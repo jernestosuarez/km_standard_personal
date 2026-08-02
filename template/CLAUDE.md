@@ -1,0 +1,153 @@
+---
+type: config
+title: Agent Instructions — {{PROJECT_NAME}} Knowledge Hub
+description: Instructions for Claude agents working in this hub. Governance rules and workflows.
+tags: [governance, config]
+timestamp: {{INIT_DATE}}
+---
+
+> **Continuing prior work? Read [HANDOVER.md](HANDOVER.md) first** — current state, open items, and what was done last session.
+
+# Working instructions — {{PROJECT_NAME}} Knowledge Hub
+
+This directory is a **knowledge hub**, not a software project. The goal is to maintain a
+governed, auditable source of truth for {{PROJECT_NAME}}.
+
+## Scope guard
+
+Cover **{{PROJECT_NAME}} only**. In scope: {{SCOPE_IN}}. Exclude: {{SCOPE_OUT}}.
+If a fact is borderline, ask {{HUB_OWNER}}.
+
+## Whose perspective
+
+Produce work as **{{UNIT_NAME}}** — {{ORG_NAME}}. Register: institutional, authoritative, concise.
+
+For fuller context on the hub initiator's role, goals, and working preferences, read `00_about.md`.
+
+## Where the data lives
+
+- **Initiator profile:** `00_about.md` — role, goals, and agent working notes for this hub
+- **Source material:** files dropped in `_inbox/` and processed through the intake workflow
+- **Curated hub:** the numbered markdown files in this directory (00–07+)
+- **Transcripts / meeting notes:** drop in `_inbox/` for processing; reference in `sources/transcript-index.md`
+
+## How to handle new sources (intake workflow)
+
+1. Find new files in `_inbox/` (`hub-scan.sh` [INBOX] section flags them)
+2. **Classify** the file:
+   - **Source/input** (partner decks, external docs, transcripts, research) → steps 3–8 below
+   - **Team output** (memos, briefings authored by the team) → propose move to `working-docs/<topic>/`; no digest
+   - **Visual asset** (diagrams, images) → propose move to `assets/architecture/`; no digest
+3. **Digest** — extract full content; for image-based PPTX extract embedded slide images, read visually, clean up temp files; note "what's new vs hub"
+4. **Move** original to `sources/<subfolder>/`
+5. **Write digest** as `<name>_digest.md` next to the original
+6. **Run reconciliation check** (see below)
+7. **Create proposal** in `changes/`
+8. **Log** in `sources/transcript-index.md`
+
+## Reconciliation check (during ingestion)
+
+After creating a digest for a new source file (step 5):
+1. Scan `reconciliation/*.md` topic files, excluding `README.md`, for SETTLED facts relevant to the source material
+2. Extract key claims from the digest — dates, decisions, roles, technical choices, commitments
+3. Compare extracted claims against settled facts
+4. **No contradiction:** add "Reconciliation check: no conflicts" to the ingestion proposal
+5. **Contradiction found:**
+   - Create `reconciliation/_disputes/YYYY-MM-DD_<topic>_dispute.md` using the dispute template in `reconciliation/README.md`
+   - Add `⚠ RECONCILIATION REQUIRED` section to the proposal listing all disputes
+   - Do NOT auto-update reconciliation topic files — only hub owner decisions change settled facts
+6. After {{HUB_OWNER}} resolves a dispute: **capture the adjudication as a `corrections/` note (`trigger: dispute`) and commit it** — the topic file records which fact won, the correction records why and the rule that stops it recurring — **then** delete the dispute file; update the topic file if needed (via proposal/approval)
+
+## OKF frontmatter (all hub docs)
+
+Every monitored hub doc must carry valid OKF v0.1 frontmatter (`type`, `title`, `description`, `tags`,
+`resource`, `timestamp`). Verify frontmatter is present and `timestamp` is updated when applying
+any proposal. `hub-scan.sh` validates frontmatter at every session start.
+
+## Session-start checklist
+
+At the start of every session involving this hub, before doing any other work:
+
+1. **Run `bash hub-scan.sh`** — covers inbox, proposals, git-backed integrity, OKF frontmatter, and reconciliation disputes in one pass.
+2. **Handle any issues reported by section:**
+   - `[INBOX]` files found → report to {{HUB_OWNER}}; wait for instruction before processing
+   - `[PROPOSALS]` ready to apply → apply, delete both files, log, commit
+   - `[INTEGRITY]` uncommitted/untracked change → stop; surface to {{HUB_OWNER}} before doing anything else
+   - `[FRONTMATTER]` missing → flag; fix before applying any other change
+   - `[CURRENCY]` generated doc with no `lifecycle:` → mark it; advisory, never blocks a change
+   - `[RECONCILIATION]` disputes → each names who it is blocked on; surface to {{HUB_OWNER}} the ones blocked on the owner, report the rest as open, not as owner actions
+   - `[AGENT]` false `Dispatched-By:` → a commit outside this hub claimed a dispatched agent acted; capture it as a `corrections/` note, do not rewrite history
+3. **Read `corrections/`** — every note with `lifecycle: active` carries a `rule:` that is
+   **binding** on this session. These are standing instructions produced when someone corrected the
+   record; they encode how this organization actually works. Treat a `rule:` as you would an
+   instruction in this file. Ignore `superseded` and `retired` notes.
+4. All sections OK → proceed with the session's main task.
+
+**When you get something wrong and it is diagnosed** — by the owner, by a scan, or by yourself —
+write a `corrections/` note (`trigger: agent-error`) capturing the rule that prevents a repeat. This
+is the one trigger with no external prompt: nobody files a proposal against an agent's mistake, so if
+you do not record it, nothing does. An agent that silently fixes its own error teaches the hub
+nothing.
+
+## Change review workflow
+
+Hub docs are edited only after an approved proposal **or** explicit real-time confirmation
+from {{HUB_OWNER}} in chat.
+
+**The chat path is not the cheap path.** It is the one most used, so it is where corrections are most
+often lost. If {{HUB_OWNER}} *corrects* you in chat — tells you something you did, assumed, or wrote
+is wrong — write a `corrections/` note (`trigger: owner-correction`) and commit it **with** the
+change. Approving a proposed change is not a correction; being told you were wrong is. The test:
+**can you state a rule?** If yes, capture it. If no, it was a one-off decision — log it as one.
+
+1. **Propose** — create `changes/<YYYY-MM-DD>_<initials>_<slug>_proposal.md` using `PROPOSAL_TEMPLATE.md`
+2. **Approve** — {{HUB_OWNER}} or reviewer creates `changes/<YYYY-MM-DD>_<slug>_approval.md`
+3. **Apply** — agent applies changes, deletes both files, logs in `sources/transcript-index.md`, runs `bash build-indexes.sh` if any entity note changed, commits by staging each touched path by name (`git add <path> ... && git commit -m "apply: <slug>"`)
+
+**Agent rules:**
+- **Stage explicitly. Never `git add -A`.** In synced storage a deleted proposal or approval can be restored by the sync agent, and a blanket add re-commits it as if it were live. Stage the paths you touched. If anything under `changes/` is reappearing rather than being newly created, delete it again and leave it out of the commit.
+- **Claim only what you verified.** Check that each step actually completed (a chain joined by `;`, or by `&&` after a step that fails silently, proves nothing), then read the result back out of the file before staging. The commit message says what was verified after the fact; if you did not verify, say what was written, not what was merged.
+- Proposal without matching approval → surface to {{HUB_OWNER}}; do not apply
+- **Owner correction in chat** (no proposal) → write a `corrections/` note (`trigger: owner-correction`) capturing the rule, and commit it with the change
+- Proposal + `APPROVED` → apply all; delete both; log; commit
+- Proposal + `APPROVED WITH CONDITIONS` → apply only non-excluded items; delete both; log; commit
+- Proposal + `REJECTED` → **capture the approval's Reason and Rule as a `corrections/` note (`trigger: rejected-proposal`) and commit it**; then delete both; log rejection; no hub changes
+- Proposal + `APPROVED WITH CONDITIONS` → capture each excluded item's reason as a `corrections/` note before applying the rest
+- **Never delete a reviewer's reason.** `changes/` is a workspace; the reason must outlive it.
+
+## Generating artifacts (push)
+
+Use `/km-brief` to draft a memo, briefing, or status report from this hub's entity notes
+(`decisions/`, `risks/`, `milestones/`, `stakeholders/`, `partners/`) instead of freehand-reading the
+numbered docs. Drafting into `working-docs/` needs no approval. Promoting a draft to `shareable/` (or
+otherwise sending it externally) follows the normal change review workflow above; once applied and
+committed, add a row to `sources/publication-log.md` (date sent, artifact, audience, commit, sent by).
+
+## Default outputs
+
+Lead with action items and open decisions, grouped by owner. Flag blockers explicitly with the owner's name.
+
+## Sensitivity
+
+Treat client and partner information as restricted. Do not surface personnel or HR matters in
+summaries unless directly asked.
+
+## Entity indexes
+
+`index.md` in each entity folder is **generated**. Never hand-edit one — run `bash build-indexes.sh` and commit the result. A hand-edited index drifts from the notes it claims to summarise, and an index nobody trusts is worse than none: it will be read as truth long after it stops being true.
+
+## Estate binding (multi-hub deployments only)
+
+If this hub is part of a multi-hub estate — a workspace whose root contains `_KM_Supervisor/` — the
+estate tier binds this hub. Delete this section in a single-hub deployment.
+
+- **`../_KM_Supervisor/EVIDENCE.md`** governs trust between conflicting sources
+  (subject-confirmed > owner-statement > independent sources > systems of record > unresolved
+  references). Never construct identifiers from names; never turn a hedge into an edge; retract in
+  place, never delete.
+- **Identity home of record: `../_KM_Supervisor/semantic-layer/`.** This hub holds engagement facts
+  and *references* shared entities (people, external counterparts, clients, products, units); it never
+  mints them. New entity, identity change, ontology change, cross-hub contradiction, or restricted
+  content → escalate per **`../_KM_Supervisor/PROTOCOL.md`** (write a note to
+  `../_KM_Supervisor/escalations/`). The estate owner decides at supervisor level; sync notices return
+  through this hub's own `changes/`.

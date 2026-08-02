@@ -1,0 +1,15 @@
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Editor scratch
+*.swp
+*~
+
+# Office and cloud-sync lock files, and partial downloads.
+# These belong to no one, and a blanket "stage everything" sweeps them into commits.
+~$*
+.~lock.*
+*.tmp
+*.crdownload
+*.partial

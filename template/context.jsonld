@@ -1,0 +1,139 @@
+{
+  "@context": {
+    "@base": "https://example.org/{{PROJECT_SLUG}}/",
+    "@vocab": "https://example.org/{{PROJECT_SLUG}}/vocab#",
+    "type": "@type",
+    "schema": "https://schema.org/",
+    "org": "http://www.w3.org/ns/org#",
+    "prov": "http://www.w3.org/ns/prov#",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#",
+    "Stakeholder": "schema:Person",
+    "Partner": "schema:Organization",
+    "Milestone": "schema:Event",
+    "Decision": "Decision",
+    "Risk": "Risk",
+    "RelationshipAssertion": "RelationshipAssertion",
+    "Correction": "Correction",
+    "correctedBy": {
+      "@id": "correctedBy",
+      "@type": "@id"
+    },
+    "trigger": "hasTrigger",
+    "rule": "hasRule",
+    "supersedes": {
+      "@id": "supersedes",
+      "@type": "@id"
+    },
+    "lifecycle": "hasLifecycle",
+    "role": "schema:roleName",
+    "organisation": {
+      "@id": "schema:memberOf",
+      "@type": "@id"
+    },
+    "targetDate": {
+      "@id": "schema:startDate",
+      "@type": "xsd:date"
+    },
+    "date": {
+      "@id": "schema:dateCreated",
+      "@type": "xsd:date"
+    },
+    "owner": {
+      "@id": "hasOwner",
+      "@type": "@id"
+    },
+    "decidedBy": {
+      "@id": "hasDecisionMaker",
+      "@type": "@id"
+    },
+    "status": "hasStatus",
+    "impact": "hasImpact",
+    "involvement": "hasInvolvement",
+    "phase": "hasPhase",
+    "nextStep": "hasNextStep",
+    "subject": {
+      "@id": "rdf:subject",
+      "@type": "@id"
+    },
+    "predicate": {
+      "@id": "rdf:predicate",
+      "@type": "@vocab"
+    },
+    "object": {
+      "@id": "rdf:object",
+      "@type": "@id"
+    },
+    "scope": {
+      "@id": "skos:inScheme",
+      "@type": "@id"
+    },
+    "confidence": "hasConfidence",
+    "assertion_method": "hasAssertionMethod",
+    "evidence": {
+      "@id": "prov:wasDerivedFrom",
+      "@type": "@id"
+    },
+    "observed_at": {
+      "@id": "prov:generatedAtTime",
+      "@type": "xsd:date"
+    },
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "reportsTo": {
+      "@id": "org:reportsTo",
+      "@type": "@id"
+    },
+    "supervises": {
+      "@id": "supervises",
+      "@type": "@id"
+    },
+    "memberOfUnit": {
+      "@id": "org:memberOf",
+      "@type": "@id"
+    },
+    "hasSkipLevelManager": {
+      "@id": "hasSkipLevelManager",
+      "@type": "@id"
+    },
+    "collaboratesOn": {
+      "@id": "collaboratesOn",
+      "@type": "@id"
+    },
+    "coordinatesWith": {
+      "@id": "coordinatesWith",
+      "@type": "@id"
+    },
+    "frequentCollaboratorWith": {
+      "@id": "frequentCollaboratorWith",
+      "@type": "@id"
+    },
+    "coLeadsInitiativeWith": {
+      "@id": "coLeadsInitiativeWith",
+      "@type": "@id"
+    },
+    "providesStrategicInputTo": {
+      "@id": "providesStrategicInputTo",
+      "@type": "@id"
+    },
+    "providesTechnicalOversightTo": {
+      "@id": "providesTechnicalOversightTo",
+      "@type": "@id"
+    },
+    "delegatesTechnicalLeadTo": {
+      "@id": "delegatesTechnicalLeadTo",
+      "@type": "@id"
+    },
+    "hasExecutiveSponsor": {
+      "@id": "hasExecutiveSponsor",
+      "@type": "@id"
+    },
+    "hasGovernanceSponsor": {
+      "@id": "hasGovernanceSponsor",
+      "@type": "@id"
+    },
+    "last-reviewed": {
+      "@id": "lastReviewed",
+      "@type": "xsd:date"
+    }
+  }
+}

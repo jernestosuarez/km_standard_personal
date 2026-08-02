@@ -1,0 +1,4 @@
+interface:
+  display_name: "KM Hub Builder"
+  short_description: "Maintain and version the governed KM Standard"
+  default_prompt: "Use km-hub-builder to evaluate an authorized lesson and update the KM Standard without editing hubs."

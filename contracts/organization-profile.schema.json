@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://km-standard.example/contracts/organization-profile.schema.json",
+  "title": "OrganizationProfile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "profile_id", "profile_revision", "organization", "approval",
+    "canonical_compatibility", "enterprise_binding", "policy_references",
+    "supervisor_binding", "operations", "forbidden_operations", "effective_date", "lifecycle"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "profile_id": {"type": "string", "minLength": 1},
+    "profile_revision": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"},
+    "organization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "name": {"type": "string", "minLength": 1}
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_id", "approved_at"],
+      "properties": {
+        "record_id": {"type": "string", "minLength": 1},
+        "approved_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"}
+      }
+    },
+    "canonical_compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["minimum", "maximum_exclusive"],
+      "properties": {
+        "minimum": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+$"},
+        "maximum_exclusive": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+$"}
+      }
+    },
+    "enterprise_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["namespace", "contract_revision"],
+      "properties": {
+        "namespace": {"type": "string", "minLength": 1},
+        "contract_revision": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"}
+      }
+    },
+    "policy_references": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true
+    },
+    "supervisor_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_operation"],
+      "properties": {"profile_operation": {"const": "resolve_organization_profile"}}
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "target", "source", "sha256"],
+            "properties": {
+              "kind": {"const": "add"},
+              "target": {"type": "string", "pattern": "^\\.km/organization/(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+              "source": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+              "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["kind", "module_id", "source", "sha256", "eligibility_record"],
+            "properties": {
+              "kind": {"const": "module"},
+              "module_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+              "source": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"},
+              "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+              "eligibility_record": {"type": "string", "minLength": 1}
+            }
+          }
+        ]
+      }
+    },
+    "forbidden_operations": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "enum": [
+          "replace_canonical_initializer", "copy_canonical_template",
+          "weaken_canonical_governance", "replace_generic_agent_instructions",
+          "copy_enterprise_records", "enable_module_without_eligibility"
+        ]
+      }
+    },
+    "effective_date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+    "lifecycle": {"enum": ["active", "superseded", "retired"]}
+  }
+}

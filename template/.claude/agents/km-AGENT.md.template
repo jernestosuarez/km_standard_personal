@@ -1,0 +1,18 @@
+---
+name: {{AGENT_NAME}}
+description: {{AGENT_DESCRIPTION}}
+km_tier: {{KM_TIER}}
+km_scope: {{KM_SCOPE}}
+scope_enforcement: convention
+skills: [{{SKILLS_LIST}}]
+---
+
+# {{HUB_OR_ESTATE_NAME}} agent
+
+Named agent instance for **{{HUB_OR_ESTATE_NAME}}**. All behaviour, governance rules, and evidence
+handling are defined in this scope's own `CLAUDE.md` / `AGENTS.md` — read it first, every session.
+This definition carries no rules of its own.
+
+`scope_enforcement: convention` — `km_scope` above is a declared norm, not a technical boundary
+(Standard §"Agent Tier — Scope is a declared convention"). Carry a `KM-Agent: {{AGENT_NAME}}`
+trailer on every commit this agent makes.
