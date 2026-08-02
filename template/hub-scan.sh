@@ -443,6 +443,96 @@ else
 fi
 echo
 
+echo "[ RESTRICTED ]"
+# The sensitivity boundary, mechanically checked (v1.16). A note, or a section inside one, is
+# marked restricted by a line beginning `sensitivity: restricted`. The rule the marker states is
+# a boundary rule: restricted content is never surfaced outside its bound. This check enforces it
+# on the hub's outbound surfaces:
+#   shareable/            leaves the team by definition
+#   changes/ free text    proposals and approvals travel to reviewers and other tiers
+#   generated indexes     the hub's summary surface; build-indexes.sh excludes restricted notes,
+#                         so a hit here clears by regenerating, never by hand-editing
+# Two findings, both ERRORS: the marker itself on a surface (restricted content copied there
+# wholesale), and the name of a restricted-marked note on a surface, as a wiki-link or a bare
+# word (disclosing the existence and identity of the restricted record). Errors, not advisories,
+# deliberately: unlike history, an outbound file can be fixed before it ships, so this gate is
+# clearable and stays on.
+# Readability: shareable/ and changes/ are not in the [ READABILITY ] probe set, so this check
+# probes what it reads itself. A surface it could not read is reported and never counted as
+# clean, and an unreadable note is reported as an identifier-coverage gap. A check must not pass
+# because it failed to read its evidence.
+restricted_marker='^sensitivity:[[:space:]]*restricted([^A-Za-z0-9-]|$)'
+restricted_errors=0
+restricted_surface_unreadable=0
+
+# Pass 1: collect the identifiers (note names) of restricted-marked notes. Everything in the hub
+# except the surfaces themselves, the inbox (arriving, not yet asserted), templates and indexes.
+restricted_id_scan=$(
+  find "$HUB" -name '*.md' -type f \
+      -not -path '*/.git/*' \
+      -not -path "$HUB/_inbox/*" \
+      -not -path "$HUB/shareable/*" \
+      -not -path "$HUB/changes/*" 2>/dev/null | sort \
+  | while IFS= read -r f; do
+      # Leading paren keeps this case parseable inside $( ) on bash 3.2 (macOS default).
+      case "$f" in (*/TEMPLATE.md|*/index.md) continue ;; esac
+      sz=$(file_size "$f"); sz=${sz:-0}
+      got=$(head -c 1 "$f" 2>/dev/null | wc -c | tr -d ' '); got=${got:-0}
+      if [ "$sz" -gt 0 ] && [ "$got" -eq 0 ]; then
+        printf 'U\t%s\n' "${f#$HUB/}"
+      elif grep -I -Eq "$restricted_marker" "$f" 2>/dev/null; then
+        printf 'I\t%s\n' "$(basename "$f" .md)"
+      fi
+    done
+)
+restricted_ids=$(printf '%s\n' "$restricted_id_scan" | awk -F'\t' '$1=="I"{print $2}' | sort -u)
+restricted_ids_unreadable=$(printf '%s\n' "$restricted_id_scan" | awk -F'\t' '$1=="U"{print $2}')
+
+# Pass 2: scan the outbound surfaces.
+restricted_surfaces=$(
+  find "$HUB/shareable" -name '*.md' -type f 2>/dev/null
+  find "$HUB/changes" -name '*.md' -type f \
+      ! -name 'PROPOSAL_TEMPLATE.md' ! -name 'APPROVAL_TEMPLATE.md' 2>/dev/null
+  for dir in $ENTITY_DIRS; do
+    [ -f "$HUB/$dir/index.md" ] && echo "$HUB/$dir/index.md"
+  done
+)
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  sz=$(file_size "$f"); sz=${sz:-0}
+  got=$(head -c 1 "$f" 2>/dev/null | wc -c | tr -d ' '); got=${got:-0}
+  if [ "$sz" -gt 0 ] && [ "$got" -eq 0 ]; then
+    echo "  ! UNREADABLE (not downloaded?): ${f#$HUB/} (not checked for restricted content)"
+    restricted_surface_unreadable=$((restricted_surface_unreadable + 1)); adv
+    continue
+  fi
+  if grep -I -Eq "$restricted_marker" "$f" 2>/dev/null; then
+    echo "  ! RESTRICTED MARKER on outbound surface: ${f#$HUB/}"
+    restricted_errors=$((restricted_errors + 1))
+  fi
+  while IFS= read -r rid; do
+    [ -z "$rid" ] && continue
+    if grep -I -qwF -- "$rid" "$f" 2>/dev/null; then
+      echo "  ! RESTRICTED IDENTIFIER '$rid' on outbound surface: ${f#$HUB/}"
+      restricted_errors=$((restricted_errors + 1))
+    fi
+  done <<< "$restricted_ids"
+done <<< "$restricted_surfaces"
+if [ -n "$restricted_ids_unreadable" ]; then
+  echo "  ! Identifier coverage incomplete: note(s) below could not be read, so the set of"
+  echo "    restricted note names checked against the surfaces may be missing entries:"
+  printf '%s\n' "$restricted_ids_unreadable" | sed 's/^/    - /'
+  adv
+fi
+if [ "$restricted_errors" -gt 0 ]; then
+  errors=$((errors + restricted_errors))
+elif [ "$restricted_surface_unreadable" -gt 0 ] || [ -n "$restricted_ids_unreadable" ]; then
+  echo "  No restricted content found on the surfaces that could be read (coverage incomplete)"
+else
+  echo "  OK: no restricted markers or identifiers on outbound surfaces"
+fi
+echo
+
 echo "[ RECONCILIATION ]"
 disputes=$(find "$HUB/reconciliation/_disputes" -maxdepth 1 -name '*_dispute.md' 2>/dev/null | sort)
 if [ -z "$disputes" ]; then

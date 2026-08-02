@@ -1,13 +1,13 @@
 ---
 type: brief
-title: Knowledge Management Standard: Hub Framework (v1.15)
+title: Knowledge Management Standard: Hub Framework (v1.16)
 description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, and an optional Agent Tier for named, discoverable agent instances.
 tags: [standard, knowledge-management, governance, okf, agents]
 resource: template/
-timestamp: 2026-08-02
+timestamp: 2026-08-03
 ---
 
-# Knowledge Management Standard: Hub Framework (v1.15)
+# Knowledge Management Standard: Hub Framework (v1.16)
 
 **Status:** Active standard. Framework-agnostic, works with Claude, GPT, Gemini, or any other LLM agent, and equally well with no agent at all (plain human use).
 
@@ -509,7 +509,10 @@ extension is the IP:
 
 A relationship layer describes people. Classify it restricted by default, keep it out of `shareable/`,
 and remember that "who works with whom" is inferable personnel data even when every individual edge is
-innocuous.
+innocuous. Since v1.16 the boundary is checked, not just stated: mark a note with a line beginning
+`sensitivity: restricted` and the `[ RESTRICTED ]` check in `hub-scan.sh` fails the scan if that
+marker, or the marked note's name, reaches `shareable/`, a change notice, or a generated index (see
+"Validating the graph", below).
 
 #### One assertion, one file
 
@@ -1183,6 +1186,24 @@ target when it fails. Unfilled template placeholders (`[[<name>]]`) are skipped.
 `decidedBy` is not a decision; it is a sentence. The check is a flat table of type → required fields
 and must be kept in sync with the `TEMPLATE.md` files.
 
+**`[ RESTRICTED ]`**, the sensitivity boundary, mechanically checked (added in v1.16). A note, or a
+section inside one, is marked restricted by a line beginning `sensitivity: restricted`, in
+frontmatter or in the body. The marker states a boundary rule: restricted content is never surfaced
+outside its bound, and until v1.16 nothing enforced that rule anywhere. The check scans the hub's
+outbound surfaces: `shareable/` (leaves the team by definition), the free text of `changes/`
+proposals and approvals excluding the two templates (notices travel to reviewers and other tiers),
+and the generated entity indexes (the hub's summary surface). Two findings, both errors: the marker
+itself on a surface means restricted content was copied there wholesale, and the name of a
+restricted-marked note on a surface, as a wiki-link or a bare word, discloses the existence and
+identity of the restricted record. `build-indexes.sh` excludes restricted notes from the indexes it
+writes, so an index hit is cleared by regenerating, never by hand-editing. A surface file the check
+could not read is reported and never counted as clean, and an unreadable note is reported as an
+identifier-coverage gap: the check does not pass by failing to read its evidence. This is an error,
+not an advisory, deliberately: unlike git history, an outbound file can be fixed before it ships,
+so the gate is clearable and stays on. Expect occasional false positives from a restricted note
+whose name is a common word; that is the fail-closed trade, and the remedy is renaming the note or
+adjudicating the hit, never weakening the check.
+
 **Deliberately not SHACL.** Full shape-constraint machinery is rung-3 formalism, and the standard's
 rule is: don't climb higher than you need. A required-field check catches the defects that actually
 occur, missing owner, dangling link, at a fraction of the cost, and it stays readable by anyone who
@@ -1196,7 +1217,7 @@ scan looks identical whether the hub is clean or structurally broken.
 
 | Class | Exit | What it means |
 |---|---|---|
-| **Error** | **1** | Structurally broken: dangling wiki-link, missing required field, missing frontmatter, uncommitted monitored file, unparseable date, not a git repo. **Defects.** |
+| **Error** | **1** | Structurally broken: dangling wiki-link, missing required field, missing frontmatter, uncommitted monitored file, unparseable date, restricted content on an outbound surface, not a git repo. **Defects.** |
 | **Advisory** | **0** | Intact, needs a human: pending inbox, open proposal, active dispute, stale note. **Prompts.** |
 
 The split is the whole point. **A gate that fires on prompts gets switched off, and takes the real
@@ -1210,8 +1231,8 @@ product, the exit code is just how a machine reads it.
 
 The full, copy-ready script is at [`template/hub-scan.sh`](template/hub-scan.sh). It checks, in one
 pass: pending inbox files, pending proposals/approvals, git-backed integrity (uncommitted/untracked
-monitored files), OKF frontmatter on every monitored file, and (if configured) open reconciliation
-disputes. There is no separate baseline file to maintain, the hub's own git history is the baseline.
+monitored files), OKF frontmatter on every monitored file, the restricted-content boundary on
+outbound surfaces, and (if configured) open reconciliation disputes. There is no separate baseline file to maintain, the hub's own git history is the baseline.
 
 ---
 
@@ -2247,6 +2268,7 @@ happened once (see the v1.9 row) and the ledger exists so it does not happen twi
 | v1.13 | 2026-08-01 | Portable Standard Maintainer: authority is separated from evidence; lessons are classified as canonical, overlay-only, hub-local, enterprise knowledge, or mixed; one governed `km-hub-builder` contract ships with thin Claude and Codex adapters, safe installation, and runtime-parity checks. |
 | v1.14 | 2026-08-01 | Canonical-first hub initialization with a portable OrganizationProfile contract, pinned deployment provenance, separate Supervisor customization, fail-closed validation, and Claude/Codex semantic parity. |
 | v1.15 | 2026-08-02 | Generated entity indexes carry `lifecycle: active`, emitted by `build-indexes.sh`. The currency rule already covered them as hub-produced documents, but the generator omitted the field, so `[ CURRENCY ]` flagged every index in every hub with entity notes and no permitted act could clear it, because the files are regenerated and their headers forbid hand edits. Observed identically by three hub agents in one estate on 2026-08-02. |
+| v1.16 | 2026-08-03 | The sensitivity boundary becomes a checked rule: `[ RESTRICTED ]` in `hub-scan.sh` fails, as an error, when a `sensitivity: restricted` marker or the name of a restricted-marked note appears in `shareable/`, in change-notice free text, or in a generated entity index; `build-indexes.sh` excludes restricted notes so an index hit clears by regeneration; `tests/test_restricted_lint.sh` carries the negative fixture proving the check fires. Derived from a security review in one estate that found the restricted rule stated in prose and enforced at no boundary. |
 
 ---
 

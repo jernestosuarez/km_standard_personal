@@ -75,6 +75,7 @@ At the start of every session involving this hub, before doing any other work:
    - `[INTEGRITY]` uncommitted/untracked change → stop; surface to {{HUB_OWNER}} before doing anything else
    - `[FRONTMATTER]` missing → flag; fix before applying any other change
    - `[CURRENCY]` generated doc with no `lifecycle:` → mark it; advisory, never blocks a change
+   - `[RESTRICTED]` restricted marker or restricted note name on an outbound surface → error; remove it, or regenerate the index, before anything ships
    - `[RECONCILIATION]` disputes → each names who it is blocked on; surface to {{HUB_OWNER}} the ones blocked on the owner, report the rest as open, not as owner actions
    - `[AGENT]` false `Dispatched-By:` → a commit outside this hub claimed a dispatched agent acted; capture it as a `corrections/` note, do not rewrite history
 3. **Read `corrections/`** — every note with `lifecycle: active` carries a `rule:` that is
