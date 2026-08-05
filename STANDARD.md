@@ -4,7 +4,7 @@ title: Knowledge Management Standard: Hub Framework (v1.17)
 description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, and an optional Agent Tier for named, discoverable agent instances.
 tags: [standard, knowledge-management, governance, okf, agents]
 resource: template/
-timestamp: 2026-08-03
+timestamp: 2026-08-05
 ---
 
 # Knowledge Management Standard: Hub Framework (v1.17)
