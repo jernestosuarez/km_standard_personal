@@ -30,6 +30,20 @@ adv()  { advisories=$((advisories + 1)); }
 echo "=== Hub Scan — $(date '+%Y-%m-%d %H:%M') ==="
 echo
 
+# HANDOVER is surfaced first, before any other section, so a resuming session reads the curated
+# home of record before reconstructing state from the git log or a diff. A missing HANDOVER.md is a
+# defect, not a prompt: the required scaffold file is gone, so it is an ERROR (see the exit-status
+# note above), the same rank as missing frontmatter.
+echo "[ HANDOVER ]"
+if [ -f "$HUB/HANDOVER.md" ]; then
+  echo "  READ HANDOVER.md FIRST — before any state reconstruction from the git log or a diff (no exceptions):"
+  echo "  → HANDOVER.md ($(grep -m1 '^# ' "$HUB/HANDOVER.md" | sed 's/^# //'))"
+else
+  echo "  ERROR — HANDOVER.md missing; regenerate via /km-handover before continuing"
+  err
+fi
+echo
+
 echo "[ INBOX ]"
 pending=$(find "$HUB/_inbox" -maxdepth 1 -type f ! -name 'README.md' ! -name '.DS_Store' 2>/dev/null | sort)
 if [ -z "$pending" ]; then

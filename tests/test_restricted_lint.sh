@@ -62,6 +62,24 @@ timestamp: 2026-08-03
 Clean external overview with no restricted content.
 EOF
 
+# A HANDOVER.md is a required scaffold file since v1.17: hub-scan.sh reports its absence as an error.
+# This fixture is a hand-built synthetic hub (not a template copy), so provide one explicitly.
+cat > "$hub/HANDOVER.md" <<'EOF'
+---
+type: handover
+title: Session Handover (synthetic fixture)
+description: Synthetic handover for the restricted-lint test.
+tags: [handover]
+resource: ./
+lifecycle: active
+timestamp: 2026-08-03
+---
+
+# Session Handover (synthetic fixture)
+
+Synthetic continuity note. No real content.
+EOF
+
 git -C "$hub" init -q
 # Blanket staging is used here only because this IS the initial scaffold commit of a brand-new,
 # fully synthetic hub: the one narrow exception STANDARD.md Rule 3 carves out.

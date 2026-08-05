@@ -6,7 +6,10 @@ tags: [governance, config]
 timestamp: {{INIT_DATE}}
 ---
 
-> **Continuing prior work? Read [HANDOVER.md](HANDOVER.md) first** — current state, open items, and what was done last session.
+> **Read [HANDOVER.md](HANDOVER.md) first — no exceptions.** It is the curated home of record for
+> session-to-session state: current state, open items, and what was done last session. Read it
+> **before** reconstructing any state from the git log or a diff; raw history is not a substitute for
+> the curated handover. `hub-scan.sh` surfaces it as its first `[ HANDOVER ]` line.
 
 # Working instructions — {{PROJECT_NAME}} Knowledge Hub
 
@@ -70,6 +73,7 @@ At the start of every session involving this hub, before doing any other work:
 
 1. **Run `bash hub-scan.sh`** — covers inbox, proposals, git-backed integrity, OKF frontmatter, and reconciliation disputes in one pass.
 2. **Handle any issues reported by section:**
+   - `[HANDOVER]` → **read `HANDOVER.md` first, before any state reconstruction from the git log or a diff**; a missing `HANDOVER.md` is an error, regenerate it via `/km-handover` before continuing
    - `[INBOX]` files found → report to {{HUB_OWNER}}; wait for instruction before processing
    - `[PROPOSALS]` ready to apply → apply, delete both files, log, commit
    - `[INTEGRITY]` uncommitted/untracked change → stop; surface to {{HUB_OWNER}} before doing anything else

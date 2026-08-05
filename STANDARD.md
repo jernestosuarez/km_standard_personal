@@ -1,13 +1,13 @@
 ---
 type: brief
-title: Knowledge Management Standard: Hub Framework (v1.16)
+title: Knowledge Management Standard: Hub Framework (v1.17)
 description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, and an optional Agent Tier for named, discoverable agent instances.
 tags: [standard, knowledge-management, governance, okf, agents]
 resource: template/
 timestamp: 2026-08-03
 ---
 
-# Knowledge Management Standard: Hub Framework (v1.16)
+# Knowledge Management Standard: Hub Framework (v1.17)
 
 **Status:** Active standard. Framework-agnostic, works with Claude, GPT, Gemini, or any other LLM agent, and equally well with no agent at all (plain human use).
 
@@ -666,6 +666,36 @@ outside the proposal/approval workflow, surface to the hub owner before proceedi
 
 This catches: manual edits by contributors who bypassed the workflow, accidental overwrites, sync
 conflicts from cloud storage, and agent errors.
+
+#### The curated handover is surfaced first and read before any state reconstruction (added in v1.17)
+
+A hub keeps a single curated home of record for session-to-session state, `HANDOVER.md`: what the
+hub is, its open items, the pre-send review points, and what the last session did. It is written
+deliberately, at the end of a session, for the next reader. The raw git log and an uncommitted diff
+are *not* that record: they are the unadjudicated material the handover was distilled from, and a
+resuming session that reconstructs state from them instead of reading the handover skips exactly the
+curated content that does not survive in commit subjects, an enumerated open-decision list, a named
+pre-send review point.
+
+Reconstructing state from raw history when a curated handover exists is an **evidence-hierarchy
+inversion**, the same shape as the estate rule *check the hubs and the layer before the transcripts*:
+the settled, adjudicated record outranks the raw stream it was built from, and is consulted first.
+The defect that produced this rule was systemic rather than a lapse of attention: nothing at the
+enforced session-start entry point surfaced the handover, and the only pointer to it was a
+*conditional* advisory ("continuing prior work? read the handover first") that read as optional and
+so was skipped by a session that did not classify itself as continuing prior work.
+
+Two obligations close it, and both belong at the session-start entry point Rule 3 already defines:
+
+1. **The scan surfaces it, first.** `hub-scan.sh` prints a `[ HANDOVER ]` block ahead of every other
+   section, pointing the agent at `HANDOVER.md` unconditionally ("read it first, before any state
+   reconstruction, no exceptions") and echoing its title. A **missing** `HANDOVER.md` is a required
+   scaffold file that is gone, so it is reported as an **error** (exit 1), the same rank as missing
+   frontmatter, not an advisory; the fix is to regenerate it via the handover skill.
+2. **The instruction is unconditional.** The agent-instruction files (`CLAUDE.md`, `AGENTS.md`) name
+   reading `HANDOVER.md` as the first read-first step with no precondition, not a conditional aside.
+   An advisory that the reader must first decide applies to them is an advisory that the reader who
+   most needs it will decide does not.
 
 #### Stage explicitly: what a commit contains is chosen, not swept up (added in v1.10)
 
@@ -2269,6 +2299,7 @@ happened once (see the v1.9 row) and the ledger exists so it does not happen twi
 | v1.14 | 2026-08-01 | Canonical-first hub initialization with a portable OrganizationProfile contract, pinned deployment provenance, separate Supervisor customization, fail-closed validation, and Claude/Codex semantic parity. |
 | v1.15 | 2026-08-02 | Generated entity indexes carry `lifecycle: active`, emitted by `build-indexes.sh`. The currency rule already covered them as hub-produced documents, but the generator omitted the field, so `[ CURRENCY ]` flagged every index in every hub with entity notes and no permitted act could clear it, because the files are regenerated and their headers forbid hand edits. Observed identically by three hub agents in one estate on 2026-08-02. |
 | v1.16 | 2026-08-03 | The sensitivity boundary becomes a checked rule: `[ RESTRICTED ]` in `hub-scan.sh` fails, as an error, when a `sensitivity: restricted` marker or the name of a restricted-marked note appears in `shareable/`, in change-notice free text, or in a generated entity index; `build-indexes.sh` excludes restricted notes so an index hit clears by regeneration; `tests/test_restricted_lint.sh` carries the negative fixture proving the check fires. Derived from a security review in one estate that found the restricted rule stated in prose and enforced at no boundary. |
+| v1.17 | 2026-08-05 | Session-start handover surfacing (Rule 3): `hub-scan.sh` prints a `[ HANDOVER ]` block ahead of every other section pointing the agent at `HANDOVER.md` unconditionally and echoing its title, and reports a missing `HANDOVER.md` as an error (the same rank as missing frontmatter); the `CLAUDE.md`/`AGENTS.md` pointer is promoted from a conditional advisory to an unconditional first read-first step. Reconstructing session state from the raw git log or a diff when a curated handover exists is an evidence-hierarchy inversion, the same shape as *check the hubs and the layer before the transcripts*. Derived from a supervisor-tier incident where a resumed session rebuilt state from git history and an uncommitted diff, missing named pre-send review points and an enumerated open-decision list, because the enforced entry point surfaced nothing and the only pointer was a conditional advisory. |
 
 ---
 
