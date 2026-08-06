@@ -1,13 +1,13 @@
 ---
 type: brief
-title: Knowledge Management Standard: Hub Framework (v1.17)
+title: Knowledge Management Standard: Hub Framework (v1.18)
 description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, and an optional Agent Tier for named, discoverable agent instances.
 tags: [standard, knowledge-management, governance, okf, agents]
 resource: template/
-timestamp: 2026-08-05
+timestamp: 2026-08-06
 ---
 
-# Knowledge Management Standard: Hub Framework (v1.17)
+# Knowledge Management Standard: Hub Framework (v1.18)
 
 **Status:** Active standard. Framework-agnostic, works with Claude, GPT, Gemini, or any other LLM agent, and equally well with no agent at all (plain human use).
 
@@ -696,6 +696,52 @@ Two obligations close it, and both belong at the session-start entry point Rule 
    reading `HANDOVER.md` as the first read-first step with no precondition, not a conditional aside.
    An advisory that the reader must first decide applies to them is an advisory that the reader who
    most needs it will decide does not.
+
+#### The curated handover is written before a state-changing session ends (added in v1.18)
+
+The read side above is only half of a loop. It guarantees the *next* session reads the curated
+handover; it does nothing to guarantee the handover it reads is current. A session that lands real
+work and then ends without refreshing `HANDOVER.md` hands the next reader a confident, well-surfaced
+record of a state that no longer exists, which is worse than a missing handover, because the read
+side vouches for it.
+
+The write side closes the loop at the one point the system can act on: session end. The handover is a
+judgment-layer artifact, only the model can author it, and only a stop-gate can both refuse to end a
+session and hand the model an instruction, so the obligation is enforced there. When a session has
+landed commits that changed hub state but none of them touched `HANDOVER.md`, the gate blocks once
+and instructs the model to refresh the current-state section via the handover skill and commit it,
+before stopping.
+
+Three properties make this a guardrail rather than a nuisance, and each is a rule, not a tuning
+choice:
+
+1. **Substantive work means committed work.** Uncommitted or untracked files are Rule 3's
+   `[INTEGRITY]` concern, already surfaced at the next session start; counting them here would fire
+   the gate on stray scratch. The gate judges from the same baseline the integrity check trusts,
+   HEAD at session start against HEAD now.
+2. **It fires at most once per session.** A stop-gate that re-blocks on the very turn that answers it
+   is a loop; the model must always be able to say "nothing meaningful changed, no refresh needed" in
+   one line and stop. The gate arms a one-shot marker per session and honours the runtime's own
+   already-blocking signal, so it never re-enters itself.
+3. **It is best-effort, and says so.** No true "session end" signal exists: the stop-gate fires at
+   every turn boundary, so this guarantees *one* refresh per working session, not that the handover
+   is the session's final word, and a session cleared rather than ended never triggers it at all. The
+   read side and the periodic hygiene pass remain the backstop. This is a guardrail against the
+   common failure, ending a working session with a stale handover, not a proof that the handover is
+   perfect.
+
+In the reference implementation this is `handover-hooks.sh` at the hub root, wired in
+`template/.claude/settings.json` as a `SessionStart` baseline and a `Stop` check, with the script path
+resolved portably through the runtime's project-directory variable so `km-init` installs it unmodified
+into any hub location. The gate resolves the hub root from its own location and reads only committed
+history, so it never depends on where the hub lives. It is a Claude Code mechanism; a surface with no
+equivalent stop lifecycle enforces the same obligation through this standard and the read-side
+surfacing alone. There is deliberately **no** session-end regeneration of any generated artifact: a
+hub's only candidate, its generated entity indexes, are *monitored* files that must be committed
+through the governed flow, and regenerating them out-of-band at session end would manufacture exactly
+the uncommitted-monitored-file state Rule 3 exists to catch. `build-indexes.sh` already runs at apply
+time, when an entity note actually changes; there is no deterministic hub artifact that wants a
+detached rebuild, so none is invented.
 
 #### Stage explicitly: what a commit contains is chosen, not swept up (added in v1.10)
 
@@ -2300,6 +2346,7 @@ happened once (see the v1.9 row) and the ledger exists so it does not happen twi
 | v1.15 | 2026-08-02 | Generated entity indexes carry `lifecycle: active`, emitted by `build-indexes.sh`. The currency rule already covered them as hub-produced documents, but the generator omitted the field, so `[ CURRENCY ]` flagged every index in every hub with entity notes and no permitted act could clear it, because the files are regenerated and their headers forbid hand edits. Observed identically by three hub agents in one estate on 2026-08-02. |
 | v1.16 | 2026-08-03 | The sensitivity boundary becomes a checked rule: `[ RESTRICTED ]` in `hub-scan.sh` fails, as an error, when a `sensitivity: restricted` marker or the name of a restricted-marked note appears in `shareable/`, in change-notice free text, or in a generated entity index; `build-indexes.sh` excludes restricted notes so an index hit clears by regeneration; `tests/test_restricted_lint.sh` carries the negative fixture proving the check fires. Derived from a security review in one estate that found the restricted rule stated in prose and enforced at no boundary. |
 | v1.17 | 2026-08-05 | Session-start handover surfacing (Rule 3): `hub-scan.sh` prints a `[ HANDOVER ]` block ahead of every other section pointing the agent at `HANDOVER.md` unconditionally and echoing its title, and reports a missing `HANDOVER.md` as an error (the same rank as missing frontmatter); the `CLAUDE.md`/`AGENTS.md` pointer is promoted from a conditional advisory to an unconditional first read-first step. Reconstructing session state from the raw git log or a diff when a curated handover exists is an evidence-hierarchy inversion, the same shape as *check the hubs and the layer before the transcripts*. Derived from a supervisor-tier incident where a resumed session rebuilt state from git history and an uncommitted diff, missing named pre-send review points and an enumerated open-decision list, because the enforced entry point surfaced nothing and the only pointer was a conditional advisory. |
+| v1.18 | 2026-08-06 | Handover write side (Rule 3), the mirror of v1.17: a `Stop` gate (`handover-hooks.sh`, wired in `template/.claude/settings.json` against a `SessionStart` baseline) blocks once when a session landed commits that changed hub state but did not touch `HANDOVER.md`, instructing the model to refresh the current-state section via `/km-handover` and commit before stopping. Best-effort by construction, Stop fires per turn, not at a true session end, and `/clear` never fires it, so it guarantees one refresh per working session, not the final word; the read side and the hygiene pass remain the backstop. Substantive work is committed work (uncommitted files stay the `[INTEGRITY]` check's concern); the gate fires at most once per session and honours the runtime's already-blocking signal so it never re-enters itself. No session-end regeneration hook: a hub's only deterministic candidate, its generated entity indexes, are monitored files committed through the governed flow, so a detached rebuild would manufacture the uncommitted-monitored state Rule 3 catches. The hook path is portable through the runtime project-directory variable, so `km-init` installs it unmodified per hub. Ported from the proven supervisor-tier write-side hook. |
 
 ---
 

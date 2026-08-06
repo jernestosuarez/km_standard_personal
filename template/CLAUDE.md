@@ -94,6 +94,15 @@ is the one trigger with no external prompt: nobody files a proposal against an a
 you do not record it, nothing does. An agent that silently fixes its own error teaches the hub
 nothing.
 
+## Session-end handover
+
+If this session changed hub state, **refresh `HANDOVER.md` before you stop** — run `/km-handover` to
+rewrite section 5 (current state, open items, next steps) with what actually changed, then commit it.
+The next session reads that handover first and trusts it; leaving it stale hands the next agent a
+confident record of a state that no longer exists. A `Stop` gate (`handover-hooks.sh`) enforces this:
+it blocks once when a session landed commits but did not touch `HANDOVER.md`. If nothing meaningful
+changed, say so in one line and stop — it will not fire again this session.
+
 ## Change review workflow
 
 Hub docs are edited only after an approved proposal **or** explicit real-time confirmation

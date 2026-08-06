@@ -222,8 +222,18 @@ no other substitution — they're producer-facing templates, not populated docs)
 ```
 template/hub-scan.sh                       → <target>/hub-scan.sh
 template/build-indexes.sh                  → <target>/build-indexes.sh
+template/handover-hooks.sh                 → <target>/handover-hooks.sh
+template/.claude/settings.json             → <target>/.claude/settings.json
 template/.gitignore                        → <target>/.gitignore
 ```
+
+`.claude/settings.json` wires the handover hooks (v1.18): a `SessionStart` baseline and a `Stop`
+check. It references the
+script portably through `$CLAUDE_PROJECT_DIR`, which Claude Code sets to the hub root, so it is copied
+verbatim and works wherever the hub is created — never substitute a path into it. The hooks are a
+Claude Code mechanism; Codex/AGENTS.md has no equivalent Stop-blocking lifecycle, so there is no
+`.agents/settings.json` parallel — the underlying obligation is enforced for both surfaces by the
+standard itself and by the read-side surfacing in `hub-scan.sh`.
 
 **Skills to embed in the new hub:**
 
@@ -247,10 +257,10 @@ Create a `.gitkeep` file in each of these:
 <target>/assets/architecture/.gitkeep
 ```
 
-**Make hub-scan.sh executable:**
+**Make the hub scripts executable:**
 
 ```bash
-chmod +x "<target>/hub-scan.sh"
+chmod +x "<target>/hub-scan.sh" "<target>/handover-hooks.sh"
 ```
 
 After populating all files, search for any remaining `{{` in the target directory and flag any

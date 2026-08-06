@@ -8,7 +8,7 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.17** (2026-08-05). The full ledger of released versions, and the rule that a
+**Current version: v1.18** (2026-08-06). The full ledger of released versions, and the rule that a
 published version number is never reused, is in [`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.
 
