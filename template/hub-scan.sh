@@ -44,6 +44,19 @@ else
 fi
 echo
 
+# In a multi-hub estate (workspace root also contains _KM_Supervisor/), the estate corrections
+# registry binds every hub session: each lifecycle: active note there carries a rule: in force here,
+# inherited by reference and never copied down (PROTOCOL.md §Self-improvement loop). Skipped silently
+# in a single-hub deployment.
+_estate_corr="$(cd "$HUB/.." 2>/dev/null && pwd)/_KM_Supervisor/corrections"
+if [ -d "$_estate_corr" ]; then
+  echo "[ CORRECTIONS ]"
+  _nactive=$(grep -rl '^lifecycle: active' "$_estate_corr"/*.md 2>/dev/null | wc -l | tr -d ' ')
+  echo "  ESTATE RULES BIND — read ../_KM_Supervisor/corrections/ (${_nactive} active) at session start;"
+  echo "  every lifecycle: active note's rule: is in force in this hub"
+  echo
+fi
+
 echo "[ INBOX ]"
 pending=$(find "$HUB/_inbox" -maxdepth 1 -type f ! -name 'README.md' ! -name '.DS_Store' 2>/dev/null | sort)
 if [ -z "$pending" ]; then

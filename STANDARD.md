@@ -1,13 +1,13 @@
 ---
 type: brief
-title: Knowledge Management Standard: Hub Framework (v1.18)
+title: Knowledge Management Standard: Hub Framework (v1.19)
 description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, and an optional Agent Tier for named, discoverable agent instances.
 tags: [standard, knowledge-management, governance, okf, agents]
 resource: template/
 timestamp: 2026-08-06
 ---
 
-# Knowledge Management Standard: Hub Framework (v1.18)
+# Knowledge Management Standard: Hub Framework (v1.19)
 
 **Status:** Active standard. Framework-agnostic, works with Claude, GPT, Gemini, or any other LLM agent, and equally well with no agent at all (plain human use).
 
@@ -742,6 +742,37 @@ through the governed flow, and regenerating them out-of-band at session end woul
 the uncommitted-monitored-file state Rule 3 exists to catch. `build-indexes.sh` already runs at apply
 time, when an entity note actually changes; there is no deterministic hub artifact that wants a
 detached rebuild, so none is invented.
+
+#### The estate corrections registry is surfaced and bound at session start (added in v1.19)
+
+A hub's agent-instruction files already bind the estate tier by reference: the evidence standard, the
+identity home of record, and the escalation protocol are each named as governing this hub. The
+estate's own `corrections/` registry was not among them. `PROTOCOL.md` asserts that a supervisor-tier
+correction binds every tier, but nothing at the hub's enforced session-start entry point surfaced or
+read it, so that binding was transitive assertion only, present in the supervisor's prose and absent
+from the hub's session start. This is the same defect v1.17 found for the handover: a rule stated to
+be binding, with no operational surface that makes it so, is skipped by exactly the session that most
+needs it.
+
+The fix mirrors v1.17, and both obligations sit at the session-start entry point Rule 3 already
+defines. Both are conditional on the hub actually being part of an estate, so a single-hub deployment
+is unaffected:
+
+1. **The scan surfaces it.** In a multi-hub estate — the workspace root also holds `_KM_Supervisor/`
+   — `hub-scan.sh` prints a `[ CORRECTIONS ]` block immediately after `[ HANDOVER ]`, pointing the
+   agent at `../_KM_Supervisor/corrections/` and counting the `lifecycle: active` notes there whose
+   `rule:` is in force in this hub. A standalone hub has no estate directory and the block prints
+   nothing.
+2. **The instruction is explicit.** `CLAUDE.md` and `AGENTS.md` declare, in the estate-binding
+   section, that `../_KM_Supervisor/corrections/` binds this hub: read at session start alongside the
+   hub's own `corrections/`, every `lifecycle: active` note's `rule:` in force, a supervisor-tier
+   correction binding by reference and never copied down.
+
+The registry is inherited by reference, not copied. A supervisor-tier rule lives in one place and
+binds every hub from there; duplicating it into each hub would fork it and reintroduce exactly the
+duplicate-discovery problem the promotion ladder (§"Promotion: a rule learned in one hub must be able
+to reach the others") exists to close. The `[ CORRECTIONS ]` line is a pointer to that single home of
+record, the same relationship the `[ HANDOVER ]` line has to `HANDOVER.md`.
 
 #### Stage explicitly: what a commit contains is chosen, not swept up (added in v1.10)
 
@@ -2347,6 +2378,7 @@ happened once (see the v1.9 row) and the ledger exists so it does not happen twi
 | v1.16 | 2026-08-03 | The sensitivity boundary becomes a checked rule: `[ RESTRICTED ]` in `hub-scan.sh` fails, as an error, when a `sensitivity: restricted` marker or the name of a restricted-marked note appears in `shareable/`, in change-notice free text, or in a generated entity index; `build-indexes.sh` excludes restricted notes so an index hit clears by regeneration; `tests/test_restricted_lint.sh` carries the negative fixture proving the check fires. Derived from a security review in one estate that found the restricted rule stated in prose and enforced at no boundary. |
 | v1.17 | 2026-08-05 | Session-start handover surfacing (Rule 3): `hub-scan.sh` prints a `[ HANDOVER ]` block ahead of every other section pointing the agent at `HANDOVER.md` unconditionally and echoing its title, and reports a missing `HANDOVER.md` as an error (the same rank as missing frontmatter); the `CLAUDE.md`/`AGENTS.md` pointer is promoted from a conditional advisory to an unconditional first read-first step. Reconstructing session state from the raw git log or a diff when a curated handover exists is an evidence-hierarchy inversion, the same shape as *check the hubs and the layer before the transcripts*. Derived from a supervisor-tier incident where a resumed session rebuilt state from git history and an uncommitted diff, missing named pre-send review points and an enumerated open-decision list, because the enforced entry point surfaced nothing and the only pointer was a conditional advisory. |
 | v1.18 | 2026-08-06 | Handover write side (Rule 3), the mirror of v1.17: a `Stop` gate (`handover-hooks.sh`, wired in `template/.claude/settings.json` against a `SessionStart` baseline) blocks once when a session landed commits that changed hub state but did not touch `HANDOVER.md`, instructing the model to refresh the current-state section via `/km-handover` and commit before stopping. Best-effort by construction, Stop fires per turn, not at a true session end, and `/clear` never fires it, so it guarantees one refresh per working session, not the final word; the read side and the hygiene pass remain the backstop. Substantive work is committed work (uncommitted files stay the `[INTEGRITY]` check's concern); the gate fires at most once per session and honours the runtime's already-blocking signal so it never re-enters itself. No session-end regeneration hook: a hub's only deterministic candidate, its generated entity indexes, are monitored files committed through the governed flow, so a detached rebuild would manufacture the uncommitted-monitored state Rule 3 catches. The hook path is portable through the runtime project-directory variable, so `km-init` installs it unmodified per hub. Ported from the proven supervisor-tier write-side hook. |
+| v1.19 | 2026-08-06 | The estate corrections registry is surfaced and bound at hub session start (Rule 3), closing for the corrections registry the gap v1.17 closed for the handover. A hub's agent-instruction files bound the evidence standard, the identity home of record, and the escalation protocol by reference, but not the estate `corrections/` registry, so `PROTOCOL.md`'s assertion that a supervisor-tier correction binds every tier had no operational surface at the hub's session-start entry point. `hub-scan.sh` now prints a `[ CORRECTIONS ]` block immediately after `[ HANDOVER ]`, conditional on the workspace root holding `_KM_Supervisor/`, pointing the agent at `../_KM_Supervisor/corrections/` and counting the `lifecycle: active` notes in force; a standalone hub prints nothing. `CLAUDE.md` and `AGENTS.md` declare the registry binding in the estate-binding section, inherited by reference and never copied down. The same change ports the estate-binding section into `AGENTS.md`, which previously carried none, so the binding is present on the non-Claude surface too. Single-hub deployments are unaffected. |
 
 ---
 

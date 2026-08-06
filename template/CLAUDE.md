@@ -165,3 +165,7 @@ estate tier binds this hub. Delete this section in a single-hub deployment.
   content → escalate per **`../_KM_Supervisor/PROTOCOL.md`** (write a note to
   `../_KM_Supervisor/escalations/`). The estate owner decides at supervisor level; sync notices return
   through this hub's own `changes/`.
+- **`../_KM_Supervisor/corrections/` binds this hub.** Read it at session start alongside this hub's
+  own `corrections/`: every `lifecycle: active` note there carries a `rule:` in force here. A
+  supervisor-tier correction binds every hub by reference and is never copied down; `hub-scan.sh`
+  surfaces it as a `[ CORRECTIONS ]` line.

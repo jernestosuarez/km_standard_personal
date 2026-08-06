@@ -150,3 +150,23 @@ summaries unless directly asked.
 ## Entity indexes
 
 `index.md` in each entity folder is **generated**. Never hand-edit one — run `bash build-indexes.sh` and commit the result. A hand-edited index drifts from the notes it claims to summarise, and an index nobody trusts is worse than none: it will be read as truth long after it stops being true.
+
+## Estate binding (multi-hub deployments only)
+
+If this hub is part of a multi-hub estate — a workspace whose root contains `_KM_Supervisor/` — the
+estate tier binds this hub. Delete this section in a single-hub deployment.
+
+- **`../_KM_Supervisor/EVIDENCE.md`** governs trust between conflicting sources
+  (subject-confirmed > owner-statement > independent sources > systems of record > unresolved
+  references). Never construct identifiers from names; never turn a hedge into an edge; retract in
+  place, never delete.
+- **Identity home of record: `../_KM_Supervisor/semantic-layer/`.** This hub holds engagement facts
+  and *references* shared entities (people, external counterparts, clients, products, units); it never
+  mints them. New entity, identity change, ontology change, cross-hub contradiction, or restricted
+  content → escalate per **`../_KM_Supervisor/PROTOCOL.md`** (write a note to
+  `../_KM_Supervisor/escalations/`). The estate owner decides at supervisor level; sync notices return
+  through this hub's own `changes/`.
+- **`../_KM_Supervisor/corrections/` binds this hub.** Read it at session start alongside this hub's
+  own `corrections/`: every `lifecycle: active` note there carries a `rule:` in force here. A
+  supervisor-tier correction binds every hub by reference and is never copied down; `hub-scan.sh`
+  surfaces it as a `[ CORRECTIONS ]` line.
