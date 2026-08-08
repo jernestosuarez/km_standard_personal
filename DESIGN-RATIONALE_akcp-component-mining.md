@@ -81,4 +81,16 @@ question the estate has today?* Patterns that fail it are recorded as rejected, 
 Item 3 (eval harness) first — smallest build, and it supplies evidence to a mechanism the standard already
 has but currently runs on judgment alone. See the spec.
 
+## Addendum — independent convergence (2026-08-08)
+
+AWS's **Context Ontology Accelerator** (`aws/context-ontology-accelerator`, official `aws` org, examined
+2026-08-08) independently implements the same governance shape this standard and AKCP arrived at: AI
+proposes metadata, **nothing becomes authoritative without human review**, and steward edits sit in an
+explicit priority hierarchy — `STEWARD_EDITED` > `DETERMINISTIC` (from constraints) > `AI_GENERATED` —
+where higher priority always survives regeneration, and *editing and approving are two distinct actions*.
+That is three independent arrivals at human-gated, provenance-tiered knowledge governance (this standard,
+AKCP, COA), the third from a major cloud vendor's official org. Recorded as corroborating evidence that
+the standard's core design is the emerging industry pattern — not as grounds for any rule change, which
+still requires operational evidence per the maintainer's discipline.
+
 *2026-08-05. Adversarial/mining rationale; companion to STANDARD.md, non-normative.*
