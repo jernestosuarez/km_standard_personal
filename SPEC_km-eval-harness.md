@@ -3,7 +3,7 @@ type: reference
 title: Spec — KM Eval Harness (retirement evidence + settled-fact regression)
 description: Buildable specification for a lightweight eval harness that generates a question→answer set from a hub's settled facts and decision notes, then measures which records are exercised and which the hub can still answer. Supplies evidence for the standard's existing lifecycle-retirement discipline. Non-normative proposal; adoption routes through the standard-maintainer.
 tags: [spec, evaluation, retirement, value-measurement, provenance]
-timestamp: 2026-08-05
+timestamp: 2026-08-12
 ---
 
 # Spec — KM Eval Harness
@@ -29,6 +29,10 @@ action.
 - Not a benchmark of the LLM — it tests whether *the hub's content* is retrievable and correct, holding the
   model fixed.
 - Not a new store — it reads existing hub files and writes one report; no database, no runtime service.
+- Not a check against the world — the harness measures **internal consistency**: whether the hub can still
+  answer what its own settled records assert. A clean run means the hub agrees with itself, not that its
+  facts match reality. Whether a settled fact is stale against reality remains a reconciliation / review
+  question, outside this harness.
 
 ## Inputs
 
@@ -44,6 +48,10 @@ Three stages, each a small script (bash + the estate's existing agent tooling; n
    `question → expected-answer` pairs, tagged with the source note's id. Store as a plain
    `eval/<hub>.questions.jsonl` (or markdown table). Regenerated when notes change; never hand-authored
    answers — they are extracted from the note, so the note remains the source of truth.
+   Inclusion gates operate on **row-level status, not file lifecycle alone**: a settled-facts topic file
+   that is itself `lifecycle: active` may carry individual entries marked superseded or retired, and those
+   rows are excluded even though their file is active. (Confirmed in the first pilot run: a superseded
+   entry inside an active settled-facts file was correctly excluded.)
 
 2. **Run** — pose each question to an agent restricted to *reading the hub* (no outside knowledge). Record,
    per question: answered / not-answered / wrong, and which note id(s) the answer drew on.
@@ -52,7 +60,7 @@ Three stages, each a small script (bash + the estate's existing agent tooling; n
    - **Regression failures** — questions the hub should answer from a settled fact but got wrong or could
      not answer. A correctness signal (possible stale or contradictory content).
    - **Never-exercised records** — active notes that no generated question ever needed. Retirement
-     candidates by disuse.
+     candidates by disuse. *(Dropped from the first cut — see "First cut" below.)*
    - **Unanswerable-now records** — notes whose question the hub can no longer answer (source moved,
      context lost). Retirement or reconstruction candidates.
 
@@ -85,6 +93,13 @@ prune signal — the difference between an examined hub and an unexamined one.
 ## First cut (smallest buildable version)
 
 Settled facts + `decisions/` only · template-generated questions · exact-match grading on the note's stated
-value · one report per hub, run on demand. Everything else is a later increment.
+value · one report per hub, run on demand. The first-cut report carries the **regression-failure** and
+**unanswerable-now** lists only: the never-exercised list is dropped from the first cut, because with
+template-generated questions every active record trivially receives a question that retrieves straight back
+to it, so "never exercised" carries no signal (confirmed empirically in the first pilot run, 2026-08-05).
+Reinstating it requires question sources independent of the records themselves — a later increment.
+Everything else is a later increment.
 
-*2026-08-05. Proposal spec; non-normative companion to STANDARD.md.*
+*2026-08-05. Proposal spec; non-normative companion to STANDARD.md. Revised 2026-08-12 from first-pilot
+evidence: row-level inclusion gating, internal-consistency scope statement, never-exercised list dropped
+from the first cut.*
