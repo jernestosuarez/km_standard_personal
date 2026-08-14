@@ -1,13 +1,17 @@
 ---
 type: brief
-title: Knowledge Management Standard: Hub Framework (v1.19)
+title: Knowledge Management Standard: Hub Framework (v1.20 DRAFT — awaiting owner push)
 description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, and an optional Agent Tier for named, discoverable agent instances.
 tags: [standard, knowledge-management, governance, okf, agents]
 resource: template/
 timestamp: 2026-08-06
 ---
 
-# Knowledge Management Standard: Hub Framework (v1.19)
+# Knowledge Management Standard: Hub Framework (v1.20 DRAFT — awaiting owner push)
+
+**DRAFT — awaiting owner push.** v1.20 (the owner queue) is drafted but unpublished; the last
+published version is **v1.19**, and every deployment pin continues to resolve against v1.19 until
+the owner pushes.
 
 **Status:** Active standard. Framework-agnostic, works with Claude, GPT, Gemini, or any other LLM agent, and equally well with no agent at all (plain human use).
 
@@ -2137,6 +2141,109 @@ because they are shared, curated artifacts; the Supervisor gets **auditability w
 A Supervisor that cannot show the history of its own registry is the least governed part of the estate
 at exactly the point of highest trust.
 
+#### The owner queue: one decision surface, tiered defaults, back-pressure, batched clearing (added in v1.20)
+
+> **DRAFT — awaiting owner push.** Drafted 2026-08-14; not yet part of any published version.
+
+Everything above governs what the estate **captures**: routing, identity, evidence, escalation.
+None of it governs what the owner can **consume**. An estate that runs unattended routines,
+sweeps, evaluation passes, hygiene runs, produces decisions faster than one human absorbs them,
+and each producer surfaces its asks on its own surface: a daily brief here, a state file there,
+ask files, escalation notes, pending proposals in every hub, live chat. This section was adopted
+after an estate reached roughly forty open items spread across eight such surfaces, nothing
+ranked, capped, or expiring, with a material evidence gap presenting identically to a routine
+watch-list verdict, and the owner reporting they could no longer tell what was pending or what
+needed them. The layers above design for capture and integrity; this one designs for **owner
+throughput**. No decision authority moves anywhere: the queue changes where decisions surface and
+how they age, never who makes them.
+
+**One surface.** `QUEUE.md`, at the Supervisor tier, is the owner's **only** decision surface.
+Every proposal batch, escalation, ask, and owner action registers there as one self-explanatory
+row, what it is, where it came from, why it is being asked, in a one-word-answerable form, and
+**nothing counts as "surfaced to the owner" without a queue row**. The rows live in a
+machine-parseable block (explicit begin/end markers; one delimited row per item: id, tier, date
+raised, default date, the ask) so the session-start scan can render and count them. The scan
+prints the queue **first**, and a session opens with at most five ranked rows; everything else
+waits below the fold.
+
+**Three tiers.**
+
+| Tier | Holds | Default behaviour |
+|---|---|---|
+| **A** | Money, identity, strategy, client- or external-facing artifacts, deletions, actions only the owner can take | Never defaults. Waits for the owner's word; surfaced live |
+| **B** | Recoverable and in scope: routine content proposals, pilot verdicts from evaluation routines | **Auto-applies its recommendation after a veto window (default: 7 days) unless the owner vetoes.** An external deadline may shorten the window, never lengthen it |
+| **C** | FYI | Never asks anything; folded into the queue's FYI section |
+
+Tier B flips the middle band from approve-to-act to **veto-to-stop**. A row past its default date
+is applied through the normal proposal/approval mechanics, with the approval file citing the
+elapsed veto window as its authority, so the audit trail records that the default ran, not that a
+review happened. A vetoed row is withdrawn in place, never deleted. **Anything touching identity,
+money, restricted content, deletions, or client-facing surfaces is never tier B**, whatever its
+origin: the time default exists for recoverable calls, and none of those are recoverable.
+
+**Back-pressure.** When open A + B rows exceed a cap (default: 10), every routine enters
+**decision-halt**: it keeps running and logging findings, but mints no new decision items, no
+adoption nominations, and no owner-facing asks, verdicts default to the watch list and findings
+queue in the routine's own logs, until the count drops below the cap. Decision production is
+throttled by decision consumption; the queue can shrink, never spiral. **The check runs at the
+start of a routine, not at publication.** A constraint that can invalidate a run's output must be
+evaluated before the run does the work: checked only at the moment of publication it turns a
+cheap no-op into an expensive retraction, and one estate's routine demonstrated exactly that by
+drafting, committing, and then reverting a proposal in a hub's history because it read the queue
+last. **Escalation classes are exempt.** Identity, restricted content, and cross-hub
+contradictions are the classes the estate exists to catch; suppressing them under back-pressure
+would trade the owner's attention for the estate's integrity. They always register, as tier A,
+where the queue ranks them first.
+
+**Batched clearing.** A clearing skill (reference name `/km-clear`) sweeps the queue in an owner
+Q&A: small batches of three or four questions per round, tier A first ranked by age and impact,
+each question zero-context self-explanatory with the recommended option marked and first, one
+decision per question, and a free-text answer always outranking the offered options, because an
+answer that corrects the question or says "already decided" is the real decision. Two rules carry
+the mechanism's value:
+
+- **Reconcile before asking.** Before any row older than the current session is surfaced, check
+  the decision log, the estate's derived registers, and the row's home hub for a ruling that
+  already answers or supersedes it. A row the record answers is closed with its source cited;
+  **the owner is never re-asked a decided thing.** Re-asking is the precise failure the queue
+  exists to end: spending the owner's attention on something the estate already knew.
+- **Answers execute in the same session.** Every answer becomes a committed artifact, a proposal,
+  a directive, an identity record, an archived escalation, before the run reports done; the queue
+  is then reranked and the sitting agenda refreshed. A cleared decision that produces no artifact
+  is not cleared, it is deferred with extra steps.
+
+Sessions offer a clearing run **in one line** whenever the scan shows the queue warrants it
+(several tier-A rows open, a tier-B default imminent, or decision-halt), instead of surfacing
+items one by one.
+
+**The weekly sitting.** Decisions batch into one short weekly owner sitting (on the order of
+thirty minutes), agenda kept at the bottom of the queue file, top of queue first. Drip is
+reserved for tier-A items that genuinely cannot wait, an external deadline inside the week.
+Standing review items get a **protected agenda slot**, so recurring walkthroughs stop losing to
+the urgent drip.
+
+**Routine output is machine-facing.** Briefs, state files, and logs are demoted to the
+machine/agent record: their ask sections point at the queue rows registered that run, never at a
+parallel ask list, and **the owner is never expected to read a routine's output to find a
+decision**. Each brief carries a read flag; a session triages every unread brief, verifying that
+each owner-facing item in it has a queue row, registering any that lack one, then marking it
+read. The brief remains the backstop for days no session runs, never a second surface.
+
+**Hub inboxes are queue inventory.** A file pending in any hub's `_inbox/` is decision work the
+owner cannot see from the estate tier. The Supervisor scan counts every hub's pending inbox
+entries, and each affected hub registers as a queue row, tier B, cleared by directing that hub's
+own intake under a committed directive, unless a pending file is itself decision-shaped, in which
+case it surfaces as tier A.
+
+**The owner's desk.** The owner's personal follow-ups, reports owed, calls promised, chases, are
+not estate decisions and never occupy decision rows. They live in the queue's own "owner's desk"
+section as dated nudges, and nowhere else.
+
+A single-hub deployment does not need this section, but the mechanism is not inherently
+estate-sized: the moment any deployment's routine output can out-produce its one human decider,
+the queue file, the tiers, and the back-pressure rule adopt without the rest of the Supervisor
+tier.
+
 #### Import package contract: packages from unconnected systems
 
 Sources sometimes arrive as packages an external agent generated against a system the estate has no
@@ -2379,6 +2486,7 @@ happened once (see the v1.9 row) and the ledger exists so it does not happen twi
 | v1.17 | 2026-08-05 | Session-start handover surfacing (Rule 3): `hub-scan.sh` prints a `[ HANDOVER ]` block ahead of every other section pointing the agent at `HANDOVER.md` unconditionally and echoing its title, and reports a missing `HANDOVER.md` as an error (the same rank as missing frontmatter); the `CLAUDE.md`/`AGENTS.md` pointer is promoted from a conditional advisory to an unconditional first read-first step. Reconstructing session state from the raw git log or a diff when a curated handover exists is an evidence-hierarchy inversion, the same shape as *check the hubs and the layer before the transcripts*. Derived from a supervisor-tier incident where a resumed session rebuilt state from git history and an uncommitted diff, missing named pre-send review points and an enumerated open-decision list, because the enforced entry point surfaced nothing and the only pointer was a conditional advisory. |
 | v1.18 | 2026-08-06 | Handover write side (Rule 3), the mirror of v1.17: a `Stop` gate (`handover-hooks.sh`, wired in `template/.claude/settings.json` against a `SessionStart` baseline) blocks once when a session landed commits that changed hub state but did not touch `HANDOVER.md`, instructing the model to refresh the current-state section via `/km-handover` and commit before stopping. Best-effort by construction, Stop fires per turn, not at a true session end, and `/clear` never fires it, so it guarantees one refresh per working session, not the final word; the read side and the hygiene pass remain the backstop. Substantive work is committed work (uncommitted files stay the `[INTEGRITY]` check's concern); the gate fires at most once per session and honours the runtime's already-blocking signal so it never re-enters itself. No session-end regeneration hook: a hub's only deterministic candidate, its generated entity indexes, are monitored files committed through the governed flow, so a detached rebuild would manufacture the uncommitted-monitored state Rule 3 catches. The hook path is portable through the runtime project-directory variable, so `km-init` installs it unmodified per hub. Ported from the proven supervisor-tier write-side hook. |
 | v1.19 | 2026-08-06 | The estate corrections registry is surfaced and bound at hub session start (Rule 3), closing for the corrections registry the gap v1.17 closed for the handover. A hub's agent-instruction files bound the evidence standard, the identity home of record, and the escalation protocol by reference, but not the estate `corrections/` registry, so `PROTOCOL.md`'s assertion that a supervisor-tier correction binds every tier had no operational surface at the hub's session-start entry point. `hub-scan.sh` now prints a `[ CORRECTIONS ]` block immediately after `[ HANDOVER ]`, conditional on the workspace root holding `_KM_Supervisor/`, pointing the agent at `../_KM_Supervisor/corrections/` and counting the `lifecycle: active` notes in force; a standalone hub prints nothing. `CLAUDE.md` and `AGENTS.md` declare the registry binding in the estate-binding section, inherited by reference and never copied down. The same change ports the estate-binding section into `AGENTS.md`, which previously carried none, so the binding is present on the non-Claude surface too. Single-hub deployments are unaffected. |
+| v1.20 | 2026-08-14 | **DRAFT — awaiting owner push.** The owner queue (Supervisor tier): one machine-parseable decision surface (`QUEUE.md`) that every proposal, escalation, and ask must register on to count as surfaced to the owner; three tiers (A never defaults; B auto-applies its recommendation after a veto window, with identity, money, restricted content, deletions, and client-facing surfaces never tier B; C never asks); routine decision-halt above a queue cap, checked at the **start** of a run and with escalation classes exempt; a batched Q&A clearing skill (`/km-clear`) bound by reconcile-before-ask; one weekly owner sitting with a protected walkthrough slot; routine briefs demoted to machine-facing with a session-triage read flag; hub inboxes counted as queue inventory. Adopted after an estate reached roughly 40 open items across 8 owner-facing surfaces, with routine decision production outrunning one owner's consumption and re-asks spending owner attention on already-decided items. |
 
 ---
 
