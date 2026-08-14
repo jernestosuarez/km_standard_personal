@@ -1,17 +1,17 @@
 ---
 type: brief
-title: Knowledge Management Standard: Hub Framework (v1.20 DRAFT — awaiting owner push)
+title: Knowledge Management Standard: Hub Framework (v1.21 DRAFT — awaiting owner push)
 description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, and an optional Agent Tier for named, discoverable agent instances.
 tags: [standard, knowledge-management, governance, okf, agents]
 resource: template/
 timestamp: 2026-08-06
 ---
 
-# Knowledge Management Standard: Hub Framework (v1.20 DRAFT — awaiting owner push)
+# Knowledge Management Standard: Hub Framework (v1.21 DRAFT — awaiting owner push)
 
-**DRAFT — awaiting owner push.** v1.20 (the owner queue) is drafted but unpublished; the last
-published version is **v1.19**, and every deployment pin continues to resolve against v1.19 until
-the owner pushes.
+**DRAFT — awaiting owner push.** v1.20 (the owner queue) and v1.21 (the `[ RESTRICTED ]`
+narrowing) are drafted but unpublished; the last published version is **v1.19**, and every
+deployment pin continues to resolve against v1.19 until the owner pushes.
 
 **Status:** Active standard. Framework-agnostic, works with Claude, GPT, Gemini, or any other LLM agent, and equally well with no agent at all (plain human use).
 
@@ -515,8 +515,10 @@ A relationship layer describes people. Classify it restricted by default, keep i
 and remember that "who works with whom" is inferable personnel data even when every individual edge is
 innocuous. Since v1.16 the boundary is checked, not just stated: mark a note with a line beginning
 `sensitivity: restricted` and the `[ RESTRICTED ]` check in `hub-scan.sh` fails the scan if that
-marker, or the marked note's name, reaches `shareable/`, a change notice, or a generated index (see
-"Validating the graph", below).
+marker, the name of a note marked restricted in frontmatter, or the verbatim text of a body-marked
+restricted section reaches `shareable/`, a change notice, or a generated index. A note restricted
+only in one body section stays nameable on those surfaces; its section text does not travel
+(narrowed in v1.21, see "Validating the graph", below).
 
 #### One assertion, one file
 
@@ -1297,23 +1299,34 @@ target when it fails. Unfilled template placeholders (`[[<name>]]`) are skipped.
 `decidedBy` is not a decision; it is a sentence. The check is a flat table of type → required fields
 and must be kept in sync with the `TEMPLATE.md` files.
 
-**`[ RESTRICTED ]`**, the sensitivity boundary, mechanically checked (added in v1.16). A note, or a
-section inside one, is marked restricted by a line beginning `sensitivity: restricted`, in
-frontmatter or in the body. The marker states a boundary rule: restricted content is never surfaced
-outside its bound, and until v1.16 nothing enforced that rule anywhere. The check scans the hub's
-outbound surfaces: `shareable/` (leaves the team by definition), the free text of `changes/`
-proposals and approvals excluding the two templates (notices travel to reviewers and other tiers),
-and the generated entity indexes (the hub's summary surface). Two findings, both errors: the marker
-itself on a surface means restricted content was copied there wholesale, and the name of a
-restricted-marked note on a surface, as a wiki-link or a bare word, discloses the existence and
-identity of the restricted record. `build-indexes.sh` excludes restricted notes from the indexes it
-writes, so an index hit is cleared by regenerating, never by hand-editing. A surface file the check
-could not read is reported and never counted as clean, and an unreadable note is reported as an
-identifier-coverage gap: the check does not pass by failing to read its evidence. This is an error,
-not an advisory, deliberately: unlike git history, an outbound file can be fixed before it ships,
-so the gate is clearable and stays on. Expect occasional false positives from a restricted note
-whose name is a common word; that is the fail-closed trade, and the remedy is renaming the note or
-adjudicating the hit, never weakening the check.
+**`[ RESTRICTED ]`**, the sensitivity boundary, mechanically checked (added in v1.16; narrowed in
+v1.21). A note, or a section inside one, is marked restricted by a line beginning
+`sensitivity: restricted`, in frontmatter or in the body. The marker states a boundary rule:
+restricted content is never surfaced outside its bound, and until v1.16 nothing enforced that rule
+anywhere. The check scans the hub's outbound surfaces: `shareable/` (leaves the team by
+definition), the free text of `changes/` proposals and approvals excluding the two templates
+(notices travel to reviewers and other tiers), and the generated entity indexes (the hub's summary
+surface). **Where the marker sits decides what is restricted** (narrowed in v1.21): a marker in
+*frontmatter* restricts the whole note, its name included; a marker in the *body* restricts the
+section it opens, that section's verbatim text, not the note's name. Three findings, all errors:
+the marker itself on a surface means restricted content was copied there wholesale; the name of a
+frontmatter-restricted note on a surface, as a wiki-link or a bare word, discloses the existence
+and identity of a record that is restricted in its entirety; and a verbatim line of a
+body-restricted section on a surface means the bounded text itself travelled. Before the
+narrowing, one restricted section anywhere in a file made the file's name an error on every
+outbound surface, which made such files structurally un-nameable as proposal targets: the governed
+route to changing the file was blocked by the check that was meant to protect it. The narrowing is
+a stated trade, and the limits are the check's own: a body-marked note's existence and name become
+disclosable, and verbatim-line matching does not catch paraphrase or very short lines, so **a note
+whose name or existence is itself sensitive must carry the marker in frontmatter**, where the name
+block still covers it. `build-indexes.sh` excludes restricted-marked notes, either form, from the
+indexes it writes, so an index hit is cleared by regenerating, never by hand-editing. A surface
+file the check could not read is reported and never counted as clean, and an unreadable note is
+reported as an identifier-coverage gap: the check does not pass by failing to read its evidence.
+This is an error, not an advisory, deliberately: unlike git history, an outbound file can be fixed
+before it ships, so the gate is clearable and stays on. Expect occasional false positives from a
+restricted note whose name is a common word; that is the fail-closed trade, and the remedy is
+renaming the note or adjudicating the hit, never weakening the check.
 
 **Deliberately not SHACL.** Full shape-constraint machinery is rung-3 formalism, and the standard's
 rule is: don't climb higher than you need. A required-field check catches the defects that actually
@@ -2487,6 +2500,7 @@ happened once (see the v1.9 row) and the ledger exists so it does not happen twi
 | v1.18 | 2026-08-06 | Handover write side (Rule 3), the mirror of v1.17: a `Stop` gate (`handover-hooks.sh`, wired in `template/.claude/settings.json` against a `SessionStart` baseline) blocks once when a session landed commits that changed hub state but did not touch `HANDOVER.md`, instructing the model to refresh the current-state section via `/km-handover` and commit before stopping. Best-effort by construction, Stop fires per turn, not at a true session end, and `/clear` never fires it, so it guarantees one refresh per working session, not the final word; the read side and the hygiene pass remain the backstop. Substantive work is committed work (uncommitted files stay the `[INTEGRITY]` check's concern); the gate fires at most once per session and honours the runtime's already-blocking signal so it never re-enters itself. No session-end regeneration hook: a hub's only deterministic candidate, its generated entity indexes, are monitored files committed through the governed flow, so a detached rebuild would manufacture the uncommitted-monitored state Rule 3 catches. The hook path is portable through the runtime project-directory variable, so `km-init` installs it unmodified per hub. Ported from the proven supervisor-tier write-side hook. |
 | v1.19 | 2026-08-06 | The estate corrections registry is surfaced and bound at hub session start (Rule 3), closing for the corrections registry the gap v1.17 closed for the handover. A hub's agent-instruction files bound the evidence standard, the identity home of record, and the escalation protocol by reference, but not the estate `corrections/` registry, so `PROTOCOL.md`'s assertion that a supervisor-tier correction binds every tier had no operational surface at the hub's session-start entry point. `hub-scan.sh` now prints a `[ CORRECTIONS ]` block immediately after `[ HANDOVER ]`, conditional on the workspace root holding `_KM_Supervisor/`, pointing the agent at `../_KM_Supervisor/corrections/` and counting the `lifecycle: active` notes in force; a standalone hub prints nothing. `CLAUDE.md` and `AGENTS.md` declare the registry binding in the estate-binding section, inherited by reference and never copied down. The same change ports the estate-binding section into `AGENTS.md`, which previously carried none, so the binding is present on the non-Claude surface too. Single-hub deployments are unaffected. |
 | v1.20 | 2026-08-14 | **DRAFT — awaiting owner push.** The owner queue (Supervisor tier): one machine-parseable decision surface (`QUEUE.md`) that every proposal, escalation, and ask must register on to count as surfaced to the owner; three tiers (A never defaults; B auto-applies its recommendation after a veto window, with identity, money, restricted content, deletions, and client-facing surfaces never tier B; C never asks); routine decision-halt above a queue cap, checked at the **start** of a run and with escalation classes exempt; a batched Q&A clearing skill (`/km-clear`) bound by reconcile-before-ask; one weekly owner sitting with a protected walkthrough slot; routine briefs demoted to machine-facing with a session-triage read flag; hub inboxes counted as queue inventory. Adopted after an estate reached roughly 40 open items across 8 owner-facing surfaces, with routine decision production outrunning one owner's consumption and re-asks spending owner attention on already-decided items. |
+| v1.21 | 2026-08-14 | **DRAFT — awaiting owner push.** The `[ RESTRICTED ]` name block is narrowed to what the marker actually restricts. Since v1.16, a `sensitivity: restricted` line anywhere in a note made the note's NAME an error on every outbound surface, so a file with one restricted section could never be named as a proposal target: the governed route to changing such a file was blocked by the check meant to protect it. Now a marker in frontmatter still restricts the whole note, name included; a marker in the body restricts the section it opens, whose verbatim text (lines of at least 16 characters, up to the next heading at the same or a higher level) is blocked on outbound surfaces while the note's name and path stay nameable. Stated trade-offs: a body-marked note's existence and name become disclosable, and verbatim-line matching does not catch paraphrase or very short lines, so a note whose name or existence is itself sensitive must be marked in frontmatter. `build-indexes.sh` continues to exclude both forms from generated indexes. `tests/test_restricted_lint.sh` proves both sides of the narrowing and that the frontmatter name block still fires. Derived from an estate incident (owner-adjudicated "fix", 2026-08-14) in which a hub file with one restricted section became structurally un-nameable in `changes/` proposals. |
 
 ---
 

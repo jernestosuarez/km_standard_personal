@@ -471,19 +471,32 @@ fi
 echo
 
 echo "[ RESTRICTED ]"
-# The sensitivity boundary, mechanically checked (v1.16). A note, or a section inside one, is
-# marked restricted by a line beginning `sensitivity: restricted`. The rule the marker states is
-# a boundary rule: restricted content is never surfaced outside its bound. This check enforces it
-# on the hub's outbound surfaces:
+# The sensitivity boundary, mechanically checked (v1.16; narrowed in v1.21). A note, or a
+# section inside one, is marked restricted by a line beginning `sensitivity: restricted`. The
+# rule the marker states is a boundary rule: restricted content is never surfaced outside its
+# bound. This check enforces it on the hub's outbound surfaces:
 #   shareable/            leaves the team by definition
 #   changes/ free text    proposals and approvals travel to reviewers and other tiers
 #   generated indexes     the hub's summary surface; build-indexes.sh excludes restricted notes,
 #                         so a hit here clears by regenerating, never by hand-editing
-# Two findings, both ERRORS: the marker itself on a surface (restricted content copied there
-# wholesale), and the name of a restricted-marked note on a surface, as a wiki-link or a bare
-# word (disclosing the existence and identity of the restricted record). Errors, not advisories,
-# deliberately: unlike history, an outbound file can be fixed before it ships, so this gate is
-# clearable and stays on.
+# WHERE the marker sits decides WHAT is restricted (narrowed in v1.21):
+#   frontmatter marker    the whole note is restricted, name included — the note's name on a
+#                         surface discloses the existence and identity of the restricted record
+#   body marker           the SECTION the marker opens is restricted — the section's verbatim
+#                         text is blocked on surfaces, but the note's name/path stays nameable,
+#                         so the note can still be the target of a governed proposal. (Before
+#                         v1.21 one restricted section made the whole file's name an error on
+#                         every outbound surface, so the governed route to changing such a file
+#                         was itself blocked.)
+# Three findings, all ERRORS: the marker itself on a surface (restricted content copied there
+# wholesale), the name of a frontmatter-restricted note on a surface, as a wiki-link or a bare
+# word (disclosing the existence and identity of the restricted record), and a verbatim line of
+# a body-restricted section on a surface. Errors, not advisories, deliberately: unlike history,
+# an outbound file can be fixed before it ships, so this gate is clearable and stays on.
+# Stated limits of the narrowing: section text is matched as verbatim lines of at least 16
+# characters, so paraphrase and very short lines escape, and a body-marked note's existence and
+# name are disclosable by design. A note whose name or existence is itself sensitive must carry
+# the marker in FRONTMATTER; the name block then covers it.
 # Readability: shareable/ and changes/ are not in the [ READABILITY ] probe set, so this check
 # probes what it reads itself. A surface it could not read is reported and never counted as
 # clean, and an unreadable note is reported as an identifier-coverage gap. A check must not pass
@@ -492,8 +505,11 @@ restricted_marker='^sensitivity:[[:space:]]*restricted([^A-Za-z0-9-]|$)'
 restricted_errors=0
 restricted_surface_unreadable=0
 
-# Pass 1: collect the identifiers (note names) of restricted-marked notes. Everything in the hub
-# except the surfaces themselves, the inbox (arriving, not yet asserted), templates and indexes.
+# Pass 1: walk every note in the hub except the surfaces themselves, the inbox (arriving, not
+# yet asserted), templates and indexes. Emit, tab-separated (narrowed in v1.21):
+#   I <note-name>          frontmatter-restricted note: its NAME is blocked on surfaces
+#   C <note-name> <line>   verbatim content line of a body-restricted section: TEXT is blocked
+#   U <path>               unreadable: identifier/section coverage gap
 restricted_id_scan=$(
   find "$HUB" -name '*.md' -type f \
       -not -path '*/.git/*' \
@@ -508,11 +524,38 @@ restricted_id_scan=$(
       if [ "$sz" -gt 0 ] && [ "$got" -eq 0 ]; then
         printf 'U\t%s\n' "${f#$HUB/}"
       elif grep -I -Eq "$restricted_marker" "$f" 2>/dev/null; then
-        printf 'I\t%s\n' "$(basename "$f" .md)"
+        # Classify the marker's position: frontmatter restricts the whole note (I record);
+        # a body marker restricts the section it opens, up to the next heading at the same or
+        # a higher level (C records, one per non-trivial verbatim line). A marker before any
+        # heading restricts the rest of the body. Binary files were already excluded by grep -I.
+        awk -v stem="$(basename "$f" .md)" -v mrk="$restricted_marker" '
+          NR==1 && $0=="---" { infm=1; next }
+          infm {
+            if ($0=="---") infm=0
+            else if ($0 ~ mrk) print "I\t" stem
+            next
+          }
+          {
+            if ($0 ~ /^#+[ \t]/) {
+              n=0; while (substr($0, n+1, 1)=="#") n++
+              # A heading at or above the restricted section own level closes the span; a
+              # deeper heading is part of the section and is treated as its content.
+              if (span && n <= base) span=0
+              cur=n
+            }
+            if ($0 ~ mrk) { if (!span) { span=1; base=cur }; next }
+            if (span) {
+              line=$0
+              gsub(/^[ \t]+|[ \t]+$/, "", line)
+              if (length(line) >= 16) print "C\t" stem "\t" line
+            }
+          }
+        ' "$f" 2>/dev/null
       fi
     done
 )
 restricted_ids=$(printf '%s\n' "$restricted_id_scan" | awk -F'\t' '$1=="I"{print $2}' | sort -u)
+restricted_section_lines=$(printf '%s\n' "$restricted_id_scan" | awk -F'\t' '$1=="C"' | sort -u)
 restricted_ids_unreadable=$(printf '%s\n' "$restricted_id_scan" | awk -F'\t' '$1=="U"{print $2}')
 
 # Pass 2: scan the outbound surfaces.
@@ -544,10 +587,23 @@ while IFS= read -r f; do
       restricted_errors=$((restricted_errors + 1))
     fi
   done <<< "$restricted_ids"
+  # Body-restricted sections: their verbatim text must not reach a surface, even though the
+  # containing note's name may (narrowed in v1.21).
+  while IFS= read -r crec; do
+    [ -z "$crec" ] && continue
+    cstem=$(printf '%s\n' "$crec" | cut -f2)
+    ctext=$(printf '%s\n' "$crec" | cut -f3-)
+    [ -z "$ctext" ] && continue
+    if grep -I -qF -- "$ctext" "$f" 2>/dev/null; then
+      echo "  ! RESTRICTED SECTION TEXT (from '$cstem') on outbound surface: ${f#$HUB/}"
+      restricted_errors=$((restricted_errors + 1))
+    fi
+  done <<< "$restricted_section_lines"
 done <<< "$restricted_surfaces"
 if [ -n "$restricted_ids_unreadable" ]; then
   echo "  ! Identifier coverage incomplete: note(s) below could not be read, so the set of"
-  echo "    restricted note names checked against the surfaces may be missing entries:"
+  echo "    restricted note names and section text checked against the surfaces may be missing"
+  echo "    entries:"
   printf '%s\n' "$restricted_ids_unreadable" | sed 's/^/    - /'
   adv
 fi
@@ -556,7 +612,7 @@ if [ "$restricted_errors" -gt 0 ]; then
 elif [ "$restricted_surface_unreadable" -gt 0 ] || [ -n "$restricted_ids_unreadable" ]; then
   echo "  No restricted content found on the surfaces that could be read (coverage incomplete)"
 else
-  echo "  OK: no restricted markers or identifiers on outbound surfaces"
+  echo "  OK: no restricted markers, identifiers or section text on outbound surfaces"
 fi
 echo
 

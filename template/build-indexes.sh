@@ -16,9 +16,11 @@
 #
 # Notes marked restricted, a line beginning `sensitivity: restricted` anywhere in the note, are
 # also excluded (v1.16). A generated index is a summary surface, and restricted content is never
-# surfaced in summaries; the [ RESTRICTED ] check in hub-scan.sh fails the scan if a restricted
-# note's name reaches an index, and this exclusion is what makes that hit clearable by
-# regeneration. The note stays on disk and in git, inside its own bound.
+# surfaced in summaries; the [ RESTRICTED ] check in hub-scan.sh fails the scan if a
+# frontmatter-restricted note's name, or a restricted section's verbatim text, reaches an index,
+# and this exclusion is what makes such a hit clearable by regeneration. Body-marked notes stay
+# excluded here too, deliberately conservative (v1.21): an index row carries content, title,
+# status, owner, not just the name. The note stays on disk and in git, inside its own bound.
 
 HUB="$(cd "$(dirname "$0")" && pwd)"
 ENTITY_DIRS="decisions risks stakeholders milestones partners relationships corrections"
