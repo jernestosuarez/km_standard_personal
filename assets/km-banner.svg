@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 400" width="2560" height="800" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#152B42"/>
+      <stop offset="1" stop-color="#0F2233"/>
+    </linearGradient>
+    <linearGradient id="hubglow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1B4A57"/>
+      <stop offset="1" stop-color="#143844"/>
+    </linearGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="1280" height="400" fill="url(#bg)"/>
+  <!-- faint dot grid, right side texture -->
+  <g fill="#22405C">
+    <circle cx="700" cy="60" r="2"/><circle cx="760" cy="40" r="2"/><circle cx="840" cy="70" r="2"/>
+    <circle cx="920" cy="45" r="2"/><circle cx="1000" cy="65" r="2"/><circle cx="1080" cy="40" r="2"/>
+    <circle cx="1160" cy="60" r="2"/><circle cx="1220" cy="90" r="2"/><circle cx="680" cy="350" r="2"/>
+    <circle cx="1240" cy="330" r="2"/><circle cx="660" cy="180" r="2"/><circle cx="1250" cy="200" r="2"/>
+  </g>
+
+  <!-- ============ LEFT: wordmark ============ -->
+  <text x="80" y="112" font-size="17" font-weight="bold" letter-spacing="5" fill="#4FD1C5">OPEN STANDARD · V1.22</text>
+  <text x="78" y="182" font-size="72" font-weight="bold" fill="#F2F6F9">KM Standard</text>
+  <text x="80" y="226" font-size="23" fill="#A8BDD1">Governed, agent-readable knowledge in plain files.</text>
+
+  <!-- feature tokens -->
+  <g font-size="16" fill="#8FA9C0">
+    <rect x="80" y="258" width="118" height="34" rx="17" fill="none" stroke="#2C4A66" stroke-width="1.5"/>
+    <text x="102" y="280">git-native</text>
+    <rect x="212" y="258" width="176" height="34" rx="17" fill="none" stroke="#2C4A66" stroke-width="1.5"/>
+    <text x="234" y="280">evidence-governed</text>
+    <rect x="402" y="258" width="150" height="34" rx="17" fill="none" stroke="#2C4A66" stroke-width="1.5"/>
+    <text x="424" y="280">owner-ruled</text>
+  </g>
+
+  <!-- the v1.22 motif line -->
+  <text x="80" y="337" font-size="19" font-style="italic" fill="#E8B34B">“Claims cross; records don’t.”</text>
+
+  <!-- ============ RIGHT: the stack motif ============ -->
+  <!-- supervisor -->
+  <g>
+    <rect x="928" y="52" width="44" height="44" rx="8" transform="rotate(45 950 74)" fill="#3A2530" stroke="#D9846B" stroke-width="2.5"/>
+    <text x="990" y="80" font-size="15" fill="#93A8BC">supervisor</text>
+  </g>
+  <!-- links supervisor->hubs -->
+  <g stroke="#37536F" stroke-width="1.8">
+    <line x1="950" y1="106" x2="810" y2="152"/>
+    <line x1="950" y1="106" x2="950" y2="152"/>
+    <line x1="950" y1="106" x2="1090" y2="152"/>
+  </g>
+
+  <!-- hubs row -->
+  <g>
+    <rect x="748" y="152" width="124" height="70" rx="12" fill="url(#hubglow)" stroke="#4FD1C5" stroke-width="2.5"/>
+    <rect x="888" y="152" width="124" height="70" rx="12" fill="url(#hubglow)" stroke="#4FD1C5" stroke-width="2.5"/>
+    <rect x="1028" y="152" width="124" height="70" rx="12" fill="url(#hubglow)" stroke="#4FD1C5" stroke-width="2.5"/>
+    <!-- tiny entity dots + link lines inside each hub -->
+    <g fill="#4FD1C5">
+      <circle cx="778" cy="180" r="4"/><circle cx="812" cy="196" r="4"/><circle cx="842" cy="174" r="4"/>
+      <circle cx="918" cy="180" r="4"/><circle cx="952" cy="196" r="4"/><circle cx="982" cy="174" r="4"/>
+      <circle cx="1058" cy="180" r="4"/><circle cx="1092" cy="196" r="4"/><circle cx="1122" cy="174" r="4"/>
+    </g>
+    <g stroke="#2E6B72" stroke-width="1.4">
+      <line x1="778" y1="180" x2="812" y2="196"/><line x1="812" y1="196" x2="842" y2="174"/>
+      <line x1="918" y1="180" x2="952" y2="196"/><line x1="952" y1="196" x2="982" y2="174"/>
+      <line x1="1058" y1="180" x2="1092" y2="196"/><line x1="1092" y1="196" x2="1122" y2="174"/>
+    </g>
+    <text x="1152" y="245" font-size="15" fill="#93A8BC" text-anchor="end">knowledge hubs</text>
+  </g>
+
+  <!-- gateway band -->
+  <g>
+    <line x1="700" y1="285" x2="1200" y2="285" stroke="#E8B34B" stroke-width="3"/>
+    <line x1="700" y1="291" x2="1200" y2="291" stroke="#E8B34B" stroke-width="1" opacity="0.45"/>
+    <text x="700" y="273" font-size="15" fill="#E8B34B">gateway</text>
+    <text x="1200" y="273" font-size="15" fill="#E8B34B" text-anchor="end">classify · extract · resolve</text>
+  </g>
+  <!-- crossing arrows: claims up (solid), records blocked (stub) -->
+  <g stroke="#4FD1C5" stroke-width="2.2" fill="none">
+    <line x1="810" y1="318" x2="810" y2="238"/>
+    <path d="M804 246 L810 234 L816 246" fill="#4FD1C5" stroke="none"/>
+    <line x1="950" y1="318" x2="950" y2="238"/>
+    <path d="M944 246 L950 234 L956 246" fill="#4FD1C5" stroke="none"/>
+  </g>
+  <g stroke="#5E7285" stroke-width="2.2">
+    <line x1="1090" y1="318" x2="1090" y2="300"/>
+    <line x1="1078" y1="298" x2="1102" y2="298" stroke-width="3.5"/>
+  </g>
+
+  <!-- systems of record: three cylinders -->
+  <g>
+    <g fill="#1B3450" stroke="#5E7285" stroke-width="2">
+      <path d="M770 330 a40 11 0 0 1 80 0 v28 a40 11 0 0 1 -80 0 z"/>
+      <ellipse cx="810" cy="330" rx="40" ry="11"/>
+      <path d="M910 330 a40 11 0 0 1 80 0 v28 a40 11 0 0 1 -80 0 z"/>
+      <ellipse cx="950" cy="330" rx="40" ry="11"/>
+      <path d="M1050 330 a40 11 0 0 1 80 0 v28 a40 11 0 0 1 -80 0 z"/>
+      <ellipse cx="1090" cy="330" rx="40" ry="11"/>
+    </g>
+    <text x="770" y="392" font-size="15" fill="#7A90A6">systems of record — the records stay</text>
+  </g>
+</svg>

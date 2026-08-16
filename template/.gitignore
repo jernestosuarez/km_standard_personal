@@ -13,3 +13,8 @@ Thumbs.db
 *.tmp
 *.crdownload
 *.partial
+
+# The scratch plane (STANDARD.md → Rule 6 → "Three planes"): a declared, wipeable workspace for
+# temporarily materialized records (batch processing), with a stated lifetime. Git never holds
+# it, so erasure is honored by construction. Wipe it when the batch completes.
+_scratch/

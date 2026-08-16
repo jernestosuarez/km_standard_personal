@@ -6,9 +6,11 @@ tags: [standard, knowledge-management, governance, okf]
 timestamp: 2026-07-02
 ---
 
+<p align="center"><img src="assets/km-banner.png" alt="KM Standard — governed, agent-readable knowledge in plain files" width="100%"/></p>
+
 # Knowledge Management Standard
 
-**Current version: v1.19** (2026-08-06). The full ledger of released versions, and the rule that a
+**Current version: v1.22** (2026-08-16). The full ledger of released versions, and the rule that a
 published version number is never reused, is in [`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.
 
@@ -21,7 +23,8 @@ tied to any specific company, industry, or AI vendor.
 | Path | What it is |
 |---|---|
 | [`STANDARD.md`](STANDARD.md) | The full standard — architecture, governance rules, frontmatter spec, ontology layer, checklists. Read this first. |
-| [`template/`](template/) | A ready-to-copy reference hub: stub docs, `context.jsonld`, `km-deployment.md`, entity-note folders (`decisions/`, `risks/`, `stakeholders/`, `milestones/`, `partners/`), governance files, and the per-hub agent skills (`km-intake`, `km-propose`, `km-gather`, `km-start`, `km-handover`, `km-brief`) already wired up for Claude Code and AGENTS.md-compatible tools. |
+| [`template/`](template/) | A ready-to-copy reference hub: stub docs, `context.jsonld`, `km-deployment.md`, entity-note folders (`decisions/`, `risks/`, `stakeholders/`, `milestones/`, `partners/`, `corrections/`, plus the optional `relationships/`, `claims/`, and `sources/systems/`), governance files, and the per-hub agent skills (`km-intake`, `km-propose`, `km-gather`, `km-start`, `km-handover`, `km-brief`) already wired up for Claude Code and AGENTS.md-compatible tools. |
+| [`rfcs/`](rfcs/RFC-001-sor-gateway.md) | Design RFCs. RFC-001 — the record boundary / systems-of-record gateway (published as v1.22, 2026-08-16): motivation, migration, implementation notes, and open questions for Rule 6, `accessClass`, `SourceSystem`, `Claim`, bitemporal validity, and inbound connectors. RFC-002 — stations, compartments, and the resolution plane (drafted as v1.23, awaiting owner push), with per-ruling provenance tags. |
 | [`contracts/organization-profile.schema.json`](contracts/organization-profile.schema.json) | Portable JSON contract for an approved Enterprise Knowledge Layer organization profile. |
 | [`scripts/validate_organization_profile.py`](scripts/validate_organization_profile.py) | Dependency-free validator for profile shape, compatibility, safe paths, and module eligibility. |
 | [`skills/km-init/`](skills/km-init/SKILL.md) | Workspace-level skill: stands up a brand-new hub from `template/`. |

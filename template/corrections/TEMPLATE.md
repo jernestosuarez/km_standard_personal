@@ -6,6 +6,8 @@ date: <YYYY-MM-DD>
 trigger: rejected-proposal | dispute | owner-correction | agent-error
 rule: <the standing rule this produces — the durable part; write it as an instruction>
 supersedes: "[[<entity note this overrides, if any>]]"
+# accessClass: internal   # optional (Rule 6): public | internal | restricted | record — absent means
+#                         # internal; anything derived from restricted material inherits restricted
 lifecycle: active | superseded | retired
 tags: [correction]
 resource: <where the correction came from — proposal slug, dispute file, or session>

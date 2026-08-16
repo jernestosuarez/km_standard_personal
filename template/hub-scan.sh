@@ -8,7 +8,7 @@
 HUB="$(cd "$(dirname "$0")" && pwd)"
 
 # Entity folders that hold one note per instance. Keep in sync with STANDARD.md.
-ENTITY_DIRS="decisions risks stakeholders milestones partners relationships corrections"
+ENTITY_DIRS="decisions risks stakeholders milestones partners relationships corrections claims"
 
 # Staleness threshold in days. Override per hub in 07_glossary.md and change here to match.
 STALE_DAYS=${STALE_DAYS:-90}
@@ -100,6 +100,9 @@ else
       ':(exclude)sources' ':(exclude).claude'
     git -C "$HUB" status --porcelain -- \
       sources.config.md sources/transcript-index.md sources/publication-log.md sources/dates-register.md
+    # SourceSystem notes (Rule 6) are governed content inside the otherwise-unmonitored sources/,
+    # like the named registers above. The pathspec matches nothing in a hub without the folder.
+    [ -d "$HUB/sources/systems" ] && git -C "$HUB" status --porcelain -- sources/systems
   )
   if [ -z "$changes" ]; then
     echo "  OK — committed monitored state is clean"
@@ -114,7 +117,7 @@ echo
 # Build the monitored document list once — reused by FRONTMATTER, FRESHNESS, LINKS and SHAPE.
 monitored_docs=$(
   find "$HUB" -maxdepth 1 -name '*.md' -type f 2>/dev/null
-  for dir in sources reconciliation $ENTITY_DIRS; do
+  for dir in sources sources/systems reconciliation $ENTITY_DIRS; do
     find "$HUB/$dir" -maxdepth 1 -name '*.md' -type f 2>/dev/null
   done
 )
@@ -262,6 +265,26 @@ else
     echo "  ! canonical-standard-source must be non-empty"
     deployment_errors=$((deployment_errors + 1))
   fi
+
+  # Hub species (Rule 6, v1.23): optional axes. Absent means station: domain and
+  # exposure: compartment, so a hub that never declares them scans exactly as before;
+  # a declared value outside the enum is a defect, the same rank as a bad deployment-state.
+  station=$(fm_field "$deployment_file" "station")
+  exposure=$(fm_field "$deployment_file" "exposure")
+  case "$station" in
+    ""|org-core|domain|engagement|publication) : ;;
+    *)
+      echo "  ! station must be org-core, domain, engagement or publication (absent = domain)"
+      deployment_errors=$((deployment_errors + 1))
+      ;;
+  esac
+  case "$exposure" in
+    ""|never-public|compartment|counterparty|public) : ;;
+    *)
+      echo "  ! exposure must be never-public, compartment, counterparty or public (absent = compartment)"
+      deployment_errors=$((deployment_errors + 1))
+      ;;
+  esac
 
   case "$deployment_state" in
     canonical)
@@ -412,6 +435,8 @@ while IFS= read -r f; do
     Partner)               check_shape "$f" Partner "title status"; shape_checked=$((shape_checked+1)) ;;
     Correction)            check_shape "$f" Correction "title correctedBy date trigger rule lifecycle"; shape_checked=$((shape_checked+1)) ;;
     RelationshipAssertion) check_shape "$f" RelationshipAssertion "subject predicate object confidence assertion_method observed_at"; shape_checked=$((shape_checked+1)) ;;
+    SourceSystem)          check_shape "$f" SourceSystem "title systemKind uriScheme connector defaultAccessClass refreshPolicy owner"; shape_checked=$((shape_checked+1)) ;;
+    Claim)                 check_shape "$f" Claim "title owner evidencedBy assertion_method recordedAt"; shape_checked=$((shape_checked+1)) ;;
   esac
 done <<< "$readable_docs"
 if [ "$shape_checked" -eq 0 ]; then
@@ -471,29 +496,58 @@ fi
 echo
 
 echo "[ RESTRICTED ]"
-# The sensitivity boundary, mechanically checked (v1.16). A note, or a section inside one, is
-# marked restricted by a line beginning `sensitivity: restricted`. The rule the marker states is
-# a boundary rule: restricted content is never surfaced outside its bound. This check enforces it
-# on the hub's outbound surfaces:
+# The sensitivity boundary, mechanically checked (v1.16; narrowed in v1.21). A note, or a
+# section inside one, is marked restricted by a line beginning `sensitivity: restricted`. The
+# rule the marker states is a boundary rule: restricted content is never surfaced outside its
+# bound. This check enforces it on the hub's outbound surfaces:
 #   shareable/            leaves the team by definition
 #   changes/ free text    proposals and approvals travel to reviewers and other tiers
 #   generated indexes     the hub's summary surface; build-indexes.sh excludes restricted notes,
 #                         so a hit here clears by regenerating, never by hand-editing
-# Two findings, both ERRORS: the marker itself on a surface (restricted content copied there
-# wholesale), and the name of a restricted-marked note on a surface, as a wiki-link or a bare
-# word (disclosing the existence and identity of the restricted record). Errors, not advisories,
-# deliberately: unlike history, an outbound file can be fixed before it ships, so this gate is
-# clearable and stays on.
+# WHERE the marker sits decides WHAT is restricted (narrowed in v1.21):
+#   frontmatter marker    the whole note is restricted, name included — the note's name on a
+#                         surface discloses the existence and identity of the restricted record
+#   body marker           the SECTION the marker opens is restricted — the section's verbatim
+#                         text is blocked on surfaces, but the note's name/path stays nameable,
+#                         so the note can still be the target of a governed proposal. (Before
+#                         v1.21 one restricted section made the whole file's name an error on
+#                         every outbound surface, so the governed route to changing such a file
+#                         was itself blocked.)
+# Three findings, all ERRORS: the marker itself on a surface (restricted content copied there
+# wholesale), the name of a frontmatter-restricted note on a surface, as a wiki-link or a bare
+# word (disclosing the existence and identity of the restricted record), and a verbatim line of
+# a body-restricted section on a surface. Errors, not advisories, deliberately: unlike history,
+# an outbound file can be fixed before it ships, so this gate is clearable and stays on.
+# Stated limits of the narrowing: section text is matched as verbatim lines of at least 16
+# characters, so paraphrase and very short lines escape, and a body-marked note's existence and
+# name are disclosable by design. A note whose name or existence is itself sensitive must carry
+# the marker in FRONTMATTER; the name block then covers it.
 # Readability: shareable/ and changes/ are not in the [ READABILITY ] probe set, so this check
 # probes what it reads itself. A surface it could not read is reported and never counted as
 # clean, and an unreadable note is reported as an identifier-coverage gap. A check must not pass
 # because it failed to read its evidence.
+# Classification-aware since v1.22 (Rule 6): a note whose FRONTMATTER carries
+# `accessClass: restricted` or `accessClass: record` is restricted CONTENT with a nameable NAME —
+# existence crosses; contents don't (crossing law 3). Its whole body is treated like a
+# body-restricted section: verbatim text blocked on outbound surfaces, name and path still
+# nameable, so a record-class catalogue entry can be pointed at without being reproduced.
+# Verbatim matching is the declassification rule by construction: an aggregate is not a verbatim
+# line of any restricted note, so it passes; an extracted line is, so it does not ("aggregation
+# declassifies; extraction does not"). A note whose name or existence is itself sensitive still
+# uses the `sensitivity: restricted` FRONTMATTER marker, which blocks the name as well. The class
+# line itself on a surface means a classed note's frontmatter was copied there wholesale — an
+# error, same as the marker.
 restricted_marker='^sensitivity:[[:space:]]*restricted([^A-Za-z0-9-]|$)'
+restricted_class='^accessClass:[[:space:]]*(restricted|record)([^A-Za-z0-9-]|$)'
 restricted_errors=0
 restricted_surface_unreadable=0
 
-# Pass 1: collect the identifiers (note names) of restricted-marked notes. Everything in the hub
-# except the surfaces themselves, the inbox (arriving, not yet asserted), templates and indexes.
+# Pass 1: walk every note in the hub except the surfaces themselves, the inbox (arriving, not
+# yet asserted), templates and indexes. Emit, tab-separated (narrowed in v1.21; classes v1.22):
+#   I <note-name>          frontmatter-restricted note: its NAME is blocked on surfaces
+#   C <note-name> <line>   verbatim content line of a body-restricted section, or any body line
+#                          of a note classed restricted/record in frontmatter: TEXT is blocked
+#   U <path>               unreadable: identifier/section coverage gap
 restricted_id_scan=$(
   find "$HUB" -name '*.md' -type f \
       -not -path '*/.git/*' \
@@ -507,12 +561,44 @@ restricted_id_scan=$(
       got=$(head -c 1 "$f" 2>/dev/null | wc -c | tr -d ' '); got=${got:-0}
       if [ "$sz" -gt 0 ] && [ "$got" -eq 0 ]; then
         printf 'U\t%s\n' "${f#$HUB/}"
-      elif grep -I -Eq "$restricted_marker" "$f" 2>/dev/null; then
-        printf 'I\t%s\n' "$(basename "$f" .md)"
+      elif grep -I -Eq "$restricted_marker" "$f" 2>/dev/null \
+        || grep -I -Eq "$restricted_class" "$f" 2>/dev/null; then
+        # Classify the marker's position: frontmatter restricts the whole note (I record);
+        # a body marker restricts the section it opens, up to the next heading at the same or
+        # a higher level (C records, one per non-trivial verbatim line). A marker before any
+        # heading restricts the rest of the body. An accessClass of restricted/record counts
+        # only in FRONTMATTER (it is an OKF field, not a marker) and restricts the whole BODY
+        # as C records while leaving the name nameable — existence crosses; contents don't
+        # (v1.22). Binary files were already excluded by grep -I.
+        awk -v stem="$(basename "$f" .md)" -v mrk="$restricted_marker" -v cls="$restricted_class" '
+          NR==1 && $0=="---" { infm=1; next }
+          infm {
+            if ($0=="---") infm=0
+            else if ($0 ~ mrk) print "I\t" stem
+            else if ($0 ~ cls) classed=1
+            next
+          }
+          {
+            if ($0 ~ /^#+[ \t]/) {
+              n=0; while (substr($0, n+1, 1)=="#") n++
+              # A heading at or above the restricted section own level closes the span; a
+              # deeper heading is part of the section and is treated as its content.
+              if (span && n <= base) span=0
+              cur=n
+            }
+            if ($0 ~ mrk) { if (!span) { span=1; base=cur }; next }
+            if (span || classed) {
+              line=$0
+              gsub(/^[ \t]+|[ \t]+$/, "", line)
+              if (length(line) >= 16) print "C\t" stem "\t" line
+            }
+          }
+        ' "$f" 2>/dev/null
       fi
     done
 )
 restricted_ids=$(printf '%s\n' "$restricted_id_scan" | awk -F'\t' '$1=="I"{print $2}' | sort -u)
+restricted_section_lines=$(printf '%s\n' "$restricted_id_scan" | awk -F'\t' '$1=="C"' | sort -u)
 restricted_ids_unreadable=$(printf '%s\n' "$restricted_id_scan" | awk -F'\t' '$1=="U"{print $2}')
 
 # Pass 2: scan the outbound surfaces.
@@ -537,6 +623,12 @@ while IFS= read -r f; do
     echo "  ! RESTRICTED MARKER on outbound surface: ${f#$HUB/}"
     restricted_errors=$((restricted_errors + 1))
   fi
+  # A restricted/record class line on a surface means a classed note's frontmatter was copied
+  # there wholesale (v1.22). `accessClass: internal` and `accessClass: public` are not findings.
+  if grep -I -Eq "$restricted_class" "$f" 2>/dev/null; then
+    echo "  ! RESTRICTED ACCESS CLASS on outbound surface: ${f#$HUB/}"
+    restricted_errors=$((restricted_errors + 1))
+  fi
   while IFS= read -r rid; do
     [ -z "$rid" ] && continue
     if grep -I -qwF -- "$rid" "$f" 2>/dev/null; then
@@ -544,10 +636,23 @@ while IFS= read -r f; do
       restricted_errors=$((restricted_errors + 1))
     fi
   done <<< "$restricted_ids"
+  # Body-restricted sections: their verbatim text must not reach a surface, even though the
+  # containing note's name may (narrowed in v1.21).
+  while IFS= read -r crec; do
+    [ -z "$crec" ] && continue
+    cstem=$(printf '%s\n' "$crec" | cut -f2)
+    ctext=$(printf '%s\n' "$crec" | cut -f3-)
+    [ -z "$ctext" ] && continue
+    if grep -I -qF -- "$ctext" "$f" 2>/dev/null; then
+      echo "  ! RESTRICTED SECTION TEXT (from '$cstem') on outbound surface: ${f#$HUB/}"
+      restricted_errors=$((restricted_errors + 1))
+    fi
+  done <<< "$restricted_section_lines"
 done <<< "$restricted_surfaces"
 if [ -n "$restricted_ids_unreadable" ]; then
   echo "  ! Identifier coverage incomplete: note(s) below could not be read, so the set of"
-  echo "    restricted note names checked against the surfaces may be missing entries:"
+  echo "    restricted note names and section text checked against the surfaces may be missing"
+  echo "    entries:"
   printf '%s\n' "$restricted_ids_unreadable" | sed 's/^/    - /'
   adv
 fi
@@ -556,7 +661,7 @@ if [ "$restricted_errors" -gt 0 ]; then
 elif [ "$restricted_surface_unreadable" -gt 0 ] || [ -n "$restricted_ids_unreadable" ]; then
   echo "  No restricted content found on the surfaces that could be read (coverage incomplete)"
 else
-  echo "  OK: no restricted markers or identifiers on outbound surfaces"
+  echo "  OK: no restricted markers, classes, identifiers or section text on outbound surfaces"
 fi
 echo
 

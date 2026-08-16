@@ -24,6 +24,9 @@ These source types work in every hub without any configuration:
 
 _Add entries here as your hub connects to external tools._
 _Run `/km-gather` and answer "yes" when asked to add a source — it will guide you through the fields._
+_Where the record boundary layer is adopted (STANDARD.md → Rule 6), each configured external system
+also carries a `SourceSystem` note in `sources/systems/` — the governed system-level contract; this
+file remains the gather tool's runtime configuration and should point at that note, not restate it._
 
 <!-- Template for a new entry:
 
