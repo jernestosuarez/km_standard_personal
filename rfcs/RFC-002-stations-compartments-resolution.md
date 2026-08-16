@@ -10,8 +10,9 @@ timestamp: 2026-08-16
 
 > **Status: DRAFT.** Companion to [RFC-001](RFC-001-sor-gateway.md); owner design session of
 > 2026-08-16, relayed the same day; drafted as **v1.23 (DRAFT — awaiting owner push)** on branch
-> `feature/sor-gateway`, stacked on the v1.22 draft. RFC-001's open questions are updated in place
-> with resolved-by pointers — the questions stand as asked; what answers them is marked.
+> `feature/sor-gateway`, stacked on v1.22 (published 2026-08-16). RFC-001's open questions are
+> updated in place with resolved-by pointers — the questions stand as asked; what answers them is
+> marked.
 
 ## Provenance discipline
 

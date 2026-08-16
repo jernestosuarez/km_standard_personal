@@ -8,16 +8,20 @@ timestamp: 2026-08-16
 
 # RFC-001 — The record boundary: a systems-of-record gateway
 
-> **Status: DRAFT.** Owner-authorized 2026-08-16; drafted as **v1.22 (DRAFT — awaiting owner
-> push)** on branch `feature/sor-gateway`, stacked on the unpublished v1.20/v1.21 drafts. The
-> normative edits summarized in §"Normative changes" land in the same branch; nothing binds any
-> deployment until the owner publishes. Open questions in §"Open questions" are deliberately
-> unresolved and await the owner's ruling.
+> **Status: ADOPTED — published as v1.22 on 2026-08-16.** Owner-authorized 2026-08-16; drafted
+> as **v1.22** on branch `feature/sor-gateway`, stacked on the then-unpublished v1.20/v1.21
+> drafts. The normative edits summarized in §"Normative changes" land in the same branch; nothing
+> binds any deployment until the owner publishes. Open questions in §"Open questions" are
+> deliberately unresolved and await the owner's ruling.
 >
 > **Updated 2026-08-16, same day:** the owner's follow-on design session produced
 > [RFC-002](RFC-002-stations-compartments-resolution.md) (drafted as v1.23). The open questions
 > below stand as asked, each now carrying a resolved-by pointer with its provenance tag; the
 > questions are not deleted — what answers them is marked.
+>
+> **Publication note, 2026-08-16:** the owner ruled v1.22 published, carrying the v1.20/v1.21
+> train beneath it. This RFC's normative changes are part of the published standard; RFC-002 and
+> its v1.23 normative edits remain draft, awaiting owner push.
 
 ---
 
@@ -227,6 +231,6 @@ rule being enforced — so every crossing decision was re-derived from first pri
 person, with no schema to record the terms. The governance layer already contained the gateway;
 this RFC names it and gives it a schema.
 
-*2026-08-16. Companion to STANDARD.md v1.22 (DRAFT). Related:
+*2026-08-16. Companion to STANDARD.md v1.22 (published 2026-08-16). Related:
 DESIGN-RATIONALE_semantica-component-mining.md (bitemporal candidate, adopted here as change 5);
 DESIGN-RATIONALE_akcp-component-mining.md (framing rule for lifting ideas, not runtimes).*
