@@ -89,4 +89,47 @@ run_case \
   "urn:example:km-profile:main" "profile-1" "urn:example:enterprise:" "contract-7" \
   1 "canonical deployment must not contain organization or enterprise binding values"
 
+# Hub species axes (Rule 6, v1.23) — optional fields on the same binding.
+# Absent is already covered: every case above carries neither field and passes or fails on
+# other grounds. Here: declared valid values pass; an out-of-enum value is an error.
+declare_species() {
+  local hub="$1"; shift
+  awk -v lines="$*" '1; /^deployment-state: canonical$/ { n=split(lines, a, ";"); for (i=1; i<=n; i++) print a[i] }' \
+    "$hub/km-deployment.md" > "$hub/km-deployment.md.new"
+  mv "$hub/km-deployment.md.new" "$hub/km-deployment.md"
+  git -C "$hub" add km-deployment.md
+  git -C "$hub" -c user.name='KM Test' -c user.email='km-test@example.invalid' \
+    commit -qm 'apply: declare hub species'
+}
+
+species_hub=$(prepare_hub species-valid canonical "$CANONICAL_REVISION" "" "" "" "")
+declare_species "$species_hub" "station: org-core;exposure: never-public"
+set +e
+output=$(bash "$species_hub/hub-scan.sh" 2>&1)
+status=$?
+set -e
+if [ "$status" -ne 0 ]; then
+  printf '%s\n' "$output" >&2
+  fail "species-valid returned $status, expected 0"
+fi
+if ! printf '%s\n' "$output" | grep -Fq "OK: canonical standard binding is complete"; then
+  printf '%s\n' "$output" >&2
+  fail "species-valid did not report a complete canonical binding"
+fi
+
+species_bad=$(prepare_hub species-invalid canonical "$CANONICAL_REVISION" "" "" "" "")
+declare_species "$species_bad" "station: everywhere"
+set +e
+output=$(bash "$species_bad/hub-scan.sh" 2>&1)
+status=$?
+set -e
+if [ "$status" -ne 1 ]; then
+  printf '%s\n' "$output" >&2
+  fail "species-invalid returned $status, expected 1"
+fi
+if ! printf '%s\n' "$output" | grep -Fq "station must be org-core, domain, engagement or publication"; then
+  printf '%s\n' "$output" >&2
+  fail "species-invalid did not report the station enum error"
+fi
+
 echo "deployment binding tests passed"

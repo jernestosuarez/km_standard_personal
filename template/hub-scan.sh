@@ -266,6 +266,26 @@ else
     deployment_errors=$((deployment_errors + 1))
   fi
 
+  # Hub species (Rule 6, v1.23): optional axes. Absent means station: domain and
+  # exposure: compartment, so a hub that never declares them scans exactly as before;
+  # a declared value outside the enum is a defect, the same rank as a bad deployment-state.
+  station=$(fm_field "$deployment_file" "station")
+  exposure=$(fm_field "$deployment_file" "exposure")
+  case "$station" in
+    ""|org-core|domain|engagement|publication) : ;;
+    *)
+      echo "  ! station must be org-core, domain, engagement or publication (absent = domain)"
+      deployment_errors=$((deployment_errors + 1))
+      ;;
+  esac
+  case "$exposure" in
+    ""|never-public|compartment|counterparty|public) : ;;
+    *)
+      echo "  ! exposure must be never-public, compartment, counterparty or public (absent = compartment)"
+      deployment_errors=$((deployment_errors + 1))
+      ;;
+  esac
+
   case "$deployment_state" in
     canonical)
       if [ -n "$profile_id" ] || [ -n "$profile_revision" ] \

@@ -1,18 +1,18 @@
 ---
 type: brief
-title: Knowledge Management Standard: Hub Framework (v1.22 DRAFT — awaiting owner push)
+title: Knowledge Management Standard: Hub Framework (v1.23 DRAFT — awaiting owner push)
 description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, an optional Agent Tier for named, discoverable agent instances, and an optional record-boundary layer for governed use of systems of record.
 tags: [standard, knowledge-management, governance, okf, agents]
 resource: template/
 timestamp: 2026-08-06
 ---
 
-# Knowledge Management Standard: Hub Framework (v1.22 DRAFT — awaiting owner push)
+# Knowledge Management Standard: Hub Framework (v1.23 DRAFT — awaiting owner push)
 
 **DRAFT — awaiting owner push.** v1.20 (the owner queue), v1.21 (the `[ RESTRICTED ]`
-narrowing) and v1.22 (the record boundary) are drafted but unpublished; the last published
-version is **v1.19**, and every deployment pin continues to resolve against v1.19 until the
-owner pushes.
+narrowing), v1.22 (the record boundary) and v1.23 (stations, compartments, and the resolution
+plane) are drafted but unpublished; the last published version is **v1.19**, and every
+deployment pin continues to resolve against v1.19 until the owner pushes.
 
 **Status:** Active standard. Framework-agnostic, works with Claude, GPT, Gemini, or any other LLM agent, and equally well with no agent at all (plain human use).
 
@@ -574,6 +574,14 @@ runtime configuration; where this type is adopted, a configured external source 
 SourceSystem note rather than restating its terms. See also §"Source connectors (SoR gateway)":
 in the connector model, each SourceSystem note *is* the connector's declarative manifest.
 
+**Placement in a multi-hub estate (refined in v1.23).** Connectors are estate-level
+infrastructure: one mail connector serves many hubs, and its classification policy must be
+uniform, or the same record crosses at two different ceilings depending on which hub asked. In a
+multi-hub estate, `SourceSystem` notes therefore live at the **Supervisor**, and each hub carries
+a **subscription** — it subscribes to a `uriScheme` with a filter. Per-hub placement under
+`sources/systems/` remains valid, and is the default, for a **single-hub deployment**, where
+there is no second hub for the policy to diverge across.
+
 ### Claims: a settled fact with its own lifecycle (optional ninth type)
 
 The reconciliation layer settles facts into topic-file rows, and for most hubs a row is enough. A
@@ -1061,6 +1069,77 @@ accessClass: public | internal | restricted | record
   complementary, not competing: a note whose **name or existence** is itself sensitive carries the
   marker in frontmatter, which blocks the name as well, exactly as since v1.16.
 
+#### The resolution plane: record-class data is resolved, never stored (added in v1.23)
+
+**Record-class data is never stored in the hub's git.** The hub holds the pointer; the gateway
+resolves it at query time through a connector (typically MCP): clearance-checked, audit-logged,
+nothing persisted. The access **event** may be recorded as a claim; the accessed **data** may not.
+
+The reason is structural, not stylistic: git is permanent, and erasure obligations are not
+optional. Personal data carries a right to erasure that a versioned file cannot honor — every
+commit that ever contained it would have to be rewritten, which Rule 3's integrity model exists
+to forbid. So the classes divide by **storage plane**: `restricted` content may live in git under
+its class; `record` referents live only in their system of record and are resolved, never stored.
+This is the one place `accessClass` is more than a handling label — it decides *where the bytes
+are allowed to exist*.
+
+#### Three planes: knowledge, resolution, scratch (added in v1.23)
+
+Storage stays git at every station; what differs near the systems of record is the **runtime**:
+
+| Plane | Substrate | Holds |
+|---|---|---|
+| **Knowledge** | git | Claims, aggregates, existence — everything Rule 6 lets cross |
+| **Resolution** | gateway/MCP runtime | Nothing at rest: record-class referents resolved per query |
+| **Scratch** | `_scratch/`, git-ignored, wipeable | Temporarily materialized records for batch processing, with a stated lifetime |
+
+The scratch plane is the named home for work that must touch records in bulk — an export
+extracted, processed, and deleted. It is declared (`_scratch/` at the hub root, ignored by the
+template's own `.gitignore`), its lifetime is stated before materialization, and it is wiped when
+the batch completes. Because git never held it, erasure is honored **by construction**. It is the
+*materialized* batch degenerate case of the gateway: the same crossing laws govern what leaves it
+for the knowledge plane, plus a wipe at the end. Anything worth keeping crosses as a claim,
+aggregate, or classified extract with lineage — never by promoting scratch contents into git
+wholesale.
+
+#### Station and exposure: what flows in, who consumes out (added in v1.23)
+
+Two independent axes, declared in the hub's deployment manifest (`km-deployment.md`):
+
+- `station: org-core | domain | engagement | publication` — governs **intake**: what may flow in.
+- `exposure: never-public | compartment | counterparty | public` — governs **output**: who may
+  consume. Defaults when absent: `station: domain`, `exposure: compartment`.
+
+The crossing laws are **station-transition rules**, parameterized by (from-station, to-station):
+from a system of record into org-core, knowledge crosses at full fidelity (records still
+resolve-only); from org-core into domain hubs, aggregates cross; onto publication surfaces, only
+public claims cross.
+
+> **Build at the station, publish at the exposure.**
+
+The design error the two axes exist to prevent: **deriving a hub's intake rules from its exposure
+hollows the hub out to match its most public consumer** — a hub filled only with what its widest
+audience may see cannot answer its owner's own questions. Fill it to its station; let the
+boundary produce the projections.
+
+Two rules ride these axes:
+
+- **Version at the tempo of decisions, not of data.** Org-core hubs snapshot aggregates at
+  governance cadence — weekly, monthly, at decision points; telemetry stays in the systems of
+  record and their dashboards. The hub records what the organization knew and decided upon, not
+  everything it measured.
+- **Hub-to-hub access is compartmented, not leveled.** Two hubs can be equally "restricted" about
+  the same subject in opposite directions — one holds positions its counterparty must never see;
+  the other is written *for* that counterparty. No ordering of levels expresses that. Each hub
+  therefore declares an **owner**, an **audience** (who it is for), and a **boundary** (who it
+  must never reach), beside station and exposure in the manifest; cross-compartment flow is
+  **default-deny, Supervisor-mediated**. Three mechanisms, three jobs, deliberately
+  non-collapsible: `station`/`exposure` govern a hub's **edges**; the **compartment** governs
+  **membership between hubs**; `accessClass` governs **zones inside a hub**.
+
+Full rationale, transition table, and provenance tags:
+[`rfcs/RFC-002-stations-compartments-resolution.md`](rfcs/RFC-002-stations-compartments-resolution.md).
+
 ---
 
 ## File Templates
@@ -1229,7 +1308,9 @@ note. Gateway rules, whatever the transport:
   reconciliation apply unchanged.
 - **Raw records never cross.** A connector emits claims, aggregates, existence, and classified
   extracts under the four crossing laws — at or below its declared ceiling; the contents of a
-  `record`-class referent never cross at all.
+  `record`-class referent never cross at all. For those referents the connector is also the
+  **resolution plane** (Rule 6): it answers queries against the record at query time —
+  clearance-checked, audit-logged, nothing persisted.
 - **Detection, extraction, and freshness automate; classification and resolution authority stay
   with the owner.**
 
@@ -1278,6 +1359,16 @@ The rule, borrowed from the ADR and unchanged for a decade because it works:
 
 Editing an accepted decision destroys the only record that the earlier reasoning ever existed, and
 that reasoning is precisely what stops it being re-litigated next year.
+
+**The one lawful exception: redaction with tombstones (added in v1.23).** An erasure obligation
+can reach committed *knowledge*, not just records (the resolution plane already keeps records out
+of git). For that case, and only that case, an **owner-only history-redaction procedure** exists:
+the content is removed from history, and a **tombstone note** is left recording the fact and date
+of the redaction — the *fact that something was removed* is preserved; the content is gone. The
+redaction is logged as a `corrections/` note, so the reasoning survives, and it must be
+**exceptional and documented**: a hub redacting routinely is a hub that held material Rule 6
+should have kept out — fix the intake, not the history. This is the supersede-never-rewrite
+doctrine's explicit boundary condition, stated here so neither rule silently swallows the other.
 
 `supersedes` is an optional field on `Decision`, `Risk` and `Milestone` (`Correction` already had
 it). `[ LINKS ]` validates the pointer automatically, it scans every frontmatter wiki-link, so a
@@ -2262,14 +2353,26 @@ hub knowledge; a duplicate that agrees on day one is the worst kind, because not
 the copies have drifted. Hubs hold typed references to Supervisor entities; the Supervisor holds no
 copy of hub engagement facts.
 
-*Pointer (v1.22, unresolved):* where hubs adopt the record boundary (Rule 6), a further
-Supervisor-tier concern appears — an estate view of which systems of record feed which hubs
-(aggregating the hubs' own `SourceSystem` notes), and stewardship of classification defaults at
-the gateway: policy sets the default class per system; the owner adjudicates exceptions, the
-mirror of reconciliation. Whether this expands the Supervisor charter, and whether hubs themselves
-carry clearances the Supervisor mediates when one hub's agent follows another hub's pointers, is
-deliberately left open — see [`rfcs/RFC-001-sor-gateway.md`](rfcs/RFC-001-sor-gateway.md), open
-questions. This paragraph is a pointer, not a charter change.
+**The crossing laws are scale-invariant (added in v1.23, directional).** Each layer relates to
+the layer below exactly as hubs relate to systems of record: the Supervisor holds claims
+**about** hubs — existence, ownership, topics, claim identities — never hub contents, and a
+person's supervisor-level card records **which** compartments they appear in, never what they did
+there. *Existence crosses; contents don't — at every altitude.* This is also the structural
+answer to the supervisor-as-highest-value-target problem: a tier that holds only existence-grade
+claims about the tiers below is not worth breaching for their contents, because the contents were
+never there.
+
+*Pointer (v1.22; updated in v1.23):* where hubs adopt the record boundary (Rule 6), the
+Supervisor gains the charter material sketched in
+[`rfcs/RFC-002-stations-compartments-resolution.md`](rfcs/RFC-002-stations-compartments-resolution.md),
+item 8: the **promotion path** (hub experience → supervisor observation → standard RFC — the
+ontology's own evolution mechanism); **cross-hub claim reconciliation** (a claim has one identity
+and one home of record; the sweep detects divergence, the owning hub resolves — detection
+automated, resolution human); the **federated SoR registry** (estate-level `SourceSystem` notes
+with per-hub subscriptions — see the placement note in the entity layer); and **compartment
+policy** (the gateway sets classification defaults; the compartment owner adjudicates exceptions;
+the Supervisor holds the policy table and the escalation path). The charter rewrite itself
+remains future work; this paragraph remains a pointer, not the charter.
 
 #### The semantic layer: shared entity registry
 
@@ -2700,6 +2803,7 @@ happened once (see the v1.9 row) and the ledger exists so it does not happen twi
 | v1.20 | 2026-08-14 | **DRAFT — awaiting owner push.** The owner queue (Supervisor tier): one machine-parseable decision surface (`QUEUE.md`) that every proposal, escalation, and ask must register on to count as surfaced to the owner; three tiers (A never defaults; B auto-applies its recommendation after a veto window, with identity, money, restricted content, deletions, and client-facing surfaces never tier B; C never asks); routine decision-halt above a queue cap, checked at the **start** of a run and with escalation classes exempt; a batched Q&A clearing skill (`/km-clear`) bound by reconcile-before-ask; one weekly owner sitting with a protected walkthrough slot; routine briefs demoted to machine-facing with a session-triage read flag; hub inboxes counted as queue inventory. Adopted after an estate reached roughly 40 open items across 8 owner-facing surfaces, with routine decision production outrunning one owner's consumption and re-asks spending owner attention on already-decided items. |
 | v1.21 | 2026-08-14 | **DRAFT — awaiting owner push.** The `[ RESTRICTED ]` name block is narrowed to what the marker actually restricts. Since v1.16, a `sensitivity: restricted` line anywhere in a note made the note's NAME an error on every outbound surface, so a file with one restricted section could never be named as a proposal target: the governed route to changing such a file was blocked by the check meant to protect it. Now a marker in frontmatter still restricts the whole note, name included; a marker in the body restricts the section it opens, whose verbatim text (lines of at least 16 characters, up to the next heading at the same or a higher level) is blocked on outbound surfaces while the note's name and path stay nameable. Stated trade-offs: a body-marked note's existence and name become disclosable, and verbatim-line matching does not catch paraphrase or very short lines, so a note whose name or existence is itself sensitive must be marked in frontmatter. `build-indexes.sh` continues to exclude both forms from generated indexes. `tests/test_restricted_lint.sh` proves both sides of the narrowing and that the frontmatter name block still fires. Derived from an estate incident (owner-adjudicated "fix", 2026-08-14) in which a hub file with one restricted section became structurally un-nameable in `changes/` proposals. |
 | v1.22 | 2026-08-16 | **DRAFT — awaiting owner push.** The record boundary (Rule 6): records stay in systems of record; hubs hold claims about records, with resolvable pointers. Four crossing laws — claims cross, records don't; aggregates cross, line items don't; existence crosses, contents don't; an unavoidable copy is the classified extract with lineage. Optional `accessClass` frontmatter field (`public \| internal \| restricted \| record`, default `internal` when absent), with propagation (derived-from-restricted inherits restricted), the declassification rule ("aggregation declassifies; extraction does not"), and classification-aware `[ RESTRICTED ]` enforcement: a restricted-class note's body text is blocked verbatim on outbound surfaces while its name stays nameable (existence crosses; the `sensitivity: restricted` frontmatter marker remains the mechanism for names that are themselves sensitive), and restricted-class notes are excluded from generated indexes. Two optional entity types: `SourceSystem` (`sources/systems/`, grounded in `dcat:DataService`) — the per-system contract behind the per-source date register — and `Claim` (`claims/`, proprietary) — a settled fact promoted to its own lifecycle and evidence chain, with reconciliation remaining the adjudication process and promotion never mandatory. Optional bitemporal fields `validFrom`/`validUntil`/`recordedAt` (adopting the Semantica mining rationale's priority candidate). An optional inbound connector section mirrors the outbound MCP query surface; the manual inbox + date gate + reconciliation are named as the gateway's reference implementation, and detection/extraction/freshness automate while classification and resolution authority stay with the owner. Full rationale, migration notes, implementation notes, and open questions in `rfcs/RFC-001-sor-gateway.md`. Derived from an engagement organizing a partner organization's complete internal knowledge export (~12,000 files) into a governed hub, where the four crossing laws were discovered operationally rather than designed. |
+| v1.23 | 2026-08-16 | **DRAFT — awaiting owner push.** Stations, compartments, and the resolution plane (`rfcs/RFC-002-stations-compartments-resolution.md`; every ruling provenance-tagged owner-ruled / delegated / directional). The resolution plane: record-class data is never stored in hub git — the hub holds the pointer and the gateway resolves it at query time, clearance-checked, audit-logged, nothing persisted; the access event may be recorded as a claim, the data may not (git permanence cannot honor erasure obligations). Three planes: knowledge (git), resolution (gateway runtime), scratch (`_scratch/`, git-ignored, wipeable, stated lifetime — erasure by construction). Hub species as two independent manifest axes in `km-deployment.md`: `station` (org-core \| domain \| engagement \| publication) governs intake, `exposure` (never-public \| compartment \| counterparty \| public) governs output; defaults `domain`/`compartment` when absent, enums validated by `[ DEPLOYMENT ]` only when present; the crossing laws become station-transition rules — build at the station, publish at the exposure — and org-core hubs version at the tempo of decisions, not of data. Hub-to-hub access is compartmented, not leveled: each hub declares owner, audience, and boundary; cross-compartment flow is default-deny, Supervisor-mediated (resolving RFC-001 open question 1). Scale invariance: existence crosses, contents don't — at every altitude; the Supervisor holds claims about hubs, never hub contents. Redaction with tombstones enters as the supersede-never-rewrite doctrine's explicit boundary condition. Federated SoR registry: in multi-hub estates `SourceSystem` notes live at the Supervisor with per-hub subscriptions, single-hub placement unchanged (partially resolving open question 2); query-time gating is subsumed by the resolution plane (open question 3). |
 
 ---
 

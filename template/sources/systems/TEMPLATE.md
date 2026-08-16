@@ -26,4 +26,7 @@ This note is the SYSTEM-level contract. Per-SOURCE dates stay in sources/dates-r
 the date gate's control point — and every source arriving from this system is still gated there.
 Where connectors are in use, this note is the connector's declarative manifest
 (STANDARD.md §"Source connectors (SoR gateway)").
+Placement (v1.23): in a multi-hub estate, SourceSystem notes live at the Supervisor — connector
+classification policy must be uniform across hubs — and each hub subscribes to a uriScheme with
+a filter. This per-hub location is the home for single-hub deployments.
 -->
