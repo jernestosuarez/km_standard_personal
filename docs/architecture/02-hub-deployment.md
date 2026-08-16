@@ -3,7 +3,7 @@ type: architecture
 title: Canonical-First, Profile-Second Hub Deployment
 description: The two-commit deployment protocol, from the value gate through profile resolution and verification to the organization-bound customization commit.
 tags: [architecture, deployment, organization-profile, supervisor]
-timestamp: 2026-08-02
+timestamp: 2026-08-16
 ---
 
 # Canonical-First, Profile-Second Hub Deployment
@@ -88,3 +88,11 @@ The hub's own scan enforces the binding invariants recorded in `km-deployment.md
 The canonical test `tests/test_hub_deployment_binding.sh` proves each of these cases, including
 both failure directions: organization values on a canonical hub and missing values on an
 organization-bound hub.
+
+**Draft rider (v1.23, not yet binding):** the binding file also hosts optional, commented hub
+*species* fields — `station` (governs intake) and `exposure` (governs output), with compartment
+audience/boundary declarations beside them. Absent fields default to `station: domain`,
+`exposure: compartment`, and the scan validates the enums only when the fields are present; the
+same test file proves that declared valid values pass and an out-of-enum value fails. The
+obligations behind these fields bind nothing until v1.23 publishes — see
+[`06-stations-compartments-resolution.md`](06-stations-compartments-resolution.md).

@@ -3,7 +3,7 @@ type: architecture
 title: Authority Boundaries
 description: Which actor approves, implements, orchestrates, and executes, how each act is recorded, and how the same boundaries hold across agent runtimes.
 tags: [architecture, authority, roles, agents]
-timestamp: 2026-08-02
+timestamp: 2026-08-16
 ---
 
 # Authority Boundaries
@@ -19,7 +19,7 @@ boundaries and how each is evidenced.
 | Institutional authority | Approves each OrganizationProfile revision. The approval is a record with an id and a date, held in the organization instance repository. | Does not implement profiles or operate deployments. |
 | Enterprise steward | Implements profiles, enterprise records, and policy instructions in the organization instance repository. | Cannot self-approve. A profile the steward wrote but the authority has not approved is not resolvable. |
 | KM Supervisor | Orchestrates the estate: routing, shared identity, escalations, hub deployment. Resolves and applies approved profiles and registers hubs. | Never manufactures enterprise truth. Never approves a profile. Never edits hub content directly; content changes go through each hub's own proposal flow. |
-| Knowledge hub and its agent | Owns local knowledge under the five governance rules. Applies changes under its own approval flow. | Never mints enterprise identity. An unrecognized shared entity is escalated, not created locally. |
+| Knowledge hub and its agent | Owns local knowledge under the six governance rules. Applies changes under its own approval flow. | Never mints enterprise identity. An unrecognized shared entity is escalated, not created locally. Never holds records that a system of record masters — claims and pointers only (Rule 6). |
 | Standard Maintainer | Evolves and versions the canonical standard and hands adoption to the Supervisor. | Does not apply standard changes to hubs. Adoption is each hub owner's decision, recorded in that hub's history. |
 
 ```mermaid

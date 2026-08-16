@@ -1,9 +1,9 @@
 ---
 type: architecture
 title: Architecture Overview
-description: The layered architecture of the KM Standard and the flow of authority from the institutional approval record down to individual knowledge hubs.
-tags: [architecture, layers, enterprise, supervisor]
-timestamp: 2026-08-02
+description: The layered architecture of the KM Standard, the vertical stack from systems of record to consumers, and the flow of authority from the institutional approval record down to individual knowledge hubs.
+tags: [architecture, layers, enterprise, supervisor, record-boundary]
+timestamp: 2026-08-16
 ---
 
 # Architecture Overview
@@ -47,11 +47,22 @@ effects hub content changes only through each hub's own proposal and approval fl
 
 ### Knowledge hubs
 
-Each hub holds purpose-specific knowledge for one initiative, governed by the standard's five rules:
+Each hub holds purpose-specific knowledge for one initiative, governed by the standard's six rules:
 inbox-first intake, proposal and approval for every doc change, Git-backed integrity, OKF
-frontmatter, and source traceability. Hubs own their local knowledge and adopt standard changes
+frontmatter, source traceability, and — since v1.22 — the record boundary: records stay in the
+systems that master them, and the hub holds claims about records with resolvable pointers, never
+shadow copies of operational data. Hubs own their local knowledge and adopt standard changes
 under their own governance. They never mint enterprise identity; an unrecognized shared entity is
 escalated to the Supervisor instead.
+
+### Systems of record (below every hub, since v1.22)
+
+The layer the standard governs *against* rather than *owns*: the ERP, CRM, HRIS, finance system,
+document store, ticketing system, transcription service, identity provider — wherever an
+operational record is mastered. Hubs never replicate this layer; what may cross from it into a hub
+is governed by Rule 6's four crossing laws, and the crossing itself — today the manual inbox +
+date gate + reconciliation, optionally a connector — is the SoR gateway. See
+[`05-the-record-boundary.md`](05-the-record-boundary.md).
 
 ## Diagram
 
@@ -76,6 +87,31 @@ flowchart TB
     hubA -.->|"escalations, evidence"| supervisor
     hubB -.->|"escalations, evidence"| supervisor
 ```
+
+## The vertical stack (v1.22)
+
+The diagram above shows the *governance* layers — who owns which repository of truth. The record
+boundary adds an orthogonal, *data-altitude* view of the same estate:
+
+```
+L4  Consumers          humans · agents · factories · briefs/publications
+L3  Domain hubs        per-project / per-domain governed hubs
+L2  Supervisor         routing · ontology stewardship · cross-hub reconciliation · SoR registry
+L1  SoR Gateway        connectors · classification · claim extraction · freshness · access mediation
+L0  Systems of record  ERP · CRM · HRIS · finance · DMS · ticketing · transcription · IdP
+```
+
+L1 needs no software to exist: the inbox, the date gate, and reconciliation are the gateway,
+operated manually, and remain its reference implementation. Rule 6 names what they enforce.
+
+## The entity types
+
+A hub's typed knowledge lives as one note per instance, in nine entity types: five core
+(`Stakeholder`, `Partner`, `Milestone` — grounded in schema.org — and the proprietary `Decision`
+and `Risk`) and four optional (`RelationshipAssertion`, `Correction`, and since v1.22
+`SourceSystem` — grounded in `dcat:DataService` — and `Claim`). The grounding split is deliberate:
+open-standard common ground where the concept is solved, proprietary vocabulary where the
+knowledge is the organization's own. See the Ontology & Entity Layer in `STANDARD.md`.
 
 ## Authority flow
 
