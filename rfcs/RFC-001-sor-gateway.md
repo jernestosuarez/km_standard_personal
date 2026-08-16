@@ -13,6 +13,11 @@ timestamp: 2026-08-16
 > normative edits summarized in §"Normative changes" land in the same branch; nothing binds any
 > deployment until the owner publishes. Open questions in §"Open questions" are deliberately
 > unresolved and await the owner's ruling.
+>
+> **Updated 2026-08-16, same day:** the owner's follow-on design session produced
+> [RFC-002](RFC-002-stations-compartments-resolution.md) (drafted as v1.23). The open questions
+> below stand as asked, each now carrying a resolved-by pointer with its provenance tag; the
+> questions are not deleted — what answers them is marked.
 
 ---
 
@@ -152,7 +157,9 @@ All edits land in this branch; section names refer to `STANDARD.md`.
    not have. Today the reference server (`template/mcp/server.py`) filters retired/superseded
    notes but neither `sensitivity`-marked nor classed content — a pre-existing property, now
    named; `claims/` was added to its entity dirs so Claim notes are queryable like any other
-   entity.
+   entity. *Subsumed [OWNER-RULED] by RFC-002 item 1: this note and open question 3 are one gap
+   with one name — the **resolution plane**. Record-class access is clearance-checked resolution
+   through the gateway; the knowledge-plane query surface is unchanged.*
 5. **Supervisor SoR registry.** An estate view aggregating the hubs' `SourceSystem` notes (which
    systems feed which hubs, at what ceilings) — generated, never hand-maintained, like the agent
    registry. Pointer added to the Supervisor tier; the charter expansion is open question 2.
@@ -168,18 +175,33 @@ All edits land in this branch; section names refer to `STANDARD.md`.
 
 ## Open questions — for the owner to rule on
 
+*(Updated 2026-08-16: dispositions from [RFC-002](RFC-002-stations-compartments-resolution.md)
+added in place. The questions stand as asked.)*
+
 1. **Hub-level access classes.** Does a *hub* itself carry a clearance (a finance hub vs a project
    hub) that the Supervisor mediates when one hub's agent follows another hub's pointers? Today the
    class lives on notes; a hub-level ceiling would be the natural unit for cross-hub mediation, and
    also the first genuinely new Supervisor authority since the evidence standard.
+   → **Resolved [DIRECTIONAL] by RFC-002 item 4:** not a clearance *level* — a **compartment**.
+   Each hub declares owner, audience, and boundary; cross-compartment flow is default-deny,
+   Supervisor-mediated. Levels cannot express two hubs restricted in opposite directions about
+   the same subject; compartments can.
 2. **Supervisor charter expansion.** Ontology stewardship, SoR-registry stewardship, and
    classification authority — policy sets defaults at the gateway (each SourceSystem note's
    `defaultAccessClass`); the owner adjudicates exceptions, the mirror of reconciliation. The
    standard now carries only a pointer note in the Supervisor tier; the charter rewrite is future
    work and should not ride this RFC.
+   → **Partially resolved [DIRECTIONAL] by RFC-002 item 8:** a four-function charter sketch
+   (promotion path; cross-hub claim reconciliation; federated SoR registry with per-hub
+   subscriptions — refining this RFC's per-hub `SourceSystem` placement for estates; compartment
+   policy). The charter rewrite itself remains future work.
 3. **Query-time enforcement.** Whether `accessClass` gates agent tool access at query time on the
    MCP surface (implementation note 4). Depends on the MCP query-surface work; deciding it now
    would be designing ahead of a funded question.
+   → **Subsumed [OWNER-RULED] by RFC-002 item 1:** the gap has one name, the **resolution
+   plane**. Record-class data is never stored in hub git; it is resolved at query time through
+   the gateway — clearance-checked, audit-logged, nothing persisted. The access event may be
+   recorded as a claim; the data may not.
 
 ---
 
