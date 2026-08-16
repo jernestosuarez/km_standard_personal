@@ -6,6 +6,8 @@ tags: [standard, knowledge-management, governance, okf]
 timestamp: 2026-07-02
 ---
 
+<p align="center"><img src="assets/km-banner.png" alt="KM Standard — governed, agent-readable knowledge in plain files" width="100%"/></p>
+
 # Knowledge Management Standard
 
 **Current version: v1.22** (2026-08-16). The full ledger of released versions, and the rule that a
