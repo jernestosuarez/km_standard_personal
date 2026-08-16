@@ -1,104 +1,138 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 400" width="2560" height="800" font-family="Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 420" width="2560" height="840" font-family="Helvetica, Arial, sans-serif">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#152B42"/>
-      <stop offset="1" stop-color="#0F2233"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#081420"/>
+      <stop offset="0.72" stop-color="#0E2334"/>
+      <stop offset="1" stop-color="#0A1826"/>
     </linearGradient>
-    <linearGradient id="hubglow" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#1B4A57"/>
-      <stop offset="1" stop-color="#143844"/>
+    <radialGradient id="tealwash" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#1E5D66" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#1E5D66" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="amberwash" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#8A6420" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#8A6420" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="nodeglow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#4FD1C5" stop-opacity="0.85"/>
+      <stop offset="0.35" stop-color="#4FD1C5" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#4FD1C5" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="supglow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#E08A6A" stop-opacity="0.8"/>
+      <stop offset="0.4" stop-color="#E08A6A" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#E08A6A" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="trail" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4FD1C5" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#4FD1C5" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="hubfill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16424D" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#123240" stop-opacity="0.25"/>
     </linearGradient>
   </defs>
 
-  <!-- background -->
-  <rect width="1280" height="400" fill="url(#bg)"/>
-  <!-- faint dot grid, right side texture -->
-  <g fill="#22405C">
-    <circle cx="700" cy="60" r="2"/><circle cx="760" cy="40" r="2"/><circle cx="840" cy="70" r="2"/>
-    <circle cx="920" cy="45" r="2"/><circle cx="1000" cy="65" r="2"/><circle cx="1080" cy="40" r="2"/>
-    <circle cx="1160" cy="60" r="2"/><circle cx="1220" cy="90" r="2"/><circle cx="680" cy="350" r="2"/>
-    <circle cx="1240" cy="330" r="2"/><circle cx="660" cy="180" r="2"/><circle cx="1250" cy="200" r="2"/>
+  <!-- ground -->
+  <rect width="1280" height="420" fill="url(#bg)"/>
+  <circle cx="1010" cy="140" r="300" fill="url(#tealwash)"/>
+  <ellipse cx="660" cy="308" rx="560" ry="130" fill="url(#amberwash)"/>
+
+  <!-- faint starfield -->
+  <g fill="#2A4A66">
+    <circle cx="80" cy="50" r="1.6"/><circle cx="210" cy="34" r="1.6"/><circle cx="330" cy="64" r="1.6"/>
+    <circle cx="470" cy="40" r="1.6"/><circle cx="600" cy="70" r="1.6"/><circle cx="705" cy="36" r="1.6"/>
+    <circle cx="835" cy="58" r="1.6"/><circle cx="1235" cy="150" r="1.6"/><circle cx="150" cy="120" r="1.6"/>
+    <circle cx="1255" cy="40" r="1.6"/><circle cx="905" cy="26" r="1.6"/><circle cx="55" cy="230" r="1.6"/>
+    <circle cx="640" cy="150" r="1.6"/><circle cx="60" cy="360" r="1.6"/><circle cx="1240" cy="390" r="1.6"/>
   </g>
 
-  <!-- ============ LEFT: wordmark ============ -->
-  <text x="80" y="112" font-size="17" font-weight="bold" letter-spacing="5" fill="#4FD1C5">OPEN STANDARD · V1.22</text>
-  <text x="78" y="182" font-size="72" font-weight="bold" fill="#F2F6F9">KM Standard</text>
-  <text x="80" y="226" font-size="23" fill="#A8BDD1">Governed, agent-readable knowledge in plain files.</text>
+  <!-- ================= THE RECORD BOUNDARY (hero line) ================= -->
+  <rect x="0" y="300" width="1280" height="16" fill="#E8B34B" opacity="0.07"/>
+  <line x1="0" y1="308" x2="1280" y2="308" stroke="#E8B34B" stroke-width="7" opacity="0.14"/>
+  <line x1="0" y1="308" x2="1280" y2="308" stroke="#F2C464" stroke-width="2.6" opacity="0.85"/>
+  <line x1="0" y1="308" x2="1280" y2="308" stroke="#FFE9B8" stroke-width="0.9" opacity="0.9"/>
+  <text x="82" y="297" font-size="14" letter-spacing="2.5" font-weight="bold" fill="#E8B34B" opacity="0.9">THE RECORD BOUNDARY</text>
 
-  <!-- feature tokens -->
-  <g font-size="16" fill="#8FA9C0">
-    <rect x="80" y="258" width="118" height="34" rx="17" fill="none" stroke="#2C4A66" stroke-width="1.5"/>
-    <text x="102" y="280">git-native</text>
-    <rect x="212" y="258" width="176" height="34" rx="17" fill="none" stroke="#2C4A66" stroke-width="1.5"/>
-    <text x="234" y="280">evidence-governed</text>
-    <rect x="402" y="258" width="150" height="34" rx="17" fill="none" stroke="#2C4A66" stroke-width="1.5"/>
-    <text x="424" y="280">owner-ruled</text>
+  <!-- ================= BELOW: systems of record (dim world) ================= -->
+  <g>
+    <g fill="#14273A" stroke="#3E5468" stroke-width="1.8">
+      <path d="M120 348 a34 9 0 0 1 68 0 v26 a34 9 0 0 1 -68 0 z"/><ellipse cx="154" cy="348" rx="34" ry="9"/>
+      <path d="M330 356 a30 8 0 0 1 60 0 v22 a30 8 0 0 1 -60 0 z"/><ellipse cx="360" cy="356" rx="30" ry="8"/>
+      <path d="M700 352 a34 9 0 0 1 68 0 v24 a34 9 0 0 1 -68 0 z"/><ellipse cx="734" cy="352" rx="34" ry="9"/>
+      <path d="M920 358 a28 8 0 0 1 56 0 v20 a28 8 0 0 1 -56 0 z"/><ellipse cx="948" cy="358" rx="28" ry="8"/>
+      <path d="M1120 350 a34 9 0 0 1 68 0 v26 a34 9 0 0 1 -68 0 z"/><ellipse cx="1154" cy="350" rx="34" ry="9"/>
+    </g>
+    <!-- blocked record attempts: stubs stopped at the line -->
+    <g stroke="#5E7285" stroke-width="2">
+      <line x1="360" y1="344" x2="360" y2="322"/><line x1="350" y1="320" x2="370" y2="320" stroke-width="3.2"/>
+      <line x1="948" y1="346" x2="948" y2="322"/><line x1="938" y1="320" x2="958" y2="320" stroke-width="3.2"/>
+    </g>
+    <text x="120" y="408" font-size="14" fill="#5E7893">systems of record — the records stay</text>
   </g>
 
-  <!-- the v1.22 motif line -->
-  <text x="80" y="337" font-size="19" font-style="italic" fill="#E8B34B">“Claims cross; records don’t.”</text>
+  <!-- ================= ABOVE: claims rising into hub constellations ================= -->
+  <!-- rising trails -->
+  <g>
+    <rect x="733" y="236" width="2.4" height="66" fill="url(#trail)"/>
+    <rect x="843" y="252" width="2.4" height="52" fill="url(#trail)"/>
+    <rect x="1013" y="242" width="2.4" height="62" fill="url(#trail)"/>
+    <rect x="1153" y="256" width="2.4" height="48" fill="url(#trail)"/>
+    <rect x="923" y="262" width="2.4" height="42" fill="url(#trail)"/>
+  </g>
+  <!-- claim particles with glow -->
+  <g>
+    <circle cx="734" cy="232" r="16.0" fill="#4FD1C5" opacity="0.10"/><circle cx="734" cy="232" r="8.8" fill="#4FD1C5" opacity="0.22"/><circle cx="734" cy="232" r="3.4" fill="#7FE6DC"/>
+    <circle cx="844" cy="248" r="14.0" fill="#4FD1C5" opacity="0.10"/><circle cx="844" cy="248" r="7.7" fill="#4FD1C5" opacity="0.22"/><circle cx="844" cy="248" r="3" fill="#7FE6DC"/>
+    <circle cx="1014" cy="238" r="16.0" fill="#4FD1C5" opacity="0.10"/><circle cx="1014" cy="238" r="8.8" fill="#4FD1C5" opacity="0.22"/><circle cx="1014" cy="238" r="3.4" fill="#7FE6DC"/>
+    <circle cx="1154" cy="252" r="13.0" fill="#4FD1C5" opacity="0.10"/><circle cx="1154" cy="252" r="7.2" fill="#4FD1C5" opacity="0.22"/><circle cx="1154" cy="252" r="2.8" fill="#7FE6DC"/>
+    <circle cx="924" cy="258" r="12.0" fill="#4FD1C5" opacity="0.10"/><circle cx="924" cy="258" r="6.6" fill="#4FD1C5" opacity="0.22"/><circle cx="924" cy="258" r="2.6" fill="#7FE6DC"/>
+  </g>
 
-  <!-- ============ RIGHT: the stack motif ============ -->
+  <!-- hub constellations -->
+  <g>
+    <!-- hub 1 -->
+    <rect x="676" y="120" width="150" height="86" rx="16" fill="url(#hubfill)" stroke="#4FD1C5" stroke-width="1.6" opacity="0.95"/>
+    <g stroke="#2E6B72" stroke-width="1.3">
+      <line x1="706" y1="152" x2="742" y2="176"/><line x1="742" y1="176" x2="782" y2="146"/><line x1="706" y1="152" x2="782" y2="146"/>
+    </g>
+    <circle cx="706" cy="152" r="12.0" fill="#4FD1C5" opacity="0.10"/><circle cx="706" cy="152" r="6.6" fill="#4FD1C5" opacity="0.22"/><circle cx="706" cy="152" r="3.4" fill="#4FD1C5"/>
+    <circle cx="742" cy="176" r="12.0" fill="#4FD1C5" opacity="0.10"/><circle cx="742" cy="176" r="6.6" fill="#4FD1C5" opacity="0.22"/><circle cx="742" cy="176" r="3.4" fill="#4FD1C5"/>
+    <circle cx="782" cy="146" r="12.0" fill="#4FD1C5" opacity="0.10"/><circle cx="782" cy="146" r="6.6" fill="#4FD1C5" opacity="0.22"/><circle cx="782" cy="146" r="3.4" fill="#4FD1C5"/>
+    <!-- hub 2 -->
+    <rect x="866" y="150" width="150" height="86" rx="16" fill="url(#hubfill)" stroke="#4FD1C5" stroke-width="1.6" opacity="0.95"/>
+    <g stroke="#2E6B72" stroke-width="1.3">
+      <line x1="896" y1="182" x2="932" y2="206"/><line x1="932" y1="206" x2="972" y2="176"/>
+    </g>
+    <circle cx="896" cy="182" r="12.0" fill="#4FD1C5" opacity="0.10"/><circle cx="896" cy="182" r="6.6" fill="#4FD1C5" opacity="0.22"/><circle cx="896" cy="182" r="3.4" fill="#4FD1C5"/>
+    <circle cx="932" cy="206" r="12.0" fill="#4FD1C5" opacity="0.10"/><circle cx="932" cy="206" r="6.6" fill="#4FD1C5" opacity="0.22"/><circle cx="932" cy="206" r="3.4" fill="#4FD1C5"/>
+    <circle cx="972" cy="176" r="12.0" fill="#4FD1C5" opacity="0.10"/><circle cx="972" cy="176" r="6.6" fill="#4FD1C5" opacity="0.22"/><circle cx="972" cy="176" r="3.4" fill="#4FD1C5"/>
+    <!-- hub 3 -->
+    <rect x="1056" y="118" width="150" height="86" rx="16" fill="url(#hubfill)" stroke="#4FD1C5" stroke-width="1.6" opacity="0.95"/>
+    <g stroke="#2E6B72" stroke-width="1.3">
+      <line x1="1086" y1="150" x2="1122" y2="174"/><line x1="1122" y1="174" x2="1162" y2="144"/>
+    </g>
+    <circle cx="1086" cy="150" r="12.0" fill="#4FD1C5" opacity="0.10"/><circle cx="1086" cy="150" r="6.6" fill="#4FD1C5" opacity="0.22"/><circle cx="1086" cy="150" r="3.4" fill="#4FD1C5"/>
+    <circle cx="1122" cy="174" r="12.0" fill="#4FD1C5" opacity="0.10"/><circle cx="1122" cy="174" r="6.6" fill="#4FD1C5" opacity="0.22"/><circle cx="1122" cy="174" r="3.4" fill="#4FD1C5"/>
+    <circle cx="1162" cy="144" r="12.0" fill="#4FD1C5" opacity="0.10"/><circle cx="1162" cy="144" r="6.6" fill="#4FD1C5" opacity="0.22"/><circle cx="1162" cy="144" r="3.4" fill="#4FD1C5"/>
+    <text x="676" y="106" font-size="14" fill="#7FA3BC">knowledge hubs</text>
+  </g>
+
   <!-- supervisor -->
   <g>
-    <rect x="928" y="52" width="44" height="44" rx="8" transform="rotate(45 950 74)" fill="#3A2530" stroke="#D9846B" stroke-width="2.5"/>
-    <text x="990" y="80" font-size="15" fill="#93A8BC">supervisor</text>
-  </g>
-  <!-- links supervisor->hubs -->
-  <g stroke="#37536F" stroke-width="1.8">
-    <line x1="950" y1="106" x2="810" y2="152"/>
-    <line x1="950" y1="106" x2="950" y2="152"/>
-    <line x1="950" y1="106" x2="1090" y2="152"/>
+    <circle cx="951" cy="62" r="34" fill="#E08A6A" opacity="0.10"/><circle cx="951" cy="62" r="22" fill="#E08A6A" opacity="0.16"/>
+    <rect x="933" y="44" width="36" height="36" rx="7" transform="rotate(45 951 62)" fill="#341F28" stroke="#E08A6A" stroke-width="2.2"/>
+    <g stroke="#3A5A76" stroke-width="1.3" opacity="0.9">
+      <line x1="951" y1="90" x2="790" y2="120"/>
+      <line x1="951" y1="90" x2="941" y2="150"/>
+      <line x1="951" y1="90" x2="1110" y2="118"/>
+    </g>
+    <text x="994" y="67" font-size="14" fill="#C08D7B">supervisor</text>
   </g>
 
-  <!-- hubs row -->
-  <g>
-    <rect x="748" y="152" width="124" height="70" rx="12" fill="url(#hubglow)" stroke="#4FD1C5" stroke-width="2.5"/>
-    <rect x="888" y="152" width="124" height="70" rx="12" fill="url(#hubglow)" stroke="#4FD1C5" stroke-width="2.5"/>
-    <rect x="1028" y="152" width="124" height="70" rx="12" fill="url(#hubglow)" stroke="#4FD1C5" stroke-width="2.5"/>
-    <!-- tiny entity dots + link lines inside each hub -->
-    <g fill="#4FD1C5">
-      <circle cx="778" cy="180" r="4"/><circle cx="812" cy="196" r="4"/><circle cx="842" cy="174" r="4"/>
-      <circle cx="918" cy="180" r="4"/><circle cx="952" cy="196" r="4"/><circle cx="982" cy="174" r="4"/>
-      <circle cx="1058" cy="180" r="4"/><circle cx="1092" cy="196" r="4"/><circle cx="1122" cy="174" r="4"/>
-    </g>
-    <g stroke="#2E6B72" stroke-width="1.4">
-      <line x1="778" y1="180" x2="812" y2="196"/><line x1="812" y1="196" x2="842" y2="174"/>
-      <line x1="918" y1="180" x2="952" y2="196"/><line x1="952" y1="196" x2="982" y2="174"/>
-      <line x1="1058" y1="180" x2="1092" y2="196"/><line x1="1092" y1="196" x2="1122" y2="174"/>
-    </g>
-    <text x="1152" y="245" font-size="15" fill="#93A8BC" text-anchor="end">knowledge hubs</text>
-  </g>
-
-  <!-- gateway band -->
-  <g>
-    <line x1="700" y1="285" x2="1200" y2="285" stroke="#E8B34B" stroke-width="3"/>
-    <line x1="700" y1="291" x2="1200" y2="291" stroke="#E8B34B" stroke-width="1" opacity="0.45"/>
-    <text x="700" y="273" font-size="15" fill="#E8B34B">gateway</text>
-    <text x="1200" y="273" font-size="15" fill="#E8B34B" text-anchor="end">classify · extract · resolve</text>
-  </g>
-  <!-- crossing arrows: claims up (solid), records blocked (stub) -->
-  <g stroke="#4FD1C5" stroke-width="2.2" fill="none">
-    <line x1="810" y1="318" x2="810" y2="238"/>
-    <path d="M804 246 L810 234 L816 246" fill="#4FD1C5" stroke="none"/>
-    <line x1="950" y1="318" x2="950" y2="238"/>
-    <path d="M944 246 L950 234 L956 246" fill="#4FD1C5" stroke="none"/>
-  </g>
-  <g stroke="#5E7285" stroke-width="2.2">
-    <line x1="1090" y1="318" x2="1090" y2="300"/>
-    <line x1="1078" y1="298" x2="1102" y2="298" stroke-width="3.5"/>
-  </g>
-
-  <!-- systems of record: three cylinders -->
-  <g>
-    <g fill="#1B3450" stroke="#5E7285" stroke-width="2">
-      <path d="M770 330 a40 11 0 0 1 80 0 v28 a40 11 0 0 1 -80 0 z"/>
-      <ellipse cx="810" cy="330" rx="40" ry="11"/>
-      <path d="M910 330 a40 11 0 0 1 80 0 v28 a40 11 0 0 1 -80 0 z"/>
-      <ellipse cx="950" cy="330" rx="40" ry="11"/>
-      <path d="M1050 330 a40 11 0 0 1 80 0 v28 a40 11 0 0 1 -80 0 z"/>
-      <ellipse cx="1090" cy="330" rx="40" ry="11"/>
-    </g>
-    <text x="770" y="392" font-size="15" fill="#7A90A6">systems of record — the records stay</text>
-  </g>
+  <!-- ================= LEFT: wordmark ================= -->
+  <text x="82" y="102" font-size="16" font-weight="bold" letter-spacing="6" fill="#4FD1C5">OPEN STANDARD · V1.22</text>
+  <text x="78" y="186" font-size="88" font-weight="bold" fill="#F5F9FC">KM <tspan fill="#4FD1C5">Standard</tspan></text>
+  <text x="82" y="232" font-size="24" fill="#AFC4D8">Governed, agent-readable knowledge in plain files.</text>
+  <text x="82" y="268" font-size="21" font-style="italic" fill="#F2C464">“Claims cross; records don’t.”</text>
 </svg>

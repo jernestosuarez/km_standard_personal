@@ -8,6 +8,24 @@ timestamp: 2026-07-02
 
 <p align="center"><img src="assets/km-banner.png" alt="KM Standard — governed, agent-readable knowledge in plain files" width="100%"/></p>
 
+<p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
+
+<p align="center">
+  <img src="assets/badges/version.svg" alt="standard v1.22"/>
+  <img src="assets/badges/rfcs.svg" alt="RFCs: 2 adopted"/>
+  <img src="assets/badges/license.svg" alt="license: free to adopt"/>
+  <img src="assets/badges/format.svg" alt="format: markdown + git"/>
+  <img src="assets/badges/agents.svg" alt="agents: MCP-ready"/>
+</p>
+
+<p align="center">
+  <a href="STANDARD.md"><img src="assets/badges/nav-standard.svg" alt="The Standard"/></a>&nbsp;
+  <a href="template/"><img src="assets/badges/nav-template.svg" alt="Template"/></a>&nbsp;
+  <a href="rfcs/"><img src="assets/badges/nav-rfcs.svg" alt="RFCs"/></a>&nbsp;
+  <a href="skills/"><img src="assets/badges/nav-skills.svg" alt="Skills"/></a>&nbsp;
+  <a href="#quick-start--one-hub"><img src="assets/badges/nav-quickstart.svg" alt="Quick start"/></a>
+</p>
+
 # Knowledge Management Standard
 
 **Current version: v1.22** (2026-08-16). The full ledger of released versions, and the rule that a
