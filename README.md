@@ -21,7 +21,8 @@ tied to any specific company, industry, or AI vendor.
 | Path | What it is |
 |---|---|
 | [`STANDARD.md`](STANDARD.md) | The full standard — architecture, governance rules, frontmatter spec, ontology layer, checklists. Read this first. |
-| [`template/`](template/) | A ready-to-copy reference hub: stub docs, `context.jsonld`, `km-deployment.md`, entity-note folders (`decisions/`, `risks/`, `stakeholders/`, `milestones/`, `partners/`), governance files, and the per-hub agent skills (`km-intake`, `km-propose`, `km-gather`, `km-start`, `km-handover`, `km-brief`) already wired up for Claude Code and AGENTS.md-compatible tools. |
+| [`template/`](template/) | A ready-to-copy reference hub: stub docs, `context.jsonld`, `km-deployment.md`, entity-note folders (`decisions/`, `risks/`, `stakeholders/`, `milestones/`, `partners/`, `corrections/`, plus the optional `relationships/`, `claims/`, and `sources/systems/`), governance files, and the per-hub agent skills (`km-intake`, `km-propose`, `km-gather`, `km-start`, `km-handover`, `km-brief`) already wired up for Claude Code and AGENTS.md-compatible tools. |
+| [`rfcs/`](rfcs/RFC-001-sor-gateway.md) | Design RFCs. RFC-001 — the record boundary / systems-of-record gateway (drafted as v1.22, awaiting owner push): motivation, migration, implementation notes, and open questions for Rule 6, `accessClass`, `SourceSystem`, `Claim`, bitemporal validity, and inbound connectors. |
 | [`contracts/organization-profile.schema.json`](contracts/organization-profile.schema.json) | Portable JSON contract for an approved Enterprise Knowledge Layer organization profile. |
 | [`scripts/validate_organization_profile.py`](scripts/validate_organization_profile.py) | Dependency-free validator for profile shape, compatibility, safe paths, and module eligibility. |
 | [`skills/km-init/`](skills/km-init/SKILL.md) | Workspace-level skill: stands up a brand-new hub from `template/`. |

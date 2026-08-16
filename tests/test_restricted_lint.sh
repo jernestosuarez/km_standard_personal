@@ -8,6 +8,10 @@
 # narrowing fixtures prove BOTH sides of the narrowed rule: a note restricted only in one body
 # section stays nameable on outbound surfaces, while that section's verbatim text does not
 # travel, and a frontmatter-restricted note's name is still blocked.
+# The v1.22 classification fixtures prove both sides of the accessClass rule (Rule 6): a note
+# classed restricted/record stays NAMEABLE on outbound surfaces (existence crosses), while its
+# BODY text does not travel and its class line on a surface is an error; build-indexes.sh
+# excludes classed notes from generated indexes.
 # All content here is synthetic; no real person, organization or initiative is named.
 set -u
 
@@ -16,7 +20,7 @@ work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 hub="$work/hub"
 mkdir -p "$hub/_inbox" "$hub/changes" "$hub/shareable" "$hub/stakeholders" "$hub/decisions" \
-         "$hub/working-docs"
+         "$hub/working-docs" "$hub/claims"
 cp "$ROOT/template/hub-scan.sh" "$hub/hub-scan.sh"
 cp "$ROOT/template/build-indexes.sh" "$hub/build-indexes.sh"
 
@@ -78,6 +82,27 @@ The synthetic fallback is to concede the annex and hold the fee schedule.
 ## Next steps
 
 Open again after the restricted span; schedule the review call.
+EOF
+
+# A restricted-CLASS note (v1.22, Rule 6): frontmatter accessClass, no sensitivity marker.
+# Its name must stay nameable on outbound surfaces (existence crosses); its body must not travel.
+cat > "$hub/claims/synthetic-funding-claim.md" <<'EOF'
+---
+type: Claim
+title: Synthetic funding claim for the accessClass fixture
+description: Synthetic restricted-class claim note.
+owner: "[[casey-example]]"
+evidencedBy: [sources/docs/synthetic-ledger.md]
+assertion_method: derived
+accessClass: restricted
+recordedAt: 2026-08-16
+lifecycle: active
+tags: [fixture]
+resource: ./
+timestamp: 2026-08-16
+---
+
+The synthetic ledger extract routes nine hundred units through the fixture account.
 EOF
 
 cat > "$hub/shareable/overview.md" <<'EOF'
@@ -189,6 +214,63 @@ else
 fi
 rm "$hub/changes/2026-08-03_XX_leak_proposal.md"
 
+# 2b. CLASSIFICATION (v1.22), name side: a note classed restricted in FRONTMATTER stays nameable
+#     on an outbound surface — existence crosses (law 3) — and an aggregate derived from it (not a
+#     verbatim line) travels freely: aggregation declassifies; extraction does not. Exit status is
+#     not asserted (the appended line makes the surface file uncommitted — [ INTEGRITY ]'s finding).
+printf '\nTotals derive from [[synthetic-funding-claim]]. Aggregate exposure is under one thousand units.\n' >> "$hub/shareable/overview.md"
+out=$(bash "$hub/hub-scan.sh" 2>&1)
+if printf '%s' "$out" | grep -q "RESTRICTED IDENTIFIER 'synthetic-funding-claim'"; then
+  echo "FAIL: a restricted-CLASS note's NAME on a surface was flagged (existence must cross)"
+  printf '%s\n' "$out"
+  fail=1
+elif printf '%s' "$out" | grep -q "RESTRICTED SECTION TEXT (from 'synthetic-funding-claim')"; then
+  echo "FAIL: an aggregate (non-verbatim) line was flagged as restricted-class body text"
+  printf '%s\n' "$out"
+  fail=1
+else
+  echo "PASS: a restricted-class note stays nameable and an aggregate derived from it travels"
+fi
+git -C "$hub" checkout -q -- shareable/overview.md
+
+# 2c. CLASSIFICATION (v1.22), text side: a verbatim body line of a restricted-class note in
+#     change-notice free text must fail the scan as an error — that is extraction.
+cat > "$hub/changes/2026-08-16_XX_extract_proposal.md" <<'EOF'
+# Change Proposal - extraction fixture
+
+Quoting the body of the restricted-class claim note:
+
+The synthetic ledger extract routes nine hundred units through the fixture account.
+EOF
+out=$(bash "$hub/hub-scan.sh" 2>&1); status=$?
+if [ "$status" -eq 1 ] && printf '%s' "$out" | grep -q "RESTRICTED SECTION TEXT (from 'synthetic-funding-claim')"; then
+  echo "PASS: restricted-class body text in a change notice fails the scan"
+else
+  echo "FAIL: restricted-class body text in a change notice did not fail the scan (exit $status)"
+  printf '%s\n' "$out"
+  fail=1
+fi
+rm "$hub/changes/2026-08-16_XX_extract_proposal.md"
+
+# 2d. CLASSIFICATION (v1.22), class line: a restricted/record class line on a surface means a
+#     classed note's frontmatter was copied there wholesale — an error, same as the marker.
+cat > "$hub/changes/2026-08-16_XX_classline_proposal.md" <<'EOF'
+# Change Proposal - class-line fixture
+
+Quoting a classed note wholesale into free text, frontmatter and all:
+
+accessClass: record
+EOF
+out=$(bash "$hub/hub-scan.sh" 2>&1); status=$?
+if [ "$status" -eq 1 ] && printf '%s' "$out" | grep -q "RESTRICTED ACCESS CLASS"; then
+  echo "PASS: restricted access class line in a change notice fails the scan"
+else
+  echo "FAIL: restricted access class line in a change notice did not fail the scan (exit $status)"
+  printf '%s\n' "$out"
+  fail=1
+fi
+rm "$hub/changes/2026-08-16_XX_classline_proposal.md"
+
 # 3. build-indexes.sh excludes the restricted note and keeps the non-restricted one.
 cat > "$hub/stakeholders/jordan-avery.md" <<'EOF'
 ---
@@ -213,12 +295,21 @@ else
   echo "PASS: build-indexes.sh excludes restricted notes from the generated index"
 fi
 
+# 3b. build-indexes.sh excludes a restricted-CLASS note from its index (v1.22): an index row
+#     carries title and fields, which for a classed note is extraction, not existence.
+if grep -q "synthetic-funding-claim" "$hub/claims/index.md"; then
+  echo "FAIL: build-indexes.sh listed a restricted-class note in the claims index"
+  fail=1
+else
+  echo "PASS: build-indexes.sh excludes restricted-class notes from the generated index"
+fi
+
 # 4. POSITIVE: with the index regenerated and everything committed, the hub scans clean.
-git -C "$hub" add stakeholders/jordan-avery.md stakeholders/index.md decisions/index.md
+git -C "$hub" add stakeholders/jordan-avery.md stakeholders/index.md decisions/index.md claims/index.md
 git -C "$hub" -c user.name=fixture -c user.email=fixture@example.invalid \
   commit -qm "apply: add fixture stakeholder and generated indexes"
 out=$(bash "$hub/hub-scan.sh" 2>&1); status=$?
-if [ "$status" -eq 0 ] && printf '%s' "$out" | grep -q "OK: no restricted markers, identifiers or section text"; then
+if [ "$status" -eq 0 ] && printf '%s' "$out" | grep -q "OK: no restricted markers, classes, identifiers or section text"; then
   echo "PASS: clean hub passes with [ RESTRICTED ] reporting OK"
 else
   echo "FAIL: clean hub did not pass (exit $status)"

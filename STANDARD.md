@@ -1,17 +1,18 @@
 ---
 type: brief
-title: Knowledge Management Standard: Hub Framework (v1.21 DRAFT — awaiting owner push)
-description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, and an optional Agent Tier for named, discoverable agent instances.
+title: Knowledge Management Standard: Hub Framework (v1.22 DRAFT — awaiting owner push)
+description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, an optional Agent Tier for named, discoverable agent instances, and an optional record-boundary layer for governed use of systems of record.
 tags: [standard, knowledge-management, governance, okf, agents]
 resource: template/
 timestamp: 2026-08-06
 ---
 
-# Knowledge Management Standard: Hub Framework (v1.21 DRAFT — awaiting owner push)
+# Knowledge Management Standard: Hub Framework (v1.22 DRAFT — awaiting owner push)
 
-**DRAFT — awaiting owner push.** v1.20 (the owner queue) and v1.21 (the `[ RESTRICTED ]`
-narrowing) are drafted but unpublished; the last published version is **v1.19**, and every
-deployment pin continues to resolve against v1.19 until the owner pushes.
+**DRAFT — awaiting owner push.** v1.20 (the owner queue), v1.21 (the `[ RESTRICTED ]`
+narrowing) and v1.22 (the record boundary) are drafted but unpublished; the last published
+version is **v1.19**, and every deployment pin continues to resolve against v1.19 until the
+owner pushes.
 
 **Status:** Active standard. Framework-agnostic, works with Claude, GPT, Gemini, or any other LLM agent, and equally well with no agent at all (plain human use).
 
@@ -72,7 +73,7 @@ systems and tools.**
 
 ### Layer 2: Governance
 
-A lightweight governance layer sits on top of the format. It enforces five rules that prevent the hub
+A lightweight governance layer sits on top of the format. It enforces six rules that prevent the hub
 from drifting into an uncontrolled, unreliable state:
 
 1. **Inbox-first**, all incoming files land in `_inbox/` before anything else
@@ -82,6 +83,8 @@ from drifting into an uncontrolled, unreliable state:
 4. **OKF frontmatter on every doc**, enforced at scan time, not just at authoring time
 5. **Source traceability**, every fact in a hub document traces to a named origin; a fact whose
    origin cannot be named is flagged at intake, never blended into settled prose
+6. **The record boundary**, records stay in the systems that master them; hubs hold claims about
+   records, with resolvable pointers, never shadow copies of operational data
 
 Governance contributes: **auditability, change control, integrity, and accountability.**
 
@@ -186,6 +189,8 @@ The canonical layout below is fixed. Adapt folder names only for initiative-spec
 │                                      (type: RelationshipAssertion) — see § Relationship layer
 ├── corrections/                     ← One note per correction (type: Correction) — the standing
 │                                      rules produced when someone said "no, that's wrong"
+├── claims/                          ← Optional: one note per promoted claim (type: Claim)
+│                                      — see § Claims (ninth type)
 │
 ├── _inbox/                          ← Drop zone — ALL incoming files land here first
 │   └── README.md                    ← Governance reminder (no exceptions)
@@ -198,6 +203,8 @@ The canonical layout below is fixed. Adapt folder names only for initiative-spec
 │   ├── transcript-index.md          ← Inbound provenance index (meetings, memos, documents)
 │   ├── dates-register.md            ← Date gate control point — no source ingested without a date
 │   ├── publication-log.md           ← Outbound provenance index (artifacts sent, audience, commit)
+│   ├── systems/                     ← Optional: one note per connected system of record
+│   │                                  (type: SourceSystem) — see § Source systems (eighth type)
 │   ├── decks/                       ← Source decks + digests
 │   ├── docs/                        ← Source documents + digests
 │   └── [initiative-specific]/       ← Additional source subfolders as needed
@@ -219,7 +226,8 @@ The canonical layout below is fixed. Adapt folder names only for initiative-spec
 ```
 0[0-9]_*.md   10_*.md   CLAUDE.md   AGENTS.md   README.md   km-deployment.md   context.jsonld
 sources/transcript-index.md   sources/publication-log.md
-{decisions,risks,stakeholders,milestones,partners}/*.md, excluding TEMPLATE.md
+{decisions,risks,stakeholders,milestones,partners,relationships,corrections,claims}/*.md, excluding TEMPLATE.md
+sources/systems/*.md, excluding TEMPLATE.md
 reconciliation/*.md topic files, excluding reconciliation/README.md
 ```
 
@@ -313,6 +321,8 @@ value. This standard's five entity types are grounded accordingly:
 | `Risk` | *(none, proprietary)* | Same, risk framing is organization-specific |
 | `RelationshipAssertion` | `rdf:` reification + `prov:` | Optional sixth type. *How people relate* is partly common ground (`org:reportsTo`, `org:memberOf`) and partly proprietary (how your organization evidences collaboration), see § Relationship layer |
 | `Correction` | *(none, proprietary)* | Seventh type. How *this* organization learns from being wrong has no open-standard equivalent, and the rules it produces are the organization's own tribal knowledge, which is exactly the part worth keeping. See § The correction loop |
+| `SourceSystem` | `dcat:DataService` | Optional eighth type. A connected system of record is a solved, open-standard concept — W3C DCAT already models data services; don't invent a proprietary replacement. See § Source systems |
+| `Claim` | *(none, proprietary)* | Optional ninth type. What *this* organization holds to be true, on what evidence, for what period — that adjudication is the hub's own vocabulary, like `Decision` and `Risk`. See § Claims |
 
 Extend `context.jsonld` with more proprietary terms freely as an initiative needs them, that extension
 *is* the ontology's IP, per the reasoning above. Do not invent proprietary replacements for `Stakeholder`
@@ -531,6 +541,61 @@ External people (clients, partners, government counterparts) are `Stakeholder` n
 hold them in a separate folder or namespace; that is a local overlay decision, not a schema change,
 and it must not fork the `Stakeholder` type.
 
+### Source systems: the record boundary's registry (optional eighth type)
+
+Rule 6 says records stay in systems of record. A hub honouring it needs one small thing the
+directory layout did not have: a place where *which systems, on what terms* is written down. A
+`SourceSystem` note is that place — one note per connected system of record, in `sources/systems/`,
+carrying the system-level contract: what kind of system it is, how its records are addressed, how
+the hub connects, the classification ceiling of what it may emit, and how often it is re-read. It
+is **optional**, like `RelationshipAssertion`: adopt it when the hub actually draws on systems of
+record; a hub fed only by dropped documents loses nothing by ignoring it.
+
+| Field | Purpose |
+|---|---|
+| `systemKind` | `erp` \| `crm` \| `hris` \| `finance` \| `dms` \| `ticketing` \| `transcription` \| `idp` \| `vault-export` \| `other` |
+| `uriScheme` | How pointers into this system are written, e.g. `gdrive://`, `notion://`, `transcript://` — the resolvable-pointer half of Rule 6 |
+| `connector` | `manual` \| `mcp:<server-name>` \| `api` — how material crosses. `manual` is the common case and fully valid: the inbox is the connector |
+| `defaultAccessClass` | The class stamped on anything extracted from this system, unless the owner rules otherwise |
+| `refreshPolicy` | `on-demand` \| `daily` \| `weekly` \| `none` — how freshness is maintained. `none` declares a snapshot honestly |
+| `owner` | Wiki-link to the stakeholder who owns the relationship with this system |
+
+Grounding: `dcat:DataService` (W3C DCAT, declared in `context.jsonld`) — the same reasoning as
+`Stakeholder` and `Partner`: data-catalog vocabulary is solved common ground, and a proprietary
+replacement would buy nothing but lock-in. See
+[`template/sources/systems/TEMPLATE.md`](template/sources/systems/TEMPLATE.md).
+
+The note lives under `sources/` deliberately: it is provenance infrastructure, the system-level
+sibling of the provenance registers already there. The division of labour with
+`sources/dates-register.md` matters and is stated in both places: the **register** remains the
+date gate's control point, one row per *source*; the **SourceSystem note** carries the
+*system-level* contract those sources arrive under. `sources.config.md` remains the gather tool's
+runtime configuration; where this type is adopted, a configured external source points at its
+SourceSystem note rather than restating its terms. See also §"Source connectors (SoR gateway)":
+in the connector model, each SourceSystem note *is* the connector's declarative manifest.
+
+### Claims: a settled fact with its own lifecycle (optional ninth type)
+
+The reconciliation layer settles facts into topic-file rows, and for most hubs a row is enough. A
+row stops being enough when a fact needs what a row cannot carry: its own lifecycle (it will be
+superseded independently of its topic), an evidence chain (several resolvable pointers, not a
+source-list cell), a validity window, or a stable identity another hub can reference. A `Claim`
+note — one statement per file, in `claims/` — promotes such a row to a first-class entity.
+
+Fields: the statement itself is the `title`; `owner`; `evidencedBy` (a list of resolvable
+pointers — Rule 5's provenance order applies, and the mapping reuses `prov:wasDerivedFrom`);
+`assertion_method` (the relationship layer's vocabulary — `directory`, `communication-evidence`,
+`meeting-evidence`, `stated` — plus `derived`, for a claim computed from records: an aggregate
+that crossed under law 2); `confidence` (omitted once adjudicated, as everywhere else);
+`accessClass`; the bitemporal fields (§"Scheduled truth"); `supersedes`; `lifecycle`. See
+[`template/claims/TEMPLATE.md`](template/claims/TEMPLATE.md).
+
+**Reconciliation remains the adjudication process; promotion is never mandatory.** A settled row
+MAY become a Claim note when it earns the overhead — it never must, and a small hub loses nothing
+by keeping its tables. When a row is promoted, it points at the note instead of restating it:
+single home of record, as everywhere. Grounding: proprietary, like `Decision` and `Risk` — what
+this organization holds true, on what evidence, is its own vocabulary.
+
 ### Why this matters beyond IP: pull queries and reliable generation
 
 Individually addressable, typed entity notes are what make two things possible that prose tables don't:
@@ -547,7 +612,7 @@ maintain.
 
 ---
 
-## Governance Layer: Five Rules
+## Governance Layer: Six Rules
 
 ### Rule 1: Everything goes to `_inbox/` first
 
@@ -932,6 +997,70 @@ fact. Two mechanisms move a fact up the order:
    the artifact itself into `sources/` so the hub holds it. Do not hoard everything, hold the
    evidence for the facts that matter, and leave the rest as honestly-marked second-order.
 
+### Rule 6: The record boundary (added in v1.22)
+
+**Records stay in systems of record. Hubs hold claims about records.**
+
+A hub is not a data store. The moment it starts holding copies of operational records — CRM rows,
+ledger entries, personnel files, contact databases — it becomes a shadow system: unowned,
+unrefreshed, and invisible to the access controls of the system the records actually live in.
+Every hub therefore distinguishes **systems of record** (the ERP, CRM, HRIS, finance system,
+document store, ticketing system, transcription service, identity provider — wherever a record is
+mastered) from **knowledge** (what the hub asserts about the world). Records stay in the system
+that owns them; the hub holds **claims about records**, each with a resolvable pointer back
+(Rule 5's provenance order applies to the pointer).
+
+Four crossing laws govern what may pass from a system of record into a hub:
+
+1. **Claims cross; records don't.** *"The contract commits us to X — at `<uri>`"* is hub
+   knowledge. The contract itself stays in the document store.
+2. **Aggregates cross; line items don't.** A total computed across a ledger is knowledge; the
+   ledger's rows are records.
+3. **Existence crosses; contents don't.** That a database exists — its size, owner, and location —
+   is knowledge; its rows are records. A hub can answer *"what do we hold, and where?"* without
+   holding any of it.
+4. **When a copy is unavoidable — pointer rot, survivability (sources get revoked; people leave) —
+   copy only the classified extract, with lineage:** source pointer, extraction date, access
+   class. A hub must survive losing its system of record, but only at the fidelity its access
+   class permits.
+
+**This rule names a boundary the standard already enforced by hand.** The inbox (Rule 1), the date
+gate, and the reconciliation layer *are* the gateway between systems of record and the hub,
+operated manually: material lands in `_inbox/`, is dated, digested, classified, and adjudicated
+before anything becomes settled hub prose. Rule 6 states what those mechanisms were always
+protecting, and gives it a schema — the optional `accessClass` field below, the `SourceSystem` and
+`Claim` entity types (Ontology & Entity Layer), and the optional connector section (§"Source
+connectors (SoR gateway)"). The governing principle for any automation built at this boundary,
+the same division reconciliation already draws: **detection, extraction, and freshness automate;
+classification and resolution authority stay with the owner.**
+
+#### `accessClass`: the classification a claim carries (optional)
+
+Any hub document or entity note may carry an optional frontmatter field:
+
+```yaml
+accessClass: public | internal | restricted | record
+```
+
+- **Default when absent: `internal`.** A hub with no interest in classification never writes the
+  field, and nothing changes.
+- **`record`** marks catalogue entries and pointers whose referent must never be reproduced in hub
+  content: the note may say what the record is, where it lives, and how big it is (law 3); it may
+  never quote it.
+- **Propagation:** anything derived from `restricted` material inherits `restricted` unless
+  declassified.
+- **Declassification: "Aggregation declassifies; extraction does not."** A total computed across a
+  thousand rows may drop a class; a single row never does — whoever does the extracting.
+- **Outbound enforcement:** nothing `restricted` or `record` reaches `shareable/` or a published
+  artifact. Mechanically, the `[ RESTRICTED ]` check is classification-aware: the body text of a
+  note classed `restricted` or `record` is blocked verbatim on outbound surfaces, while the note's
+  **name stays nameable** — existence crosses (law 3); contents do not. Verbatim matching enforces
+  the declassification rule by construction: an aggregate is not a verbatim line of any restricted
+  note, so it passes; an extracted line is, so it does not. Restricted-class notes are also
+  excluded from generated entity indexes. The existing `sensitivity: restricted` marker is
+  complementary, not competing: a note whose **name or existence** is itself sensitive carries the
+  marker in frontmatter, which blocks the name as well, exactly as since v1.16.
+
 ---
 
 ## File Templates
@@ -1074,6 +1203,38 @@ machinery (`.claude/`, skills, templates), a query surface that answers question
 tooling is noise burying the fact someone asked for.
 
 **Committed = safe to expose.** The server must never be the thing that weakens that.
+
+### Source connectors (SoR gateway): optional, inbound (added in v1.22)
+
+The query surface above is the hub's optional **outbound** interface: external agents consume
+committed hub facts through four tools. This section is its **inbound mirror** — the record
+boundary (Rule 6) expressed as an interface. The symmetry is deliberate: outbound, the git commit
+is the publish boundary; inbound, the access class is the crossing boundary. Both are additive
+consumption paths, never dependencies.
+
+**v1 — declarative.** Each `SourceSystem` note (Ontology & Entity Layer, eighth type) *is* the
+connector manifest: system kind, uri scheme, connector route, class ceiling, refresh cadence. A
+hub whose connectors are all `manual` is already fully described — the inbox is the connector, and
+**a hub built from a snapshot is the batch degenerate case of the gateway**: a `vault-export`
+source with `refreshPolicy: none`, honestly declared.
+
+**v2 — live.** A connector — typically an MCP server — declares its readable scope, the
+access-class ceiling of what it emits, its cadence, and its uri scheme, matching its SourceSystem
+note. Gateway rules, whatever the transport:
+
+- **Read-only by default.** A connector that can write to a system of record is a different tool
+  with a different risk model, and is out of scope here.
+- **Everything lands via `_inbox/`, or as claims with lineage** — source pointer, extraction date,
+  access class. A connector is a faster inbox, never a bypass: the date gate, digesting, and
+  reconciliation apply unchanged.
+- **Raw records never cross.** A connector emits claims, aggregates, existence, and classified
+  extracts under the four crossing laws — at or below its declared ceiling; the contents of a
+  `record`-class referent never cross at all.
+- **Detection, extraction, and freshness automate; classification and resolution authority stay
+  with the owner.**
+
+Like the MCP query surface, delete every connector and the hub is unchanged — the manual gateway,
+inbox + date gate + reconciliation, is the reference implementation.
 
 ### Progressive disclosure: the folder index
 
@@ -1275,6 +1436,32 @@ Set the staleness threshold in `07_glossary.md` (default **90 days**) and in `hu
 (`STALE_DAYS`). **They must agree**, a documented rule that differs from the enforced rule is worse
 than having neither, because readers trust the document and the machine trusts the script.
 
+### Scheduled truth: bitemporal validity (optional, added in v1.22)
+
+`lifecycle` handles supersession — a fact replaced by a later one. It does not handle **scheduled
+truth**: a fact that is true *for a period*, known in advance. A constraint that holds between two
+dates (a change freeze), an exemption that expires and resurfaces, a decision overtaken by a dated
+event — none of these is superseded by anything; they lapse on schedule, and no record-side
+timestamp says so.
+
+Three optional frontmatter fields, on any hub document or entity note:
+
+| Field | The claim |
+|---|---|
+| `validFrom` | The fact holds in the world from this date |
+| `validUntil` | …and stops holding on this date. A lapsed window is a staleness candidate **by declaration, not by guess** |
+| `recordedAt` | When the hub learned it — which neither `timestamp` (last edit) nor `last-reviewed` (last re-verification) states |
+
+World-time and record-time are different axes, and conflating them is how a hub grades itself
+internally consistent while the world has moved on. This adopts the priority candidate from
+[`DESIGN-RATIONALE_semantica-component-mining.md`](DESIGN-RATIONALE_semantica-component-mining.md)
+(pattern 1) in normative form; the field names follow the entity layer's existing idiom rather
+than the rationale's `valid-until:` sketch. Mappings in `context.jsonld`: `schema:validFrom`,
+`schema:validThrough`, `prov:generatedAtTime`, all `xsd:date`. No check gates on these fields yet;
+the lapsed-window advisory is specified in
+[`rfcs/RFC-001-sor-gateway.md`](rfcs/RFC-001-sor-gateway.md) but deliberately unbuilt until hubs
+write the fields.
+
 ### Validating the graph: links and shape
 
 > An ontology is knowledge, not enforcement. A rule only binds when something deterministic checks
@@ -1464,7 +1651,9 @@ daily and deliver output as a notification. This catches drift before the day's 
 
 If the initiative draws on an external knowledge system (a meeting-transcription tool, a CRM, a ticket
 tracker), record the connection details and any relevant record IDs in `sources.config.md` and
-`sources/transcript-index.md`.
+`sources/transcript-index.md`. Where the record boundary layer is adopted (Rule 6), also create one
+`SourceSystem` note per connected system in `sources/systems/` — the system-level contract: kind,
+uri scheme, connector route, class ceiling, refresh cadence.
 
 ---
 
@@ -1668,7 +1857,7 @@ handover note is the only artifact the Standard Maintainer writes outside the st
 | Proposal/approval filename conventions | `hub-scan.sh` slug-matching depends on these |
 | OKF frontmatter field names (`type`, `title`, etc.) | Interoperability depends on consistency |
 | Standard type taxonomy | Cross-hub consistency; enables multi-hub agent queries |
-| Governance rules (five rules) | The control model; partial compliance breaks auditability |
+| Governance rules (six rules) | The control model; partial compliance breaks auditability |
 | `Stakeholder`/`Partner`/`Milestone` grounding in schema.org | Interoperability and avoiding vendor lock-in, don't invent proprietary replacements for solved, open-standard concepts |
 | One-instance-one-file convention for entity notes | Vault-LD's triples-live-in-frontmatter-only constraint; a table row is invisible to any query surface |
 
@@ -2072,6 +2261,15 @@ The Supervisor is therefore the **master index, never a master copy**. It does n
 hub knowledge; a duplicate that agrees on day one is the worst kind, because nothing flags it until
 the copies have drifted. Hubs hold typed references to Supervisor entities; the Supervisor holds no
 copy of hub engagement facts.
+
+*Pointer (v1.22, unresolved):* where hubs adopt the record boundary (Rule 6), a further
+Supervisor-tier concern appears — an estate view of which systems of record feed which hubs
+(aggregating the hubs' own `SourceSystem` notes), and stewardship of classification defaults at
+the gateway: policy sets the default class per system; the owner adjudicates exceptions, the
+mirror of reconciliation. Whether this expands the Supervisor charter, and whether hubs themselves
+carry clearances the Supervisor mediates when one hub's agent follows another hub's pointers, is
+deliberately left open — see [`rfcs/RFC-001-sor-gateway.md`](rfcs/RFC-001-sor-gateway.md), open
+questions. This paragraph is a pointer, not a charter change.
 
 #### The semantic layer: shared entity registry
 
@@ -2501,6 +2699,7 @@ happened once (see the v1.9 row) and the ledger exists so it does not happen twi
 | v1.19 | 2026-08-06 | The estate corrections registry is surfaced and bound at hub session start (Rule 3), closing for the corrections registry the gap v1.17 closed for the handover. A hub's agent-instruction files bound the evidence standard, the identity home of record, and the escalation protocol by reference, but not the estate `corrections/` registry, so `PROTOCOL.md`'s assertion that a supervisor-tier correction binds every tier had no operational surface at the hub's session-start entry point. `hub-scan.sh` now prints a `[ CORRECTIONS ]` block immediately after `[ HANDOVER ]`, conditional on the workspace root holding `_KM_Supervisor/`, pointing the agent at `../_KM_Supervisor/corrections/` and counting the `lifecycle: active` notes in force; a standalone hub prints nothing. `CLAUDE.md` and `AGENTS.md` declare the registry binding in the estate-binding section, inherited by reference and never copied down. The same change ports the estate-binding section into `AGENTS.md`, which previously carried none, so the binding is present on the non-Claude surface too. Single-hub deployments are unaffected. |
 | v1.20 | 2026-08-14 | **DRAFT — awaiting owner push.** The owner queue (Supervisor tier): one machine-parseable decision surface (`QUEUE.md`) that every proposal, escalation, and ask must register on to count as surfaced to the owner; three tiers (A never defaults; B auto-applies its recommendation after a veto window, with identity, money, restricted content, deletions, and client-facing surfaces never tier B; C never asks); routine decision-halt above a queue cap, checked at the **start** of a run and with escalation classes exempt; a batched Q&A clearing skill (`/km-clear`) bound by reconcile-before-ask; one weekly owner sitting with a protected walkthrough slot; routine briefs demoted to machine-facing with a session-triage read flag; hub inboxes counted as queue inventory. Adopted after an estate reached roughly 40 open items across 8 owner-facing surfaces, with routine decision production outrunning one owner's consumption and re-asks spending owner attention on already-decided items. |
 | v1.21 | 2026-08-14 | **DRAFT — awaiting owner push.** The `[ RESTRICTED ]` name block is narrowed to what the marker actually restricts. Since v1.16, a `sensitivity: restricted` line anywhere in a note made the note's NAME an error on every outbound surface, so a file with one restricted section could never be named as a proposal target: the governed route to changing such a file was blocked by the check meant to protect it. Now a marker in frontmatter still restricts the whole note, name included; a marker in the body restricts the section it opens, whose verbatim text (lines of at least 16 characters, up to the next heading at the same or a higher level) is blocked on outbound surfaces while the note's name and path stay nameable. Stated trade-offs: a body-marked note's existence and name become disclosable, and verbatim-line matching does not catch paraphrase or very short lines, so a note whose name or existence is itself sensitive must be marked in frontmatter. `build-indexes.sh` continues to exclude both forms from generated indexes. `tests/test_restricted_lint.sh` proves both sides of the narrowing and that the frontmatter name block still fires. Derived from an estate incident (owner-adjudicated "fix", 2026-08-14) in which a hub file with one restricted section became structurally un-nameable in `changes/` proposals. |
+| v1.22 | 2026-08-16 | **DRAFT — awaiting owner push.** The record boundary (Rule 6): records stay in systems of record; hubs hold claims about records, with resolvable pointers. Four crossing laws — claims cross, records don't; aggregates cross, line items don't; existence crosses, contents don't; an unavoidable copy is the classified extract with lineage. Optional `accessClass` frontmatter field (`public \| internal \| restricted \| record`, default `internal` when absent), with propagation (derived-from-restricted inherits restricted), the declassification rule ("aggregation declassifies; extraction does not"), and classification-aware `[ RESTRICTED ]` enforcement: a restricted-class note's body text is blocked verbatim on outbound surfaces while its name stays nameable (existence crosses; the `sensitivity: restricted` frontmatter marker remains the mechanism for names that are themselves sensitive), and restricted-class notes are excluded from generated indexes. Two optional entity types: `SourceSystem` (`sources/systems/`, grounded in `dcat:DataService`) — the per-system contract behind the per-source date register — and `Claim` (`claims/`, proprietary) — a settled fact promoted to its own lifecycle and evidence chain, with reconciliation remaining the adjudication process and promotion never mandatory. Optional bitemporal fields `validFrom`/`validUntil`/`recordedAt` (adopting the Semantica mining rationale's priority candidate). An optional inbound connector section mirrors the outbound MCP query surface; the manual inbox + date gate + reconciliation are named as the gateway's reference implementation, and detection/extraction/freshness automate while classification and resolution authority stay with the owner. Full rationale, migration notes, implementation notes, and open questions in `rfcs/RFC-001-sor-gateway.md`. Derived from an engagement organizing a partner organization's complete internal knowledge export (~12,000 files) into a governed hub, where the four crossing laws were discovered operationally rather than designed. |
 
 ---
 

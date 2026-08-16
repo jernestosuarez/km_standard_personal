@@ -15,6 +15,11 @@ without a resolved date. Every source gets a row here *before* it is ingested.
 
 **Maintained by:** agents during intake. **Approved by:** the hub owner.
 
+Where the record boundary layer is adopted (STANDARD.md → Rule 6), this register stays the
+**per-source** control point; the **per-system** contract — connector, uri scheme, class ceiling,
+refresh cadence — lives in one `SourceSystem` note per system under `systems/`. Sources arriving
+from a registered system are still gated here, row by row.
+
 ## Status values
 
 - `MISSING` — no date yet; **blocks ingestion**. Ask the hub owner.

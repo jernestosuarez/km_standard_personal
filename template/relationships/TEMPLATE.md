@@ -9,6 +9,9 @@ confidence: high | medium | low
 assertion_method: directory | directory-chain | communication-evidence | meeting-evidence | stated
 evidence: [<resolvable reference: source path, page ID, or export + date>]
 observed_at: <YYYY-MM-DD>
+# accessClass: internal   # optional (Rule 6): public | internal | restricted | record — absent means
+#                         # internal. This layer describes people: restricted by default is the norm,
+#                         # via the sensitivity marker (see § Relationship layer, Sensitivity).
 lifecycle: active   # active | superseded | retired. A relationship that ended is superseded, never deleted.
 tags: [relationship]
 resource: sources/transcript-index.md

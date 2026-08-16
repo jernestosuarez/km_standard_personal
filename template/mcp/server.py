@@ -36,7 +36,7 @@ except ImportError:
 
 HUB = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path.cwd()
 ENTITY_DIRS = ["decisions", "risks", "stakeholders", "milestones", "partners",
-               "relationships", "corrections"]
+               "relationships", "corrections", "claims"]
 
 mcp = FastMCP("hub")
 
