@@ -266,6 +266,16 @@ else
     deployment_errors=$((deployment_errors + 1))
   fi
 
+  # The purpose interview (v1.25). A hub whose deployment binding records no interview date is
+  # QUARANTINED: it never scans green until /km-init's purpose interview has produced the hub
+  # definition. The date-shape check also catches an unsubstituted {{INIT_DATE}} placeholder.
+  initiation_interview=$(fm_field "$deployment_file" "initiation-interview")
+  if ! printf '%s\n' "$initiation_interview" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
+    echo "  ! HUB NOT INITIATED: initiation-interview carries no date — run the /km-init purpose"
+    echo "    interview to produce the hub definition; an uninterviewed hub never scans green"
+    deployment_errors=$((deployment_errors + 1))
+  fi
+
   # Hub species (Rule 6, v1.23): optional axes. Absent means station: domain and
   # exposure: compartment, so a hub that never declares them scans exactly as before;
   # a declared value outside the enum is a defect, the same rank as a bad deployment-state.

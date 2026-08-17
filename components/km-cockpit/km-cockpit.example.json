@@ -1,0 +1,9 @@
+{
+  "_comment": "KM Cockpit deployment manifest. Copy to km-cockpit.json beside km-cockpit.py (or point $KM_COCKPIT_CONFIG at it) and fill in. estate_root resolves relative to this file's directory; queue_path and hub_registry_path resolve relative to estate_root. Omit hub_registry_path (or leave it empty) for a single-hub deployment: the estate root is then the hub root and queue_path names the hub-local queue file. When the supervisor tier is minted later, re-point queue_path at the estate queue and add hub_registry_path — same data contract, no rebuild.",
+  "estate_root": "../..",
+  "queue_path": "_KM_Supervisor/QUEUE.md",
+  "hub_registry_path": "_KM_Supervisor/hub-registry.md",
+  "port": 8485,
+  "organization_name": "Example Organization",
+  "state_dir": "~/.config/km-cockpit"
+}

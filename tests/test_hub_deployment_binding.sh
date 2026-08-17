@@ -117,6 +117,28 @@ if ! printf '%s\n' "$output" | grep -Fq "OK: canonical standard binding is compl
   fail "species-valid did not report a complete canonical binding"
 fi
 
+# The purpose interview gate (v1.25) — the canary proving the check fires: a hub whose
+# binding carries no initiation-interview date is quarantined (error), never scanned green.
+uninterviewed=$(prepare_hub uninterviewed canonical "$CANONICAL_REVISION" "" "" "" "")
+sed -i.bak -e 's|^initiation-interview: .*|initiation-interview: ""|' \
+  "$uninterviewed/km-deployment.md"
+rm -f "$uninterviewed/km-deployment.md.bak"
+git -C "$uninterviewed" add km-deployment.md
+git -C "$uninterviewed" -c user.name='KM Test' -c user.email='km-test@example.invalid' \
+  commit -qm 'apply: strip interview date (fixture)'
+set +e
+output=$(bash "$uninterviewed/hub-scan.sh" 2>&1)
+status=$?
+set -e
+if [ "$status" -ne 1 ]; then
+  printf '%s\n' "$output" >&2
+  fail "uninterviewed returned $status, expected 1"
+fi
+if ! printf '%s\n' "$output" | grep -Fq "HUB NOT INITIATED"; then
+  printf '%s\n' "$output" >&2
+  fail "uninterviewed did not report the quarantine"
+fi
+
 species_bad=$(prepare_hub species-invalid canonical "$CANONICAL_REVISION" "" "" "" "")
 declare_species "$species_bad" "station: everywhere"
 set +e

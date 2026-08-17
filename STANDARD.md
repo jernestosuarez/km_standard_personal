@@ -1,18 +1,20 @@
 ---
 type: brief
-title: Knowledge Management Standard: Hub Framework (v1.23 DRAFT — awaiting owner push)
+title: Knowledge Management Standard: Hub Framework (v1.26)
 description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, an optional Agent Tier for named, discoverable agent instances, and an optional record-boundary layer for governed use of systems of record.
 tags: [standard, knowledge-management, governance, okf, agents]
 resource: template/
-timestamp: 2026-08-16
+timestamp: 2026-08-17
 ---
 
-# Knowledge Management Standard: Hub Framework (v1.23 DRAFT — awaiting owner push)
+# Knowledge Management Standard: Hub Framework (v1.26)
 
-**DRAFT — awaiting owner push.** v1.23 (stations, compartments, and the resolution plane) is
-drafted but unpublished. The last published version is **v1.22** (2026-08-16, publishing the
-v1.20 and v1.21 train with it); deployment pins resolve the version they pinned until their
-Supervisor re-pins.
+**Published v1.26** (2026-08-17, owner push, carrying v1.24 — the owner-surface train: the KM
+Cockpit side component, the owner interaction contract, the projection contract, the staleness
+rule — and v1.25 — the `/km-init` purpose interview and the initiation quarantine gate — with
+it). **v1.23** (stations, compartments, and the resolution plane) **remains drafted and
+unpublished**: its sections are marked with their version and bind nothing until its own push.
+Deployment pins resolve the version they pinned until their Supervisor re-pins.
 
 **Status:** Active standard. Framework-agnostic, works with Claude, GPT, Gemini, or any other LLM agent, and equally well with no agent at all (plain human use).
 
@@ -111,9 +113,12 @@ several initiatives at once, an optional fourth layer routes facts to the correc
 hubs relate to each other. The Supervisor never bypasses Layers 1–2: it *dispatches* proposals into
 each target hub's own governance. It is defined in full under **Supervisor Tier, Cross-Hub
 Orchestration** below, including its estate extensions: the shared-entity registry (semantic layer),
-the escalation protocol, and the evidence standard. It is only needed once two or more hubs share a
-source or an entity. A single-hub deployment
-can ignore it entirely.
+the escalation protocol, and the evidence standard. **The threshold is the hub count, not
+overlap: the moment a workspace runs more than one hub, this standard advises creating the
+Supervisor tier** (v1.26; an owner ruling replacing the earlier "share a source or an entity"
+trigger) — estate-level state has nowhere correct to live inside a hub, and the tier starts as
+the small **minimum tier** defined below, never the full apparatus. A single-hub deployment can
+ignore it entirely.
 
 ### Enterprise organization profile extension (v1.14)
 
@@ -1527,6 +1532,22 @@ Set the staleness threshold in `07_glossary.md` (default **90 days**) and in `hu
 (`STALE_DAYS`). **They must agree**, a documented rule that differs from the enforced rule is worse
 than having neither, because readers trust the document and the machine trusts the script.
 
+#### The staleness rule: show the gap, never correct it silently (added in v1.24)
+
+The date gate forbids guessing a date. This is its generalization to **states overtaken by
+time**: a commitment whose target date has passed but still reads "planned", a periodic figure
+with no successor after its period, a status the calendar has contradicted. None of these is
+wrong in the record — the record was true when written — but any surface that republishes it
+as-is is asserting something time has falsified, and the tempting defaults (guess the outcome,
+mark it done, drop the item) all destroy trust the moment anyone checks.
+
+**When a recorded state is contradicted by the passage of time, publish the contradiction and
+name who can resolve it.** The reference forms: *"target passed, status unconfirmed"*, and *"no
+later figure exists in this knowledge base."* The honest gap is also the better artifact: to an
+external reader it is evidence the system reports what it knows rather than what looks
+finished. Derived from a deployment that published six overtaken commitments exactly this way,
+on pages a counterparty read.
+
 ### Scheduled truth: bitemporal validity (optional, added in v1.22)
 
 `lifecycle` handles supersession — a fact replaced by a later one. It does not handle **scheduled
@@ -1675,6 +1696,33 @@ only test that measures worth.
 question. Record that decision in `00_about.md`. Never invent questions to clear the gate, a
 fabricated competency question is worse than none, because it makes a useless hub look justified.*
 
+#### The purpose interview: the definition is produced, never assumed (added in v1.25)
+
+The value gate above asks whether the hub is worth building; the **purpose interview** asks
+what it actually is, and hub initiation is one of the interaction contract's lifecycle gates —
+it may not proceed silently. `/km-init` runs the interview as batched structured Q&A and its
+answers become the **hub definition**, three artifacts:
+
+1. the **scope guard** — purpose, one line in / one line out, in the agent-instruction files;
+2. the **hub manifest** — the definition recorded in `km-deployment.md` (purpose, scope guard,
+   audiences mapped to the three surfaces, the elicited knowledge-vs-records boundary, evidence
+   expectations, routing keywords, owner cadence), stamped with the interview date as
+   `initiation-interview`;
+3. the **registry row** — where a supervisor tier exists, the hub's entry in the hub registry.
+
+Two of the interview's questions exist because assuming them fails operationally. **Audiences
+map to surfaces:** each audience is named to the surface it gets (audience / owner /
+practitioner), so the owner surface is planned rather than discovered missing. **The
+knowledge-vs-records boundary is elicited, not assumed:** the access vocabulary (Rule 6,
+`accessClass`) exists in the standard, but which of the owner's material is knowledge to curate
+and which is records to point at is a conversation — walked source by source — that no default
+answers correctly.
+
+**The quarantine gate:** a hub whose deployment binding records no `initiation-interview` date
+never scans green — `hub-scan.sh` reports it as an error — and in a multi-hub estate a
+hub-shaped directory absent from the hub registry is quarantined by the estate's own scan. An
+uninterviewed hub is not a lesser hub; it is not yet a hub.
+
 ### Step 2: Create the directory structure and initialize git
 
 ```bash
@@ -1797,6 +1845,30 @@ uri scheme, connector route, class ceiling, refresh cadence.
 Push, generating an artifact and sending it to someone, is already controlled by the proposal/
 approval/commit workflow above. This section defines the generation mechanism that sits on top of it,
 using the entity notes from the Ontology & Entity Layer.
+
+### The projection contract: four gates on every consuming surface (added in v1.24)
+
+Every surface that consumes hub content — a static reading site, a conversational agent, a push
+brief, the MCP query surface — passes the same four gates before a page or fact travels. This
+generalizes the entity layer's design principle ("the git commit is the publish boundary") into
+the stated contract of every projection:
+
+1. **Committed at git HEAD**, never the working tree — drafts, open proposals, inbox material,
+   and unresolved disputes stay invisible with no extra rule to write;
+2. **Lifecycle-active** — retired and superseded notes do not project;
+3. **Within the surface's access clearance** — the note's `accessClass` is at or below the
+   ceiling declared for that surface (Rule 6);
+4. **Listed in that surface's manifest** — projection is opt-in per surface, never "everything
+   not excluded".
+
+One requirement of the projection step itself: **generated markdown is normalized for its
+renderer.** Source conventions and renderer conventions differ (a list beginning directly after
+a paragraph, two-space versus four-space nesting), and projecting one into the other without
+normalization silently flattens structure — intros merge with their bullets, sub-bullets become
+siblings — while the source looks correct throughout.
+
+Decision surfaces are not audience surfaces and never ride a projection: they are unpublished
+by default (see "The decision surface" under the Supervisor Tier).
 
 ### Generating a draft
 
@@ -2312,17 +2384,90 @@ proposal in that hub's `changes/`, subject to the hub owner's approval, the reco
 the resulting commit, exactly as if a human had written the proposal. Routing is a *pre-filter* that
 decides which hub a proposal is written into; it does not weaken any Layer-2 control.
 
+### The supervisor threshold: hub count > 1 (added in v1.26)
+
+**The moment there is more than one hub, the standard advises creating the Supervisor tier.**
+This replaces the earlier trigger ("once two or more hubs share a source or an entity"): the
+count of hubs is the threshold, not whether they overlap yet. The reason is where estate-level
+state lives — the decision queue, the owner's surface, and cross-hub reconciliation belong to
+the estate rather than to either hub, and putting them inside a hub conflates the tiers; a
+second estate demonstrated this by accumulating estate state with nowhere correct to hold it.
+
+**The part that decides whether the rule is followed: the tier must scale down.** A mature
+supervisor is large — protocol, evidence standard, semantic layer, routing, escalations,
+sweeps — and a two-hub estate that reads the rule as "build all of that" will ignore it. So the
+standard defines a minimum, and everything else is adopted against a named condition.
+
+#### The minimum tier
+
+A directory at the workspace root holding exactly four things:
+
+1. **`hub-registry.md`** — one row per hub: folder, status (`hub`/`repo`), owner, routing
+   keywords (each hub's row is written by its own `/km-init` interview);
+2. **`QUEUE.md`** — the estate's owner queue (the mechanism above, at its smallest);
+3. **`_inbox/`** — the drop zone; inbox-first applies to the supervisor from day one;
+4. **its own git history** — `git init` at minting; auditability without bureaucracy, as above.
+
+That is all. Every omitted capability has a **named adoption condition** — the conditions table
+ships in the minimum tier's own README (template:
+[`skills/km-supervise/_KM_Supervisor_template/`](skills/km-supervise/_KM_Supervisor_template/)):
+
+| Omitted capability | Adopt when |
+|---|---|
+| Routing pass (`relationships.md`, `routing-log.md`, `_unrouted/`) | A source belongs to two or more hubs |
+| Semantic layer (shared-entity registry) | Hubs start disagreeing about the same people, organizations, or products |
+| Escalation protocol (`escalations/`) | Someone other than the owner operates a hub, or restricted-class content appears |
+| Evidence standard (`EVIDENCE.md`) | Two sources conflict and the hubs need one binding trust order |
+| Estate corrections registry (`corrections/`) | The owner corrects the agent on a rule that crosses hub boundaries |
+| Decision surface (KM Cockpit component) | The owner wants the queue as rendered cards rather than a file |
+
+#### Bind only what exists
+
+A hub scaffolded next to a minimum tier must not carry estate-binding references to an evidence
+standard, semantic layer, protocol file, escalations folder, or corrections registry that are
+not there — the template's own instruction already says a dangling binding is worse than none.
+The rule: **a hub's estate-binding section names only the estate files and directories actually
+present at the tier**, and each capability adopted later extends the binding through that hub's
+own governance. The scan side already behaves this way (`[ CORRECTIONS ]` prints only when the
+estate corrections directory exists); the instruction files must match it.
+
+#### Detection at hub creation
+
+Hub creation is the natural moment the threshold is crossed, so when `/km-init` finds another
+hub already in the workspace it runs two checks. First, it **detects a deployed decision
+surface** — a cockpit manifest at a deployment location — and asks the owner whether the new
+hub joins it: with no tier yet, a yes rides the tier-minting below (the estate queue absorbs
+both hubs and the manifest re-points); with a tier already present, the new hub's registry row
+is all the cockpit's registry-derived map needs, and the interview states which of the two
+paths applied. Second, if there is no supervisor tier, it **recommends minting the minimum
+tier then and there, recommendation first** (registry rows for both hubs, the estate queue,
+the inbox, `git init`). The owner may decline — the threshold rule is advice the standard
+gives, never an act it performs silently.
+
+#### The decision surface crosses the threshold by configuration
+
+Before the tier exists, a deployed cockpit binds to the **hub-local** queue file; when the
+minimum tier is minted, the estate queue moves there and the cockpit's manifest re-points its
+queue path (and gains the registry path) — the same data contract at both scales, one config
+change, no rebuild (see `components/km-cockpit/`). This is why the component is genericised by
+configuration: the threshold rule is only followable if crossing it is cheap.
+
 ### Standing up the Supervisor: checklist
 
-Only needed once a workspace runs two or more hubs that share a source.
+At the second hub (the threshold above), mint the **minimum tier**:
 
-1. Create `_KM_Supervisor/` at the workspace root with `_unrouted/`.
-2. Build `hub-registry.md`: scan sibling folders, classify each as `hub` or `repo`, capture owner and
-   routing keywords from each hub's `CLAUDE.md` scope guard + `07_glossary.md` tags.
-3. Create `relationships.md` (empty edge table) and `routing-log.md` (empty run list), both with OKF
-   frontmatter.
-4. Run a dry-run routing pass on a recent batch of the cross-cutting source and review the routing
-   table before any live dispatch.
+1. Create `_KM_Supervisor/` at the workspace root: `hub-registry.md`, `QUEUE.md`, `_inbox/`,
+   and the README with the conditions table (template:
+   `skills/km-supervise/_KM_Supervisor_template/`); `git init` the directory.
+2. Build `hub-registry.md`: one row per sibling folder, classified `hub` or `repo`, with owner
+   and routing keywords from each hub's interview record (`km-deployment.md`), `CLAUDE.md`
+   scope guard, and `07_glossary.md` tags.
+3. Re-point any deployed decision surface at the estate queue (one manifest change, above).
+
+Adopt the routing capability when its condition first occurs (a source belongs to two or more
+hubs): create `relationships.md` (empty edge table), `routing-log.md` (empty run list) and
+`_unrouted/`, all with OKF frontmatter, then run a dry-run routing pass on a recent batch of
+the cross-cutting source and review the routing table before any live dispatch.
 
 ### What the Supervisor does not do
 
@@ -2557,6 +2702,90 @@ A single-hub deployment does not need this section, but the mechanism is not inh
 estate-sized: the moment any deployment's routine output can out-produce its one human decider,
 the queue file, the tiers, and the back-pressure rule adopt without the rest of the Supervisor
 tier.
+
+#### The owner interaction contract (added in v1.24)
+
+The queue governs what surfaces to the owner; this contract governs **how**. Every rule here
+failed first as prose in a live deployment — missing links, context-free questions, duplicates,
+verbosity, absent reminders, a hub initiated with no Q&A — so each is paired with a mechanism,
+never restated as advice. It binds every session and every routine of the deployment that
+adopts it.
+
+1. **A question exists only as an artifact.** A question to the owner exists only as a
+   registered queue row or a structured Q&A card — asking and registering are the same act. A
+   question in running prose was not asked: it may not be counted on, waited for, or held
+   against the owner. Every row or card carries, mandatorily: **links** to every referenced
+   file; **two lines of zero-context legibility** (what it is, where it came from); **why only
+   the owner** can answer it; and **options, recommendation first**, one-word answerable. Cards
+   come in small batches (three or four per round), tier A first. A free-text answer always
+   outranks the offered options — an answer that corrects the question or says "already
+   decided" triggers a reconcile, never an argument.
+2. **No duplicates, mechanically.** Because every ask is a row, reconcile-before-ask (above)
+   runs against a complete register: the decision log, the queue's open and closed rows, and
+   the home hub, before any row is written. A question the record answers is closed with its
+   source, never re-asked.
+3. **Reminders are automatic, immediate, and short.** Every row carries its ask date and age;
+   session start renders unanswered asks with ages. A row unanswered across two sessions gets a
+   one-line nudge — the row id and its ask line, never a re-explanation (the row already
+   explains itself). A tier-A row is never silently waiting: it is nudged, or the owner has
+   parked it explicitly.
+4. **Estate events force a Q&A (lifecycle gates).** Some events may not proceed silently; each
+   fires a structured owner interview: **hub initiation** (a hub-shaped directory not in the
+   hub registry is quarantined — never scanned green — until the initiation interview runs;
+   see `/km-init`); a **new outbound surface** (sensitivity interview and lint coverage before
+   first publish); **standard adoption or version change** (nothing publishes without the
+   owner's push); a **new counterpart class** (identity and data-protection interview before
+   minting).
+5. **Owner-facing output has a fixed, short shape.** Every owner-facing turn ends, in order:
+   **NEEDS YOU** (the linked rows or cards, bounded, first — or "nothing needs you"), **DONE**
+   (one line per completed thing, links inline), **FYI** (optional, three lines maximum), and
+   nothing else. Narration, method, and evidence trails live in logs and commits, not in the
+   owner's reading. A periodic hygiene pass reports interaction metrics — asks made, answered,
+   re-asked, average nudge age — so degradation shows as a number.
+6. **Answer surfaces are equal channels.** Chat, the batched clearing skill, and any deployed
+   decision surface (below) are equally valid ways to answer; every channel's answers are
+   processed identically — executed to committed artifacts in the same session, then
+   acknowledged.
+
+#### The decision surface: three surfaces, and the KM Cockpit component (added in v1.24)
+
+A deployment has **three surfaces, not two**, and naming them is what keeps the middle one from
+being forgotten:
+
+| Surface | Who reads it | What it carries |
+|---|---|---|
+| **Audience** | Each function or counterpart the deployment serves | Generated knowledge shaped per audience, through the projection contract — no machinery |
+| **Owner** | The one person decisions wait on | Only the decisions waiting on them: the queue, rendered decidable |
+| **Practitioner** | Whoever operates the hub | The hub itself — files, scans, proposals, skills |
+
+The owner surface is the one that decides whether a deployment survives: a knowledge system
+produces decisions faster than it produces documents, and if those decisions accumulate
+somewhere nobody opens, the system becomes a chore and is abandoned. It is therefore a
+**deployment component, not an optional extra**.
+
+The standard ships a reference implementation: the **KM Cockpit**
+([`components/km-cockpit/`](components/km-cockpit/)) — a stdlib-only, single-file local web
+surface rendering the queue as full-context cards with one-click answers, truthful proposal
+lifecycle states, an activity audit trail, and per-hub views. It is a **side component**: own
+directory, own deployment step, configured entirely by a deployment manifest (estate root,
+queue path, hub-registry path, port, organization name), with the per-hub attribution map
+derived from the governed hub registry. Its normative contract is
+[`components/km-cockpit/SPEC.md`](components/km-cockpit/SPEC.md), and two of its rules are
+rules of this standard, whatever implements the surface:
+
+- **A surface, never a pen.** A decision surface renders the queue and captures answers; it
+  never executes anything, never writes estate state, never mints identity. Answers become
+  committed artifacts only through a governed session.
+- **Decision surfaces are unpublished by default.** The decision layer carries budget,
+  identity, and commercial context — routinely more sensitive than the knowledge it decides
+  about, and the record boundary that governs knowledge says nothing about it. A decision
+  surface binds to localhost and is never published beside a reading site or any audience
+  surface; shared or remote access is an explicit owner decision carrying clearance and an
+  audit trail.
+
+In a single-hub deployment the same component binds to a hub-local queue file — the identical
+data contract — so minting the supervisor tier later re-points one manifest path and nothing
+else (see "The minimum tier", below).
 
 #### Import package contract: packages from unconnected systems
 
@@ -2804,6 +3033,9 @@ happened once (see the v1.9 row) and the ledger exists so it does not happen twi
 | v1.21 | 2026-08-16 | Drafted 2026-08-14; published 2026-08-16 with v1.22. The `[ RESTRICTED ]` name block is narrowed to what the marker actually restricts. Since v1.16, a `sensitivity: restricted` line anywhere in a note made the note's NAME an error on every outbound surface, so a file with one restricted section could never be named as a proposal target: the governed route to changing such a file was blocked by the check meant to protect it. Now a marker in frontmatter still restricts the whole note, name included; a marker in the body restricts the section it opens, whose verbatim text (lines of at least 16 characters, up to the next heading at the same or a higher level) is blocked on outbound surfaces while the note's name and path stay nameable. Stated trade-offs: a body-marked note's existence and name become disclosable, and verbatim-line matching does not catch paraphrase or very short lines, so a note whose name or existence is itself sensitive must be marked in frontmatter. `build-indexes.sh` continues to exclude both forms from generated indexes. `tests/test_restricted_lint.sh` proves both sides of the narrowing and that the frontmatter name block still fires. Derived from an estate incident (owner-adjudicated "fix", 2026-08-14) in which a hub file with one restricted section became structurally un-nameable in `changes/` proposals. |
 | v1.22 | 2026-08-16 | The record boundary (Rule 6): records stay in systems of record; hubs hold claims about records, with resolvable pointers. Four crossing laws — claims cross, records don't; aggregates cross, line items don't; existence crosses, contents don't; an unavoidable copy is the classified extract with lineage. Optional `accessClass` frontmatter field (`public \| internal \| restricted \| record`, default `internal` when absent), with propagation (derived-from-restricted inherits restricted), the declassification rule ("aggregation declassifies; extraction does not"), and classification-aware `[ RESTRICTED ]` enforcement: a restricted-class note's body text is blocked verbatim on outbound surfaces while its name stays nameable (existence crosses; the `sensitivity: restricted` frontmatter marker remains the mechanism for names that are themselves sensitive), and restricted-class notes are excluded from generated indexes. Two optional entity types: `SourceSystem` (`sources/systems/`, grounded in `dcat:DataService`) — the per-system contract behind the per-source date register — and `Claim` (`claims/`, proprietary) — a settled fact promoted to its own lifecycle and evidence chain, with reconciliation remaining the adjudication process and promotion never mandatory. Optional bitemporal fields `validFrom`/`validUntil`/`recordedAt` (adopting the Semantica mining rationale's priority candidate). An optional inbound connector section mirrors the outbound MCP query surface; the manual inbox + date gate + reconciliation are named as the gateway's reference implementation, and detection/extraction/freshness automate while classification and resolution authority stay with the owner. Full rationale, migration notes, implementation notes, and open questions in `rfcs/RFC-001-sor-gateway.md`. Derived from an engagement organizing a partner organization's complete internal knowledge export (~12,000 files) into a governed hub, where the four crossing laws were discovered operationally rather than designed. |
 | v1.23 | 2026-08-16 | **DRAFT — awaiting owner push.** Stations, compartments, and the resolution plane (`rfcs/RFC-002-stations-compartments-resolution.md`; every ruling provenance-tagged owner-ruled / delegated / directional). The resolution plane: record-class data is never stored in hub git — the hub holds the pointer and the gateway resolves it at query time, clearance-checked, audit-logged, nothing persisted; the access event may be recorded as a claim, the data may not (git permanence cannot honor erasure obligations). Three planes: knowledge (git), resolution (gateway runtime), scratch (`_scratch/`, git-ignored, wipeable, stated lifetime — erasure by construction). Hub species as two independent manifest axes in `km-deployment.md`: `station` (org-core \| domain \| engagement \| publication) governs intake, `exposure` (never-public \| compartment \| counterparty \| public) governs output; defaults `domain`/`compartment` when absent, enums validated by `[ DEPLOYMENT ]` only when present; the crossing laws become station-transition rules — build at the station, publish at the exposure — and org-core hubs version at the tempo of decisions, not of data. Hub-to-hub access is compartmented, not leveled: each hub declares owner, audience, and boundary; cross-compartment flow is default-deny, Supervisor-mediated (resolving RFC-001 open question 1). Scale invariance: existence crosses, contents don't — at every altitude; the Supervisor holds claims about hubs, never hub contents. Redaction with tombstones enters as the supersede-never-rewrite doctrine's explicit boundary condition. Federated SoR registry: in multi-hub estates `SourceSystem` notes live at the Supervisor with per-hub subscriptions, single-hub placement unchanged (partially resolving open question 2); query-time gating is subsumed by the resolution plane (open question 3). |
+| v1.24 | 2026-08-17 | Drafted and published 2026-08-17 (owner push, with v1.25 and v1.26). The owner-surface train, from an operational build (2026-08-14→17) on a second estate. (1) **Three surfaces named** — audience / owner / practitioner — with the owner surface promoted to a deployment component: decisions accumulating where nobody opens them is how a deployment dies. (2) **The KM Cockpit side component** (`components/km-cockpit/`): the proven owner decision surface shipped exactly as deployed (v3.8 behavior — brief-gated cards, five truthful proposal lifecycle states, supervisor-actions request channel, per-hub views, activity audit trail), genericised by **configuration only** — a deployment manifest (estate root, queue path, hub-registry path, port, organization name, state dir) and a registry-derived hub map; normative contract in its `SPEC.md`, including *surface-never-a-pen* and *decision surfaces are unpublished by default* (localhost-bound, never beside a reading site, shared access an explicit owner decision with clearance and audit). Single-hub mode binds the same component to a hub-local queue file — identical data contract, so the supervisor threshold (v1.26) is a manifest re-point, proven by `tests/test_km_cockpit.sh`'s single-hub round-trip. (3) **The owner interaction contract**: questions exist only as registered artifacts (links, zero-context, why-owner, recommendation-first), mechanical dedup, automatic two-session nudges, lifecycle gates, the fixed NEEDS YOU / DONE / FYI output shape, equal answer channels. (4) **The projection contract**: four gates on every consuming surface (committed at HEAD, lifecycle-active, within clearance, manifest-listed) plus renderer normalization. (5) **The staleness rule**: a recorded state contradicted by time publishes the contradiction and names who can resolve it, never a silent correction. Trade-offs recorded: the queue stays hand-maintained-file-first exactly as deployed — deriving queue content from what the estate's files already know is a roadmap note only (one estate, one day, medium confidence; SPEC.md §9); desktop notifications are macOS best-effort; keyword hub-attribution is approximate until the queue's machine block gains an explicit hubs field. |
+| v1.25 | 2026-08-17 | Drafted and published 2026-08-17 (owner push, with v1.24 and v1.26). The `/km-init` purpose interview: a hub's definition is **produced by a structured Q&A, never assumed** — purpose and scope guard (in **and** out), audiences each mapped to one of the three surfaces, the **knowledge-vs-records boundary elicited source by source** (the Rule 6 access vocabulary existed; the conversation that applies it did not), evidence expectations, routing keywords, and owner cadence — the answer-surface question asked recommendation-first with **a deployed cockpit as the recommended default** (owner amendment, 2026-08-17: the owner surface is what decides whether a deployment survives); planning the surface is mandatory, deploying it remains an explicit act. Outputs: the scope guard, the hub manifest (`km-deployment.md` → Hub definition, `initiation-interview` date, `routing-keywords`), and the supervisor registry row where a tier exists. **The quarantine gate is mechanical:** `[ DEPLOYMENT ]` in `hub-scan.sh` errors on a binding with no interview date (date-shape checked, so an unsubstituted placeholder cannot pass), and an uninterviewed hub never scans green; `tests/test_hub_deployment_binding.sh` carries the canary. Delivery guidance in `km-init` Step 8: name what reconciliation finds during onboarding out loud (a selling point, not only a control), and a **directional, run-once** bulk-corpus intake shape (catalogue → boundary interview → domain split → briefed parallel readers → per-domain extract → entity layer) recorded as guidance, deliberately not yet a normative pattern. Trade-off recorded: existing hubs fail the gate until the interview is backfilled at adoption — deliberate, that is the gate working. |
+| v1.26 | 2026-08-17 | Drafted and published 2026-08-17 (owner push, with v1.24 and v1.25). The supervisor at the second hub, from the owner's recorded ruling: **hub count > 1 advises creating the Supervisor tier**, replacing the "share a source or an entity" trigger — the count is the threshold, not overlap, because estate-level state (the owner queue, cross-hub decisions) has nowhere correct to live inside a hub. What makes the rule followable: (1) the **minimum tier** — hub registry + estate queue + inbox + own git history, nothing more, with every omitted capability (routing, semantic layer, escalations, evidence standard, estate corrections, decision surface) carrying a **named adoption condition** in a table that ships in the tier's own template README; (2) **bind-only-what-exists** — a hub's estate-binding section names only files actually present at the tier (`km-init` prunes at scaffold time; the scan's `[ CORRECTIONS ]` block already behaved this way), with a new minimum-tier bullet binding the registry and queue; (3) **detection at creation** — `/km-init` finding an existing hub first detects an already-deployed cockpit and asks whether the new hub joins it (no tier yet: the yes rides the tier-minting, estate queue absorbing both hubs and the manifest re-pointing; tier present: the registry row alone suffices, and the interview states which path applied), then **recommends** minting the minimum tier, recommendation-first (owner amendment, 2026-08-17, strengthening the original "offers"); declining is recorded, never overridden; (4) **the decision surface crosses by configuration** — hub-local queue pre-tier, manifest re-point at minting, identical data contract (proven by the v1.24 single-hub round-trip test). `km-supervise` now names its own adoption condition: a minimum tier meeting its first cross-hub source adopts the routing files at that moment. Trade-offs recorded: the threshold is **advice the standard gives, never an act it performs** — the owner may decline; and the minimum tier deliberately omits every capability whose absence is recoverable, betting that a small tier actually minted beats a complete tier ignored. |
 
 ---
 

@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.22"/>
+  <img src="assets/badges/version.svg" alt="standard v1.26"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 2 adopted"/>
   <img src="assets/badges/license.svg" alt="license: free to adopt"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,7 +28,8 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.22** (2026-08-16). The full ledger of released versions, and the rule that a
+**Current version: v1.26** (2026-08-17, publishing the v1.24 and v1.25 train with it; v1.23
+remains an unpublished draft awaiting its own push). The full ledger of released versions, and the rule that a
 published version number is never reused, is in [`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.
 
@@ -48,6 +49,7 @@ tied to any specific company, industry, or AI vendor.
 | [`skills/km-init/`](skills/km-init/SKILL.md) | Workspace-level skill: stands up a brand-new hub from `template/`. |
 | [`skills/km-supervise/`](skills/km-supervise/SKILL.md) | Optional workspace-level skill: routes a source that touches multiple hubs (the "Supervisor tier"). Includes a starter `_KM_Supervisor_template/`. |
 | [`skills/km-brief/`](skills/km-brief/SKILL.md) | Per-hub skill: generates an audience-tailored memo/briefing/status report by querying entity notes instead of freehand-reading hub docs. |
+| [`components/km-cockpit/`](components/km-cockpit/README.md) | Optional side component (published as v1.24, 2026-08-17): the KM Cockpit — the owner decision surface. Renders the owner queue as full-context decision cards on localhost; configured entirely by a deployment manifest; never published beside a reading site. Normative contract in [`SPEC.md`](components/km-cockpit/SPEC.md). |
 | [`agents/km-hub-builder/`](agents/km-hub-builder/SKILL.md) | Optional Standard Maintainer package: one governed contract, distributable Claude and Codex adapters, safe installation, and runtime-parity checks. It changes standards and hands adoption to the Supervisor; it never edits hubs. |
 | [`docs/architecture/`](docs/architecture/README.md) | Architecture documentation: the layer model, the canonical-first hub deployment protocol, the OrganizationProfile contract, and authority boundaries. Descriptive, not normative. |
 
@@ -77,11 +79,14 @@ No AI agent is required to use this standard — it works as a plain governance 
 human-maintained markdown folder. The optional skills exist to automate the mechanical parts (digesting
 sources, drafting proposals, running the scan) for teams using an AI coding/knowledge assistant.
 
-## Quick start — multiple hubs that share sources
+## Quick start — more than one hub
 
-Only needed once you run two or more hubs and a single source (e.g. a weekly all-hands) produces facts
-relevant to more than one of them. See "Supervisor Tier — Cross-Hub Orchestration" in `STANDARD.md`,
-and [`skills/km-supervise/`](skills/km-supervise/SKILL.md) for the operating skill.
+The moment a workspace runs more than one hub, the standard advises creating the Supervisor
+tier (v1.26) — starting from the **minimum tier**: a hub registry, an estate queue,
+an inbox, and its own git history, with every further capability adopted against a named
+condition. See "The supervisor threshold" and "Supervisor Tier — Cross-Hub Orchestration" in
+`STANDARD.md`, and [`skills/km-supervise/`](skills/km-supervise/SKILL.md) for the routing
+skill (adopted when a source first spans two hubs).
 
 ## License / reuse
 
