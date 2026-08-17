@@ -81,7 +81,12 @@ function, no machinery), the **owner** surface (only the decisions waiting on a 
   steering group — audience surface, monthly brief; the owner — owner surface; the project
   team — practitioner".) Record one line per audience.
 - **Owner cadence** — how often will the owner sit with the decision queue, and on which
-  answer surface (chat, the clearing skill, a deployed cockpit)?
+  answer surface? Ask recommendation-first, per the interaction contract: **a deployed
+  cockpit (recommended)** — the owner surface is what decides whether a deployment survives,
+  and the cockpit is the standard's reference implementation of it
+  (`components/km-cockpit/`) — then chat or the clearing skill; all remain equally valid
+  answer channels. Planning the surface here is mandatory; deploying the cockpit remains an
+  explicit act with its own deployment step, but the default recommendation is the cockpit.
 
 **Round 4 — the knowledge-vs-records boundary (Rule 6, elicited, not assumed).** The access
 vocabulary exists in the standard; this conversation is what applies it. Ask:
@@ -342,24 +347,41 @@ Every hub carries exactly one named agent definition — see `STANDARD.md` §"Ag
 
 ## Step 4.6 — The supervisor threshold: detect, offer, register (v1.25/v1.26)
 
-**Detection (v1.26).** Check the workspace root (the parent of the target path). If it holds
-**another hub-shaped directory** (one containing `km-deployment.md` or `hub-scan.sh`) and **no
-`_KM_Supervisor/`**, the threshold is crossed — the standard advises the supervisor tier the
-moment there is more than one hub. Say so, and offer to mint the **minimum tier** now:
+**Detection (v1.26).** When at least one hub already exists in the workspace root (the parent
+of the target path — a **hub-shaped directory** is one containing `km-deployment.md` or
+`hub-scan.sh`), run both checks below, in order.
+
+**(a) Detect a deployed cockpit.** Look for a cockpit deployment manifest — `km-cockpit.json`
+at a deployment location (beside any copy of `km-cockpit.py`; the reference location is
+`<hub>/cockpit/` pre-tier, `_KM_Supervisor/cockpit/` after). If one is found, **ask the owner
+whether to add the new hub to it.** On yes, which path applies depends on the tier, and the
+interview report states which one applied:
+
+- **No supervisor tier yet** — the addition rides the tier-minting in (b): the estate queue
+  absorbs both hubs' decision rows, the cockpit manifest re-points its `queue_path` at the
+  estate queue (and gains `hub_registry_path`), and the registry-derived hub map picks up the
+  new hub from its registry row. One config change, no rebuild.
+- **Tier already exists** — confirm the new hub's registry row (the Registration step below):
+  the cockpit's hub map derives from the registry, so the row is all it needs and nothing else
+  is done.
+
+**(b) Recommend the supervisor tier.** If there is **no `_KM_Supervisor/`**, the threshold is
+crossed — the standard advises the supervisor tier the moment there is more than one hub. Put
+it recommendation-first, per the interaction contract:
 
 > "This workspace now holds two hubs and no supervisor tier. The standard advises one at the
 > second hub — estate state (the owner queue, cross-hub decisions) has nowhere correct to live
-> inside a hub. The minimum is small: a hub registry, an estate queue, an inbox, and its own
-> git history. Mint it now?"
+> inside a hub. **Recommended: mint the minimum tier now** — it is four small things: a hub
+> registry, an estate queue, an inbox, and its own git history. Alternative: **not yet** — the
+> advice and your decline are recorded."
 
 If **yes**: create `_KM_Supervisor/` at the workspace root from
 `skills/km-supervise/_KM_Supervisor_template/` — copy `hub-registry.md`, `QUEUE.md`, `README.md`
 (the conditions table) and `_inbox/README.md`, substitute `{{INIT_DATE}}`, `git init` and
 commit; write a registry row for **each** hub found (this one and the pre-existing ones, from
 their `km-deployment.md` interview records — a pre-existing hub with no interview record gets
-status `repo` and a note that its interview is owed). If a decision surface (KM Cockpit) is
-deployed against a hub-local queue, remind the owner to re-point its manifest `queue_path` at
-the estate queue — one config change, no rebuild. If **no**: record the advice and the owner's
+status `repo` and a note that its interview is owed); and complete any cockpit addition agreed
+in (a) by re-pointing the manifest. If **not yet**: record the recommendation and the owner's
 decline in the report; the threshold rule is advice the standard gives, never an act performed
 silently.
 
