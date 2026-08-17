@@ -48,6 +48,7 @@ tied to any specific company, industry, or AI vendor.
 | [`skills/km-init/`](skills/km-init/SKILL.md) | Workspace-level skill: stands up a brand-new hub from `template/`. |
 | [`skills/km-supervise/`](skills/km-supervise/SKILL.md) | Optional workspace-level skill: routes a source that touches multiple hubs (the "Supervisor tier"). Includes a starter `_KM_Supervisor_template/`. |
 | [`skills/km-brief/`](skills/km-brief/SKILL.md) | Per-hub skill: generates an audience-tailored memo/briefing/status report by querying entity notes instead of freehand-reading hub docs. |
+| [`components/km-cockpit/`](components/km-cockpit/README.md) | Optional side component (drafted as v1.24, awaiting owner push): the KM Cockpit — the owner decision surface. Renders the owner queue as full-context decision cards on localhost; configured entirely by a deployment manifest; never published beside a reading site. Normative contract in [`SPEC.md`](components/km-cockpit/SPEC.md). |
 | [`agents/km-hub-builder/`](agents/km-hub-builder/SKILL.md) | Optional Standard Maintainer package: one governed contract, distributable Claude and Codex adapters, safe installation, and runtime-parity checks. It changes standards and hands adoption to the Supervisor; it never edits hubs. |
 | [`docs/architecture/`](docs/architecture/README.md) | Architecture documentation: the layer model, the canonical-first hub deployment protocol, the OrganizationProfile contract, and authority boundaries. Descriptive, not normative. |
 
