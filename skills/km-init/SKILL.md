@@ -44,21 +44,61 @@ because it makes a useless hub look justified.
 
 ---
 
-## Step 1 — Collect inputs
+## Step 1 — The purpose interview (structured Q&A, v1.25)
 
-Ask the user for all of the following in one message:
+The hub's definition is **produced by an interview, never assumed**. Run it as batched
+structured questions — three or four per round, one decision per question, in the order below —
+and record the answers verbatim; they populate the **Hub definition** in `km-deployment.md`,
+the scope guard in `CLAUDE.md`/`AGENTS.md`, and (where a supervisor tier exists) the hub's
+registry row. The interview date is stamped into `km-deployment.md` as `initiation-interview`;
+**without it the hub is quarantined — `hub-scan.sh` reports an error and the hub never scans
+green.**
+
+**Round 1 — identity and purpose:**
 
 - **Project name** — full human-readable name (e.g. "Q3 Product Launch")
 - **Hub owner** — first and last name of the person responsible for approvals
 - **Organisation name** — the organisation running this initiative
 - **Unit / team name** — the specific team creating this hub
 - **Your role / title** — job title of the person setting up this hub
-- **Description** — one sentence: what this initiative is and what the hub tracks
+- **Description (purpose)** — one sentence: what this initiative is and what the hub tracks
+
+**Round 2 — the scope guard:**
+
 - **Scope (in)** — one sentence: what is explicitly in scope for this hub
-- **Scope (out)** — one sentence: what is explicitly excluded
-- **About-me file (optional)** — a file path or pasted text describing the initiator's background,
-  goals for this hub, and working preferences. If not available now, these sections can be filled
-  in later via `/km-propose`.
+- **Scope (out)** — one sentence: what is explicitly excluded. Push for a real exclusion; a
+  scope guard with no "out" guards nothing.
+- **Routing keywords** — 5–10 lowercase, comma-separated terms that mark a source as this
+  hub's business. They feed the supervisor's hub registry and the decision surface's per-hub
+  attribution.
+
+**Round 3 — audiences and surfaces.** A deployment has three surfaces (STANDARD.md → "The
+decision surface: three surfaces"): the **audience** surface (generated knowledge shaped per
+function, no machinery), the **owner** surface (only the decisions waiting on a person), the
+**practitioner** surface (the hub itself). Ask:
+
+- **Who will consume this hub's knowledge**, and which surface does each get? (e.g. "the
+  steering group — audience surface, monthly brief; the owner — owner surface; the project
+  team — practitioner".) Record one line per audience.
+- **Owner cadence** — how often will the owner sit with the decision queue, and on which
+  answer surface (chat, the clearing skill, a deployed cockpit)?
+
+**Round 4 — the knowledge-vs-records boundary (Rule 6, elicited, not assumed).** The access
+vocabulary exists in the standard; this conversation is what applies it. Ask:
+
+- **What material is knowledge here** — claims this hub curates, adjudicates and republishes —
+  **and what is records** — operational data that stays in the systems that master it, with
+  the hub holding claims and resolvable pointers only? Walk the owner's named sources: for
+  each, knowledge or record?
+- **Evidence expectations** — which source classes will this hub trust at face value, and
+  which always need owner confirmation? (Anchor on the evidence order: subject-confirmed >
+  owner-statement > independent sources > systems of record > unresolvable references.)
+
+**Closing:**
+
+- **About-me file (optional)** — a file path or pasted text describing the initiator's
+  background, goals for this hub, and working preferences. If not available now, these
+  sections can be filled in later via `/km-propose`.
 - **Target path** — absolute path where the hub directory should be created
   (default: suggest `<current directory>/<project-slug>`)
 
@@ -66,7 +106,10 @@ Derive from the project name:
 - `SLUG` = lowercase, spaces → hyphens, strip punctuation (e.g. "Q3 Product Launch" → `q3-product-launch`)
 - `INIT_DATE` = today's date as `YYYY-MM-DD`
 
-Confirm all values with the user before proceeding.
+Confirm all values with the user before proceeding. The interview's outputs are three
+artifacts: the **scope guard** (CLAUDE.md/AGENTS.md and `km-deployment.md`), the **hub
+manifest** (`km-deployment.md` → Hub definition, `initiation-interview` stamped), and — where
+a supervisor tier exists — the **registry row** (Step 4.6).
 
 ---
 
@@ -169,10 +212,15 @@ to the target path.
 | `{{INITIATOR_GOALS}}` | Why this hub was created (from about-me or placeholder) |
 | `{{INITIATOR_CONTEXT}}` | Role and unit context (from about-me or placeholder) |
 | `{{INITIATOR_AGENT_NOTES}}` | Agent working notes (from about-me or placeholder) |
-| `{{DESCRIPTION}}` | One-sentence description |
+| `{{DESCRIPTION}}` | One-sentence description (the hub's purpose, from the interview) |
 | `{{SCOPE_IN}}` | In-scope statement |
 | `{{SCOPE_OUT}}` | Out-of-scope statement |
-| `{{INIT_DATE}}` | Today's date (YYYY-MM-DD) |
+| `{{ROUTING_KEYWORDS}}` | Comma-separated lowercase routing keywords (interview Round 2) |
+| `{{AUDIENCE_SURFACES}}` | One line per audience, each mapped to its surface (interview Round 3) |
+| `{{OWNER_CADENCE}}` | Owner cadence and answer surface (interview Round 3) |
+| `{{KNOWLEDGE_RECORDS_BOUNDARY}}` | The elicited knowledge-vs-records boundary (interview Round 4) |
+| `{{EVIDENCE_EXPECTATIONS}}` | The elicited evidence expectations (interview Round 4) |
+| `{{INIT_DATE}}` | Today's date (YYYY-MM-DD) — also stamped as `initiation-interview` in `km-deployment.md`; the scan quarantines a hub without it |
 | `{{KM_STANDARD_VERSION}}` | Canonical KM Standard version derived in Step 2 |
 | `{{KM_STANDARD_REVISION}}` | Full canonical Git revision derived in Step 2 |
 | `{{KM_STANDARD_SOURCE}}` | Canonical origin URL, or `unresolved`, derived in Step 2 |
@@ -289,6 +337,22 @@ Every hub carries exactly one named agent definition — see `STANDARD.md` §"Ag
 
 ---
 
+## Step 4.6 — Register the hub with the supervisor tier (v1.25)
+
+If `_KM_Supervisor/` exists at the workspace root, append the new hub's row to
+`_KM_Supervisor/hub-registry.md` now, from the interview's answers:
+
+```
+| <hub-directory-name> | hub | <hub owner> | <routing keywords> |
+```
+
+The registry is the estate's routing map and the decision surface's attribution source; a hub
+missing from it is quarantined by the estate's own scan. If no supervisor tier exists, skip
+this step (single-hub deployments carry their routing keywords in `km-deployment.md`, where
+the decision surface reads them directly).
+
+---
+
 ## Step 5 — Initial commit
 
 ```bash
@@ -363,3 +427,17 @@ If yes, run `/km-gather` against the named sources and produce proposals through
 maintenance — and maintenance, not modelling, is what kills these programs. A hub seeded in an hour
 and never reviewed again is worse than an empty one, because it looks authoritative. Do not oversell
 this step.
+
+**Name what reconciliation finds, out loud.** When seeding surfaces contradictions in the
+owner's own material — two prices for one product, two dates for one decision — that finding is
+the clearest early evidence the system does something: say so to the owner (or the customer)
+explicitly, during onboarding, rather than resolving it quietly. Reconciliation is a selling
+point, not only a control.
+
+**Bulk corpora (directional, run once — not yet a normative pattern).** When the seed is not a
+handful of named documents but a large corpus (thousands of files), the proven shape so far is:
+catalogue without opening restricted material → agree the knowledge-vs-records boundary with
+the owner (the Round 4 interview, applied to the corpus) → split by domain → parallel readers,
+each briefed with that boundary and a per-reader confidentiality brief → one extract per domain
+→ then the entity layer. Treat this as guidance to adapt, not procedure to follow; a second run
+is what turns it into one.

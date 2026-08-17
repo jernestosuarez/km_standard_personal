@@ -9,6 +9,13 @@ canonical-standard-version: "{{KM_STANDARD_VERSION}}"
 canonical-standard-revision: "{{KM_STANDARD_REVISION}}"
 canonical-standard-source: "{{KM_STANDARD_SOURCE}}"
 deployment-state: canonical
+# The purpose interview (v1.25). The date the /km-init interview produced this hub's
+# definition (below). An empty or absent value QUARANTINES the hub: hub-scan.sh reports it
+# as an error, and an uninterviewed hub never scans green.
+initiation-interview: "{{INIT_DATE}}"
+# Routing keywords from the interview — harvested by the supervisor's hub registry and by
+# the decision surface's per-hub attribution. Comma-separated, lowercase.
+routing-keywords: "{{ROUTING_KEYWORDS}}"
 organization-profile-id: ""
 organization-profile-revision: ""
 enterprise-namespace: ""
@@ -39,3 +46,21 @@ The optional `station` and `exposure` fields declare the hub's species (STANDARD
 `station: domain`, `exposure: compartment`; `hub-scan.sh` validates the values only when the
 fields are present. The optional compartment fields declare audience and boundary for
 Supervisor-mediated, default-deny cross-compartment flow.
+
+## Hub definition (from the /km-init purpose interview, v1.25)
+
+Recorded on {{INIT_DATE}}. This is the hub's manifest of intent — what it is for, for whom, and
+where its boundaries sit. Changing it is a governed change like any other.
+
+- **Purpose:** {{DESCRIPTION}}
+- **Scope guard — in:** {{SCOPE_IN}}
+- **Scope guard — out:** {{SCOPE_OUT}}
+- **Audiences and surfaces** (each audience named to the surface it gets — audience / owner /
+  practitioner; STANDARD.md → "The decision surface: three surfaces"):
+  {{AUDIENCE_SURFACES}}
+- **Knowledge vs. records boundary** (what this hub curates as claims, and what stays in
+  systems of record with pointers only — Rule 6): {{KNOWLEDGE_RECORDS_BOUNDARY}}
+- **Evidence expectations** (what sources this hub will trust, and what always needs owner
+  confirmation): {{EVIDENCE_EXPECTATIONS}}
+- **Owner cadence** (how often the owner sits with the queue, and on which surface):
+  {{OWNER_CADENCE}}
