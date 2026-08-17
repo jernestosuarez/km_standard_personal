@@ -153,8 +153,16 @@ summaries unless directly asked.
 ## Estate binding (multi-hub deployments only)
 
 If this hub is part of a multi-hub estate — a workspace whose root contains `_KM_Supervisor/` — the
-estate tier binds this hub. Delete this section in a single-hub deployment.
+estate tier binds this hub. Delete this section in a single-hub deployment. **Bind only what
+exists** (v1.26): a supervisor tier starts minimal and grows against named conditions, so keep
+each bullet below only if its target file or directory is actually present at the tier — a
+dangling binding is worse than none — and extend this section through this hub's own governance
+when the tier adopts a capability.
 
+- **`../_KM_Supervisor/hub-registry.md` and `../_KM_Supervisor/QUEUE.md`** (the minimum tier)
+  bind this hub's registration and the owner's decisions: this hub appears as a registry row,
+  and anything needing the estate owner's word registers on the estate queue — nothing counts
+  as surfaced to the owner without a queue row.
 - **`../_KM_Supervisor/EVIDENCE.md`** governs trust between conflicting sources
   (subject-confirmed > owner-statement > independent sources > systems of record > unresolved
   references). Never construct identifiers from names; never turn a hedge into an edge; retract in

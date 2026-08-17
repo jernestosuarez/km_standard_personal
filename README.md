@@ -78,11 +78,14 @@ No AI agent is required to use this standard — it works as a plain governance 
 human-maintained markdown folder. The optional skills exist to automate the mechanical parts (digesting
 sources, drafting proposals, running the scan) for teams using an AI coding/knowledge assistant.
 
-## Quick start — multiple hubs that share sources
+## Quick start — more than one hub
 
-Only needed once you run two or more hubs and a single source (e.g. a weekly all-hands) produces facts
-relevant to more than one of them. See "Supervisor Tier — Cross-Hub Orchestration" in `STANDARD.md`,
-and [`skills/km-supervise/`](skills/km-supervise/SKILL.md) for the operating skill.
+The moment a workspace runs more than one hub, the standard advises creating the Supervisor
+tier (drafted as v1.26) — starting from the **minimum tier**: a hub registry, an estate queue,
+an inbox, and its own git history, with every further capability adopted against a named
+condition. See "The supervisor threshold" and "Supervisor Tier — Cross-Hub Orchestration" in
+`STANDARD.md`, and [`skills/km-supervise/`](skills/km-supervise/SKILL.md) for the routing
+skill (adopted when a source first spans two hubs).
 
 ## License / reuse
 

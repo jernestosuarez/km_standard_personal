@@ -231,8 +231,11 @@ to the target path.
 ```
 template/CLAUDE.md                         → <target>/CLAUDE.md
    ⤷ After copying: if the workspace root contains `_KM_Supervisor/`, KEEP the "Estate binding"
-     section and verify its four relative paths resolve from the new hub. If there is no
-     `_KM_Supervisor/`, DELETE the section — a dangling estate binding is worse than none.
+     section but BIND ONLY WHAT EXISTS (v1.26): check each bullet's target path from the new
+     hub and delete every bullet whose file or directory is not present at the tier — next to a
+     minimum tier that leaves only the hub-registry/QUEUE bullet. If there is no
+     `_KM_Supervisor/`, DELETE the whole section — a dangling estate binding is worse than none.
+     Apply the same pruning to AGENTS.md (the sections are mirrors).
 template/AGENTS.md                         → <target>/AGENTS.md
 template/HANDOVER.md                       → <target>/HANDOVER.md
 template/sources.config.md                 → <target>/sources.config.md
@@ -337,19 +340,40 @@ Every hub carries exactly one named agent definition — see `STANDARD.md` §"Ag
 
 ---
 
-## Step 4.6 — Register the hub with the supervisor tier (v1.25)
+## Step 4.6 — The supervisor threshold: detect, offer, register (v1.25/v1.26)
 
-If `_KM_Supervisor/` exists at the workspace root, append the new hub's row to
-`_KM_Supervisor/hub-registry.md` now, from the interview's answers:
+**Detection (v1.26).** Check the workspace root (the parent of the target path). If it holds
+**another hub-shaped directory** (one containing `km-deployment.md` or `hub-scan.sh`) and **no
+`_KM_Supervisor/`**, the threshold is crossed — the standard advises the supervisor tier the
+moment there is more than one hub. Say so, and offer to mint the **minimum tier** now:
+
+> "This workspace now holds two hubs and no supervisor tier. The standard advises one at the
+> second hub — estate state (the owner queue, cross-hub decisions) has nowhere correct to live
+> inside a hub. The minimum is small: a hub registry, an estate queue, an inbox, and its own
+> git history. Mint it now?"
+
+If **yes**: create `_KM_Supervisor/` at the workspace root from
+`skills/km-supervise/_KM_Supervisor_template/` — copy `hub-registry.md`, `QUEUE.md`, `README.md`
+(the conditions table) and `_inbox/README.md`, substitute `{{INIT_DATE}}`, `git init` and
+commit; write a registry row for **each** hub found (this one and the pre-existing ones, from
+their `km-deployment.md` interview records — a pre-existing hub with no interview record gets
+status `repo` and a note that its interview is owed). If a decision surface (KM Cockpit) is
+deployed against a hub-local queue, remind the owner to re-point its manifest `queue_path` at
+the estate queue — one config change, no rebuild. If **no**: record the advice and the owner's
+decline in the report; the threshold rule is advice the standard gives, never an act performed
+silently.
+
+**Registration (v1.25).** If `_KM_Supervisor/` exists (pre-existing or just minted), append the
+new hub's row to `_KM_Supervisor/hub-registry.md` from the interview's answers:
 
 ```
 | <hub-directory-name> | hub | <hub owner> | <routing keywords> |
 ```
 
 The registry is the estate's routing map and the decision surface's attribution source; a hub
-missing from it is quarantined by the estate's own scan. If no supervisor tier exists, skip
-this step (single-hub deployments carry their routing keywords in `km-deployment.md`, where
-the decision surface reads them directly).
+missing from it is quarantined by the estate's own scan. If no supervisor tier exists (the
+owner declined, or this is the first hub), skip registration — single-hub deployments carry
+their routing keywords in `km-deployment.md`, where the decision surface reads them directly.
 
 ---
 

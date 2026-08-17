@@ -27,7 +27,13 @@ Read, in full:
 - `_KM_Supervisor/relationships.md` — existing edges (so you don't re-propose known ones)
 
 If `_KM_Supervisor/` does not exist, stop and tell the owner to stand up the Supervisor first
-(see "Standing up the Supervisor" in `STANDARD.md`) — offer to do it.
+(see "The supervisor threshold" in `STANDARD.md` — advised the moment there is more than one
+hub) — offer to mint the minimum tier from `_KM_Supervisor_template/`.
+
+If the tier exists but is the **minimum tier** (no `relationships.md`, `routing-log.md`, or
+`_unrouted/`), this run is exactly the named condition for adopting the routing capability — a
+source now belongs to two or more hubs. Say so, and offer to create the three routing files
+from the template (with OKF frontmatter) before proceeding; the first run should be `--dry-run`.
 
 Ask once: **"Refresh the registry before we start? (re-scan hub scope guards + glossary tags)"**
 - **Yes** → re-derive routing keywords for each hub from its `CLAUDE.md` scope guard and
