@@ -1,3 +1,8 @@
+---
+name: km-supervise
+description: Use when a source, decision or fact touches more than one hub. /km-supervise routes it from the supervisor tier into each affected hub's own proposal flow.
+---
+
 # Skill: km-supervise — Route a Cross-Cutting Source Across Hubs
 
 You have been invoked as `/km-supervise`. A **cross-cutting source** (meeting transcripts, an

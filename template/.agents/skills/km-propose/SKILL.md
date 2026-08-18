@@ -1,3 +1,8 @@
+---
+name: km-propose
+description: Use when a hub document, entity note or governance file should change from a discussion, decision or owner correction rather than an inbox file. /km-propose drafts the proposal.
+---
+
 # Skill: km-propose — Draft a Change Proposal
 
 > **If the hub owner corrected you in chat rather than asking for a proposal**, you still owe an

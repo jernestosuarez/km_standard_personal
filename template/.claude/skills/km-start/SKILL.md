@@ -1,3 +1,8 @@
+---
+name: km-start
+description: Use at the start of any session in this knowledge hub, or to check its health. /km-start runs the structural scan plus the corrections, staleness and competency-question audits.
+---
+
 # Skill: km-start — Session Opening Audit
 
 You have been invoked as `/km-start`. Run this at the beginning of every session involving

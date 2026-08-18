@@ -1,3 +1,8 @@
+---
+name: km-gather
+description: Use when hub content needs researching from external or configured sources. /km-gather searches them, compares against current hub state, and drafts a proposal citing evidence for every change.
+---
+
 # Skill: km-gather — Research Sources and Propose Hub Updates
 
 You have been invoked as `/km-gather`. Search one or more sources, compare against the full

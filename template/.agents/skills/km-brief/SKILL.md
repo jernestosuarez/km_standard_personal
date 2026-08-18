@@ -1,3 +1,8 @@
+---
+name: km-brief
+description: Use when someone needs a memo, briefing or status report drawn from this hub. /km-brief drafts it for a named audience by querying committed entity notes.
+---
+
 # Skill: km-brief — Generate an Audience-Tailored Artifact
 
 You have been invoked as `/km-brief`. Generate a memo, briefing, or status report by querying this

@@ -1,3 +1,8 @@
+---
+name: km-init
+description: Use when standing up a new knowledge hub from this standard. /km-init runs the purpose interview, scaffolds the hub from the template, mints its agent, and registers it.
+---
+
 # Skill: km-init — Initialize a New Knowledge Hub
 
 You have been invoked as `/km-init`. Create a new governed knowledge hub by copying and

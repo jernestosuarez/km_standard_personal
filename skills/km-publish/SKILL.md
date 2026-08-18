@@ -1,3 +1,8 @@
+---
+name: km-publish
+description: Use when a document held in this hub must be issued outward as a rendered PDF. /km-publish builds it from committed source through the shared renderer and its guards.
+---
+
 # Skill: km-publish — Issue an Outward-Facing Artifact from the Hub
 
 You have been invoked as `/km-publish`. Render an issuable document (PDF) from an editable source held in

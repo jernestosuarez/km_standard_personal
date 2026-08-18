@@ -1,3 +1,8 @@
+---
+name: km-handover
+description: Use at the end of a working session, or when the handover is stale. /km-handover rewrites the current-state and open-items section of HANDOVER.md for the next agent.
+---
+
 # Skill: km-handover — Update Session Handover
 
 You have been invoked as `/km-handover`. Update section 5 of `HANDOVER.md` so the next

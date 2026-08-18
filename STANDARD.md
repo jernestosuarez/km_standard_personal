@@ -4,7 +4,7 @@ title: Knowledge Management Standard: Hub Framework (v1.26)
 description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, an optional Agent Tier for named, discoverable agent instances, and an optional record-boundary layer for governed use of systems of record.
 tags: [standard, knowledge-management, governance, okf, agents]
 resource: template/
-timestamp: 2026-08-17
+timestamp: 2026-08-18
 ---
 
 # Knowledge Management Standard: Hub Framework (v1.26)
@@ -12,8 +12,9 @@ timestamp: 2026-08-17
 **Published v1.26** (2026-08-17, owner push, carrying v1.24 — the owner-surface train: the KM
 Cockpit side component, the owner interaction contract, the projection contract, the staleness
 rule — and v1.25 — the `/km-init` purpose interview and the initiation quarantine gate — with
-it). **v1.23** (stations, compartments, and the resolution plane) **remains drafted and
-unpublished**: its sections are marked with their version and bind nothing until its own push.
+it). **v1.23** (stations, compartments, and the resolution plane) and **v1.27** (skill files
+declare their trigger) **remain drafted and unpublished**: their sections are marked with their
+version and bind nothing until their own push.
 Deployment pins resolve the version they pinned until their Supervisor re-pins.
 
 **Status:** Active standard. Framework-agnostic, works with Claude, GPT, Gemini, or any other LLM agent, and equally well with no agent at all (plain human use).
@@ -2876,6 +2877,49 @@ home of record does not. If a definition needs to say what "in scope" means for 
 belongs in `CLAUDE.md`; the definition links to it rather than repeating it. A definition that grows
 past roughly 25 lines has almost certainly copied something that belongs elsewhere.
 
+### Skill files declare their trigger, not their title (added in v1.27)
+
+A **skill** is a named procedure an agent runtime can discover and invoke (`/km-start`, `/km-intake`,
+`/km-gather`). It is not an agent: it carries no scope and no identity, and it is discovered by
+metadata rather than by being asked for by name. Every skill file this standard ships therefore
+carries YAML frontmatter with exactly two fields:
+
+```yaml
+---
+name: km-gather
+description: Use when hub content needs researching from external or configured sources. /km-gather searches them, compares against current hub state, and drafts a proposal citing evidence for every change.
+---
+```
+
+`name` is the directory slug and the invocation. `description` states **when to use the skill**,
+in trigger terms. It is the only part of the file a runtime holds before invocation, the body loads
+only once the skill is selected, so it is also the only thing on which the decision to invoke can be
+made. A skill file with no frontmatter falls back to whatever its first heading says, and a heading
+is a title: "Skill: km-gather, Research Sources and Propose Hub Updates" names the skill without
+ever saying what would make an agent reach for it. Discovery then degrades to the operator
+remembering the skill exists, which is exactly the knowledge a new session does not have.
+
+Three properties, each with a cost that makes it a rule rather than a preference:
+
+- **One dense sentence, roughly 15 to 30 words**, naming the trigger conditions and the invocation
+  itself. Descriptions are **resident**: they occupy the context window of every session in which the
+  skill is installed, used or not. The standing cost scales with the *number* of installed skills,
+  not with how often they fire, so verbosity is paid for on every message of every session.
+- **Written so it needs no quoting.** Keep a colon followed by a space out of the value: a plain YAML
+  scalar cannot contain one, and a description that must be quoted is one naive frontmatter reader
+  away from carrying its own quotation marks into the listing.
+- **Placed where its residency is earned.** Per-hub skills live in the hub and are resident only in
+  sessions opened there; workspace-level skills (hub initialization, cross-hub routing) live at the
+  workspace. Placement, not intent, decides who pays.
+
+Compliance is mechanical: `tests/test_skill_frontmatter.sh` fails when any shipped skill file lacks
+frontmatter, lacks either field, carries a `name` that is not its directory slug, carries a
+description that would not survive a plain-scalar parse, or carries one outside the word budget; it
+also fails when the same slug's frontmatter has drifted between the trees it ships in. Each rule is
+proved against a synthetic violation, so a check that has stopped firing is itself caught. **Stated
+limit:** the test covers the skills this standard ships. A skill written locally in a deployed hub is
+bound by the same rule and reached by no automated check, so it is verified at review.
+
 ### Scope is a declared convention, not an enforced control
 
 Every agent definition carries `scope_enforcement: convention`, and states this plainly: the scope
@@ -3036,6 +3080,7 @@ happened once (see the v1.9 row) and the ledger exists so it does not happen twi
 | v1.24 | 2026-08-17 | Drafted and published 2026-08-17 (owner push, with v1.25 and v1.26). The owner-surface train, from an operational build (2026-08-14→17) on a second estate. (1) **Three surfaces named** — audience / owner / practitioner — with the owner surface promoted to a deployment component: decisions accumulating where nobody opens them is how a deployment dies. (2) **The KM Cockpit side component** (`components/km-cockpit/`): the proven owner decision surface shipped exactly as deployed (v3.8 behavior — brief-gated cards, five truthful proposal lifecycle states, supervisor-actions request channel, per-hub views, activity audit trail), genericised by **configuration only** — a deployment manifest (estate root, queue path, hub-registry path, port, organization name, state dir) and a registry-derived hub map; normative contract in its `SPEC.md`, including *surface-never-a-pen* and *decision surfaces are unpublished by default* (localhost-bound, never beside a reading site, shared access an explicit owner decision with clearance and audit). Single-hub mode binds the same component to a hub-local queue file — identical data contract, so the supervisor threshold (v1.26) is a manifest re-point, proven by `tests/test_km_cockpit.sh`'s single-hub round-trip. (3) **The owner interaction contract**: questions exist only as registered artifacts (links, zero-context, why-owner, recommendation-first), mechanical dedup, automatic two-session nudges, lifecycle gates, the fixed NEEDS YOU / DONE / FYI output shape, equal answer channels. (4) **The projection contract**: four gates on every consuming surface (committed at HEAD, lifecycle-active, within clearance, manifest-listed) plus renderer normalization. (5) **The staleness rule**: a recorded state contradicted by time publishes the contradiction and names who can resolve it, never a silent correction. Trade-offs recorded: the queue stays hand-maintained-file-first exactly as deployed — deriving queue content from what the estate's files already know is a roadmap note only (one estate, one day, medium confidence; SPEC.md §9); desktop notifications are macOS best-effort; keyword hub-attribution is approximate until the queue's machine block gains an explicit hubs field. |
 | v1.25 | 2026-08-17 | Drafted and published 2026-08-17 (owner push, with v1.24 and v1.26). The `/km-init` purpose interview: a hub's definition is **produced by a structured Q&A, never assumed** — purpose and scope guard (in **and** out), audiences each mapped to one of the three surfaces, the **knowledge-vs-records boundary elicited source by source** (the Rule 6 access vocabulary existed; the conversation that applies it did not), evidence expectations, routing keywords, and owner cadence — the answer-surface question asked recommendation-first with **a deployed cockpit as the recommended default** (owner amendment, 2026-08-17: the owner surface is what decides whether a deployment survives); planning the surface is mandatory, deploying it remains an explicit act. Outputs: the scope guard, the hub manifest (`km-deployment.md` → Hub definition, `initiation-interview` date, `routing-keywords`), and the supervisor registry row where a tier exists. **The quarantine gate is mechanical:** `[ DEPLOYMENT ]` in `hub-scan.sh` errors on a binding with no interview date (date-shape checked, so an unsubstituted placeholder cannot pass), and an uninterviewed hub never scans green; `tests/test_hub_deployment_binding.sh` carries the canary. Delivery guidance in `km-init` Step 8: name what reconciliation finds during onboarding out loud (a selling point, not only a control), and a **directional, run-once** bulk-corpus intake shape (catalogue → boundary interview → domain split → briefed parallel readers → per-domain extract → entity layer) recorded as guidance, deliberately not yet a normative pattern. Trade-off recorded: existing hubs fail the gate until the interview is backfilled at adoption — deliberate, that is the gate working. |
 | v1.26 | 2026-08-17 | Drafted and published 2026-08-17 (owner push, with v1.24 and v1.25). The supervisor at the second hub, from the owner's recorded ruling: **hub count > 1 advises creating the Supervisor tier**, replacing the "share a source or an entity" trigger — the count is the threshold, not overlap, because estate-level state (the owner queue, cross-hub decisions) has nowhere correct to live inside a hub. What makes the rule followable: (1) the **minimum tier** — hub registry + estate queue + inbox + own git history, nothing more, with every omitted capability (routing, semantic layer, escalations, evidence standard, estate corrections, decision surface) carrying a **named adoption condition** in a table that ships in the tier's own template README; (2) **bind-only-what-exists** — a hub's estate-binding section names only files actually present at the tier (`km-init` prunes at scaffold time; the scan's `[ CORRECTIONS ]` block already behaved this way), with a new minimum-tier bullet binding the registry and queue; (3) **detection at creation** — `/km-init` finding an existing hub first detects an already-deployed cockpit and asks whether the new hub joins it (no tier yet: the yes rides the tier-minting, estate queue absorbing both hubs and the manifest re-pointing; tier present: the registry row alone suffices, and the interview states which path applied), then **recommends** minting the minimum tier, recommendation-first (owner amendment, 2026-08-17, strengthening the original "offers"); declining is recorded, never overridden; (4) **the decision surface crosses by configuration** — hub-local queue pre-tier, manifest re-point at minting, identical data contract (proven by the v1.24 single-hub round-trip test). `km-supervise` now names its own adoption condition: a minimum tier meeting its first cross-hub source adopts the routing files at that moment. Trade-offs recorded: the threshold is **advice the standard gives, never an act it performs** — the owner may decline; and the minimum tier deliberately omits every capability whose absence is recoverable, betting that a small tier actually minted beats a complete tier ignored. |
+| v1.27 | 2026-08-18 | **DRAFT — awaiting owner push.** Skill files declare their trigger, not their title (Agent Tier). Every skill file the standard ships (`skills/`, `template/.claude/skills/`, `template/.agents/skills/`) now carries YAML frontmatter with `name` (the directory slug, which is also the invocation) and `description` written as **when to use it**, in trigger terms, naming the invocation itself. Derived from a measured defect in a deployed estate: 81 of 82 hub-local skill files carried no frontmatter at all, so every runtime listing fell back to the file's first heading — a title ("Skill: km-gather, Research Sources and Propose Hub Updates") states what a skill is called and never what would make an agent reach for it, leaving discovery to whoever already remembers the skill exists. Three enforced properties, each with its cost stated: one dense sentence of roughly 15–30 words, because descriptions are **resident** — they occupy context in every session where the skill is installed, used or not, and the standing cost scales with the number of skills installed rather than with how often they fire; written to need no quoting (no colon-space in the value), since a plain YAML scalar cannot contain one and a quoted scalar is one naive frontmatter reader away from showing its own quote marks in the listing; and placed where residency is earned, per-hub skills in the hub, workspace-level skills (initialization, cross-hub routing) at the workspace. `tests/test_skill_frontmatter.sh` enforces all four field rules plus mirror parity, and proves each rule against a synthetic violation. **Trade-offs recorded:** (1) the fix *adds* a standing token cost where there was none — measured at ~45 tokens per skill, ~319 for a hub's set of seven, against reliable discovery; the one-sentence cap is where that trade was struck, and the 10–40 word test ceiling is the mechanical form of "roughly". (2) The colon-space ban constrains phrasing (some descriptions read slightly stiffer than their quoted form would) in exchange for parsing identically under a real YAML parser and a naive line reader. (3) Descriptions state trigger conditions but do **not** change any runtime's decision to auto-invoke; whether a given skill should fire unprompted stays a per-deployment choice this version deliberately leaves open. (4) The distribution copy `skills/km-brief/SKILL.md` is missing the index-first and lifecycle-filter guidance its template mirrors carry — pre-existing content drift, reported, deliberately **not** repaired here so that this change adds frontmatter and nothing else; the new mirror-parity check covers frontmatter only. (5) Hubs already deployed do not inherit the fix by upgrading the standard: their installed skill copies are backfilled as an adoption act under each hub's own governance. |
 
 ---
 

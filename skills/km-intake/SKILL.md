@@ -1,3 +1,8 @@
+---
+name: km-intake
+description: Use when this hub has pending proposals in changes/ or unprocessed files in _inbox/. /km-intake applies or rejects each proposal, then turns each inbox file into a sourced proposal.
+---
+
 # Skill: km-intake — Pending Proposals + Inbox Files
 
 You have been invoked as `/km-intake`. First handle any pending proposals in `changes/`, then
