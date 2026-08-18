@@ -14,7 +14,9 @@ deployment-state: canonical
 # as an error, and an uninterviewed hub never scans green.
 initiation-interview: "{{INIT_DATE}}"
 # Routing keywords from the interview — harvested by the supervisor's hub registry and by
-# the decision surface's per-hub attribution. Comma-separated, lowercase.
+# the decision surface's per-hub attribution. Comma-separated, lowercase. Gated since v1.28:
+# hub-scan.sh reports an empty or unsubstituted value as an error, because a surface that
+# reads this field attributes nothing to a hub that left it blank.
 routing-keywords: "{{ROUTING_KEYWORDS}}"
 organization-profile-id: ""
 organization-profile-revision: ""
@@ -53,8 +55,11 @@ Recorded on {{INIT_DATE}}. This is the hub's manifest of intent — what it is f
 where its boundaries sit. Changing it is a governed change like any other.
 
 - **Purpose:** {{DESCRIPTION}}
-- **Scope guard — in:** {{SCOPE_IN}}
+- **Scope guard — in** (the admission rule: the condition under which a source is admitted here,
+  not a topic label): {{SCOPE_IN}}
 - **Scope guard — out:** {{SCOPE_OUT}}
+- **Hard exclusions** (what this hub refuses *even when a routing keyword matches* — an exclusion
+  never stated against a matching keyword never fires): {{HARD_EXCLUSIONS}}
 - **Audiences and surfaces** (each audience named to the surface it gets — audience / owner /
   practitioner; STANDARD.md → "The decision surface: three surfaces"):
   {{AUDIENCE_SURFACES}}
@@ -64,3 +69,6 @@ where its boundaries sit. Changing it is a governed change like any other.
   confirmation): {{EVIDENCE_EXPECTATIONS}}
 - **Owner cadence** (how often the owner sits with the queue, and on which surface):
   {{OWNER_CADENCE}}
+- **Sensitivity posture** (restricted classes expected here, and the outbound surfaces planned —
+  elicited at initiation so the outbound lint set is configured before anything travels, never
+  retrofitted after it has): {{SENSITIVITY_POSTURE}}

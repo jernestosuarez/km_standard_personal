@@ -38,6 +38,7 @@ canonical-standard-revision: 0123456789abcdef0123456789abcdef01234567
 canonical-standard-source: synthetic-fixture
 deployment-state: canonical
 initiation-interview: "2026-08-03"
+routing-keywords: "fixture, synthetic"
 ---
 EOF
 

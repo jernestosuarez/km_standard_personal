@@ -1,12 +1,40 @@
 ---
 name: km-init
-description: Use when standing up a new knowledge hub from this standard. /km-init runs the purpose interview, scaffolds the hub from the template, mints its agent, and registers it.
+description: Use when standing up a new knowledge hub, or adopting a directory that already exists into this standard. /km-init runs the purpose interview, scaffolds what is missing, mints the agent, and registers the hub.
 ---
 
-# Skill: km-init — Initialize a New Knowledge Hub
+# Skill: km-init — Initialize or Adopt a Knowledge Hub
 
-You have been invoked as `/km-init`. Create a new governed knowledge hub by copying and
-customising the reference template from this standard.
+You have been invoked as `/km-init`. Produce a governed knowledge hub's **definition** by running
+the purpose interview, and stand up whatever the directory does not already have.
+
+## Two entry conditions, one interview
+
+| Mode | Entry condition | What it writes |
+|---|---|---|
+| **`/km-init <path>`** (create) | No hub exists at the path | The full scaffold from `template/`, the deployment binding, the agent definition, the registry row |
+| **`/km-init --adopt <path>`** (adopt) | A directory already exists and is not an initiated hub | The hub definition, the scope guard, the registry row, and **only** the scaffold files that are absent |
+
+The **adoption mode** exists because a control that makes existing artifacts non-conformant must
+ship with the act that makes them conformant (STANDARD.md → "A gate needs a route back"). A hub
+whose `km-deployment.md` carries no `initiation-interview` date never scans green, and before this
+mode there was no way to give it one without hand-writing the record. Two rules bound the mode and
+neither is negotiable:
+
+- **The interview is run, never waived.** Adoption is not a stamp. Writing an
+  `initiation-interview` date onto a hub nobody interviewed forges the exact evidence the gate asks
+  for, and it is worse than the red scan it replaces, because a red scan is honest.
+- **Only what is absent is written.** Never overwrite existing hub content, and never overwrite the
+  canonical provenance the hub already records — a hub records the revision it was *built* from, and
+  re-pinning it is a separate governed act. List everything the pass added.
+
+A directory can be quarantined by two different scans: its own (`hub-scan.sh` `[ DEPLOYMENT ]`, for
+the missing interview record) and, where a supervisor tier exists, the estate's (for absence from
+the hub registry). **One interview clears both.** Clearing one and not the other leaves the hub
+non-conformant with a check nobody was watching, so never stop halfway.
+
+Run Steps 0, 0.5 and 1 in **both** modes. In adopt mode, skip Step 3 (directory creation) and Step
+4's file copying except for genuinely missing files, and follow Step 4.7 for what to write.
 
 ---
 
@@ -39,6 +67,13 @@ the hub is internally consistent, committed, well-formed. None of them measures 
 worth anything.** A hub can scan perfectly green and be useless. This is the only check that catches
 that, and it only works before the directory exists — afterwards, sunk cost argues for keeping it.
 
+**In adopt mode the gate is harder to hold, and matters more.** The directory is already there,
+often with real content in it, and every instinct argues for initiating whatever exists. Adoption is
+therefore also the moment to conclude that a directory should **not** become a hub — that it is a
+folder of files, and governing it buys nothing. An adoption pass that has never once returned that
+answer is not being run honestly. Say it plainly when it is the answer, and leave the directory
+alone.
+
 Record the questions; they populate the **Competency questions** table in `01_project-brief.md`
 (Step 4) and are re-checked by `/km-start`.
 
@@ -49,7 +84,33 @@ because it makes a useless hub look justified.
 
 ---
 
-## Step 1 — The purpose interview (structured Q&A, v1.25)
+## Step 0.5 — Look before asking
+
+**Read what already exists before putting a single question to the owner.**
+
+- **The directory itself** — numbered documents, `CLAUDE.md`/`AGENTS.md` and any scope statement in
+  them, `km-deployment.md`, `README.md`, `sources/`, `changes/`, entity notes.
+- **The workspace**, where a supervisor tier is present — the hub registry, the relationship graph,
+  the decision log for any prior owner ruling on this subject, the unrouted backlog and any parked
+  register.
+
+**Pre-fill every interview answer you can defend from that evidence, and present each pre-fill with
+its source.** The owner confirms or corrects a pre-fill instead of dictating from zero. Then **state
+plainly which answers you could not pre-fill** — those are the real questions, and they are what the
+owner's attention is for.
+
+This matters most in adopt mode, where the evidence is richest: a directory holding two years of
+content has already demonstrated its purpose, its scope and its audiences, and the interview's job
+there is to have the owner **ratify what the content shows**, not reconstruct it from memory.
+
+**A pre-fill is a proposal, not an answer.** Only the owner's confirmation is recorded. Never write
+an unconfirmed pre-fill into the hub definition as though it had been given: the point of the step is
+to spend the owner's attention on what the record cannot answer, and a pre-fill that becomes the
+answer by default spends none of it and fabricates the definition instead.
+
+---
+
+## Step 1 — The purpose interview (structured Q&A, v1.25; extended in v1.28)
 
 The hub's definition is **produced by an interview, never assumed**. Run it as batched
 structured questions — three or four per round, one decision per question, in the order below —
@@ -68,14 +129,21 @@ green.**
 - **Your role / title** — job title of the person setting up this hub
 - **Description (purpose)** — one sentence: what this initiative is and what the hub tracks
 
-**Round 2 — the scope guard:**
+**Round 2 — the scope guard.** Ask for a rule an agent can apply to an inbound source, not a
+description of the subject:
 
-- **Scope (in)** — one sentence: what is explicitly in scope for this hub
-- **Scope (out)** — one sentence: what is explicitly excluded. Push for a real exclusion; a
-  scope guard with no "out" guards nothing.
+- **Scope (in)** — the condition under which a source is **admitted** to this hub, phrased as an
+  admission rule ("anything bearing on X's delivery, commitments or counterparties"), not as a
+  topic label.
+- **Scope (out)**, and **hard exclusions** — what is excluded, and specifically what this hub
+  **refuses even when a routing keyword matches**. Keyword matching is how a source reaches a hub
+  in the first place, so an exclusion never stated against a matching keyword never fires. Push for
+  a real one: a scope guard with no "out" guards nothing, and an "out" that names a subject area
+  rather than a refusal is barely better.
 - **Routing keywords** — 5–10 lowercase, comma-separated terms that mark a source as this
   hub's business. They feed the supervisor's hub registry and the decision surface's per-hub
-  attribution.
+  attribution, and they are written into `km-deployment.md` as `routing-keywords`, where
+  `hub-scan.sh` requires a substituted, non-empty value.
 
 **Round 3 — audiences and surfaces.** A deployment has three surfaces (STANDARD.md → "The
 decision surface: three surfaces"): the **audience** surface (generated knowledge shaped per
@@ -103,6 +171,22 @@ vocabulary exists in the standard; this conversation is what applies it. Ask:
 - **Evidence expectations** — which source classes will this hub trust at face value, and
   which always need owner confirmation? (Anchor on the evidence order: subject-confirmed >
   owner-statement > independent sources > systems of record > unresolvable references.)
+
+**Round 5 — posture and connections:**
+
+- **Sensitivity posture** — are `sensitivity: restricted` or `accessClass: restricted` classes
+  expected in this hub, and which **outbound surfaces** are planned (`shareable/`, a published
+  reading site, a generated brief)? A yes makes the outbound lint set part of initiation rather
+  than a retrofit, and, where the hub species axes are in use, declares `station` and `exposure`
+  now. Discovering a restricted class after an outbound surface exists is the expensive order: the
+  material has already travelled, and the check that would have stopped it arrives afterwards.
+- **What should move home to this hub** — where the workspace holds material with no home (the
+  supervisor's unrouted backlog, a parked register, a routing gap recorded and left open), ask
+  which of it belongs here. A hub stood up in a live workspace usually exists *because* something
+  had nowhere to go; move it as part of initiation (Step 4.8). Skip this question where no such
+  register exists — a first hub has nothing to sweep.
+- **Relationships to existing hubs** — candidate edges for the relationship graph, where a
+  supervisor tier holds one. Proposed here, confirmed by the owner, never auto-written.
 
 **Closing:**
 
@@ -162,12 +246,18 @@ KM_STANDARD_VERSION="$(sed -n 's/^\*\*Current version: v\([^*]*\)\*\*.*/\1/p' "$
 `KM_STANDARD_SOURCE` records the configured origin when available and `unresolved` otherwise; never
 invent a source URL.
 
-If the target path already exists and contains files, stop and ask the user to confirm before
-overwriting anything.
+**In adopt mode, do not overwrite provenance the hub already carries.** A hub records the revision
+it was *built* from; re-pinning it to a later canonical revision is a separate governed act with its
+own authority. Derive the values above only to fill fields that are absent or empty, and report any
+divergence between the hub's recorded version and the current one rather than silently closing it.
+
+If the target path already exists and contains files, this is the adopt case: run `--adopt` rather
+than overwriting anything. If the user asked for create mode against a populated directory, stop and
+ask them to confirm which mode they meant.
 
 ---
 
-## Step 3 — Create the hub directory structure
+## Step 3 — Create the hub directory structure (create mode)
 
 ```bash
 TARGET="<target-path>"
@@ -204,7 +294,7 @@ cd "$TARGET" && git init
 
 ---
 
-## Step 4 — Copy and populate files
+## Step 4 — Copy and populate files (create mode; adopt mode adds only what is missing, Step 4.7)
 
 For every file listed below, read the source from `template/`, replace all placeholders, and write
 to the target path.
@@ -223,9 +313,11 @@ to the target path.
 | `{{INITIATOR_CONTEXT}}` | Role and unit context (from about-me or placeholder) |
 | `{{INITIATOR_AGENT_NOTES}}` | Agent working notes (from about-me or placeholder) |
 | `{{DESCRIPTION}}` | One-sentence description (the hub's purpose, from the interview) |
-| `{{SCOPE_IN}}` | In-scope statement |
-| `{{SCOPE_OUT}}` | Out-of-scope statement |
-| `{{ROUTING_KEYWORDS}}` | Comma-separated lowercase routing keywords (interview Round 2) |
+| `{{SCOPE_IN}}` | In-scope statement, phrased as the admission rule (interview Round 2) |
+| `{{SCOPE_OUT}}` | Out-of-scope statement (interview Round 2) |
+| `{{HARD_EXCLUSIONS}}` | What the hub refuses even when a routing keyword matches (interview Round 2) |
+| `{{SENSITIVITY_POSTURE}}` | Expected restricted classes and planned outbound surfaces (interview Round 5) |
+| `{{ROUTING_KEYWORDS}}` | Comma-separated lowercase routing keywords (interview Round 2). Must be substituted and non-empty — `hub-scan.sh` `[ DEPLOYMENT ]` errors otherwise |
 | `{{AUDIENCE_SURFACES}}` | One line per audience, each mapped to its surface (interview Round 3) |
 | `{{OWNER_CADENCE}}` | Owner cadence and answer surface (interview Round 3) |
 | `{{KNOWLEDGE_RECORDS_BOUNDARY}}` | The elicited knowledge-vs-records boundary (interview Round 4) |
@@ -385,10 +477,11 @@ If **yes**: create `_KM_Supervisor/` at the workspace root from
 (the conditions table) and `_inbox/README.md`, substitute `{{INIT_DATE}}`, `git init` and
 commit; write a registry row for **each** hub found (this one and the pre-existing ones, from
 their `km-deployment.md` interview records — a pre-existing hub with no interview record gets
-status `repo` and a note that its interview is owed); and complete any cockpit addition agreed
-in (a) by re-pointing the manifest. If **not yet**: record the recommendation and the owner's
-decline in the report; the threshold rule is advice the standard gives, never an act performed
-silently.
+status `repo`, a note that its interview is owed, and **a named next act: `/km-init --adopt` on
+that directory**, which is what clears it; never leave the demotion as the end of the story); and
+complete any cockpit addition agreed in (a) by re-pointing the manifest. If **not yet**: record the
+recommendation and the owner's decline in the report; the threshold rule is advice the standard
+gives, never an act performed silently.
 
 **Registration (v1.25).** If `_KM_Supervisor/` exists (pre-existing or just minted), append the
 new hub's row to `_KM_Supervisor/hub-registry.md` from the interview's answers:
@@ -404,6 +497,45 @@ their routing keywords in `km-deployment.md`, where the decision surface reads t
 
 ---
 
+## Step 4.7 — Adopt mode: what to write into a directory that already exists
+
+**Applies only to `--adopt`.** Skip in create mode.
+
+1. **Scaffold only what is absent.** Compare the directory against `template/` and add only files
+   that are missing: the numbered documents it lacks, `hub-scan.sh`, `build-indexes.sh`,
+   `handover-hooks.sh`, `.claude/settings.json`, `HANDOVER.md`, `context.jsonld`, `changes/` and its
+   two templates, `_inbox/README.md`, the entity folders and their `TEMPLATE.md` files, `.gitignore`.
+   **Never overwrite an existing file.** `git init` only if the directory is not already a
+   repository. List every file added.
+2. **Write the hub definition into `km-deployment.md`** — the `initiation-interview` date (today,
+   `YYYY-MM-DD`, which is what lifts the standard's quarantine), `routing-keywords`, and the **Hub
+   definition** body section from the interview's answers. Preserve every provenance and deployment
+   field the binding already carries, including `deployment-state` and any organization or
+   enterprise binding: this step adds the interview record to an existing binding, it does not reset
+   the hub.
+3. **Write the scope guard** into `CLAUDE.md` and `AGENTS.md` (mirrors — apply to both) as the
+   admission rule plus the hard exclusions, in the owner's own words. Where a scope statement
+   already exists and the interview changed it, replace it and say so in the report.
+4. **Write the competency questions** into `01_project-brief.md`.
+5. **Mint the agent definition** if the hub has none (Step 4.5), and register the hub (Step 4.6) —
+   the registry row is what lifts the estate's quarantine.
+6. **Verify both gates cleared.** Run the hub's scan and, where a supervisor tier exists, the
+   estate's. If the hub's inherited `hub-scan.sh` predates the `[ DEPLOYMENT ]` interview check, it
+   cannot report the gate at all: say so explicitly rather than reporting a pass the scan never
+   performed, and verify the frontmatter by reading it.
+
+---
+
+## Step 4.8 — Move home what was parked (where a register exists)
+
+If Round 5 identified material parked elsewhere for want of a home — items in the supervisor's
+unrouted backlog, a parked register, an open routing gap this hub closes — move it now, through the
+receiving hub's normal intake, and close the register rows it came from. Leaving it parked after its
+home exists outlives the backlog's own reason for existing, and a register nobody drains stops being
+read. Where no such register exists, skip this step.
+
+---
+
 ## Step 5 — Initial commit
 
 ```bash
@@ -413,6 +545,13 @@ cd "<target-path>" && git add -A && git commit -m "init: hub scaffold"
 This is the baseline every future `hub-scan.sh` integrity check diffs against — no separate manifest
 file to compute.
 
+**Create mode only.** The blanket add is safe here for the one reason STANDARD.md gives (*Rule 3 →
+Stage explicitly*): nothing has been deleted yet and the tree holds only what the template put
+there. **In adopt mode neither holds** — the directory has its own history, possibly its own pending
+deletions and its own uncommitted work — so stage the paths this pass wrote, by name, and commit
+them with the reason. Never sweep an existing hub's unrelated working state into an initiation
+commit.
+
 ---
 
 ## Step 6 — Run hub-scan.sh
@@ -421,11 +560,20 @@ file to compute.
 cd "<target-path>" && bash hub-scan.sh
 ```
 
-All sections should show OK. If any section reports an issue, investigate and resolve before
-reporting success. Common first-run issues:
+All sections should show OK, and `[ DEPLOYMENT ]` must not print `HUB NOT INITIATED`. If any section
+reports an issue, investigate and resolve before reporting success. Common first-run issues:
 - Frontmatter missing → a template file was not populated correctly
 - Integrity flagged as uncommitted/untracked → the initial commit (Step 5) wasn't made, or a file was
   written after it
+- `HUB NOT INITIATED`, or a `routing-keywords` error → `km-deployment.md` still carries an
+  unsubstituted `{{INIT_DATE}}` or `{{ROUTING_KEYWORDS}}`; both are gated, and a placeholder cannot
+  pass either check
+
+In adopt mode the hub may be running an **inherited copy** of `hub-scan.sh` that predates the
+`[ DEPLOYMENT ]` interview check, in which case the scan cannot report the gate at all. Say so
+explicitly rather than reporting a pass the scan never performed, verify the binding by reading its
+frontmatter, and note that updating the hub's scan script is an adoption act under that hub's own
+governance, not something this skill does behind the owner's back.
 
 ---
 
@@ -437,10 +585,13 @@ see them again at the moment the hub is handed over.
 
 
 Report:
-- Hub created at: `<target-path>`
-- Files created: list them
+- Hub created at (or adopted at): `<target-path>`, and which mode ran
+- Files created: list them. In adopt mode list **only** what was added, and state explicitly what
+  was left untouched
 - Agent minted: `.claude/agents/<AGENT_NAME>.md`
-- Deployment state: `canonical`
+- Deployment state: `canonical` (create mode), or the state preserved from the existing binding
+- Which quarantines cleared: the hub's own `[ DEPLOYMENT ]` gate, and the estate registry gate where
+  a supervisor tier exists. Name any that did not clear, and why
 - Initial scan: all sections OK (or list issues)
 
 Suggest next steps:

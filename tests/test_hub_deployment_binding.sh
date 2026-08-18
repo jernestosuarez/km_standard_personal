@@ -26,6 +26,7 @@ prepare_hub() {
 
   local binding="$hub/km-deployment.md"
   sed -i.bak \
+    -e 's|{{ROUTING_KEYWORDS}}|alpha, beta, gamma|g' \
     -e 's|{{KM_STANDARD_VERSION}}|1.14|g' \
     -e "s|{{KM_STANDARD_REVISION}}|$revision|g" \
     -e 's|{{KM_STANDARD_SOURCE}}|https://example.invalid/km-standard.git|g' \
@@ -137,6 +138,53 @@ fi
 if ! printf '%s\n' "$output" | grep -Fq "HUB NOT INITIATED"; then
   printf '%s\n' "$output" >&2
   fail "uninterviewed did not report the quarantine"
+fi
+# One defect, not two: the keyword check is withheld while the interview date is itself missing,
+# so the hub is told about the one act that fixes both.
+if printf '%s\n' "$output" | grep -Fq "routing-keywords"; then
+  printf '%s\n' "$output" >&2
+  fail "uninterviewed also reported routing-keywords (should be withheld until the date is valid)"
+fi
+
+# The routing-keywords gate (v1.28) — two canaries proving the check fires on each way the field
+# can be wrong, on a hub whose interview date is otherwise valid.
+mutate_binding() { # <hub> <sed-expression> <commit-msg>
+  sed -i.bak -e "$2" "$1/km-deployment.md"
+  rm -f "$1/km-deployment.md.bak"
+  git -C "$1" add km-deployment.md
+  git -C "$1" -c user.name='KM Test' -c user.email='km-test@example.invalid' commit -qm "$3"
+}
+
+nokeywords=$(prepare_hub nokeywords canonical "$CANONICAL_REVISION" "" "" "" "")
+mutate_binding "$nokeywords" 's|^routing-keywords: .*|routing-keywords: ""|' \
+  'apply: empty routing keywords (fixture)'
+set +e
+output=$(bash "$nokeywords/hub-scan.sh" 2>&1)
+status=$?
+set -e
+if [ "$status" -ne 1 ]; then
+  printf '%s\n' "$output" >&2
+  fail "nokeywords returned $status, expected 1"
+fi
+if ! printf '%s\n' "$output" | grep -Fq "routing-keywords is empty"; then
+  printf '%s\n' "$output" >&2
+  fail "nokeywords did not report the empty keyword field"
+fi
+
+placeholder=$(prepare_hub keywords-placeholder canonical "$CANONICAL_REVISION" "" "" "" "")
+mutate_binding "$placeholder" 's|^routing-keywords: .*|routing-keywords: "{{ROUTING_KEYWORDS}}"|' \
+  'apply: unsubstituted routing keywords (fixture)'
+set +e
+output=$(bash "$placeholder/hub-scan.sh" 2>&1)
+status=$?
+set -e
+if [ "$status" -ne 1 ]; then
+  printf '%s\n' "$output" >&2
+  fail "keywords-placeholder returned $status, expected 1"
+fi
+if ! printf '%s\n' "$output" | grep -Fq "routing-keywords still carries an unsubstituted placeholder"; then
+  printf '%s\n' "$output" >&2
+  fail "keywords-placeholder did not report the unsubstituted value"
 fi
 
 species_bad=$(prepare_hub species-invalid canonical "$CANONICAL_REVISION" "" "" "" "")

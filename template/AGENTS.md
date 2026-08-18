@@ -18,8 +18,14 @@ governed, auditable source of truth for {{PROJECT_NAME}}.
 
 ## Scope guard
 
-Cover **{{PROJECT_NAME}} only**. In scope: {{SCOPE_IN}}. Exclude: {{SCOPE_OUT}}.
-If a fact is borderline, ask {{HUB_OWNER}}.
+Cover **{{PROJECT_NAME}} only**. The guard is an admission rule, not a description:
+
+- **Admit** a source when: {{SCOPE_IN}}
+- **Exclude:** {{SCOPE_OUT}}
+- **Hard exclusions — refuse even when a routing keyword matches:** {{HARD_EXCLUSIONS}}
+
+Keyword matching is how a source reaches this hub in the first place, so the hard exclusions are
+what actually stop one. If a fact is borderline, ask {{HUB_OWNER}}.
 
 ## Whose perspective
 

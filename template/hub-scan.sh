@@ -274,6 +274,26 @@ else
     echo "  ! HUB NOT INITIATED: initiation-interview carries no date — run the /km-init purpose"
     echo "    interview to produce the hub definition; an uninterviewed hub never scans green"
     deployment_errors=$((deployment_errors + 1))
+  else
+    # routing-keywords (v1.28). Part of the same manifest the interview produces, and what a
+    # supervisor registry and a decision surface read to attribute a source or a decision to this
+    # hub. Until v1.28 nothing checked it, so an empty value scanned green while every surface
+    # reading the field attributed nothing. Checked only once the interview date is valid: a hub
+    # that was never interviewed has one defect, not two, and both are fixed by the same act.
+    # Stated limit: this proves the field was filled in, never that the keywords are the right ones.
+    routing_keywords=$(fm_field "$deployment_file" "routing-keywords")
+    case "$routing_keywords" in
+      "")
+        echo "  ! routing-keywords is empty — the interview's keywords are part of the hub manifest;"
+        echo "    a supervisor registry and a decision surface attribute nothing to a hub without them"
+        deployment_errors=$((deployment_errors + 1))
+        ;;
+      *'{{'*)
+        echo "  ! routing-keywords still carries an unsubstituted placeholder — run the /km-init"
+        echo "    purpose interview and record the keywords it produced"
+        deployment_errors=$((deployment_errors + 1))
+        ;;
+    esac
   fi
 
   # Hub species (Rule 6, v1.23): optional axes. Absent means station: domain and

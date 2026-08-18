@@ -3,7 +3,7 @@ type: architecture
 title: Canonical-First, Profile-Second Hub Deployment
 description: The two-commit deployment protocol, from the value gate through profile resolution and verification to the organization-bound customization commit.
 tags: [architecture, deployment, organization-profile, supervisor]
-timestamp: 2026-08-16
+timestamp: 2026-08-19
 ---
 
 # Canonical-First, Profile-Second Hub Deployment
@@ -38,6 +38,19 @@ added, and can verify each against its pinned revision.
    `enterprise-contract-revision`. This is the second commit.
 7. Registration last. The hub is registered as organization-bound only after the customization
    commit exists and verifies. Registration never precedes the state it describes.
+
+## Adopting a directory that already exists (v1.28)
+
+Step 4 above describes the scaffold path, where `km-init` creates a hub at a path that holds
+nothing. A deployment adopting this standard onto directories it did not create enters at the same
+protocol through the skill's **adoption mode**: the value gate and the purpose interview run
+unchanged, and the pass then writes only what the directory lacks — the hub definition and its
+interview stamp, the scope guard, the registry row, and any scaffold files that are absent. It
+never overwrites existing content, and it preserves the canonical provenance the binding already
+records, because a hub records the revision it was built from and re-pinning it is a separate
+governed act. Steps 2, 3 and 5 to 7 are unchanged: an adopted hub that is to become
+organization-bound goes through the same resolve, verify and customization-commit sequence, in its
+own second commit. See STANDARD.md → "A gate needs a route back".
 
 ## Sequence diagram
 
@@ -84,6 +97,10 @@ The hub's own scan enforces the binding invariants recorded in `km-deployment.md
 - `canonical-standard-revision` must be a full 40-character lowercase Git revision.
 - A `canonical` deployment must have all four organization and enterprise fields empty.
 - An `organization-bound` deployment must have all four fields populated.
+- `initiation-interview` must carry a date (v1.25). A hub with no interview record is quarantined
+  and never scans green; the adoption mode above is how an existing directory gets one.
+- `routing-keywords` must be substituted and non-empty (v1.28), checked only once the interview
+  date is valid, so an uninterviewed hub reports one defect rather than two.
 
 The canonical test `tests/test_hub_deployment_binding.sh` proves each of these cases, including
 both failure directions: organization values on a canonical hub and missing values on an

@@ -4,7 +4,7 @@ title: Knowledge Management Standard: Hub Framework (v1.27)
 description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, an optional Agent Tier for named, discoverable agent instances, and an optional record-boundary layer for governed use of systems of record.
 tags: [standard, knowledge-management, governance, okf, agents]
 resource: template/
-timestamp: 2026-08-18
+timestamp: 2026-08-19
 ---
 
 # Knowledge Management Standard: Hub Framework (v1.27)
@@ -12,8 +12,9 @@ timestamp: 2026-08-18
 **Published v1.27** (2026-08-18, owner push: skill files declare their trigger, not their title,
 the Agent Tier change carrying frontmatter into every skill file the standard ships). The
 preceding published version is **v1.26** (2026-08-17, carrying the v1.24 and v1.25 train with
-it). **v1.23** (stations, compartments, and the resolution plane) **remains drafted and
-unpublished**: its sections are marked with their version and bind nothing until its own push.
+it). **v1.23** (stations, compartments, and the resolution plane) and **v1.28** (initiation for
+hubs that already exist) **remain drafted and unpublished**: their sections are marked with their
+version and bind nothing until their own push.
 Deployment pins resolve the version they pinned until their Supervisor re-pins.
 
 **Status:** Active standard. Framework-agnostic, works with Claude, GPT, Gemini, or any other LLM agent, and equally well with no agent at all (plain human use).
@@ -1723,6 +1724,109 @@ never scans green — `hub-scan.sh` reports it as an error — and in a multi-hu
 hub-shaped directory absent from the hub registry is quarantined by the estate's own scan. An
 uninterviewed hub is not a lesser hub; it is not yet a hub.
 
+**The manifest's routing keywords are gated too (added in v1.28).** `routing-keywords` is part of
+the manifest the interview produces, and it is what a supervisor's registry and a decision surface
+read to attribute a source or a decision to this hub. Until v1.28 nothing checked it, so a hub
+could carry an interview date, an empty keywords field and a green scan at the same time, while
+every surface reading the field silently attributed nothing to it — a check that exists in one
+place and not the other is how a declared mechanism stops working without anyone being told.
+`hub-scan.sh` now reports an empty or unsubstituted value as an error, and reports it only once the
+interview date itself is valid, because a hub that was never interviewed has one defect and not
+two. **Stated limit:** the check proves the field was filled in, never that the keywords are the
+right ones.
+
+#### A gate needs a route back: initiating a directory that already exists (added in v1.28)
+
+The quarantine gate is right, and as first shipped it was a trap. `/km-init` creates a hub by
+copying the template to a path where none exists, so it cannot interview a directory it did not
+create. From the moment the gate shipped, every hub predating it and every existing project folder
+a deployment adopts the standard onto has been non-conformant, permanently, with no act defined
+anywhere that would make it conformant again. The standard's own text made the trap visible
+without closing it: a pre-existing hub found beside a new one was registered as a `repo` with its
+interview "owed", and `repo` is a demotion (it receives no dispatched proposals), not a route.
+
+> **A control that makes existing artifacts non-conformant ships with the act that makes them
+> conformant.**
+
+That act is an **adoption mode** of the initiation skill: the interview runs against a directory
+that already exists, and writes only what is missing. Four properties make it an adoption rather
+than an amnesty:
+
+1. **The interview is run, never waived.** The mode exists so the interview can reach a hub that
+   already exists, not so the gate can be cleared without one. Stamping an `initiation-interview`
+   date onto an uninterviewed hub forges exactly the evidence the gate asks for, and that is worse
+   than the red scan it replaces, because a red scan is honest.
+2. **It writes only what is absent.** Existing content is never overwritten, and the deployment
+   provenance the hub already carries is preserved as it stands: a hub records the revision it was
+   built from, and re-pinning it to a later one is a separate governed act with its own authority.
+   The mode adds the hub definition, the scope guard, and (where a supervisor tier exists) the
+   registry row; it scaffolds only files that are genuinely missing, and lists what it added.
+3. **It clears every gate the directory tripped, or it stops.** A hub-shaped directory can be
+   quarantined twice over: by its own scan, for a missing interview record, and, where a
+   supervisor tier exists, by the estate's scan, for absence from the hub registry. One interview
+   answers both, and clearing one while leaving the other leaves the hub non-conformant with a
+   check nobody happened to be looking at.
+4. **The value gate still applies, and it is harder to hold here.** Step 1's questions are
+   designed to bite *before* a directory exists; afterwards, sunk cost argues for initiating
+   whatever is already there. Adoption is therefore also the moment to decide that a directory
+   should **not** become a hub, and an adoption pass that has never once returned that answer is
+   not being run honestly.
+
+Demonstrated by a deployment that upgraded onto eleven pre-existing hub directories: all eleven
+initiation records had to be written by hand at the supervisor tier because the initializer had no
+path to produce them, and the workspace scan reported clean throughout, since every hub was
+running an inherited copy of the scan that predated the gate. Eleven hubs needing a route back is
+what a missing route looks like at the first deployment that meets it.
+
+#### Look before asking: the interview pre-fills what the record already answers (added in v1.28)
+
+Before the first question is put, read what already exists: the directory itself (its documents,
+its agent-instruction files, its deployment binding, its sources) and, where a supervisor tier is
+present, the workspace registries. **Pre-fill every answer defensible from that evidence and
+present each one with its source**, for the owner to confirm or correct, then state plainly which
+answers could not be pre-filled, because those are the real questions. This is the interaction
+contract's reconcile-before-asking rule applied to initiation, and it is what makes an interview of
+this length survivable: asking the owner of a directory holding two years of content to describe
+it from zero is how an interview gets abandoned, and an abandoned interview leaves an uninitiated
+hub. It matters most in the adoption mode above, where the evidence is richest and the owner's job
+is to ratify what the content already demonstrates rather than to reconstruct it.
+
+**A pre-fill is a proposal, not an answer.** Only the owner's confirmation is recorded, and an
+unconfirmed pre-fill is never written into the hub definition as though it had been given. The
+mechanism's whole value is that it spends the owner's attention on what the record cannot answer;
+a pre-fill that becomes the answer by default spends none of it and fabricates the definition
+instead.
+
+#### Three more questions the interview asks (added in v1.28)
+
+v1.25 named two questions that fail when they are assumed. Three more join them, each for the same
+reason: the standard already ships the mechanism, and nothing was eliciting the input it needs.
+
+**Scope is stated as an admission rule, with its hard exclusions named.** "What this hub is about"
+is a description; an agent holding an inbound source needs a rule it can apply to that source. The
+in-scope answer therefore states the condition under which a source is **admitted**, and the
+out-of-scope answer names the **hard exclusions**: what this hub refuses *even when a routing
+keyword matches*. Keyword matching is how a source reaches a hub in the first place, so an
+exclusion never stated against a matching keyword never fires, and a guard whose "out" is a subject
+area rather than a refusal is barely stronger than no guard at all.
+
+**The sensitivity posture is elicited, not discovered.** Are restricted classes expected in this
+hub, and which outbound surfaces are planned for it? A yes makes the outbound lint set part of
+initiation instead of a retrofit and, where the hub species axes are in use, declares them at the
+start. The standard has carried the outbound restricted check since v1.16 and the access vocabulary
+since v1.22, and the conversation that configures either of them was asked for nowhere — the same
+defect v1.25 named for the knowledge-versus-records boundary, found a second time in a second
+place. Discovering a restricted class after an outbound surface exists is the expensive order: the
+material has already travelled, and the check that would have stopped it is installed afterwards.
+
+**What should move home to this hub?** Where the workspace holds material with no home — the
+supervisor's unrouted backlog, a parked register, a routing gap recorded and left open — the
+interview asks which of it belongs here, and initiation moves it. A hub stood up inside a live
+workspace usually exists *because* something had nowhere to go, so material left parked after its
+home is created outlives the backlog's own reason for existing, and a register that is never
+drained stops being read. The question applies only where such a register exists: a first hub, or
+a deployment that has not adopted the routing capability, has nothing to sweep.
+
 ### Step 2: Create the directory structure and initialize git
 
 ```bash
@@ -3080,6 +3184,7 @@ happened once (see the v1.9 row) and the ledger exists so it does not happen twi
 | v1.25 | 2026-08-17 | Drafted and published 2026-08-17 (owner push, with v1.24 and v1.26). The `/km-init` purpose interview: a hub's definition is **produced by a structured Q&A, never assumed** — purpose and scope guard (in **and** out), audiences each mapped to one of the three surfaces, the **knowledge-vs-records boundary elicited source by source** (the Rule 6 access vocabulary existed; the conversation that applies it did not), evidence expectations, routing keywords, and owner cadence — the answer-surface question asked recommendation-first with **a deployed cockpit as the recommended default** (owner amendment, 2026-08-17: the owner surface is what decides whether a deployment survives); planning the surface is mandatory, deploying it remains an explicit act. Outputs: the scope guard, the hub manifest (`km-deployment.md` → Hub definition, `initiation-interview` date, `routing-keywords`), and the supervisor registry row where a tier exists. **The quarantine gate is mechanical:** `[ DEPLOYMENT ]` in `hub-scan.sh` errors on a binding with no interview date (date-shape checked, so an unsubstituted placeholder cannot pass), and an uninterviewed hub never scans green; `tests/test_hub_deployment_binding.sh` carries the canary. Delivery guidance in `km-init` Step 8: name what reconciliation finds during onboarding out loud (a selling point, not only a control), and a **directional, run-once** bulk-corpus intake shape (catalogue → boundary interview → domain split → briefed parallel readers → per-domain extract → entity layer) recorded as guidance, deliberately not yet a normative pattern. Trade-off recorded: existing hubs fail the gate until the interview is backfilled at adoption — deliberate, that is the gate working. |
 | v1.26 | 2026-08-17 | Drafted and published 2026-08-17 (owner push, with v1.24 and v1.25). The supervisor at the second hub, from the owner's recorded ruling: **hub count > 1 advises creating the Supervisor tier**, replacing the "share a source or an entity" trigger — the count is the threshold, not overlap, because estate-level state (the owner queue, cross-hub decisions) has nowhere correct to live inside a hub. What makes the rule followable: (1) the **minimum tier** — hub registry + estate queue + inbox + own git history, nothing more, with every omitted capability (routing, semantic layer, escalations, evidence standard, estate corrections, decision surface) carrying a **named adoption condition** in a table that ships in the tier's own template README; (2) **bind-only-what-exists** — a hub's estate-binding section names only files actually present at the tier (`km-init` prunes at scaffold time; the scan's `[ CORRECTIONS ]` block already behaved this way), with a new minimum-tier bullet binding the registry and queue; (3) **detection at creation** — `/km-init` finding an existing hub first detects an already-deployed cockpit and asks whether the new hub joins it (no tier yet: the yes rides the tier-minting, estate queue absorbing both hubs and the manifest re-pointing; tier present: the registry row alone suffices, and the interview states which path applied), then **recommends** minting the minimum tier, recommendation-first (owner amendment, 2026-08-17, strengthening the original "offers"); declining is recorded, never overridden; (4) **the decision surface crosses by configuration** — hub-local queue pre-tier, manifest re-point at minting, identical data contract (proven by the v1.24 single-hub round-trip test). `km-supervise` now names its own adoption condition: a minimum tier meeting its first cross-hub source adopts the routing files at that moment. Trade-offs recorded: the threshold is **advice the standard gives, never an act it performs** — the owner may decline; and the minimum tier deliberately omits every capability whose absence is recoverable, betting that a small tier actually minted beats a complete tier ignored. |
 | v1.27 | 2026-08-18 | Drafted and published 2026-08-18 (owner push). Skill files declare their trigger, not their title (Agent Tier). Every skill file the standard ships (`skills/`, `template/.claude/skills/`, `template/.agents/skills/`) now carries YAML frontmatter with `name` (the directory slug, which is also the invocation) and `description` written as **when to use it**, in trigger terms, naming the invocation itself. Derived from a measured defect in a deployed estate: 81 of 82 hub-local skill files carried no frontmatter at all, so every runtime listing fell back to the file's first heading — a title ("Skill: km-gather, Research Sources and Propose Hub Updates") states what a skill is called and never what would make an agent reach for it, leaving discovery to whoever already remembers the skill exists. Three enforced properties, each with its cost stated: one dense sentence of roughly 15–30 words, because descriptions are **resident** — they occupy context in every session where the skill is installed, used or not, and the standing cost scales with the number of skills installed rather than with how often they fire; written to need no quoting (no colon-space in the value), since a plain YAML scalar cannot contain one and a quoted scalar is one naive frontmatter reader away from showing its own quote marks in the listing; and placed where residency is earned, per-hub skills in the hub, workspace-level skills (initialization, cross-hub routing) at the workspace. `tests/test_skill_frontmatter.sh` enforces all four field rules plus mirror parity, and proves each rule against a synthetic violation. **Trade-offs recorded:** (1) the fix *adds* a standing token cost where there was none — measured at ~45 tokens per skill, ~319 for a hub's set of seven, against reliable discovery; the one-sentence cap is where that trade was struck, and the 10–40 word test ceiling is the mechanical form of "roughly". (2) The colon-space ban constrains phrasing (some descriptions read slightly stiffer than their quoted form would) in exchange for parsing identically under a real YAML parser and a naive line reader. (3) Descriptions state trigger conditions but do **not** change any runtime's decision to auto-invoke; whether a given skill should fire unprompted stays a per-deployment choice this version deliberately leaves open. (4) The distribution copy `skills/km-brief/SKILL.md` is missing the index-first and lifecycle-filter guidance its template mirrors carry — pre-existing content drift, reported, deliberately **not** repaired here so that this change adds frontmatter and nothing else; the new mirror-parity check covers frontmatter only. (5) Hubs already deployed do not inherit the fix by upgrading the standard: their installed skill copies are backfilled as an adoption act under each hub's own governance. |
+| v1.28 | 2026-08-19 | **DRAFT — awaiting owner push.** Initiation for hubs that already exist, and four things the interview must elicit. (1) **A gate needs a route back.** v1.25 made a missing `initiation-interview` date a scan error, but `/km-init` only creates a hub from the template at a path where none exists, so it cannot interview a directory it did not create: every hub predating the gate, and every existing project folder a deployment adopts the standard onto, became permanently non-conformant with no defined act to make it conformant, and the standard's only acknowledgement of the case demoted such a hub to `repo` with its interview "owed". The skill gains an **adoption mode** — the interview runs against a directory that already exists and writes only what is missing — under four properties: the interview is run and never waived (stamping a date onto an uninterviewed hub forges the gate's own evidence, and a red scan is more honest); existing content and recorded canonical provenance are preserved, re-pinning being a separate governed act; both quarantines a directory can trip (its own scan for the missing interview record, the estate scan for absence from the registry) are cleared by the one interview or the pass stops; and the value gate still applies, harder, because after the directory exists sunk cost argues for initiating whatever is there. Demonstrated by a deployment that upgraded onto **eleven pre-existing hub directories** and had to write all eleven initiation records by hand at the supervisor tier, with its workspace scan reporting clean throughout because each hub ran an inherited copy of the scan predating the gate. (2) **Look before asking:** the interview reads the directory and the workspace registries first and pre-fills every answer defensible from evidence, each presented with its source for the owner to confirm or correct, naming plainly what could not be pre-filled — the interaction contract's reconcile-before-asking rule applied to initiation, and what makes an interview of this length survivable — with the guard that a pre-fill is a proposal and never an answer, so an unconfirmed pre-fill is never written into the hub definition. (3) **Scope stated as an admission rule** with its **hard exclusions** named: what the hub refuses even when a routing keyword matches, since keyword matching is how a source reaches a hub and an exclusion never stated against a matching keyword never fires. (4) **The sensitivity posture is elicited**, not discovered: expected restricted classes and planned outbound surfaces, so the outbound lint set is part of initiation rather than a retrofit — the outbound check has shipped since v1.16 and the access vocabulary since v1.22 while nothing asked for the input that configures them, the same defect v1.25 named for the knowledge-versus-records boundary. (5) **What should move home to this hub:** where the workspace holds an unrouted backlog, a parked register or an open routing gap, the interview asks which of it belongs here and initiation moves it; conditional on such a register existing. (6) **`routing-keywords` is gated:** `[ DEPLOYMENT ]` now errors on an empty or unsubstituted value, reported only once the interview date itself is valid so an uninterviewed hub shows one defect and not two; `tests/test_hub_deployment_binding.sh` carries both canaries. **Trade-offs recorded:** (a) the keyword gate turns red any hub interviewed under v1.25 that left the field empty — one field per hub, and the same shape of trade v1.25 itself recorded, which is the gate working rather than a regression; (b) the gate proves the field was filled, never that the keywords are the right ones, and no check can; (c) the interview grows again, to five rounds, and the pre-fill step is the whole of what pays for it, so a deployment that skips the pre-fill inherits the length without the mitigation; (d) the adoption mode is specified as a mode of the initiation skill rather than a separate skill, because two entry conditions producing one hub definition would otherwise drift into two definitions of a hub; (e) the mode is specified and unexecuted at this version — it is drafted from a deployment that performed the same work by hand, so the shape is evidenced and the skill path itself is not yet proven by a run. |
 
 ---
 
