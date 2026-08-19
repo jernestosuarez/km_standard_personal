@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.29"/>
+  <img src="assets/badges/version.svg" alt="standard v1.30"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 2 adopted"/>
   <img src="assets/badges/license.svg" alt="license: free to adopt"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,7 +28,7 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.29** (2026-08-19, a check that reports by absence is proven in both
+**Current version: v1.30** (2026-08-19, the checks a hub and a build run are proved in both
 directions; v1.23 remains an unpublished draft awaiting its own push). The full ledger of released versions, and the rule that a
 published version number is never reused, is in [`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.
