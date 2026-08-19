@@ -111,6 +111,12 @@ Search the full relevant repository, not only the files initially named. Look fo
 stale copies, false errors, and false passes. For checker changes, prove that unreadable input is not
 misreported as missing and that a check cannot pass merely because it failed to read its evidence.
 
+A checker that reports a problem by matching passes by absence, so ship its negative test in the same
+change: inject a known violation and require the instrument to catch it, then confirm it passes on
+genuinely clean input. Verify any boundary or matching syntax against the tool that will actually run
+it, never against the platform, because one tool on a host can honour a construct another silently
+ignores, and an ignored construct matches nothing, which is what a clean tree also looks like.
+
 Never reuse a published version identifier. Inspect both version history and Git history before
 selecting the next version.
 
