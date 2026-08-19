@@ -177,13 +177,14 @@ else
   missing=""
   for block in \
     '[ INBOX ]' '[ PROPOSALS ]' '[ INTEGRITY ]' '[ READABILITY ]' '[ FRONTMATTER ]' \
-    '[ FRESHNESS ]' '[ LINKS ]' '[ SHAPE ]' '[ CURRENCY ]' '[ RECONCILIATION ]' '[ AGENT ]'; do
+    '[ FRESHNESS ]' '[ LINKS ]' '[ SHAPE ]' '[ CURRENCY ]' '[ RECONCILIATION ]' '[ AGENT ]' \
+    '[ PROJECTION ]'; do
     printf '%s\n' "$out" | grep -Fq "$block" || missing="$missing $block"
   done
   if [ -n "$missing" ]; then
     die "0. blocks absent from the scan output:$missing"
   elif printf '%s\n' "$out" | grep -Fq '=== OK — clean ==='; then
-    pass "0. a clean fixture hub scans green and prints all eleven blocks"
+    pass "0. a clean fixture hub scans green and prints all twelve unconditional blocks"
   else
     die "0. clean fixture did not print the clean verdict"$'\n'"$out"
   fi
@@ -474,6 +475,182 @@ if [ -f "$cockpit" ]; then
 else
   die "12f. km-cockpit.py not found — the cross-check did not run (coverage gap, not a pass)"
 fi
+
+# --- 14. [ PROJECTION ] — the harness projection (v1.32) -----------------------------------------
+#
+# The block compares each km:project region in CLAUDE.md/AGENTS.md against its km:fact source in
+# km-deployment.md, the home of record. Its findings report by MATCHING, so a dead block and a
+# conformant hub print the same OK line, and its coverage line is the only thing standing between
+# "we checked" and "we said OK". Both directions below, plus the three over-match cases, plus the
+# case the design cannot win.
+
+# 14a. DRIFT — the verified failure this block exists for: an owner widens the admission rule by
+# writing in the instruction file, because that is the file he reads.
+hub="$(fork projection_drift)"
+python3 - "$hub/CLAUDE.md" <<'PY'
+import sys
+p = sys.argv[1]; s = open(p).read()
+s = s.replace("  {{SCOPE_IN}}\n", "  {{SCOPE_IN}}, and anything the owner ruled admissible later\n", 1)
+open(p, "w").write(s)
+PY
+git_commit "$hub" 'inject: instruction file widened past the hub definition'
+expect "14a. [ PROJECTION ] catches a projected fact that drifted from km-deployment.md (error, exit 1)" \
+  "$hub" 1 'DRIFT scope-in: CLAUDE.md and km-deployment.md hold different text'
+
+# The report must print BOTH texts. A drift report that names a class without showing the two values
+# sends the owner to open two files before he can decide which side is right, and the decision is
+# his by design — the scan never repairs.
+scan "$hub"
+if printf '%s\n' "$out" | grep -Fq 'km-deployment.md: {{SCOPE_IN}}' \
+   && printf '%s\n' "$out" | grep -Fq 'ruled admissible later'; then
+  pass "14a2. the drift report shows both sides, so the owner can decide from the report"
+else
+  die "14a2. the drift report did not show both texts"$'\n'"$out"
+fi
+
+# 14b. over-match: REFLOWING a region is not drift. Line breaks are presentation; the words are the
+# fact. A check that reported a rewrap would be red on every hub that ran a formatter once.
+hub="$(fork projection_reflow)"
+python3 - "$hub/AGENTS.md" <<'PY'
+import sys
+p = sys.argv[1]; s = open(p).read()
+s = s.replace("  {{SCOPE_OUT}}\n  <!-- km:end -->", "  {{SCOPE_OUT}}\n\n  <!-- km:end -->", 1)
+open(p, "w").write(s)
+PY
+git_commit "$hub" 'inject: a projected region rewrapped, same words'
+expect "14b. [ PROJECTION ] does not report a rewrapped region as drift (clean, exit 0)" \
+  "$hub" 0 'OK: 6 projected region(s) match km-deployment.md'
+
+# 14c. DANGLING — a region naming a class outside the standard's closed set. A hub cannot extend the
+# set: an open list makes the coverage line unmeasurable.
+hub="$(fork projection_unknown_class)"
+sed -i.bak 's/km:project scope-in /km:project scope-inn /' "$hub/CLAUDE.md"
+rm -f "$hub/CLAUDE.md.bak"
+git_commit "$hub" 'inject: region naming a class outside the closed set'
+expect "14c. [ PROJECTION ] catches a region naming an unknown fact class (error, exit 1)" \
+  "$hub" 1 "DANGLING scope-inn in CLAUDE.md: not a fact class in the standard's closed set"
+
+# 14d. DANGLING — the source went away. The instruction file still carries the copy, and nothing in
+# the home of record answers for it, so the copy is unanchored rather than merely different.
+hub="$(fork projection_source_gone)"
+python3 - "$hub/km-deployment.md" <<'PY'
+import sys
+p = sys.argv[1]; s = open(p).read()
+s = s.replace("  <!-- km:fact scope-in -->\n  {{SCOPE_IN}}\n  <!-- km:end -->", "  {{SCOPE_IN}}", 1)
+open(p, "w").write(s)
+PY
+git_commit "$hub" 'inject: home of record no longer marks the fact it homes'
+expect "14d. [ PROJECTION ] catches a projection whose source does not resolve (error, exit 1)" \
+  "$hub" 1 'DANGLING scope-in in CLAUDE.md'
+
+# 14e. the markers do not balance. A generator or a check that guessed where a region ended would
+# silently compare the wrong text; this refuses instead.
+hub="$(fork projection_unbalanced)"
+python3 - "$hub/AGENTS.md" <<'PY'
+import sys
+p = sys.argv[1]; s = open(p).read()
+s = s.replace("  {{SCOPE_OUT}}\n  <!-- km:end -->", "  {{SCOPE_OUT}}", 1)
+open(p, "w").write(s)
+PY
+git_commit "$hub" 'inject: unterminated projection marker'
+expect "14e. [ PROJECTION ] refuses a file whose markers do not balance (error, exit 1)" \
+  "$hub" 1 'UNBALANCED MARKERS in AGENTS.md: unterminated (scope-out)'
+
+# 14f. a km:fact region in an instruction file claims the home of record for the wrong file. This is
+# the whole ruling stated as a check.
+hub="$(fork projection_misplaced)"
+sed -i.bak 's/km:project hard-exclusions/km:fact hard-exclusions/' "$hub/CLAUDE.md"
+rm -f "$hub/CLAUDE.md.bak"
+git_commit "$hub" 'inject: instruction file declaring itself the home of record'
+expect "14f. [ PROJECTION ] catches an instruction file claiming to be the home of record (error, exit 1)" \
+  "$hub" 1 'MISPLACED SOURCE hard-exclusions in CLAUDE.md'
+
+# 14g. THE BLIND SPOT, and the honest half of this suite.
+#
+# A fact that lives ONLY in an instruction file, in no region and in no source, cannot be compared
+# with anything: the evidence the block consults has nothing to say about it. That is the same shape
+# as the demonstrated manifest defect the git-backed integrity check could never catch. This case
+# asserts what is actually achievable, and nothing more:
+#   (1) the run does NOT go quietly green — the line is NAMED, with its file and line number;
+#   (2) it is an ADVISORY, because unmarked text is owner-authored by definition and a gate that
+#       reddens a hub for a legitimate sentence gets switched off, taking DRIFT with it;
+#   (3) the coverage line states how much of the declared set was never looked at.
+# It does NOT assert that the block understood the line, and no canary can make it do so.
+hub="$(fork projection_blindspot)"
+python3 - "$hub/CLAUDE.md" <<'PY'
+import sys
+p = sys.argv[1]; s = open(p).read()
+s = s.replace("  <!-- km:end -->\n- **Exclude:**",
+              "  <!-- km:end -->\n- **Also admit** anything touching the second programme (owner ruling).\n- **Exclude:**", 1)
+open(p, "w").write(s)
+PY
+git_commit "$hub" 'inject: a fact in no region and no source'
+expect "14g. [ PROJECTION ] names a fact written beside a projected region (advisory, exit 0)" \
+  "$hub" 0 'UNPROJECTED TEXT beside a projected fact — CLAUDE.md:'
+scan "$hub"
+if printf '%s\n' "$out" | grep -Fq '1 line(s) beside a projected fact were named, not judged.'; then
+  pass "14g2. the run states the limit rather than printing a bare OK"
+else
+  die "14g2. the block did not state its limit on the blind-spot fixture"$'\n'"$out"
+fi
+
+# 14h. over-match: the template's own label lines sit between regions and must NOT be reported, or
+# every conformant hub carries three permanent advisories and the signal is worthless on day one.
+scan "$work/clean"
+if printf '%s\n' "$out" | grep -Fq '0 line(s) beside a projected fact were named, not judged.'; then
+  pass "14h. [ PROJECTION ] does not report a region's own label line as unprojected text"
+else
+  die "14h. the clean fixture reports interleaved text that is not there"$'\n'"$out"
+fi
+
+# 14i. the coverage line is the answer to "what did you not look at", so it is asserted directly.
+# Seven of the ten declared classes are not projected by the shipped template, and that is the
+# NORMAL state — every projection is a second copy, so a low number here is health, not debt.
+scan "$work/clean"
+if printf '%s\n' "$out" | grep -Fq '10 fact class(es) declared by the standard; 6 region(s) found in 2 instruction file(s); 6 compared; 7 class(es) not projected'; then
+  pass "14i. [ PROJECTION ] states declared / found / compared / unprojected on every run"
+else
+  die "14i. the coverage line is missing or does not state its four numbers"$'\n'"$out"
+fi
+
+# 14j. refuse rather than pass when the home of record cannot be read. A block that printed OK here
+# would be reporting a comparison it never made — the exact failure the standard's canary rule names.
+hub="$(fork projection_source_unreadable)"
+chmod 000 "$hub/km-deployment.md"
+expect "14j. [ PROJECTION ] refuses when the home of record cannot be read (never a pass)" \
+  "$hub" 1 'NOT CHECKED: km-deployment.md is missing or unreadable'
+if printf '%s\n' "$out" | grep -Fq 'refused for want of evidence, not clean'; then
+  pass "14j2. the refusal is stated as a refusal, not as coverage of zero files"
+else
+  die "14j2. the refusal did not distinguish itself from a clean run"$'\n'"$out"
+fi
+chmod 644 "$hub/km-deployment.md"
+
+# 14k. the harness carries every skill twice, once per runtime tree, and two copies of a procedure
+# drift exactly as two copies of a fact do. Demonstrated in a deployment: mirror directories left
+# un-backfilled across five hubs while their primary directories were fixed.
+hub="$(fork projection_mirror_drift)"
+printf '\nA line added to one runtime tree only.\n' >> "$hub/.claude/skills/km-start/SKILL.md"
+git_commit "$hub" 'inject: one runtime tree updated, the other not'
+expect "14k. [ PROJECTION ] catches a skill updated in one runtime tree only (error, exit 1)" \
+  "$hub" 1 'HARNESS MIRROR DIVERGENCE km-start'
+
+# 14l. over-match, twice. The shipped km-propose pair differs BY DESIGN — each tree names its own
+# harness instruction file — and a byte comparison reported it as divergence on the first run this
+# block ever made. And a deployment installing one runtime tree has one home and nothing to diverge
+# from, so it must not be reddened for the tree it chose not to install.
+scan "$work/clean"
+if printf '%s\n' "$out" | grep -Fq 'HARNESS SKILLS: 7 slug(s) compared across both runtime trees' \
+   && ! printf '%s\n' "$out" | grep -Fq 'HARNESS MIRROR DIVERGENCE'; then
+  pass "14l. the mirror check tolerates the one designed per-runtime difference"
+else
+  die "14l. the mirror check fires on the standard's own conformant template"$'\n'"$out"
+fi
+hub="$(fork projection_single_tree)"
+rm -rf "$hub/.agents"
+git_commit "$hub" 'inject: single-runtime deployment'
+expect "14m. [ PROJECTION ] does not fire on a deployment carrying one runtime tree (clean, exit 0)" \
+  "$hub" 0 'HARNESS SKILLS: one runtime tree installed, nothing to compare'
 
 # --- the fixture is still clean ------------------------------------------------------------------
 # A case that mutated the shared fixture instead of its own copy would otherwise pass here and

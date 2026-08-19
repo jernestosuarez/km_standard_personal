@@ -1,15 +1,19 @@
 ---
 type: brief
-title: Knowledge Management Standard: Hub Framework (v1.31)
+title: Knowledge Management Standard: Hub Framework (v1.32 draft)
 description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, an optional Agent Tier for named, discoverable agent instances, and an optional record-boundary layer for governed use of systems of record.
 tags: [standard, knowledge-management, governance, okf, agents]
 resource: template/
-timestamp: 2026-08-19
+timestamp: 2026-08-20
 ---
 
-# Knowledge Management Standard: Hub Framework (v1.31)
+# Knowledge Management Standard: Hub Framework (v1.32 draft)
 
-**Published v1.31** (2026-08-19, owner push: a control the owner cannot press is a defect, not an
+**v1.32 is DRAFTED and UNPUBLISHED** (2026-08-20): the harness projection — the hub definition in
+`km-deployment.md` is the home of record for the facts the agent-instruction files restate, the
+copies live in bounded marked regions, and drift is reported and never repaired. Its sections are
+marked with their version and **bind nothing until its own owner push**. The current published
+version is **v1.31** (2026-08-19, owner push: a control the owner cannot press is a defect, not an
 empty state, moving the options parser to the specification it already deferred to, reporting a row
 a decision surface cannot read instead of emptying it silently, and making *no owner-supplied value
 may size a layout* a checked invariant). The preceding published version is **v1.30** (2026-08-19,
@@ -1657,7 +1661,7 @@ product, the exit code is just how a machine reads it.
 The full, copy-ready script is at [`template/hub-scan.sh`](template/hub-scan.sh). It checks, in one
 pass: pending inbox files, pending proposals/approvals, git-backed integrity (uncommitted/untracked
 monitored files), OKF frontmatter on every monitored file, the restricted-content boundary on
-outbound surfaces, and (if configured) open reconciliation disputes. There is no separate baseline file to maintain, the hub's own git history is the baseline.
+outbound surfaces, the harness projection against the hub definition (v1.32), and (if configured) open reconciliation disputes. There is no separate baseline file to maintain, the hub's own git history is the baseline.
 
 **Every block is proved in both directions (added in v1.30).** Almost all of them report a defect
 by finding something, so a clean hub and a check that has stopped firing produce the same output: a
@@ -1667,7 +1671,8 @@ exit class, for `[ INBOX ]`, `[ PROPOSALS ]`, `[ INTEGRITY ]`, `[ READABILITY ]`
 `[ FRESHNESS ]`, `[ LINKS ]`, `[ SHAPE ]`, `[ CURRENCY ]`, `[ RECONCILIATION ]` and the `[ AGENT ]`
 false-dispatch walk. Three cases assert the other side of the same blocks, that a resolving edge, an
 unfilled template placeholder and a genuine dispatch are *not* reported, because a check that fires
-on everything proves as little as one that fires on nothing. This matters more here than in any
+on everything proves as little as one that fires on nothing. `[ QUEUE ]` (v1.31) and `[ PROJECTION ]`
+(v1.32) were added under the same obligation and carry their cases with them. This matters more here than in any
 single instrument: the scan is inherited by every hub, so a block that has silently stopped firing
 turns an entire estate green at once, with no symptom anywhere to notice.
 
@@ -1725,7 +1730,9 @@ what it actually is, and hub initiation is one of the interaction contract's lif
 it may not proceed silently. `/km-init` runs the interview as batched structured Q&A and its
 answers become the **hub definition**, three artifacts:
 
-1. the **scope guard** — purpose, one line in / one line out, in the agent-instruction files;
+1. the **scope guard** — purpose, one line in / one line out, in the agent-instruction files, and
+   from v1.32 written there inside `km:project` marked regions rather than as a bare substitution,
+   so the copy stays comparable with the definition it came from;
 2. the **hub manifest** — the definition recorded in `km-deployment.md` (purpose, scope guard,
    audiences mapped to the three surfaces, the elicited knowledge-vs-records boundary, evidence
    expectations, routing keywords, owner cadence), stamped with the interview date as
@@ -1739,6 +1746,12 @@ knowledge-vs-records boundary is elicited, not assumed:** the access vocabulary 
 `accessClass`) exists in the standard, but which of the owner's material is knowledge to curate
 and which is records to point at is a conversation — walked source by source — that no default
 answers correctly.
+
+**One interview, two files, and only one of them is the home of record (v1.32).** The interview
+writes the same elicited facts into the hub manifest and into the agent-instruction files, and
+nothing kept the two copies equal afterwards — see *The harness projection* under the Agent Tier.
+`km-deployment.md` is the home of record; the instruction files carry bounded marked copies, and
+`hub-scan.sh` reports divergence without repairing it.
 
 **The quarantine gate:** a hub whose deployment binding records no `initiation-interview` date
 never scans green — `hub-scan.sh` reports it as an error — and in a multi-hub estate a
@@ -3078,8 +3091,194 @@ This is the rule the framework already applies to shared entities in a multi-hub
 packages never ship their own copies of shared entities" (Supervisor Tier, above), applied to agent
 configuration itself. Two copies of a rule agree on day one and drift silently afterward; a single
 home of record does not. If a definition needs to say what "in scope" means for its hub, that sentence
-belongs in `CLAUDE.md`; the definition links to it rather than repeating it. A definition that grows
+belongs in the hub definition in `km-deployment.md` (corrected in v1.32: this said `CLAUDE.md`, which
+left the standard naming two homes of record for one fact class); the definition links to it rather
+than repeating it. A definition that grows
 past roughly 25 lines has almost certainly copied something that belongs elsewhere.
+
+### The harness projection: the hub definition is the home of record (added in v1.32)
+
+The rule above is stated for agent definitions, and the largest violation of it in this standard was
+the template's own agent-instruction files. `CLAUDE.md` and `AGENTS.md` restate the admission rule,
+the exclusions and the hard exclusions that `km-deployment.md` already holds. The initiation
+interview substitutes one set of elicited answers into both, once, at initiation, and nothing keeps
+them equal afterwards.
+
+Two failures were verified in a deployment, and they are one defect seen from opposite sides.
+
+**The instruction file is not a superset of the template, and is not close to one.** A retrofit wave
+across seven hubs found each hub carrying between four and eight sections for which the shipped
+template has no counterpart at all, including owner-authored routing found nowhere else in the
+standard, the deployment, or that hub. A directive written on the assumption that the template was
+the superset would have deleted owner-authored text and was refused by the receiving agents for
+exactly that reason. **This is the upper bound on the mechanism: nothing here generates an
+agent-instruction file whole.**
+
+**Where a fact does appear twice, the two copies drift, and within days.** In one hub the admission
+rule was widened by a recorded owner ruling written into the instruction file and not into the hub
+definition, so every registry-reading surface went on attributing sources by a rule the owner had
+already superseded. In another the divergence ran the other way: the hub definition carried
+exclusions naming each fact's true home hub that the instruction file did not have. One interview,
+one day, one set of answers, both files.
+
+**The ruling that resolves it:** `km-deployment.md` §"Hub definition" is the **home of record** for
+the facts an instruction file restates. `CLAUDE.md` and `AGENTS.md` carry a **projected copy inside
+bounded marked regions**. Drift is **reported, never repaired**.
+
+#### A closed set of fact classes
+
+The set is the interview's own output, and it is closed by the standard:
+
+| Class | What it governs in the harness |
+|---|---|
+| `purpose` | What the hub is |
+| `scope-in` | The admission rule |
+| `scope-out` | The exclusion statement |
+| `hard-exclusions` | What is refused even on a routing-keyword match |
+| `audiences` | Each audience mapped to its surface |
+| `knowledge-records-boundary` | What is curated as a claim and what stays in a system of record |
+| `evidence-expectations` | What this hub trusts, and what needs owner confirmation |
+| `owner-cadence` | Cadence and answer surface |
+| `sensitivity-posture` | Restricted classes expected, outbound surfaces planned |
+| `routing-keywords` | What reaches the hub at all (frontmatter) |
+
+A hub cannot extend the list. An open list makes the coverage statement below unmeasurable, and the
+coverage statement is the only honest thing this check has to say about what it did not look at.
+
+**One class the interview elicits is deliberately absent: the hub owner's name.** It appears nine
+times per instruction file, inline, inside sentences. Bounding it would mean nine markers per file
+around sentence fragments, which is the opposite of a bounded region, so it is substituted at
+initiation and is not projected. Stated plainly because it is a gap: a changed hub owner is
+reconciled by hand.
+
+#### The marker is the contract, not the template
+
+A projected fact lives inside a marked region naming its class. The markers are HTML comments and
+render as nothing:
+
+```markdown
+- **Admit** a source when:
+  <!-- km:project scope-in — home of record: km-deployment.md § Hub definition -->
+  Admit a source when it bears on the delivery of this engagement.
+  <!-- km:end -->
+```
+
+The home of record marks the same values with `km:fact`. **Every unmarked line in an instruction
+file is owner-authored by definition** and is never read, compared, generated or touched. This
+inverts the default that made the retrofit directive dangerous: a hub carrying eight sections this
+standard never heard of is fully conformant, because the mechanism was never told those sections
+exist and never looks at them.
+
+Text is compared as words, not as lines: a region is collapsed to single-spaced text before
+comparison, so **reflowing a region is not drift and rewording it is**. A check that reddened on a
+rewrap would be red on every hub that ran a formatter once.
+
+#### Drift is reported, never repaired
+
+Nothing in this mechanism writes into an instruction file on its own initiative. **Either side may
+hold the newer truth**, and the verified case proves it: a projector that silently made the
+instruction file match the hub definition would have reverted a recorded owner ruling and reported
+success. The scan reports; the owner names which side is right; the hub definition is amended
+through the hub's own governance; the projection follows. This is the division the record boundary
+already draws for the gateway — detection automates, resolution authority stays with the owner.
+
+The report therefore **prints both texts**, not just the class name. A drift report that names a
+fact without showing the two values sends the owner to open two files before he can make the
+decision the design reserves for him.
+
+#### Where the region sits, which decides whether this works at all
+
+There is an honest argument against the ruling, and it is carried into the design rather than
+dropped: in the verified case the owner widened the admission rule **in the instruction file**,
+because that is the file he reads. A design that fights where its owner actually writes loses
+quietly, and the first symptom is drift again.
+
+Three properties answer it, and they matter more than tidiness:
+
+1. **His edit is never destroyed.** Report-never-repair is not a governance nicety here, it is what
+   makes writing in the instruction file a safe act rather than a lossy one. The words he typed are
+   still there at the next session, and the scan asks a question about them.
+2. **The region carries its own pointer, in the file he is editing.** The marker comment names the
+   home of record on the line above the text, so the answer to "where does this belong" is visible
+   at the point of writing rather than in a standard he is not reading.
+3. **It is caught at the next session start, not at an audit.** `[ PROJECTION ]` runs in the
+   session-start scan every hub already runs, so the gap between writing in the wrong file and being
+   told is one session. There is deliberately **no session-end gate**: a `Stop` hook fires while he
+   is still mid-edit, and a mechanism that interrupts an owner halfway through writing a rule is the
+   same failure as one that overwrites it.
+
+The related choice is how *tightly* the region is drawn. Drawn around a value alone, the owner's
+natural act — adding a bullet beside the fact he is amending — lands outside every region and is
+invisible. So the block also reports **unprojected text sitting between projected regions**, by file
+and line, as an advisory: it does not judge whether the line is a fact, it names it and says where
+its home would be if it is. A region's own label line is excluded, or every conformant hub would
+carry three permanent advisories on day one and the signal would be worthless before it was used.
+
+#### `[ PROJECTION ]`: three errors, one advisory, and a coverage statement
+
+| Finding | Meaning | Class |
+|---|---|---|
+| `DRIFT` | A region's words differ from its source in the home of record | error |
+| `DANGLING` | A region names a class outside the closed set, or one whose source does not resolve | error |
+| `UNBALANCED MARKERS` | An opener with no terminator, or a terminator with no opener | error |
+| `MISPLACED SOURCE` | A `km:fact` region outside the home of record | error |
+| `HARNESS MIRROR DIVERGENCE` | The same skill differs between two installed runtime trees | error |
+| `UNPROJECTED TEXT` | A non-label line between projected regions, inside none of them | advisory |
+
+The block **refuses rather than passes** when the home of record is missing or unreadable: there is
+nothing to compare against, and a run that printed OK would be reporting a comparison it never made.
+
+Every run states its coverage, and it never collapses into the word OK: **how many fact classes the
+standard declares, how many regions were found in how many instruction files, how many were
+compared, and how many declared classes are not projected in this hub at all.** The shipped template
+projects three of ten, and **that is the healthy state, not a backlog**: every projection is a second
+copy that must then be kept equal, so a deployment should project the fewest facts its harness
+genuinely restates and no more.
+
+#### The harness carries its skills twice
+
+The same discipline reaches the runtime trees. A hub that installs both `.claude/skills/` and
+`.agents/skills/` holds two copies of every procedure, and two copies of a procedure drift exactly as
+two copies of a fact do — demonstrated by mirror directories left un-backfilled across five hubs
+while their primary directories were fixed. The block compares the installed trees slug by slug, and
+tolerates exactly **one** designed difference: each tree names its own harness instruction file.
+Everything else differing is drift. A deployment installing one tree has one home and is not
+compared. This closes, for a deployed hub, the limit stated under *Skill files declare their trigger*
+— that a skill living in a hub is bound by the same rules and reached by no automated check — for the
+mirror-parity half of it.
+
+The declared-skill-set list proposed in the design was **not** taken. Its motivating evidence is
+fully covered by comparing the installed trees to each other, which needs no declaration at all, and
+the alternative would have added a hand-maintained manifest — the artifact class that produced the
+blind spot this section is otherwise trying to narrow.
+
+#### What this must not do
+
+1. **Never generate an agent-instruction file whole**, and never treat the template as its superset.
+2. **Never project rules, only facts about this hub.** Estate-wide bindings are inherited by
+   reference; a copied rule forks.
+3. **Never repair drift.**
+4. **Never claim to enforce anything.** Agent scope is a declared convention, and a projection into
+   an instruction file changes nothing about that. Calling this a control over agent behaviour would
+   be the false assurance this standard holds to be worse than an acknowledged gap.
+5. **Never let the fact-class list become an open extension point.**
+
+#### The limit, stated rather than hidden
+
+Proving both directions proves this check fires on the class it models, never that it models the
+right class. **A fact that lives only in an instruction file, in no region and in no source, cannot
+be compared with anything** — it is the same shape as a hub manifest missing a row for a governed
+file, which the git-backed integrity check could never catch. Three things narrow it and none closes
+it: the unprojected set is reported as a number and a list rather than passed over in silence; the
+evidence base can represent absence directly, because a declared class with no region is a statable
+condition; and text written beside a projected fact is named by file and line. What remains is that
+**the declared list cannot be proven complete** — that the right classes were chosen is a judgement,
+fixed at the interview and reviewed at the hub's cadence, and it is the same limit this standard
+already states for routing keywords: the gate proves the field was filled, never that the keywords
+are the right ones. `tests/test_hub_scan_canaries.sh` cases 14a–14m prove the block fires on each
+class it models, refuses on evidence it cannot read, and does **not** fire on a rewrapped region, a
+region's own label line, the one designed per-runtime skill difference, or a single-runtime
+deployment.
 
 ### Skill files declare their trigger, not their title (added in v1.27)
 
@@ -3122,7 +3321,10 @@ description that would not survive a plain-scalar parse, or carries one outside 
 also fails when the same slug's frontmatter has drifted between the trees it ships in. Each rule is
 proved against a synthetic violation, so a check that has stopped firing is itself caught. **Stated
 limit:** the test covers the skills this standard ships. A skill written locally in a deployed hub is
-bound by the same rule and reached by no automated check, so it is verified at review.
+bound by the same rule and reached by no automated check, so it is verified at review. Half of that
+limit is closed in a deployed hub by `[ PROJECTION ]` (v1.32), which compares the installed runtime
+trees to each other: it catches a skill updated in one tree and not the other, and still says nothing
+about whether a locally written description names its trigger.
 
 ### Scope is a declared convention, not an enforced control
 
@@ -3289,6 +3491,7 @@ happened once (see the v1.9 row) and the ledger exists so it does not happen twi
 | v1.29 | 2026-08-19 | Drafted and published 2026-08-19 (owner push). A check that reports by absence is proven in both directions (Standard Maintainer). Repairs a demonstrated **false pass in the canonical leakage instrument**: `tests/test_canonical_leakage.sh` invokes `git grep -E`, whose regex engine ignores `\b`, so the natural way to write a whole-word denylist entry (`\bTerm\b`) matched nothing and printed "canonical leakage check passed" against a tree carrying 89 matching lines in one file — a guard reporting success while letting through exactly what it exists to stop — and the instrument could not express the case-insensitive half of a denylist at all. Found while publishing v1.28, by canarying the instrument rather than by trusting its output. **Four repairs.** Word boundaries are requested with `-w`, which git implements above the regex engine and which is therefore portable, in place of a construct the engine may ignore; `-i` makes the case-insensitive half expressible; an explicit boundary construct written into a pattern (`\b`, `\B`, `\<`, `\>`, `[[:<:]]`, `[[:>:]]`) is **probed against the live engine** before the scan and the run is refused when it proves inert, so a pattern that cannot match can never produce a pass; and the instrument fails closed on an unreadable repository or an empty scan set, with the passing line naming the mode actually run and the number of files scanned, so a recorded "passed" states what was checked. `tests/test_canonical_leakage_guard.sh` carries fifteen assertions proving both directions, including that the historic `\b` form can never again exit 0. The generalised rule is stated in §"Standard Maintainer" and bound in the maintainer contract (`agents/km-hub-builder/SKILL.md`). **Trade-offs recorded:** (a) the inert-syntax refusal is deliberately conservative — on a host whose engine does honour a construct the probe permits it, but the documented form stays `-w`, so a maintainer never has to know which host they are on; (b) `-w` bounds the whole match, so a denylist term meant to fire *inside* a longer word is written without it, and the looser substring mode is then a deliberate choice that the passing line names; (c) the scan covers tracked files, which is the publishable set by definition but leaves an untracked working file out of scope; (d) nothing here changes what a hub does, so there is no hub adoption action and the repair reaches a deployment only by re-pinning the canonical standard. **Consequence for records already written:** any leakage result recorded before this version whose pattern used `\b` is void, not clean, and is re-run under `-w` before it is relied on. |
 | v1.30 | 2026-08-19 | Drafted and published 2026-08-19 (owner push). The checks a hub and a build run are proved in both directions. v1.29 stated the rule and proved one maintainer instrument; this version applies it to the two instruments a *deployment* actually runs, and records what a canary cannot do. (1) **The publish guard runner** (`tools/km-publish.sh`) had the same shape as the repaired leakage instrument and no negative test: `FORBID` rules are manifest-supplied extended regular expressions matched with `grep -qiE`, so a pattern the engine ignores, an invalid pattern (`grep` exits 2, which a boolean test reads as "absent"), a mistyped verb (warned past), or extraction that produced no text all ended in the same line, "Guards passed". That is the worst false pass in the standard, because every guard exists *because* a correction motivated it, so the passing build reissues the corrected defect. The runner now compiles each pattern with the tool that will run it, **probes any boundary construct against that tool** and refuses when it proves inert, refuses on empty or unreadable extracted text, on a guards file asserting no rules, on an unrecognised verb and on a non-numeric `PAGES` value, distinguishes *present / absent / could-not-answer* rather than two outcomes, and names in its passing line how many rules of which kind ran and how much text was scanned. Whole-word verbs `FORBID-WORD` and `REQUIRE-WORD` are added so the refusal has a portable route back, using the matching tool's own `-w` rather than a regex construct, since a guards file travels between hosts. The guard engine is reachable as `--check-guards`, so it is testable without WeasyPrint or a PDF. (2) **The session-start scan**: eleven blocks of `template/hub-scan.sh` reported by absence with nothing proving they fire, and two of them passed without stating any coverage at all. `tests/test_hub_scan_canaries.sh` builds a clean hub from the template, proves it green, then injects one known violation per block — `[ INBOX ]`, `[ PROPOSALS ]`, `[ INTEGRITY ]`, `[ READABILITY ]`, `[ FRONTMATTER ]`, `[ FRESHNESS ]`, `[ LINKS ]`, `[ SHAPE ]`, `[ CURRENCY ]`, `[ RECONCILIATION ]` and the `[ AGENT ]` false-dispatch walk — asserting the naming line and the exit class, plus three cases proving the blocks do *not* fire on a resolving edge, an unfilled template placeholder or a genuine dispatch. `[ LINKS ]` was taken first: it decides graph-edge integrity for every hub in an estate and its failure mode is a dangling edge that fails silently. The scan is inherited by every hub, so a block that stops firing turns a whole estate green at once. No dead check was found — the eleven all fire — so `template/hub-scan.sh` changes in exactly one respect: `[ FRONTMATTER ]` and `[ LINKS ]` now name their coverage on the passing line (documents read; edges resolved against the size of the note index), because a sentence that reads identically over forty inputs and over none is a word rather than evidence, and a hub whose link check reports zero edges is being told something true. (3) **The rule is generalised in §"Standard Maintainer"** to every check the standard ships, with the demonstration that only the negative direction detects a dead check: one block was deliberately neutered while this version was written and its positive case and both its over-match cases went on passing. **Stated limit, recorded as part of the rule:** proving both directions proves a check fires on the class it *models*, never that it models the right class, and a check whose gap is structural is reached by no canary — demonstrated by a hub manifest missing a row for a governed file, which the git-backed integrity check could never have caught, because a file absent from a hand-maintained manifest is invisible to a working-tree/history comparison rather than flagged by it. **Trade-offs recorded:** (a) refusing an unrecognised guard verb turns red any existing guards file carrying a typo or a locally-invented verb, which is the gate working, and the fix is one line per file; (b) refusing a guards file that asserts no rules means a placeholder sidecar kept "for later" now blocks its build, deliberately, since a build cannot be reported as guarded by a file that guards nothing; (c) `\b` is still *permitted* where the live tool honours it, the same conservative stance as v1.29, so the documented portable form is the `-WORD` verb rather than a ban; (d) the `[ READABILITY ]` canary reproduces the observable (size on disk, read returns nothing) with an unreadable file mode and not an actual cloud on-demand placeholder, which cannot be created in a test, and the proxy additionally trips `[ INTEGRITY ]`, so that case asserts the block's own contract rather than the run's exit class; (e) nothing a hub *asserts* changes and no hub content is touched, so there is no per-hub content adoption; the only inherited file that changes is `template/hub-scan.sh`, and only in its two passing lines, so a deployment inherits (1) by taking the shared renderer and (2) by installing the current template scan, which is the retrofit wave already sequenced. (f) The canary suites live in `tests/`, which a hub does not carry, so a hub running an inherited copy of the scan is covered by them only for as long as that copy has not drifted from the template — the drift, not the canaries, is what a deployment has to manage. |
 | v1.31 | 2026-08-19 | Drafted and published 2026-08-19 (owner push). A control the owner cannot press is a defect, not an empty state. Reported from a deployment that adopted the canonical queue row schema, and found in front of a client mid-demonstration. (1) **The specification and the parser disagreed on the options format**, and the specification won. `SPEC.md` §3 says options are exact quoted verbs; the reference parser required them to be **bold** *and* quoted, so a queue written exactly as the specification and the shipped template describe it parsed **zero** options, the action bar rendered empty, and the card still showed its title, tier badge, hub chips, age and `NEEDS YOU` — complete-looking, unanswerable, silent. The parser moves to the specification (quotes make a verb an option; emphasis is presentation) and keeps both bold forms, so nothing written against the old parser breaks, which is the only asymmetry available: moving the specification instead would have broken every queue written to it and every conforming reimplementation. The specification was also the side that had *already* assigned tolerance to the parser. (2) **A row the surface cannot read is REPORTED, never silently emptied** — `hub-scan.sh` gains a conditional `[ QUEUE ]` block for the single-hub shape, `km-cockpit.py` gains `queue-check` for a Supervisor tier where the hub scan does not run, both with three outcomes (readable / cannot be read / could not be evaluated), and the card renders through the existing "Preparing for you" gate with the reason stated, enforced on POST as well as in rendering. The tier-B synthetic `apply`/`veto` pair now fires **only** where a row declares no options at all: it had been *hiding* this defect for a whole tier, and answering a row against options it never declared also credited the recommendation-follow-rate with a hit on an option the owner was never shown. (3) **No owner-supplied value may size a layout** — stated as an invariant rather than patched: an option label the length of a sentence sized a grid track with an `auto` maximum and collapsed the title column beside it, and the same class covers answers, notes and row text. Registered owner-text tracks must have a bounded maximum, a new owner-text surface is registered in the same change, and the check states the coverage it has. (4) `str.capitalize()` lower-cased everything after the first character, so an option naming a person rendered their name in lower case on the surface shown to them. (5) The queue template ships **worked tier-A and tier-B rows** inside a fenced block, and a fenced row is now documentation to every reader of the queue — parser, scan and check alike — so an example can be copied without appearing as a decision. **Both directions proved:** 19 new selftest cases, 6 hub-scan canaries (including the block staying silent where no queue exists, and its verdict cross-checked against `queue-check` on the same fixture), and 6 rendered-surface cases in `tests/test_km_cockpit.sh`. The selftest and the rendered-surface cases were re-run against the pre-fix parser and fail on it, so they are known to detect the defect they were written for; the `[ QUEUE ]` canaries assert naming lines no other block emits, so a removed or dead block fails them by construction, but they were never run against a scan that predates the block and that is a weaker claim, stated as such. **Stated limits:** the layout check verifies the tracks it has been *told* carry owner text and cannot discover an unregistered surface, which is why the registration obligation is in the contract rather than in the instrument; and the scan's `[ QUEUE ]` block and `queue-check` are two implementations of one rule, held together by a cross-check on a shared fixture and by nothing else. **Trade-off recorded:** a queue that curls its quotes now fails the check rather than parsing, which is deliberate — an unrecognised form is reported loudly instead of being absorbed by a more permissive parser that would go on hiding the next one. |
+| v1.32 | 2026-08-20 | **Drafted 2026-08-20, unpublished** (awaiting owner push). The harness projection: the hub definition is the home of record for the facts the instruction files restate. Answers the first of the three gaps a deployment owner named (2026-08-18), designed in `rfcs/RFC-004`, and unblocked by his ruling that `km-deployment.md` is the home and `CLAUDE.md`/`AGENTS.md` carry a projected copy with drift REPORTED and never repaired. **The defect, verified in a deployment:** the initiation interview substitutes one set of elicited answers into both the hub manifest and the two instruction files, once, and nothing keeps them equal — in one hub an owner widened the admission rule in the instruction file only, so every registry-reading surface went on attributing sources by a rule he had already superseded; in another the hub definition carried exclusions the instruction file lacked. The standard was itself confused about which file was the home: §"Thin definitions" said `CLAUDE.md` while the interview, the quarantine gate and every registry-reading surface used `km-deployment.md`. That sentence is **corrected**. **The upper bound, and the reason nothing here generates a file whole:** a retrofit wave across seven hubs found each carrying four to eight sections with no template counterpart at all, including owner-authored text existing nowhere else, so the template is not the superset and a generator that assumed it was would delete the deployment's own judgement. (1) **A closed set of ten fact classes** homed in `km-deployment.md`, marked with `<!-- km:fact -->`; a projected copy lives in an instruction file inside `<!-- km:project <class> -->`, and **every unmarked line is owner-authored by definition** and is never read, compared or touched. The hub owner's name is deliberately NOT projected: it appears nine times per file, inline inside sentences, and bounding it would mean nine markers around sentence fragments. (2) **`[ PROJECTION ]` in `hub-scan.sh`** — `DRIFT`, `DANGLING`, `UNBALANCED MARKERS`, `MISPLACED SOURCE` and `HARNESS MIRROR DIVERGENCE` as errors, `UNPROJECTED TEXT` beside a projected fact as an advisory, and a **coverage line on every run** naming classes declared, regions found, files read, regions compared, and classes not projected. Text is compared as words, so reflowing a region is not drift and rewording it is. The block **refuses** rather than passes when the home of record is missing or unreadable. (3) **Nothing repairs drift**, and the report prints both texts so the owner can decide from the report: the verified case proves either side can hold the newer truth, and a projector that made the instruction file match would have reverted a recorded ruling and reported success. (4) **The counter-argument is carried into the design rather than dropped.** The owner wrote his widening in the instruction file because that is the file he reads, and a design that fights where its owner writes loses quietly. So: his text is never destroyed, the marker names the home of record on the line above it where he is typing, the catch is at the next session start, there is deliberately **no `Stop`-hook gate** (it fires while he is still mid-edit, and interrupting an owner halfway through writing a rule is the same failure as overwriting it), and text written *between* regions — where an owner amending a fact actually writes — is named by file and line as an advisory rather than an error, because a gate that reddens a hub for a legitimate sentence gets switched off and takes `DRIFT` with it. (5) **Skills are compared, not declared.** The two runtime trees a hub installs hold two copies of every procedure and drift as facts do (demonstrated: mirror directories left un-backfilled across five hubs); `[ PROJECTION ]` compares them slug by slug and tolerates exactly one designed difference, each tree naming its own harness instruction file. The declared-skill-set list proposed in the RFC was **not taken**: its evidence is fully covered by comparing the installed trees, and the alternative added a hand-maintained manifest, which is the artifact class that produced the blind spot this version is narrowing. **Both directions proved**, 16 cases (`tests/test_hub_scan_canaries.sh` 14a–14m): each finding fires on the class it models, the block refuses on evidence it cannot read, and it does **not** fire on a rewrapped region, a region's own label line, the one designed per-runtime skill difference, or a single-runtime deployment. The suite was re-run against a deliberately neutered comparison and exactly the two drift cases failed, so it is known to detect a dead block. Two over-match cases were found by the instrument itself on its first run: byte-comparing the shipped skill mirrors reported a legitimate per-runtime difference as divergence, and a naive interleaved-text rule would have reported every region's own label line, giving each conformant hub three permanent advisories on day one. **Stated limits:** a fact living only in an instruction file, in no region and no source, cannot be compared with anything — the same shape as the manifest defect the git-backed integrity check could never catch — so the unprojected set is reported as a number and a list, the evidence base can represent absence directly, and text beside a projected fact is named; what remains is that **the declared list cannot be proven complete**, which is a judgement reviewed at the hub's cadence and the same limit already stated for routing keywords. A changed hub owner is reconciled by hand. **Trade-offs recorded:** (a) the shipped template projects three of ten classes and that is the healthy state, not a backlog — every projection is a second copy, so the coverage line reports what is *not* projected without implying it should be; (b) `UNPROJECTED TEXT` is advisory by choice, which means a fact written beside a region is named but does not gate; (c) the mirror comparison normalises exactly one noun and would report any future legitimate per-runtime difference as drift, which is deliberate — the maintainer normalises it or accepts it, and the check never widens on its own; (d) a hub adopts this by installing the current template scan and wrapping the facts its instruction files already restate, three regions per file, reconciling whatever divergence that surfaces; a deployment that wraps nothing stays green and its coverage line says so. |
 
 ---
 

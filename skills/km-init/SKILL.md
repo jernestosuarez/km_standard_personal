@@ -323,6 +323,7 @@ to the target path.
 | `{{KNOWLEDGE_RECORDS_BOUNDARY}}` | The elicited knowledge-vs-records boundary (interview Round 4) |
 | `{{EVIDENCE_EXPECTATIONS}}` | The elicited evidence expectations (interview Round 4) |
 | `{{INIT_DATE}}` | Today's date (YYYY-MM-DD) — also stamped as `initiation-interview` in `km-deployment.md`; the scan quarantines a hub without it |
+| Marked regions | `SCOPE_IN`, `SCOPE_OUT` and `HARD_EXCLUSIONS` are substituted **inside** `km:fact` regions in `km-deployment.md` and `km:project` regions in `CLAUDE.md`/`AGENTS.md` (v1.32). Same words on both sides, or `[ PROJECTION ]` reports drift on the day the hub is created |
 | `{{KM_STANDARD_VERSION}}` | Canonical KM Standard version derived in Step 2 |
 | `{{KM_STANDARD_REVISION}}` | Full canonical Git revision derived in Step 2 |
 | `{{KM_STANDARD_SOURCE}}` | Canonical origin URL, or `unresolved`, derived in Step 2 |
@@ -516,6 +517,13 @@ their routing keywords in `km-deployment.md`, where the decision surface reads t
 3. **Write the scope guard** into `CLAUDE.md` and `AGENTS.md` (mirrors — apply to both) as the
    admission rule plus the hard exclusions, in the owner's own words. Where a scope statement
    already exists and the interview changed it, replace it and say so in the report.
+   **Write each of the three statements inside its `km:project` marked region** (v1.32), with the
+   identical words the same answer put inside the matching `km:fact` region in `km-deployment.md`,
+   which is their home of record. The regions are what lets `hub-scan.sh`'s `[ PROJECTION ]` block
+   compare the two copies later; a bare substitution leaves two copies with nothing holding them
+   together, which is the defect v1.32 exists to close. **Write only inside the markers.** In a
+   hub that already exists, everything outside them was authored there and is never rewritten by
+   this skill — see the retrofit note below.
 4. **Write the competency questions** into `01_project-brief.md`.
 5. **Mint the agent definition** if the hub has none (Step 4.5), and register the hub (Step 4.6) —
    the registry row is what lifts the estate's quarantine.
@@ -523,6 +531,18 @@ their routing keywords in `km-deployment.md`, where the decision surface reads t
    estate's. If the hub's inherited `hub-scan.sh` predates the `[ DEPLOYMENT ]` interview check, it
    cannot report the gate at all: say so explicitly rather than reporting a pass the scan never
    performed, and verify the frontmatter by reading it.
+
+**Retrofitting the marked regions in an adopted hub (v1.32).** An existing hub's `CLAUDE.md` and
+`AGENTS.md` carry sections this standard has never seen — a retrofit wave across seven hubs found
+four to eight per hub, including owner-authored text existing nowhere else. So: wrap the statements
+that are already there, and write nothing else. Locate the admission rule, the exclusion statement
+and the hard exclusions in the file, put a `km:project` region around each **in place**, and make the
+matching `km:fact` region in `km-deployment.md` hold the same words. If the two copies already
+disagree, **do not choose** — that is exactly the drift the owner decides, so leave both as they are,
+let `[ PROJECTION ]` report it at the next session start, and name it in the report. A hub whose
+instruction files restate nothing is left unmarked and is fully conformant; the scan's coverage line
+will say that three of ten classes are projected, or none, and either is a true statement rather
+than a defect.
 
 ---
 

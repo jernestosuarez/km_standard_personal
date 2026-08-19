@@ -450,6 +450,250 @@ fi
 errors=$((errors + deployment_errors))
 echo
 
+echo "[ PROJECTION ]"
+# The harness projection (v1.32). CLAUDE.md and AGENTS.md restate facts that km-deployment.md
+# already homes — the admission rule, the exclusions, the hard exclusions. One interview wrote
+# both copies, once, and nothing kept them equal afterwards. This block compares them.
+#
+# THE HOME OF RECORD IS km-deployment.md. A copy in an instruction file lives inside a bounded
+# marked region naming its fact class; EVERY UNMARKED LINE IS OWNER-AUTHORED BY DEFINITION and is
+# never read, never compared and never touched. That inversion is the whole design: a hub carrying
+# eight sections this standard never heard of is fully conformant here.
+#
+# DRIFT IS REPORTED, NEVER REPAIRED, and nothing in this scan writes. Either side may hold the
+# newer truth — the observed case is an owner who widened an admission rule by writing it in the
+# instruction file, because that is the file he reads — so a scan that "fixed" the instruction file
+# to match the definition would revert a recorded ruling and report success.
+#
+# The closed set below is the standard's, not the hub's. Keep it in sync with STANDARD.md
+# §"The harness projection". A hub cannot extend it: an open list makes the coverage line
+# unmeasurable, and the coverage line is the only honest thing this block has to say about what
+# it did not look at.
+PROJECTION_CLASSES="purpose scope-in scope-out hard-exclusions audiences knowledge-records-boundary evidence-expectations owner-cadence sensitivity-posture routing-keywords"
+PROJECTION_TARGETS="CLAUDE.md AGENTS.md"
+
+# Parse km: marked regions out of one file. Emits, tab-separated:
+#   R <kind> <class> <collapsed text>   a closed region
+#   E <reason> <class>                  a marker defect
+# Text is collapsed to single-spaced words across the whole region, so REFLOWING A REGION IS NOT
+# DRIFT and rewording it is. Line breaks are presentation; the words are the fact.
+projection_regions() {
+  awk '
+    { line[NR] = $0 }
+    END {
+      first = 0; last = 0; open_at = 0
+      for (i = 1; i <= NR; i++) {
+        if (line[i] ~ /<!--[ \t]*km:(fact|project)[ \t]+[a-z]/) {
+          if (open_at) { printf "E\tunterminated\t%s\n", open_class; open_at = 0 }
+          k = line[i]
+          sub(/^.*<!--[ \t]*km:/, "", k)
+          gsub(/[ \t]+/, " ", k)
+          split(k, p, " ")
+          open_kind = p[1]; open_class = p[2]; open_at = i; buf = ""
+          if (!first) first = i
+          continue
+        }
+        if (line[i] ~ /<!--[ \t]*km:end[ \t]*-->/) {
+          if (!open_at) { printf "E\torphan-end\t-\n"; continue }
+          t = buf
+          gsub(/[ \t\r]+/, " ", t); sub(/^ +/, "", t); sub(/ +$/, "", t)
+          printf "R\t%s\t%s\t%s\n", open_kind, open_class, t
+          inside[open_at] = 1
+          for (j = open_at; j <= i; j++) covered[j] = 1
+          open_at = 0; last = i
+          continue
+        }
+        if (open_at) buf = buf " " line[i]
+      }
+      if (open_at) printf "E\tunterminated\t%s\n", open_class
+
+      # Interleaved text: a non-blank line sitting BETWEEN projected regions and inside no region.
+      # This is the one place the blind spot narrows. A fact that lives only in an instruction file
+      # is invisible to a region comparison by construction — but the observed way an owner writes
+      # one is a bullet added NEXT TO the fact he is amending, and that lands here. A line whose
+      # next non-blank neighbour opens a region is that region label and is not interleaved text.
+      for (i = first; i <= last && last > 0; i++) {
+        if (covered[i]) continue
+        t = line[i]; gsub(/^[ \t]+|[ \t]+$/, "", t)
+        if (t == "") continue
+        nxt = ""
+        for (j = i + 1; j <= last; j++) {
+          u = line[j]; gsub(/^[ \t]+|[ \t]+$/, "", u)
+          if (u != "") { nxt = u; break }
+        }
+        if (nxt ~ /^<!--[ \t]*km:(fact|project)[ \t]+[a-z]/) continue
+        printf "I\t%d\t%s\n", i, substr(t, 1, 88)
+      }
+    }
+  ' "$1"
+}
+
+projection_errors=0
+projection_regions_found=0
+projection_compared=0
+projection_files_read=0
+projection_files_skipped=0
+projection_seen_classes=""
+projection_interleaved=0
+
+if [ ! -f "$deployment_file" ] || ! printf '%s\n' "$readable_docs" | grep -qxF "$deployment_file"; then
+  # REFUSE rather than pass. Without the home of record there is nothing to compare against, and a
+  # block that says "OK" here would be reporting that it could not read its own evidence.
+  echo "  NOT CHECKED: km-deployment.md is missing or unreadable, so no projection has a source"
+  echo "  COVERAGE: 0 instruction file(s) compared (refused for want of evidence, not clean)"
+  adv
+else
+  src_scan=$(projection_regions "$deployment_file")
+  src_bad=$(printf '%s\n' "$src_scan" | awk -F'\t' '$1=="E"{print $2"\t"$3}')
+  if [ -n "$src_bad" ]; then
+    while IFS=$'\t' read -r reason cls; do
+      [ -z "$reason" ] && continue
+      echo "  ! UNBALANCED MARKERS in km-deployment.md: $reason ($cls)"
+      projection_errors=$((projection_errors + 1))
+    done <<< "$src_bad"
+  fi
+  src_regions=$(printf '%s\n' "$src_scan" | awk -F'\t' '$1=="R" && $2=="fact"{print $3"\t"$4}')
+
+  for target in $PROJECTION_TARGETS; do
+    tf="$HUB/$target"
+    [ -f "$tf" ] || continue
+    if ! printf '%s\n' "$readable_docs" | grep -qxF "$tf"; then
+      # Present but unreadable: a coverage gap belonging to the storage, never a clean comparison.
+      echo "  NOT CHECKED: $target is present but could not be read (coverage gap, not conformance)"
+      projection_files_skipped=$((projection_files_skipped + 1))
+      adv
+      continue
+    fi
+    projection_files_read=$((projection_files_read + 1))
+    tgt_scan=$(projection_regions "$tf")
+    # Advisory, not an error, and deliberately: an explanatory sentence written beside a projected
+    # fact is legitimate, and a gate that fires on prompts gets switched off — taking the DRIFT and
+    # DANGLING errors with it. What matters is that the line is NAMED at the next session start
+    # rather than found at an audit months later.
+    tgt_interleaved=$(printf '%s\n' "$tgt_scan" | awk -F'\t' '$1=="I"{print $2"\t"$3}')
+    if [ -n "$tgt_interleaved" ]; then
+      while IFS=$'\t' read -r ln txt; do
+        [ -z "$ln" ] && continue
+        echo "  UNPROJECTED TEXT beside a projected fact — $target:$ln: $txt"
+        projection_interleaved=$((projection_interleaved + 1))
+      done <<< "$tgt_interleaved"
+      echo "    If that amends one of the facts above, its home of record is km-deployment.md."
+      adv
+    fi
+    tgt_bad=$(printf '%s\n' "$tgt_scan" | awk -F'\t' '$1=="E"{print $2"\t"$3}')
+    if [ -n "$tgt_bad" ]; then
+      while IFS=$'\t' read -r reason cls; do
+        [ -z "$reason" ] && continue
+        echo "  ! UNBALANCED MARKERS in $target: $reason ($cls)"
+        projection_errors=$((projection_errors + 1))
+      done <<< "$tgt_bad"
+    fi
+    while IFS=$'\t' read -r kind cls text; do
+      [ -z "$kind" ] && continue
+      projection_regions_found=$((projection_regions_found + 1))
+      if [ "$kind" = "fact" ]; then
+        echo "  ! MISPLACED SOURCE $cls in $target: km:fact declares a home of record, and the home"
+        echo "    of record is km-deployment.md. Use km:project here, or move the fact."
+        projection_errors=$((projection_errors + 1))
+        continue
+      fi
+      case " $PROJECTION_CLASSES " in
+        *" $cls "*) ;;
+        *)
+          echo "  ! DANGLING $cls in $target: not a fact class in the standard's closed set"
+          projection_errors=$((projection_errors + 1))
+          continue
+          ;;
+      esac
+      # A class resolves to its km:fact region in km-deployment.md, or, for a class that lives in
+      # frontmatter, to the frontmatter field of the same name.
+      want=$(printf '%s\n' "$src_regions" | awk -F'\t' -v c="$cls" '$1==c{print $2; found=1; exit} END{if(!found) exit 3}')
+      if [ $? -ne 0 ]; then
+        want=$(fm_field "$deployment_file" "$cls")
+        if [ -z "$want" ]; then
+          echo "  ! DANGLING $cls in $target: no km:fact region and no frontmatter field of that"
+          echo "    name in km-deployment.md — the projection has no source to be checked against"
+          projection_errors=$((projection_errors + 1))
+          continue
+        fi
+      fi
+      projection_compared=$((projection_compared + 1))
+      projection_seen_classes="${projection_seen_classes}${cls}"$'\n'
+      if [ "$text" != "$want" ]; then
+        echo "  ! DRIFT $cls: $target and km-deployment.md hold different text"
+        echo "      km-deployment.md: $(printf '%s' "$want" | cut -c1-96)"
+        echo "      $target: $(printf '%s' "$text" | cut -c1-96)"
+        projection_errors=$((projection_errors + 1))
+      fi
+    done <<< "$(printf '%s\n' "$tgt_scan" | awk -F'\t' '$1=="R"{print $2"\t"$3"\t"$4}')"
+  done
+
+  # The harness carries the same skills twice, once per runtime tree, and two copies of one
+  # procedure drift exactly as two copies of one fact do. Compared only when BOTH trees are
+  # installed: a single-runtime deployment has one home and nothing to diverge from.
+  claude_skills="$HUB/.claude/skills"
+  agents_skills="$HUB/.agents/skills"
+  mirror_state="not installed"
+  if [ -d "$claude_skills" ] && [ -d "$agents_skills" ]; then
+    mirror_slugs=$( { ls -1 "$claude_skills" 2>/dev/null; ls -1 "$agents_skills" 2>/dev/null; } | sort -u )
+    mirror_n=0
+    while IFS= read -r slug; do
+      [ -z "$slug" ] && continue
+      a="$claude_skills/$slug/SKILL.md"
+      b="$agents_skills/$slug/SKILL.md"
+      if [ ! -f "$a" ] || [ ! -f "$b" ]; then
+        echo "  ! HARNESS MIRROR DIVERGENCE $slug: installed in one runtime tree and not the other"
+        projection_errors=$((projection_errors + 1))
+        continue
+      fi
+      mirror_n=$((mirror_n + 1))
+      # One legitimate per-runtime difference, and exactly one: each tree names its own harness
+      # instruction file. Normalise that noun and nothing else — a comparison that tolerated more
+      # would stop reporting the staleness it exists for. Everything still differing is drift.
+      if ! diff -q <(sed -e 's/CLAUDE\.md/HARNESS-INSTRUCTIONS/g' -e 's/AGENTS\.md/HARNESS-INSTRUCTIONS/g' "$a") \
+                   <(sed -e 's/CLAUDE\.md/HARNESS-INSTRUCTIONS/g' -e 's/AGENTS\.md/HARNESS-INSTRUCTIONS/g' "$b") >/dev/null 2>&1; then
+        echo "  ! HARNESS MIRROR DIVERGENCE $slug: the .claude and .agents copies of SKILL.md differ"
+        echo "    beyond the harness instruction-file name; one tree was updated and the other was not"
+        projection_errors=$((projection_errors + 1))
+      fi
+    done <<< "$mirror_slugs"
+    mirror_state="$mirror_n slug(s) compared across both runtime trees"
+  elif [ -d "$claude_skills" ] || [ -d "$agents_skills" ]; then
+    mirror_state="one runtime tree installed, nothing to compare"
+  fi
+
+  # The coverage line is not decoration and it never collapses into the word OK. It states how much
+  # this block was TOLD about and how much of that it found, because the defect it cannot see is a
+  # fact that lives only in an instruction file, in no region and no source. That residue is a
+  # STATED LIMIT, not a detection: the check reports the size of what it never looked at, and the
+  # completeness of the declared list is a judgement reviewed at the hub's cadence, never a check.
+  declared_n=$(printf '%s\n' $PROJECTION_CLASSES | wc -l | tr -d ' ')
+  unprojected=""
+  unprojected_n=0
+  for c in $PROJECTION_CLASSES; do
+    if ! printf '%s\n' "$projection_seen_classes" | grep -qxF "$c"; then
+      unprojected="$unprojected $c"
+      unprojected_n=$((unprojected_n + 1))
+    fi
+  done
+  if [ "$projection_errors" -eq 0 ]; then
+    echo "  OK: $projection_compared projected region(s) match km-deployment.md"
+  fi
+  echo "  COVERAGE: $declared_n fact class(es) declared by the standard; $projection_regions_found region(s) found in $projection_files_read instruction file(s); $projection_compared compared; $unprojected_n class(es) not projected in this hub and therefore not checked here"
+  [ -n "$unprojected" ] && echo "  NOT PROJECTED (this is the normal state, not a backlog):$unprojected"
+  echo "  HARNESS SKILLS: $mirror_state"
+  [ "$projection_files_skipped" -gt 0 ] && echo "  $projection_files_skipped instruction file(s) unreadable and not compared"
+  # The stated limit, printed with the verdict rather than filed in a document nobody opens. This
+  # block cannot see a fact that lives only in an instruction file, in no region and no source;
+  # it reports how much it was told about, how much of that it found, and how much text sits beside
+  # a projected fact without being one. That the declared list is the RIGHT list is a judgement
+  # reviewed at the hub's cadence, never a check.
+  echo "  LIMIT: unmarked text is owner-authored by definition and is not compared;"
+  echo "  $projection_interleaved line(s) beside a projected fact were named, not judged."
+fi
+errors=$((errors + projection_errors))
+echo
+
 echo "[ FRONTMATTER ]"
 # The passing line states HOW MANY documents were checked, not merely that none failed. A check
 # that reports a defect by finding one passes by absence, and an absence is also what an empty

@@ -18,11 +18,26 @@ governed, auditable source of truth for {{PROJECT_NAME}}.
 
 ## Scope guard
 
-Cover **{{PROJECT_NAME}} only**. The guard is an admission rule, not a description:
+Cover **{{PROJECT_NAME}} only**. The guard is an admission rule, not a description.
 
-- **Admit** a source when: {{SCOPE_IN}}
-- **Exclude:** {{SCOPE_OUT}}
-- **Hard exclusions — refuse even when a routing keyword matches:** {{HARD_EXCLUSIONS}}
+The three statements below are **projected from `km-deployment.md`, which is their home of record**
+(v1.32). Change them there. Changing them here is not an error and nothing overwrites what you
+write: `hub-scan.sh` reports the difference at the next session start as `DRIFT`, and you say which
+side is right. Everything in this file outside a `km:project` region is authored here and is never
+read, compared, or touched by that check.
+
+- **Admit** a source when:
+  <!-- km:project scope-in — home of record: km-deployment.md § Hub definition -->
+  {{SCOPE_IN}}
+  <!-- km:end -->
+- **Exclude:**
+  <!-- km:project scope-out — home of record: km-deployment.md § Hub definition -->
+  {{SCOPE_OUT}}
+  <!-- km:end -->
+- **Hard exclusions — refuse even when a routing keyword matches:**
+  <!-- km:project hard-exclusions — home of record: km-deployment.md § Hub definition -->
+  {{HARD_EXCLUSIONS}}
+  <!-- km:end -->
 
 Keyword matching is how a source reaches this hub in the first place, so the hard exclusions are
 what actually stop one. If a fact is borderline, ask {{HUB_OWNER}}.
@@ -85,6 +100,7 @@ At the start of every session involving this hub, before doing any other work:
    - `[INTEGRITY]` uncommitted/untracked change → stop; surface to {{HUB_OWNER}} before doing anything else
    - `[FRONTMATTER]` missing → flag; fix before applying any other change
    - `[CURRENCY]` generated doc with no `lifecycle:` → mark it; advisory, never blocks a change
+   - `[PROJECTION]` `DRIFT` between a projected fact and `km-deployment.md` → error; do **not** repair it — the home of record and the instruction file can each hold the newer truth, so surface both texts to {{HUB_OWNER}} and let him say which is right. `UNPROJECTED TEXT` beside a projected fact → advisory; if it amends the fact, its home is `km-deployment.md`
    - `[RESTRICTED]` restricted marker, frontmatter-restricted note name, or restricted section text on an outbound surface → error; remove it, or regenerate the index, before anything ships
    - `[RECONCILIATION]` disputes → each names who it is blocked on; surface to {{HUB_OWNER}} the ones blocked on the owner, report the rest as open, not as owner actions
    - `[AGENT]` false `Dispatched-By:` → a commit outside this hub claimed a dispatched agent acted; capture it as a `corrections/` note, do not rewrite history

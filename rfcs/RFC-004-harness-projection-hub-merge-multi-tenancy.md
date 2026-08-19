@@ -43,6 +43,19 @@ does: there is no owner ruling here to carry.
 
 # Part I — The harness projection
 
+> **Status addendum, 2026-08-20 (added after the fact; the design below is unchanged).** The owner
+> decision this Part said it needed first — *which file is the home of record* — was answered:
+> `km-deployment.md` is the home of record, `CLAUDE.md` and `AGENTS.md` carry a projected copy in
+> bounded marked regions, and drift is reported and never repaired. Part I was taken to a drafted
+> standard version on that ruling: **v1.32, drafted and unpublished**, on branch
+> `v1.32-harness-projection`. Three design calls below were **narrowed** on contact with the drafted
+> check, and the version records each: `hub-owner` is not projected (it is an inline substitution
+> occurring nine times per file, not a bounded block); the declared-skill-set list of §5 was not
+> taken, because comparing the two installed runtime trees to each other covers the same evidence
+> without adding a hand-maintained manifest; and "unclaimed class" is a coverage number rather than
+> an advisory, because a low projection count is the healthy state. Parts II and III are untouched
+> by that version and remain design only.
+
 ## The gap as named
 
 > A KM deployment ought to define the guardrails and skills the agents work inside, rather than the

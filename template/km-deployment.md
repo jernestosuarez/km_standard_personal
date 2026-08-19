@@ -54,21 +54,54 @@ Supervisor-mediated, default-deny cross-compartment flow.
 Recorded on {{INIT_DATE}}. This is the hub's manifest of intent — what it is for, for whom, and
 where its boundaries sit. Changing it is a governed change like any other.
 
-- **Purpose:** {{DESCRIPTION}}
+**This section is the home of record for these facts (v1.32).** Where an agent-instruction file
+(`CLAUDE.md`, `AGENTS.md`) restates one of them, it carries a copy inside a `<!-- km:project -->`
+region and `hub-scan.sh`'s `[ PROJECTION ]` block compares the two. The `<!-- km:fact -->` markers
+below bound the value each class projects from; they are HTML comments and render as nothing.
+Editing a fact **here** is the ordinary route. Editing it in an instruction file is not an error and
+is never overwritten — the scan reports the divergence and the owner says which side is right,
+because either side can hold the newer truth.
+
+- **Purpose:**
+  <!-- km:fact purpose -->
+  {{DESCRIPTION}}
+  <!-- km:end -->
 - **Scope guard — in** (the admission rule: the condition under which a source is admitted here,
-  not a topic label): {{SCOPE_IN}}
-- **Scope guard — out:** {{SCOPE_OUT}}
+  not a topic label):
+  <!-- km:fact scope-in -->
+  {{SCOPE_IN}}
+  <!-- km:end -->
+- **Scope guard — out:**
+  <!-- km:fact scope-out -->
+  {{SCOPE_OUT}}
+  <!-- km:end -->
 - **Hard exclusions** (what this hub refuses *even when a routing keyword matches* — an exclusion
-  never stated against a matching keyword never fires): {{HARD_EXCLUSIONS}}
+  never stated against a matching keyword never fires):
+  <!-- km:fact hard-exclusions -->
+  {{HARD_EXCLUSIONS}}
+  <!-- km:end -->
 - **Audiences and surfaces** (each audience named to the surface it gets — audience / owner /
   practitioner; STANDARD.md → "The decision surface: three surfaces"):
+  <!-- km:fact audiences -->
   {{AUDIENCE_SURFACES}}
+  <!-- km:end -->
 - **Knowledge vs. records boundary** (what this hub curates as claims, and what stays in
-  systems of record with pointers only — Rule 6): {{KNOWLEDGE_RECORDS_BOUNDARY}}
+  systems of record with pointers only — Rule 6):
+  <!-- km:fact knowledge-records-boundary -->
+  {{KNOWLEDGE_RECORDS_BOUNDARY}}
+  <!-- km:end -->
 - **Evidence expectations** (what sources this hub will trust, and what always needs owner
-  confirmation): {{EVIDENCE_EXPECTATIONS}}
+  confirmation):
+  <!-- km:fact evidence-expectations -->
+  {{EVIDENCE_EXPECTATIONS}}
+  <!-- km:end -->
 - **Owner cadence** (how often the owner sits with the queue, and on which surface):
+  <!-- km:fact owner-cadence -->
   {{OWNER_CADENCE}}
+  <!-- km:end -->
 - **Sensitivity posture** (restricted classes expected here, and the outbound surfaces planned —
   elicited at initiation so the outbound lint set is configured before anything travels, never
-  retrofitted after it has): {{SENSITIVITY_POSTURE}}
+  retrofitted after it has):
+  <!-- km:fact sensitivity-posture -->
+  {{SENSITIVITY_POSTURE}}
+  <!-- km:end -->

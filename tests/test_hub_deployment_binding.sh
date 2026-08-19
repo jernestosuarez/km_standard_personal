@@ -141,7 +141,25 @@ if ! printf '%s\n' "$output" | grep -Fq "HUB NOT INITIATED"; then
 fi
 # One defect, not two: the keyword check is withheld while the interview date is itself missing,
 # so the hub is told about the one act that fixes both.
-if printf '%s\n' "$output" | grep -Fq "routing-keywords"; then
+#
+# Scoped to the [ DEPLOYMENT ] block rather than the whole scan (narrowed in v1.32). The assertion
+# is about the deployment block WITHHOLDING ITS ERROR, and it was written as a substring search over
+# the entire output, which also matched any other block that happens to NAME the field — [ PROJECTION ]
+# lists routing-keywords among the fact classes it did not compare. Matching a coverage line is not
+# evidence that the error fired, so the scope is narrowed and the error line itself is asserted
+# absent, which is a stricter test of the same rule.
+deployment_block=$(printf '%s\n' "$output" | awk '/^\[ DEPLOYMENT \]/{f=1;next} /^\[ /{f=0} f')
+# Fail closed on an empty extraction: if the block header ever changes, awk returns nothing and the
+# search below passes over evidence it never read, which is the same "found nothing" pass the
+# standard forbids. And prove the matcher itself fires, so a narrowed assertion cannot go dead.
+if [ -z "$deployment_block" ]; then
+  printf '%s\n' "$output" >&2
+  fail "the [ DEPLOYMENT ] block could not be extracted — the check below would pass by reading nothing"
+fi
+if ! printf '  ! routing-keywords is empty\n' | grep -Fq "routing-keywords"; then
+  fail "the routing-keywords matcher does not fire on a known violation (dead assertion)"
+fi
+if printf '%s\n' "$deployment_block" | grep -Fq "routing-keywords"; then
   printf '%s\n' "$output" >&2
   fail "uninterviewed also reported routing-keywords (should be withheld until the date is valid)"
 fi
