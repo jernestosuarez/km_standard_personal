@@ -29,9 +29,14 @@ skill turns committed content into an *issuable artifact*. Neither bypasses the 
 2. **Guards are not optional output** — if the build reports `GUARD FAIL`, the artifact must not be issued,
    and the failure is surfaced to the hub owner verbatim. Guards encode corrections; a failing guard means
    a rebuild tried to reintroduce a defect the source exists to prevent.
-3. Visually verify at least the first and last page (`pdftoppm` → read the images). A page count is not a
+3. **`GUARD REFUSED` is not a pass and not a failure — it is a guard that could not be evaluated.** The
+   runner refuses (exit 2) on a pattern it cannot compile, a boundary construct the matching tool proves
+   inert, extracted text that came back empty, a guards file that reads as empty or asserts no rules, and
+   an unrecognised verb. Fix the guards file or the environment and rebuild; never issue the artifact on a
+   refusal, and never delete the offending rule to get past it.
+4. Visually verify at least the first and last page (`pdftoppm` → read the images). A page count is not a
    layout check.
-4. If the artifact is being **issued externally**, log it in `sources/publication-log.md` with the commit it
+5. If the artifact is being **issued externally**, log it in `sources/publication-log.md` with the commit it
    was generated from. Drafting-content changes still go through proposal/approval first.
 
 ## Scaffold (`new <slug>`)
@@ -41,7 +46,10 @@ Create `working-docs/<topic>/<slug>/` with:
   `<div class="pb">` for page breaks; per-page footer carrying the issue date)
 - `<NAME>.guards` — **required when a correction motivated the document**; otherwise optional. One rule
   per line, applied to the rendered PDF's extracted text: `FORBID <regex>` / `REQUIRE <regex>` /
-  `PAGES <n>`; `#` comments
+  `FORBID-WORD <regex>` / `REQUIRE-WORD <regex>` / `PAGES <n>`; `#` comments. **Use the `-WORD` forms for
+  whole-word matching, never `\b`**: the runner probes any boundary construct against the tool that will
+  actually run it and refuses when it proves inert, because an ignored boundary matches nothing and
+  nothing is also what a clean document looks like
 - `build.sh` — thin wrapper: `exec bash <relative-tools-path>/km-publish.sh <NAME>.html <OUTPUT>.pdf`
 - `README.md` — what the document is, what the guards protect, who issues it
 

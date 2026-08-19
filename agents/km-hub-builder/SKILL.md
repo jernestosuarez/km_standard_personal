@@ -117,6 +117,14 @@ genuinely clean input. Verify any boundary or matching syntax against the tool t
 it, never against the platform, because one tool on a host can honour a construct another silently
 ignores, and an ignored construct matches nothing, which is what a clean tree also looks like.
 
+This binds every check the standard ships, not only the ones a maintainer runs. Add a case proving
+the instrument does not fire on legitimate input either, since a check that matches everything proves
+as little as one that matches nothing, and make the instrument refuse rather than pass on any input
+it could not evaluate. Then state the limit in the same change: proving both directions proves the
+instrument fires on the class it models, never that it models the right class, so a check whose gap is
+structural is reached by no test at all. Answer that by making each check declare its own coverage in
+its passing line, and report a partial read as a coverage gap rather than folding it into the verdict.
+
 Never reuse a published version identifier. Inspect both version history and Git history before
 selecting the next version.
 

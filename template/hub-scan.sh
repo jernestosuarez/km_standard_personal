@@ -358,10 +358,15 @@ errors=$((errors + deployment_errors))
 echo
 
 echo "[ FRONTMATTER ]"
-fm_errors=0
+# The passing line states HOW MANY documents were checked, not merely that none failed. A check
+# that reports a defect by finding one passes by absence, and an absence is also what an empty
+# scan set looks like: "OK" over zero files reads identically to "OK" over forty. Every block
+# below that can pass by absence names its own coverage for the same reason.
+fm_errors=0; fm_checked=0
 while IFS= read -r f; do
   [ -z "$f" ] && continue
   skip_doc "$f" && continue
+  fm_checked=$((fm_checked + 1))
   if [ "$(head -1 "$f")" != '---' ]; then
     echo "  ! MISSING FRONTMATTER: ${f#$HUB/}"
     fm_errors=$((fm_errors + 1))
@@ -373,7 +378,7 @@ while IFS= read -r f; do
   fi
 done <<< "$readable_docs"
 if [ "$fm_errors" -eq 0 ]; then
-  echo "  OK — monitored documents have OKF frontmatter"
+  echo "  OK — $fm_checked monitored document(s) carry OKF frontmatter"
 else
   errors=$((errors + fm_errors))
 fi
@@ -415,7 +420,13 @@ echo "[ LINKS ]"
 # Index every note basename once, then check membership. One filesystem walk, not one per link.
 note_index=$(find "$HUB" -name '*.md' -not -path '*/.git/*' -not -path '*/_inbox/*' 2>/dev/null \
              | sed 's#.*/##; s#\.md$##' | sort -u)
-link_report=$(
+#
+# Every edge actually tested is tallied, and the tally is printed on the passing line. Without it
+# "OK — all frontmatter wiki-links resolve" is the same sentence whether forty edges resolved or
+# the walk found none at all, which is exactly how a check that has stopped seeing its inputs goes
+# unnoticed. The tally rides the same single walk (a CHECKED marker, filtered out afterwards)
+# because the inner loop runs in a subshell whose counters do not survive it.
+link_report_raw=$(
   while IFS= read -r f; do
     [ -z "$f" ] && continue
     skip_doc "$f" && continue
@@ -424,14 +435,18 @@ link_report=$(
         [ -z "$target" ] && continue
         # skip unfilled template placeholders like [[<stakeholder-note-name>]]
         printf '%s' "$target" | grep -q '[<>]' && continue
+        echo "CHECKED"
         if ! printf '%s\n' "$note_index" | grep -qxF "$target"; then
           echo "  ! UNRESOLVED LINK [[${target}]] in ${f#$HUB/}"
         fi
       done
   done <<< "$readable_docs"
 )
+links_checked=$(printf '%s\n' "$link_report_raw" | grep -c '^CHECKED$')
+link_report=$(printf '%s\n' "$link_report_raw" | grep -v '^CHECKED$' | grep 'UNRESOLVED LINK' || true)
+notes_indexed=$(printf '%s\n' "$note_index" | grep -c '[^[:space:]]')
 if [ -z "$link_report" ]; then
-  echo "  OK — all frontmatter wiki-links resolve"
+  echo "  OK — ${links_checked} frontmatter wiki-link(s) resolve against ${notes_indexed} indexed note name(s)"
 else
   printf '%s\n' "$link_report"
   # counted here, not inside the loop: the loop runs in a subshell and its increments are lost
