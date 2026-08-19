@@ -50,9 +50,17 @@ cat > "$hub/QUEUE.md" <<'EOF'
 | Id | Since | Defaults | Decision | Options |
 |---|---|---|---|---|
 | a1 | 2026-08-01 | - | **Approve the pilot run.** One sentence of context for the reader. | **"approve"** first · **"hold"** stops it |
+| a2 | 2026-08-01 | - | **Decide the pre-seed.** Written exactly as SPEC.md documents the schema. | "confirm the pre-seed, drop the prize", "ask Procurement first", "veto" |
+| a3 | 2026-08-01 | - | **Options this surface cannot read.** Declared in prose, not as quoted verbs. | approve or hold, your call |
+
+```
+| a9 | 2026-08-01 | - | **A worked example.** Fenced, therefore documentation. | "approve", "veto" |
+```
 
 <!-- QUEUE:BEGIN
 a1 | a | 2026-08-01 | - | approve the pilot run?
+a2 | a | 2026-08-01 | - | decide the pre-seed?
+a3 | a | 2026-08-01 | - | unreadable options?
 QUEUE:END -->
 
 <!-- SUPERVISOR-ACTIONS:BEGIN
@@ -91,6 +99,9 @@ None.
 ## 10. Reversibility & delegability
 Reversible; never delegable.
 EOF
+
+sed -e 's/^row: a1$/row: a2/' "$hub/queue-briefs/a1.md" > "$hub/queue-briefs/a2.md"
+sed -e 's/^row: a1$/row: a3/' "$hub/queue-briefs/a1.md" > "$hub/queue-briefs/a3.md"
 
 cat > "$hub/km-deployment.md" <<'EOF'
 ---
@@ -135,14 +146,63 @@ echo "$card" | grep -q '>Approve<' \
   && pass "answer controls present (brief gate passed)" || die "answer controls missing"
 echo "$card" | grep -q 'EXAMPLE ORGANIZATION' \
   && pass "organization name from the manifest, not the code" || die "organization name missing"
-echo "$card" | grep -q 'Preparing for you' \
-  && die "gated group rendered for a passing brief" || pass "no spurious brief gate"
+
+# --- The options contract (v1.31), proved at the RENDERED surface ---------------------------
+# The defect this closes was invisible at the unit level and visible only here: a row written
+# exactly as SPEC.md documents it parsed zero options, so the card rendered its title, tier
+# badge, hub chips and age — and an action bar containing nothing.
+echo "$card" | grep -q '>Confirm the pre-seed, drop the prize<' \
+  && pass "spec-form row (plain quoted verbs) renders its answer controls" \
+  || die "spec-form row rendered no answer control — the v1.31 defect"
+echo "$card" | grep -q '>Ask Procurement first<' \
+  && pass "proper noun survives the option label (capitalize() lower-cased it)" \
+  || die "option label proper noun destroyed"
+python3 - "$PORT" <<'PY' && pass "unreadable-options row reported; readable rows NOT gated" \
+  || die "options gate wrong in one direction (see message above)"
+import sys, re, urllib.request
+html = urllib.request.urlopen(f"http://127.0.0.1:{sys.argv[1]}/decisions").read().decode()
+
+def card(rid):
+    m = re.search(r'<article[^>]*data-row="%s".*?</article>' % rid, html, re.S)
+    if not m:
+        sys.exit(f"{rid} did not render at all")
+    return m.group(0)
+
+a3 = card("a3")
+if "data-answer-control" in a3:
+    sys.exit("a3: answer controls rendered on a row whose options cannot be read")
+if "cannot read" not in a3:
+    sys.exit("a3: gated with no reason stated in the card")
+if "Being prepared" not in a3:
+    sys.exit("a3: not routed into the Preparing group")
+# The other direction: the gate must not fire on rows it can read.
+for rid in ("a1", "a2"):
+    body = card(rid)
+    if "data-answer-control" not in body:
+        sys.exit(f"{rid}: readable row lost its answer controls")
+    if "Being prepared" in body:
+        sys.exit(f"{rid}: readable row wrongly gated")
+PY
+echo "$card" | grep -q 'card-a9' \
+  && die "a fenced example row rendered as a decision" \
+  || pass "fenced example row is documentation, never a card"
 
 code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
   -H 'Content-Type: application/json' \
   -d '{"id":"a1","answer":"approve","recommended":"approve"}' \
   "http://127.0.0.1:$PORT/answer")
 [ "$code" = "200" ] && pass "answer POST accepted" || die "answer POST -> $code"
+
+# The options gate binds POST as well as rendering: hiding a control is not enforcing a gate.
+code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+  -H 'Content-Type: application/json' \
+  -d '{"id":"a3","answer":"approve","recommended":"approve"}' \
+  "http://127.0.0.1:$PORT/answer")
+[ "$code" = "409" ] && pass "answer POST refused for a row whose options cannot be read" \
+  || die "unreadable row accepted an answer -> $code"
+grep -q '"a3"' "$state/answers.jsonl" 2>/dev/null \
+  && die "a refused answer was still written to the store" \
+  || pass "nothing written for the refused answer"
 grep -q '"a1"' "$state/answers.jsonl" 2>/dev/null \
   && pass "answer landed in the ISOLATED state dir" || die "answer not in isolated store"
 curl -s "http://127.0.0.1:$PORT/api/state" | grep -q '"pending": \["a1"\]' \

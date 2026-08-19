@@ -1,5 +1,6 @@
 #!/bin/bash
-# Canaries for template/hub-scan.sh (v1.30) — the session-start integrity and governance scan.
+# Canaries for template/hub-scan.sh (v1.30; [ QUEUE ] added v1.31) — the session-start integrity
+# and governance scan.
 #
 # WHY THIS FILE EXISTS
 #
@@ -36,6 +37,12 @@
 # represent the defect. Proving both directions closes the "the check stopped firing" failure. It
 # says nothing about "the check never looked here", which is answered by naming each block's
 # coverage, not by testing it.
+#
+# [ QUEUE ] (v1.31) is the twelfth block and the only conditional one: it runs when the hub carries
+# its own owner queue, which is the single-hub deployment shape. Its cases therefore also assert
+# that it stays SILENT in a hub with no queue, and that its verdict matches `km-cockpit.py
+# queue-check` on the same file — two implementations of one rule, and nothing else holding them
+# together.
 #
 # All fixture content is synthetic. No real person, organization or initiative is named.
 set -u
@@ -389,14 +396,93 @@ else
   die "11b. [ AGENT ] flagged a legitimate dispatch: exit $st"$'\n'"$out"
 fi
 
+# --- 12. [ QUEUE ] — the row a decision surface cannot read (added v1.31) -------------------------
+#
+# The block is conditional: it runs only in a single-hub deployment, where the owner queue lives at
+# the hub root. Its violation class is a tier-A/B row whose declared options no decision surface can
+# read, which renders as a complete-looking card with an empty action bar — a false pass on the one
+# surface where the owner acts. Both directions are asserted, plus the case that matters most for a
+# check inherited by every hub: the block must stay SILENT in a hub that carries no queue.
+queue_fixture() {   # $1 = hub, $2... = extra rows
+  local hub="$1"; shift
+  {
+    # Frontmatter and lifecycle so [ FRONTMATTER ] and [ CURRENCY ] stay quiet: this case is
+    # about [ QUEUE ] and nothing else, and a fixture that trips two other blocks would let a
+    # dead [ QUEUE ] block pass on somebody else's error.
+    printf -- '---\ntype: index\ntitle: Owner Queue\ntags: [owner-queue]\nlifecycle: active\n---\n\n'
+    printf '# Owner Queue\n\n| Id | Since | Defaults | Decision | Options |\n|---|---|---|---|---|\n'
+    printf '| a1 | 08-19 | - | **A readable row.** Context. | "approve", "veto" |\n'
+    printf '%s\n' "$@"
+  } > "$hub/QUEUE.md"
+  git_commit "$hub" 'inject: owner queue'
+}
+
+hub="$(fork queue_unreadable)"
+queue_fixture "$hub" '| a2 | 08-19 | - | **Options written as prose.** Context. | approve or hold, your call |'
+expect "12a. [ QUEUE ] catches a row whose declared options cannot be read (error, exit 1)" \
+  "$hub" 1 'UNANSWERABLE ROW: a2'
+
+hub="$(fork queue_none_declared)"
+queue_fixture "$hub" '| a3 | 08-19 | - | **No options at all.** Context. |  |'
+expect "12b. [ QUEUE ] catches a tier-A row that declares no options (error, exit 1)" \
+  "$hub" 1 'declares no answer options'
+
+hub="$(fork queue_clean)"
+queue_fixture "$hub" \
+  '| a4 | 08-19 | - | **Legacy bold form.** Context. | **"approve"** first · **"hold"** stops it |' \
+  '| b1 | 08-19 | 08-26 | **Tier B, specific verb first.** Context. | "publish it", "veto" |' \
+  '```' \
+  '| a9 | 08-19 | - | **A worked example.** Fenced, so documentation. | "approve", "veto" |' \
+  '```'
+scan "$hub"
+if [ "$st" -eq 0 ] \
+   && printf '%s\n' "$out" | grep -Eq 'OK — [1-9][0-9]* tier-A/B rows read \([1-9][0-9]* lines\)' \
+   && ! printf '%s\n' "$out" | grep -Fq 'UNANSWERABLE ROW'; then
+  pass "12c. [ QUEUE ] passes readable rows in every accepted form, and names its coverage"
+else
+  die "12c. [ QUEUE ] fired on a readable queue: exit $st"$'\n'"$out"
+fi
+
+# A fenced example row is documentation. If the block read it as a row, every deployment copying
+# the template's worked examples would be red on day one and would delete the examples.
+printf '%s\n' "$out" | grep -Fq 'UNANSWERABLE ROW: a9' \
+  && die "12d. [ QUEUE ] read a fenced example row as a live row" \
+  || pass "12d. [ QUEUE ] treats a fenced example row as documentation"
+
+# A hub with no queue of its own (the multi-hub case: the queue lives at the Supervisor tier).
+scan "$work/clean"
+if ! printf '%s\n' "$out" | grep -Fq '[ QUEUE ]'; then
+  pass "12e. [ QUEUE ] stays silent in a hub that carries no queue"
+else
+  die "12e. [ QUEUE ] fired in a hub with no QUEUE.md"$'\n'"$out"
+fi
+
+# The scan and the decision surface must return the SAME verdict on the same file, or a queue can
+# be green in the session and empty on the owner's screen. Two implementations, one rule: this is
+# the only thing holding them together.
+cockpit="$ROOT/components/km-cockpit/km-cockpit.py"
+if [ -f "$cockpit" ]; then
+  python3 "$cockpit" queue-check "$work/queue_unreadable/QUEUE.md" >/dev/null 2>&1
+  cock_bad=$?
+  python3 "$cockpit" queue-check "$work/queue_clean/QUEUE.md" >/dev/null 2>&1
+  cock_ok=$?
+  if [ "$cock_bad" -eq 1 ] && [ "$cock_ok" -eq 0 ]; then
+    pass "12f. km-cockpit.py queue-check agrees with [ QUEUE ] on both fixtures"
+  else
+    die "12f. the two instruments disagree: cockpit said $cock_bad on the bad queue, $cock_ok on the clean one"
+  fi
+else
+  die "12f. km-cockpit.py not found — the cross-check did not run (coverage gap, not a pass)"
+fi
+
 # --- the fixture is still clean ------------------------------------------------------------------
 # A case that mutated the shared fixture instead of its own copy would otherwise pass here and
 # silently weaken every case above it.
 scan "$work/clean"
 if [ "$st" -eq 0 ] && printf '%s\n' "$out" | grep -Fq '=== OK — clean ==='; then
-  pass "12. the reference fixture is still green after every case (no case leaked into it)"
+  pass "13. the reference fixture is still green after every case (no case leaked into it)"
 else
-  die "12. the reference fixture is no longer green — a case mutated the shared hub: exit $st"$'\n'"$out"
+  die "13. the reference fixture is no longer green — a case mutated the shared hub: exit $st"$'\n'"$out"
 fi
 
 echo

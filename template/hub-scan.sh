@@ -86,6 +86,99 @@ else
 fi
 echo
 
+# [ QUEUE ] — only when this deployment carries its own owner queue at the hub root (single-hub
+# mode; in a multi-hub estate the queue lives at the Supervisor tier and is checked there, by
+# `km-cockpit.py queue-check`, which applies the identical rule).
+#
+# A tier-A/B row DECLARES its answer options in the last cell: exact quoted verbs, recommendation
+# first. A row whose options cannot be read is an ERROR, not a silent absence: a decision surface
+# reading that row renders a complete-looking card — title, tier badge, age — with an action bar
+# containing nothing, so the owner opens the queue to answer and there is nothing to press, with
+# no warning anywhere. That was found in front of a client mid-demonstration. The failure mode of
+# this check is therefore the failure mode it exists to remove, which is why it is canaried in
+# both directions in tests/test_hub_scan_canaries.sh.
+if [ -f "$HUB/QUEUE.md" ]; then
+  echo "[ QUEUE ]"
+  queue_scan=$(awk '
+    # Wrapped continuation lines are joined before parsing, exactly as the surface joins them.
+    { line = $0
+      if (held != "" && line ~ /^  / ) {
+        t = line; sub(/^[ \t]+/, "", t)
+        if (t !~ /^[-|#<]/) { held = held " " t; next }
+      }
+      if (held != "") { process(held) }
+      held = line
+    }
+    END { if (held != "") process(held); printf "C\t%d\t%d\n", nrows, NR }
+
+    function process(s,   t, id, tier, n, cells, i, opts) {
+      t = s; sub(/^[ \t]+/, "", t); sub(/[ \t]+$/, "", t)
+      if (t ~ /^```/) { fenced = !fenced; return }     # fenced rows are documentation
+      if (fenced) return
+      if (t !~ /^\|[ \t]*[ab][0-9]+[ \t]*\|/) return
+      sub(/^\|/, "", t); sub(/\|$/, "", t)
+      n = split(t, cells, "|")
+      for (i = 1; i <= n; i++) { sub(/^[ \t]+/, "", cells[i]); sub(/[ \t]+$/, "", cells[i]) }
+      id = cells[1]; tier = substr(id, 1, 1)
+      nrows++
+      # Same shape recognition as the surface: canonical 5-col (Defaults cell is "-" or a date),
+      # then the legacy 4/3-col shapes, then the 2-col shape.
+      opts = ""
+      if (n >= 5 && (cells[2] == "-" || cells[2] ~ /^[0-9][0-9]-[0-9][0-9]$/ || cells[2] ~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]$/)) {
+        for (i = 5; i <= n; i++) opts = opts (opts == "" ? "" : " | ") cells[i]
+      } else if (n >= 4) {
+        for (i = 3; i <= n; i++) opts = opts (opts == "" ? "" : " | ") cells[i]
+      } else if (n == 2) {
+        opts = (tier == "b") ? "**\"apply\"** **\"veto\"**" : ""
+      }
+      if (readable(opts, tier)) return
+      if (opts ~ /[A-Za-z]/)
+        printf "E\t%s\tdeclares answer options this surface cannot read: %s\n", id, opts
+      else
+        printf "E\t%s\tdeclares no answer options (schema: Id | Since | Defaults | Decision | Options)\n", id
+    }
+
+    # Accepted forms, in the same order the surface tries them. No interval expressions: honoured by
+    # some awks and ignored by others, and an ignored construct matches nothing, which is exactly
+    # what a readable row also looks like. The quoted-label length bound is applied with length()
+    # for the same reason.
+    function readable(s, tier,   rest) {
+      if (s ~ /\*\*"[^"]+"\*\*/) return 1
+      rest = s
+      while (match(rest, /"[A-Za-z][^"]*"/)) {
+        if (RLENGTH <= 62) return 1
+        rest = substr(rest, RSTART + RLENGTH)
+      }
+      if (s ~ /\*\*[A-Za-z][A-Za-z ,+-]*\*\*[ \t]*\(/) return 1
+      if (tier == "b") {
+        if (s ~ /^[ \t]*\*\*[A-Za-z][^*]*\*\*/) return 1   # legacy prose lead verb
+        if (s !~ /[A-Za-z]/) return 1                      # declares nothing: apply/veto stands
+      }
+      return 0
+    }
+  ' "$HUB/QUEUE.md" 2>/dev/null)
+  queue_cov=$(printf '%s\n' "$queue_scan" | awk -F'\t' '$1=="C"{print $2"\t"$3}')
+  queue_rows=$(printf '%s' "$queue_cov" | cut -f1)
+  queue_lines=$(printf '%s' "$queue_cov" | cut -f2)
+  queue_bad=$(printf '%s\n' "$queue_scan" | awk -F'\t' '$1=="E"{print "  UNANSWERABLE ROW: "$2" — "$3}')
+  if [ -z "$queue_cov" ] || { [ -s "$HUB/QUEUE.md" ] && [ "${queue_lines:-0}" -eq 0 ]; }; then
+    # Never a pass: a queue with bytes on disk that yielded nothing was NOT checked, whether the
+    # file could not be read or the check itself could not run. Advisory rather than error,
+    # matching [ READABILITY ] below: size-on-disk with an empty read is the signature of cloud
+    # on-demand storage, a condition of the storage and not of the hub. What matters is that this
+    # branch cannot be mistaken for "OK".
+    echo "  UNREADABLE — QUEUE.md has $( { stat -f%z "$HUB/QUEUE.md" 2>/dev/null || stat -c%s "$HUB/QUEUE.md" 2>/dev/null || echo '?'; } ) bytes on disk and yielded 0 lines; NOT CHECKED (coverage gap, not a clean queue)"
+    adv
+  elif [ -n "$queue_bad" ]; then
+    echo "$queue_bad"
+    echo "  Options are exact quoted verbs, recommendation first (bold is optional presentation)."
+    while IFS= read -r _; do err; done <<< "$queue_bad"
+  else
+    echo "  OK — $queue_rows tier-A/B rows read ($queue_lines lines); every row's options are readable"
+  fi
+  echo
+fi
+
 echo "[ INTEGRITY ]"
 if ! git -C "$HUB" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   echo "  ERROR — hub is not a git repository. Run: git init && git add -A && git commit -m \"init: hub scaffold\""

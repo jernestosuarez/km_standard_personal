@@ -260,7 +260,10 @@ STYLE = """
  .decision-row.tier-b { border-left-color:#8a6500; }
  .decision-row.tier-c { border-left-color:var(--km-info); }
  .decision-row.done { opacity:.72; }
-  .decision-glance { display:grid; grid-template-columns:118px minmax(0,1fr) minmax(190px,auto);
+  /* Owner-text grid (§8, layout contract): every track has a BOUNDED maximum, because the
+     third one is sized by option labels the owner's queue supplies and an `auto` maximum let a
+     sentence-length label take the row and collapse the title to one word per line. */
+  .decision-glance { display:grid; grid-template-columns:118px minmax(0,1fr) minmax(190px,38%);
     gap:20px; align-items:center; padding:18px 20px; }
   .decision-identity { display:flex; align-items:center; gap:10px; }
   .decision-title-block { min-width:0; }
@@ -272,6 +275,9 @@ STYLE = """
   .recommended-answer { color:var(--km-muted); font-size:11px; }
   .recommended-answer b { color:var(--km-ink); }
   .decision-action-buttons { display:flex; gap:7px; flex-wrap:wrap; justify-content:flex-end; }
+  /* Owner-supplied label: it wraps inside its own box rather than widening the column. */
+  .decision-action-buttons button { max-width:100%; white-space:normal; text-align:center;
+    overflow-wrap:anywhere; }
   .stateflag:empty { display:none; }
   .decision-detail { border-top:1px solid var(--km-line); }
   .decision-detail > summary { padding:11px 20px; cursor:pointer; color:var(--km-accent);
@@ -731,8 +737,17 @@ def parse_cards(raw=None):
         else:
             joined.append(line)
     cards = []
+    fenced = False
     for line in joined:
         s = line.strip()
+        # A fenced block is documentation, not queue content (v1.31): the template ships worked
+        # example rows so there is something to copy and something to check against, and an
+        # example must never render as a decision on the owner's surface.
+        if s.startswith("```"):
+            fenced = not fenced
+            continue
+        if fenced:
+            continue
         m = re.match(r"^\|\s*([ab]\d+)\s*\|(.*)\|\s*$", s)
         if m:
             rid, tier = m.group(1), m.group(1)[0]
@@ -799,18 +814,40 @@ def parse_supervisor_actions():
     return {"state": "present", "actions": actions, "malformed": malformed}
 
 
+# Accepted option forms in the Options cell, tried in order (ruled v1.31). The canonical schema
+# is "exact quoted verbs, recommendation first"; bold is presentation, never part of the data, so
+# a queue written exactly as SPEC.md §3 and the template describe it must parse. The two bold
+# forms stay accepted so every queue written against the previous parser keeps working.
+OPTION_FORMS = (
+    r"\*\*\"([^\"]+)\"\*\*",                        # bold + quoted (legacy emphasis)
+    r"\"([A-Za-z][^\"]{0,59})\"",                   # quoted — the canonical schema form
+    r"\*\*([A-Za-z][A-Za-z ,+-]{1,24})\*\*\s*\(",   # legacy prose: **Verb** (context)
+)
+
+
 def options_of(card):
-    found = re.findall(r"\*\*\"([^\"]+)\"\*\*", card["next"]) or \
-        re.findall(r"\*\*([A-Za-z][A-Za-z ,+-]{1,24})\*\*\s*\(", card["next"])
+    found = []
+    for form in OPTION_FORMS:
+        found = re.findall(form, card["next"])
+        if found:
+            break
     if card["tier"] == "b":
         # Ruled 2026-08-17: a tier-B card offers its SPECIFIC default action first, veto second;
         # generic "apply" only when the row names no precise verb (ledger #3 still holds: real
-        # row options always win over synthetics).
+        # row options always win over synthetics). Amended v1.31: the synthetic pair fires ONLY
+        # when the row declares NO options. A row that declares options the parser cannot read is
+        # not a row with "no precise verb" — it is a row the surface failed to read, and
+        # answering it against a synthesised pair records an answer the row never offered (and a
+        # follow-rate hit against an option the owner was never shown). That case is reported by
+        # options_gate() instead.
         if not found:
             lead = re.match(r"\s*\*\*([A-Za-z][^*]{0,40}?)\*\*", card["next"])
-            found = [re.sub(r"\s+(it|them|this|that|now)$", "", lead.group(1).strip(),
-                            flags=re.I)] if lead else ["apply"]
-        if not any(o.lower().strip() == "veto" for o in found):
+            if lead:
+                found = [re.sub(r"\s+(it|them|this|that|now)$", "", lead.group(1).strip(),
+                                flags=re.I)]
+            elif not declares_options(card):
+                found = ["apply"]
+        if found and not any(o.lower().strip() == "veto" for o in found):
             found = list(found) + ["veto"]
     seen, out = set(), []
     for o in found:
@@ -819,6 +856,134 @@ def options_of(card):
             seen.add(k)
             out.append(o.strip())
     return out[:4]
+
+
+def declares_options(card):
+    """True when the row's Options cell holds content that is meant to be an option list —
+    i.e. the row is declaring something. Distinguishes "declared but unreadable" (a defect to
+    report) from "declared nothing" (a defect of a different, quieter kind)."""
+    return bool(re.search(r"[A-Za-z]", card.get("next", "")))
+
+
+def options_gate(card, opts):
+    """A tier-A/B row that yields no answer options is REPORTED, never silently emptied
+    (ruled v1.31, from a live demonstration where a spec-conformant queue rendered an action bar
+    with nothing in it while the card looked complete). Returns None when answerable, otherwise
+    the gate reason, which routes the card into the "Preparing for you" group exactly like a
+    failing decision brief. Rendering an empty action bar is a false pass: the owner sees a
+    complete-looking card and no control, with nothing anywhere saying why."""
+    if card.get("tier") == "c" or opts:
+        return None
+    if declares_options(card):
+        return ('the row declares answer options this surface cannot read — the canonical schema '
+                'is exact quoted verbs, recommendation first (for example: "approve", "veto")')
+    return ('the row declares no answer options (canonical schema: '
+            'Id | Since | Defaults | Decision | Options)')
+
+
+def sentence_case(text):
+    """Upper-case the first character and leave every other character alone. str.capitalize()
+    LOWER-cases the remainder, which destroys proper nouns in an option label — and the option
+    label is rendered on a surface shown to the person it names."""
+    return text[:1].upper() + text[1:]
+
+
+# ---------- The layout contract (§8, ruled v1.31) ----------
+#
+# NO OWNER-SUPPLIED VALUE MAY SIZE A LAYOUT. An option label, an answer, a note, a queue row's
+# text: all of it is unbounded text arriving from a file the surface does not control, and all of
+# it renders inside a box whose size the layout decides. The instance that produced the rule was a
+# grid track with an `auto` maximum sized by option labels the length of sentences, which took the
+# row and collapsed the title column beside it; the class is wider than that instance, so the
+# contract is stated once and checked, rather than patched wherever it next appears.
+#
+# COVERAGE, stated because a check that does not state it is a word rather than evidence: this
+# instrument checks the tracks NAMED BELOW in the grids named below. It cannot discover that a new
+# grid renders owner text — that registration is a human act, required by §8 of the SPEC in the
+# same change that adds the surface. It therefore catches "a registered track lost its bound",
+# never "a new surface was never registered".
+OWNER_TEXT_GRIDS = {
+    # selector: (1-based track positions carrying owner-supplied text, what the owner supplies)
+    ".decision-glance": ((2, 3), "the queue's Decision text, and the row's own option labels"),
+    ".activity-summary": ((5,), "the recorded answer or execution note"),
+    ".watch-item": ((3,), "the tier-C row's text"),
+    ".supervisor-action-list li": ((1,), "the supervisor-action text from the queue"),
+}
+UNBOUNDED_TRACK_MAX = ("auto", "max-content")
+
+
+def _split_tracks(value):
+    """Split a grid-template-columns value into tracks, not splitting inside parentheses."""
+    tracks, depth, cur = [], 0, ""
+    for ch in value:
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+        if ch.isspace() and depth == 0:
+            if cur:
+                tracks.append(cur)
+                cur = ""
+        else:
+            cur += ch
+    if cur:
+        tracks.append(cur)
+    return tracks
+
+
+def _track_max(track):
+    """The maximum a track can grow to: the second argument of minmax(), else the track."""
+    m = re.match(r"^minmax\((.*)\)$", track.strip())
+    if not m:
+        return track.strip().lower()
+    parts, depth, cur = [], 0, ""
+    for ch in m.group(1):
+        if ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+        if ch == "," and depth == 0:
+            parts.append(cur)
+            cur = ""
+        else:
+            cur += ch
+    parts.append(cur)
+    return parts[-1].strip().lower()
+
+
+def layout_contract_violations(style=None):
+    """Returns (violations, coverage). A violation is a registered owner-text track whose maximum
+    is unbounded, so the owner's own text decides how wide the column is."""
+    css = STYLE if style is None else style
+    violations, decls, tracks_checked = [], 0, 0
+    for selector, (positions, what) in OWNER_TEXT_GRIDS.items():
+        pattern = re.escape(selector) + r"\s*\{([^{}]*)\}"
+        found_selector = False
+        for block in re.finditer(pattern, css):
+            body = block.group(1)
+            m = re.search(r"grid-template-columns\s*:\s*([^;}]+)", body)
+            if not m:
+                continue
+            found_selector = True
+            decls += 1
+            tracks = _split_tracks(m.group(1))
+            for pos in positions:
+                if pos > len(tracks):
+                    continue          # a narrower declaration (single-column breakpoint)
+                tracks_checked += 1
+                if _track_max(tracks[pos - 1]) in UNBOUNDED_TRACK_MAX:
+                    violations.append(
+                        f"{selector} track {pos} ({what}) has an unbounded maximum "
+                        f"'{tracks[pos - 1]}' — owner text sizes this layout")
+        if not found_selector:
+            # Fail closed: a registered selector the checker cannot find is an unevaluated rule,
+            # never a passing one.
+            violations.append(
+                f"{selector} is registered as an owner-text grid but no "
+                f"grid-template-columns declaration for it was found")
+    coverage = (f"{len(OWNER_TEXT_GRIDS)} registered owner-text grids, {decls} declarations, "
+                f"{tracks_checked} owner-text tracks")
+    return violations, coverage
 
 
 def links_of(card):
@@ -1520,11 +1685,13 @@ def decisions(hub_filter=None):
         opts = options_of(c)
         rec = opts[0] if opts else ""
         # Phase 2.5 gate (§8.5): tier-A/B cards answer only against a passing decision brief.
+        # Options gate (§3, added v1.31): and only when the row's declared options are readable.
         brief, gate = None, None
         if c["tier"] in ("a", "b"):
             bp, gate = brief_check(rid)
             if gate is None:
                 brief = str(bp)
+            gate = gate or options_gate(c, opts)
         replies = "".join(
             f'<div class="qreply"><b>Supervisor:</b> {md_inline(r["reply"])} <span class="feedat">{r.get("at", "")}</span></div>'
             for r in st["replies"].get(rid, []))
@@ -1569,7 +1736,7 @@ def decisions(hub_filter=None):
                     '<span class="doneflag">✓ answer recorded — executing…</span>')
         elif c["tier"] != "c":
             quick_controls = "".join(
-                f"""<button data-answer-control class="{'rec' if o == rec else ''}" onclick="send('{rid}', '{html.escape(o)}', '{html.escape(rec)}')">{html.escape(o.capitalize())}</button>"""
+                f"""<button data-answer-control class="{'rec' if o == rec else ''}" onclick="send('{rid}', '{html.escape(o)}', '{html.escape(rec)}')">{html.escape(sentence_case(o))}</button>"""
                 for o in opts)
             custom_controls = f"""<input type="text" data-answer-control id="in-{rid}" placeholder="Type another answer…">
 <button data-answer-control onclick="send('{rid}', document.getElementById('in-{rid}').value, '{html.escape(rec)}')">Send</button>"""
@@ -1620,7 +1787,7 @@ def decisions(hub_filter=None):
         actions = ""
         if tier != "c":
             recommendation = (f'<span class="recommended-answer">Recommended: '
-                              f'<b>{html.escape(rec.capitalize())}</b></span>' if rec else "")
+                              f'<b>{html.escape(sentence_case(rec))}</b></span>' if rec else "")
             actions = (f'<div class="decision-actions" data-decision="{rid}" '
                        f'aria-label="Answer and state">{recommendation}'
                        f'<div class="decision-action-buttons">{quick_controls}</div>'
@@ -2329,6 +2496,12 @@ class H(BaseHTTPRequestHandler):
                 if gate:
                     self._send(409, f"awaiting decision brief: {gate}", "text/plain")
                     return
+                # The same gate on POST as in rendering (§4): a row whose options this surface
+                # cannot read is not answerable through it either, however the request arrived.
+                gate = options_gate(card, options_of(card))
+                if gate:
+                    self._send(409, f"returned to the Supervisor: {gate}", "text/plain")
+                    return
             with ANSWERS.open("a") as f:
                 f.write(json.dumps({"id": data["id"], "answer": data["answer"],
                                     "recommended": data.get("recommended", ""), "at": now}) + "\n")
@@ -2507,12 +2680,107 @@ def selftest():
                   state_name == "replied" and rp["reply"] == "ack")
     finally:
         QUESTIONS, QPROCESSED, QREPLIES = saved_q
+    # --- The options contract (ruled v1.31) ---------------------------------------------------
+    # Found in a live demonstration: SPEC.md §3 says "exact quoted verbs, recommendation first",
+    # the parser required bold AND quoted, so a queue written exactly as specified parsed zero
+    # options and the card rendered an action bar with nothing in it. Both directions are proved
+    # here: the forms that must parse, and the rows that must be REPORTED rather than emptied.
+    spec_row = {"id": "a1", "tier": "a",
+                "next": '"run after the call", "veto", "run now"'}
+    check("spec form parses: plain quoted verbs, recommendation first",
+          options_of(spec_row) == ["run after the call", "veto", "run now"])
+    check("spec form is answerable (no gate)", options_gate(spec_row, options_of(spec_row)) is None)
+    check("legacy bold+quoted still parses",
+          options_of({"id": "a2", "tier": "a", "next": '**"approve"** first · **"hold"** stops it'})
+          == ["approve", "hold"])
+    check("legacy prose **Verb** (…) still parses",
+          options_of({"id": "a3", "tier": "a", "next": "**Approve** (runs it) or **Hold** (waits)"})
+          == ["Approve", "Hold"])
+    check("sentence-length option labels survive whole",
+          options_of({"id": "a4", "tier": "a",
+                      "next": '"confirm the pre-seed, drop the prize", "veto"'})
+          == ["confirm the pre-seed, drop the prize", "veto"])
+    unreadable_a = {"id": "a5", "tier": "a", "next": "approve or hold, your call"}
+    check("tier A: unreadable options yield none",
+          options_of(unreadable_a) == [])
+    check("tier A: unreadable options are REPORTED, never an empty action bar",
+          "cannot read" in (options_gate(unreadable_a, options_of(unreadable_a)) or ""))
+    check("tier A: an empty Options cell is reported as declaring none",
+          "declares no answer options"
+          in (options_gate({"id": "a6", "tier": "a", "next": ""}, []) or ""))
+    unreadable_b = {"id": "b5", "tier": "b", "next": "apply or stop it, your call"}
+    check("tier B: NO synthetic pair when the row declared options that failed to read",
+          options_of(unreadable_b) == [])
+    check("tier B: that row is gated, not answered against a synthetic pair",
+          options_gate(unreadable_b, options_of(unreadable_b)) is not None)
+    check("tier B: synthetic apply/veto still fires when the row declares nothing",
+          options_of({"id": "b6", "tier": "b", "next": ""}) == ["apply", "veto"])
+    check("tier B: a real row option still wins over the synthetic one",
+          options_of({"id": "b7", "tier": "b", "next": '"run the migration"'})
+          == ["run the migration", "veto"])
+    check("tier C is never gated on options",
+          options_gate({"id": "c1", "tier": "c", "next": ""}, []) is None)
+    check("proper nouns survive the option label (capitalize() destroyed them)",
+          sentence_case("ask Procurement first") == "Ask Procurement first")
+    check("sentence_case still upper-cases the first character",
+          sentence_case("approve") == "Approve" and sentence_case("") == "")
+    fenced = ("```\n| a9 | 01-01 | - | **Example.** ctx | \"approve\", \"veto\" |\n```\n"
+              "| a8 | 01-01 | - | **Real.** ctx | \"approve\", \"veto\" |\n")
+    check("a fenced example row is documentation, never a card on the owner's surface",
+          [c["id"] for c in parse_cards(fenced)] == ["a8"])
+    # --- The layout contract (ruled v1.31) ----------------------------------------------------
+    violations, coverage = layout_contract_violations()
+    check(f"layout contract holds — {coverage}", not violations)
+    check("layout canary: an unbounded owner-text track IS caught",
+          any("unbounded maximum" in v for v in layout_contract_violations(
+              STYLE.replace("grid-template-columns:118px minmax(0,1fr) minmax(190px,38%)",
+                            "grid-template-columns:118px minmax(0,1fr) minmax(190px,auto)"))[0]))
+    check("layout canary: a registered grid the checker cannot find REFUSES, never passes",
+          any("no grid-template-columns declaration" in v for v in
+              layout_contract_violations(STYLE.replace(".decision-glance {", ".gone {"))[0]))
     print("selftest:", "FAIL" if failures else "OK")
     if failures:
         sys.exit(1)
 
 
 # ---------- CLI ----------
+
+def queue_check(path):
+    """Report every tier-A/B row whose declared options this surface cannot read (§3, v1.31).
+
+    The estate instrument for the rule that a row the surface cannot read is REPORTED, never
+    silently emptied. `hub-scan.sh` carries the same check for a hub-local queue; a supervisor
+    tier, where hub-scan does not run, calls this. Read-only: never writes, never serves.
+
+    Exit codes are three, not two, because "could not answer" is not "clean":
+      0 — every row checked is answerable (the line states how many rows were read)
+      1 — at least one row declares options the surface cannot read
+      2 — REFUSED: no path given, or the file is missing or unreadable
+    """
+    if not path or not str(path).strip():
+        print("queue-check: REFUSED — no queue path given (an empty path is not an empty queue)")
+        return 2
+    p = Path(path).expanduser()
+    try:
+        raw = p.read_text(encoding="utf-8")
+    except OSError as e:
+        print(f"queue-check: REFUSED — cannot read {p} ({e.__class__.__name__})")
+        return 2
+    cards = [c for c in parse_cards(raw) if c["tier"] in ("a", "b")]
+    bad = []
+    for c in cards:
+        gate = options_gate(c, options_of(c))
+        if gate:
+            bad.append((c["id"], gate))
+    if bad:
+        print(f"queue-check: {len(bad)} of {len(cards)} tier-A/B rows in {p} are not answerable")
+        for rid, gate in bad:
+            print(f"  {rid} — {gate}")
+        return 1
+    print(f"queue-check: OK — {len(cards)} tier-A/B rows read in {p}, "
+          "every row's declared options are readable")
+    return 0
+
 
 def rotate(src, dst):
     if not src.exists() or not src.read_text().strip():
@@ -2530,7 +2798,11 @@ def main_cli():
     if cmd == "selftest":
         selftest()
         return
+    if cmd == "queue-check" and len(sys.argv) > 2:
+        sys.exit(queue_check(sys.argv[2]))    # explicit path: runs manifest-free
     load_config()
+    if cmd == "queue-check":
+        sys.exit(queue_check(QUEUE))
     if cmd == "pull":
         lines = rotate(ANSWERS, PROCESSED)
         print("\n".join(lines) if lines else "pull: no new answers")
@@ -2555,7 +2827,8 @@ def main_cli():
         print(f"km-cockpit ({ORG}): http://127.0.0.1:{PORT}")
         ThreadingHTTPServer(("127.0.0.1", PORT), H).serve_forever()
     else:
-        sys.exit("usage: km-cockpit.py [serve|pull|questions|reply <id> <text>|exec <id> <note>|selftest]")
+        sys.exit("usage: km-cockpit.py [serve|pull|questions|reply <id> <text>|exec <id> <note>|"
+                 "queue-check [<queue path>]|selftest]")
 
 
 if __name__ == "__main__":
