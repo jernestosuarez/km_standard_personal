@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.32"/>
+  <img src="assets/badges/version.svg" alt="standard v1.33"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 2 adopted"/>
   <img src="assets/badges/license.svg" alt="license: free to adopt"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,9 +28,10 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.32** (2026-08-20, the harness projection: the hub definition in
-`km-deployment.md` is the home of record for the facts the agent-instruction files restate, and
-drift is reported, never repaired; v1.23 remains an unpublished draft awaiting its own push). The full ledger of released versions, and the rule that a
+**Current version: v1.33** (2026-08-20, the neutral preparing badge: a gated or incomplete decision
+card renders a neutral "Preparing" badge in its glance and never its actionable tier badge, so a
+single glance can never both summon the owner for a decision and say nothing is ready for them yet;
+v1.34 and v1.23 remain unpublished drafts awaiting their own push). The full ledger of released versions, and the rule that a
 published version number is never reused, is in [`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.
 
