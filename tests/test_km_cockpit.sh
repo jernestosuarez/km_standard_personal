@@ -273,6 +273,33 @@ curl -s "http://127.0.0.1:$PORT/api/state" | grep -q '"a1": "executed' \
 curl -s "http://127.0.0.1:$PORT/activity" | grep -q 'pilot approved' \
   && pass "activity feed carries the execution note" || die "activity missing execution"
 
+# --- dev-0009: a bookkeeping capture is NOT work done -----------------------------------------
+# An unattended answer pickup writes an execution record marked `status: recorded` — the answer
+# was captured but the work is still owed. Such a record must never count as executed (or an
+# answered-but-undone row shows as resolved and the executed tally lies), and it must surface as
+# awaiting execution instead. A record with no status stays a genuine execution (a1, above), so
+# the split is proved in BOTH directions on the same live state. `z9` is not a queue row, so its
+# only route into "awaiting execution" is the recorded fold. Fails closed if /api/state is empty.
+KM_COCKPIT_CONFIG="$hub/cockpit/km-cockpit.json" python3 "$COCKPIT" \
+  exec z9 "answer captured by the unattended pickup, work owed" recorded >/dev/null
+python3 - "$PORT" <<'PY' && pass "recorded capture is awaiting-execution, not executed; status-absent still executes (dev-0009, both directions)" \
+  || die "dev-0009 execution-status split wrong in one direction (see message above)"
+import sys, json, urllib.request
+s = json.load(urllib.request.urlopen(f"http://127.0.0.1:{sys.argv[1]}/api/state"))
+if not s.get("queued") and not s.get("executed"):
+    sys.exit("state carried neither queued nor executed ids — fixture empty, failing closed")
+# The bookkeeping capture must NOT read as executed and MUST read as awaiting execution.
+if "z9" in s["executed"]:
+    sys.exit("z9: a bookkeeping capture (status recorded) counted as executed — the dev-0009 defect")
+if "z9" not in s["queued"]:
+    sys.exit("z9: a recorded capture did not surface as awaiting Supervisor execution")
+# The other direction: a status-absent record is a genuine execution and stays counted as done.
+if "a1" not in s["executed"]:
+    sys.exit("a1: a status-absent record stopped counting as executed — the fix over-reached")
+if "a1" in s["queued"]:
+    sys.exit("a1: a genuine execution wrongly shows as awaiting execution")
+PY
+
 # Root confinement holds in single-hub mode too.
 code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/view?p=/etc/hosts")
 [ "$code" = "403" ] && pass "root confinement refuses an outside path" || die "confinement -> $code"

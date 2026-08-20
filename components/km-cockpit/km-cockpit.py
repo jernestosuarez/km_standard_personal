@@ -1317,15 +1317,34 @@ def read_jsonl(p):
 
 
 def state():
-    executed = {}
+    # An execution record with status "recorded" is a BOOKKEEPING acknowledgement (an unattended
+    # answer pickup captured the owner's answer) and is NOT the work being done. It must never
+    # count as executed, or an answered-but-undone row shows as resolved. A record with no status
+    # field is a genuine execution — every record that predates this schema is real and unchanged,
+    # so the absence of a status can only mean "executed", never "unknown".
+    executed, recorded = {}, {}
     for r in read_jsonl(EXECUTIONS):
-        executed[r["id"]] = r
+        if r.get("status") == "recorded":
+            recorded[r["id"]] = r
+            executed.pop(r["id"], None)      # a later "recorded" reopens; discipline over presence
+        else:
+            executed[r["id"]] = r
+            recorded.pop(r["id"], None)      # a real execution supersedes an earlier bookkeeping note
     pending = [r["id"] for r in read_jsonl(ANSWERS) if r["id"] not in executed]
     # A pulled answer whose row is STILL open in QUEUE.md means the row was reopened/repaired
     # (sequencing rule: pull updates the queue immediately; ledger #7: such rows return to open).
     open_ids = {c["id"] for c in parse_cards()}
     queued = [r["id"] for r in read_jsonl(PROCESSED)
               if r["id"] not in executed and r["id"] not in pending and r["id"] not in open_ids]
+    # A "recorded" row (answer captured, work owed) is the SAME owner-visible state as queued —
+    # "answered, awaiting Supervisor execution" — so fold it in and let every renderer handle it.
+    # It stays in `recorded` for provenance. An open row is excluded: an answered row still on the
+    # board is a re-ask, not a captured answer awaiting execution.
+    for rid in recorded:
+        if rid not in queued and rid not in executed and rid not in pending and rid not in open_ids:
+            queued.append(rid)
+    pending = list(dict.fromkeys(pending))
+    queued = list(dict.fromkeys(queued))
     replies = {}
     for r in read_jsonl(QREPLIES):
         replies.setdefault(r["id"], []).append(r)
@@ -1333,8 +1352,8 @@ def state():
     for r in read_jsonl(PROCESSED) + read_jsonl(ANSWERS):
         if r.get("id") and r.get("answer"):
             answers[r["id"]] = r["answer"]
-    return {"pending": pending, "queued": queued, "executed": executed, "replies": replies,
-            "answers": answers}
+    return {"pending": pending, "queued": queued, "executed": executed,
+            "recorded": list(recorded), "replies": replies, "answers": answers}
 
 
 def rec_stats():
@@ -2816,19 +2835,25 @@ def main_cli():
                                 "at": time.strftime("%Y-%m-%d %H:%M:%S")}) + "\n")
         print(f"reply attached to {sys.argv[2]}")
     elif cmd == "exec":
+        # exec <id> <note> [status]
+        #   (no status)  a genuine execution — the work was done
+        #   recorded     the answer was captured but the work is still owed (unattended pickup)
         CFG.mkdir(parents=True, exist_ok=True)
+        rec = {"id": sys.argv[2], "note": sys.argv[3],
+               "at": time.strftime("%Y-%m-%d %H:%M:%S")}
+        if len(sys.argv) > 4 and sys.argv[4]:
+            rec["status"] = sys.argv[4]
         with EXECUTIONS.open("a") as f:
-            f.write(json.dumps({"id": sys.argv[2], "note": sys.argv[3],
-                                "at": time.strftime("%Y-%m-%d %H:%M:%S")}) + "\n")
-        print(f"execution recorded for {sys.argv[2]}")
+            f.write(json.dumps(rec) + "\n")
+        print(f"{'answer recorded (work owed)' if rec.get('status') == 'recorded' else 'execution recorded'} for {sys.argv[2]}")
     elif cmd == "serve":
         if NOTIFY:
             threading.Thread(target=notify_loop, daemon=True).start()
         print(f"km-cockpit ({ORG}): http://127.0.0.1:{PORT}")
         ThreadingHTTPServer(("127.0.0.1", PORT), H).serve_forever()
     else:
-        sys.exit("usage: km-cockpit.py [serve|pull|questions|reply <id> <text>|exec <id> <note>|"
-                 "queue-check [<queue path>]|selftest]")
+        sys.exit("usage: km-cockpit.py [serve|pull|questions|reply <id> <text>|"
+                 "exec <id> <note> [status]|queue-check [<queue path>]|selftest]")
 
 
 if __name__ == "__main__":

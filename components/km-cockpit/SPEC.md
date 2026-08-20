@@ -80,6 +80,21 @@ hidden, the recorded verb shown) → **executed** (execution note with its commi
 `recommended` is captured with every answer for the follow-rate metric, and must always reflect
 what the served card actually showed.
 
+**An execution record's `status` separates work done from work merely captured** (added v1.34).
+An execution record carries an optional `status`. **Absent** is a genuine execution — the work
+was done — and every record written before this field existed stays a real execution, unchanged,
+because the absence of a status can only mean executed, never unknown. **`status: "recorded"`** is
+a bookkeeping capture: an unattended answer pickup wrote the owner's answer down, but the work is
+still owed. Only genuine executions count as done; a `recorded` capture renders in the same
+owner-visible state as a queued answer — answered, awaiting Supervisor execution — and a later
+`recorded` for an id that once executed reopens it, discipline over the mere presence of a record.
+Any record admitting it is not executed while carrying no status is a ledger lie: a record that
+is not a genuine execution states so, or the count it feeds is wrong. This rule is owed to the
+reference deployment: its cockpit counted a bookkeeping note as work done and showed
+answered-but-undone rows as executed, then it invented the status split and was proven on it, and
+this section is brought up to that implementation. The reference deployment leads and the
+specification follows it here; every other implementation moves to meet this section.
+
 **Rotation semantics: a record is consumed exactly once.** `pull` and `questions` print pending
 records and move them to the processed file in one call. **Pull consumes for the whole estate:**
 whoever pulls owns immediate surfacing and execution of every record returned — never only the
