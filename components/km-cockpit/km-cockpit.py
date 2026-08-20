@@ -1711,7 +1711,7 @@ def decisions(hub_filter=None):
             preparing.append(f"""<article class="decision-row preparing tier-{tier}" data-decision-row data-row="{rid}" id="card-{rid}">
 <header class="decision-glance" data-level="preparing">
 <div class="decision-identity"><span class="rid">{rid}</span>
-<span class="badge tier-{tier}" style="background:{color}" title="{tip}">{label}</span></div>
+<span class="badge" style="background:#5f6368" title="Tier {tier.upper()} once ready — {tip}. Not ready for your word yet.">Preparing</span></div>
 <div class="decision-title-block"><h3>{html.escape(decision_title(c))}</h3>
 <div class="decision-meta"><span class="decision-hubs">{hub_chips(c["hubs"])}</span>
 <span class="when">{html.escape(c['when'])}{agetxt}</span></div></div>

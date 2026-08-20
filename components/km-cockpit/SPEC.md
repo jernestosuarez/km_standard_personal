@@ -102,6 +102,15 @@ bullets or tables both valid). A gated or incomplete record renders in a separat
 reason in the expanded details only, the actionable tiers never deformed by it. The Ask channel
 stays open on gated cards. The server enforces the same gate on POST, not only in rendering.
 
+**The neutral preparing badge** (added v1.33). A gated or incomplete record renders a neutral
+"Preparing" badge in its glance and **never its actionable tier badge**, so a single glance can
+never carry an actionable signal — the red "needs you" summons for the owner's word — and "being
+prepared, nothing for you to do yet" at the same instant. The tier is named only in the badge's
+title tooltip, never as a badge the owner reads as a call to act. This rule is owed to the
+reference deployment: its cockpit rendered the contradiction on one card, then rendered the fix,
+and this section is brought up to that implementation. The reference deployment leads and the
+specification follows it here; every other implementation moves to meet this section.
+
 **The options gate** (added v1.31) uses the same path for the same reason: a tier-A/B row whose
 declared options cannot be read is not answerable, so it renders in "Preparing for you" with the
 reason stated, rather than as a complete-looking card with an empty action bar. The two gates are

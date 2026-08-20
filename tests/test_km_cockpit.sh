@@ -187,6 +187,40 @@ echo "$card" | grep -q 'card-a9' \
   && die "a fenced example row rendered as a decision" \
   || pass "fenced example row is documentation, never a card"
 
+# --- dev-0007: a gated card wears a NEUTRAL badge, never its actionable tier badge ------------
+# The defect (owner screenshot 2026-08-19): a gated tier-A card rendered the red "Needs you" tier
+# badge beside the "being prepared" flag, so one glance both summoned the owner and said nothing
+# was for him yet. The fix: the gated glance carries a neutral "Preparing" badge; the tier lives
+# only in the badge's title tooltip. Proved in BOTH directions, and failing closed on an empty
+# extraction so a fixture drift cannot read as a silent pass.
+python3 - "$PORT" <<'PY' && pass "gated card wears neutral 'Preparing' badge, not tier-A 'Needs you'; ungated tier-A still summons" \
+  || die "dev-0007 preparing badge wrong in one direction (see message above)"
+import sys, re, urllib.request
+html = urllib.request.urlopen(f"http://127.0.0.1:{sys.argv[1]}/decisions").read().decode()
+
+def glance(rid):
+    m = re.search(r'<article[^>]*data-row="%s".*?</header>' % rid, html, re.S)
+    if not m or not m.group(0).strip():
+        sys.exit(f"{rid}: glance did not render — fixture extraction empty, failing closed")
+    return m.group(0)
+
+# Gated tier-A (a3, options this surface cannot read) is routed into the Preparing group.
+a3 = glance("a3")
+if "Being prepared" not in a3:
+    sys.exit("a3: not the gated/preparing card — fixture drifted, failing closed")
+if ">Preparing<" not in a3:
+    sys.exit("a3: gated glance is missing the neutral 'Preparing' badge")
+if "Needs you" in a3:
+    sys.exit("a3: gated glance still shows the actionable tier-A 'Needs you' badge (dev-0007)")
+
+# Canary — an ungated actionable tier-A card (a1) still carries its summons unchanged.
+a1 = glance("a1")
+if "Needs you" not in a1:
+    sys.exit("a1: an ungated tier-A card lost its 'Needs you' badge — the fix over-reached")
+if ">Preparing<" in a1:
+    sys.exit("a1: an ungated tier-A card wrongly wears the neutral 'Preparing' badge")
+PY
+
 code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
   -H 'Content-Type: application/json' \
   -d '{"id":"a1","answer":"approve","recommended":"approve"}' \
