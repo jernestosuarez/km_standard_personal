@@ -57,6 +57,11 @@ cat > "$hub/QUEUE.md" <<'EOF'
 | a9 | 2026-08-01 | - | **A worked example.** Fenced, therefore documentation. | "approve", "veto" |
 ```
 
+## Owner's desk
+
+- **Chase the vendor SOW** — you are waiting on their signed statement of work.
+- **Send the retro notes** — you owe the team last sprint's retrospective.
+
 <!-- QUEUE:BEGIN
 a1 | a | 2026-08-01 | - | approve the pilot run?
 a2 | a | 2026-08-01 | - | decide the pre-seed?
@@ -298,6 +303,77 @@ if "a1" not in s["executed"]:
     sys.exit("a1: a status-absent record stopped counting as executed — the fix over-reached")
 if "a1" in s["queued"]:
     sys.exit("a1: a genuine execution wrongly shows as awaiting execution")
+PY
+
+# --- dev-0005: the owner's desk — a hand lane derived from the queue, never written ----------
+# The desk holds the owner's PERSONAL follow-ups as bullets under "## Owner's desk". They are a hand
+# lane: they render in their own section after Hubs, never as decision cards in tiers A/B/C, the id is
+# derived as desk-<slug> from the bullet's bold lead, the cockpit derives the desk from the queue and
+# never writes it, and Mark done rides the answers channel and moves the item to the done disclosure.
+code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/desk")
+[ "$code" = "200" ] && pass "route /desk -> 200" || die "route /desk -> $code"
+
+# Direction 1: the desk bullet renders in the desk section; it is NOT a card in the A/B/C tiers.
+python3 - "$PORT" <<'PY' && pass "desk-<slug> hand-lane item renders in the desk section and NOT in tiers A/B/C (dev-0005, both directions)" \
+  || die "dev-0005 desk/tier classification wrong in one direction (see message above)"
+import sys, re, urllib.request
+base = f"http://127.0.0.1:{sys.argv[1]}"
+desk = urllib.request.urlopen(base + "/desk").read().decode()
+dec = urllib.request.urlopen(base + "/decisions").read().decode()
+
+m = re.search(r'<section class="desk".*?</section>', desk, re.S)
+if not m or not m.group(0).strip():
+    sys.exit("desk section did not render — fixture extraction empty, failing closed")
+section = m.group(0)
+rid = "desk-chase-the-vendor-sow"
+if f'data-desk-item="{rid}"' not in section:
+    sys.exit(f"{rid}: derived desk id did not render as an active desk item")
+if "Chase the vendor SOW" not in section:
+    sys.exit("the desk bullet text is missing from the desk section")
+# The other direction: a desk item is a hand lane, never a decision card.
+if "desk-chase" in dec or "Chase the vendor SOW" in dec:
+    sys.exit("a desk item leaked onto the decisions board (tiers A/B/C)")
+for tier_card in re.findall(r'data-row="([^"]+)"', dec):
+    if tier_card.startswith("desk-"):
+        sys.exit(f"{tier_card}: a desk id rendered as a decision card")
+PY
+
+# Direction 2: a done record moves the item to the done disclosure and off the active list.
+before=$(shasum "$hub/QUEUE.md" | awk '{print $1}')
+code=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+  -H 'Content-Type: application/json' \
+  -d '{"id":"desk-chase-the-vendor-sow"}' \
+  "http://127.0.0.1:$PORT/desk")
+[ "$code" = "200" ] && pass "desk Mark-done POST accepted" || die "desk POST -> $code"
+grep -q '"desk-chase-the-vendor-sow"' "$state/answers.jsonl" 2>/dev/null \
+  && pass "desk tick landed in the ISOLATED owner store (answers channel)" \
+  || die "desk tick not written to the isolated store"
+
+# The cockpit derives the desk from the queue and NEVER writes it: QUEUE.md is byte-identical.
+after=$(shasum "$hub/QUEUE.md" | awk '{print $1}')
+[ "$before" = "$after" ] && pass "cockpit did not write QUEUE.md (derive-never-edit)" \
+  || die "QUEUE.md changed after a desk POST — the cockpit wrote the queue"
+
+python3 - "$PORT" <<'PY' && pass "ticked desk item moves to the done disclosure and off the active list (dev-0005)" \
+  || die "dev-0005 done-record handling wrong (see message above)"
+import sys, re, urllib.request
+desk = urllib.request.urlopen(f"http://127.0.0.1:{sys.argv[1]}/desk").read().decode()
+rid = "desk-chase-the-vendor-sow"
+m = re.search(r'<section class="desk".*?</section>', desk, re.S)
+if not m or not m.group(0).strip():
+    sys.exit("desk section did not render after the tick — failing closed")
+section = m.group(0)
+active = re.search(r'<div class="desk-items">(.*?)</div>\s*(?:<details|</section)', section, re.S)
+if active and f'data-desk-item="{rid}"' in active.group(1):
+    sys.exit(f"{rid}: a ticked item is still on the active desk list")
+disc = re.search(r'<details class="desk-done-disclosure">.*?</details>', section, re.S)
+if not disc:
+    sys.exit("no done disclosure rendered after a tick")
+if rid not in disc.group(0):
+    sys.exit(f"{rid}: a ticked item is not in the done disclosure")
+# The other item stays active — the tick moved exactly one item.
+if 'data-desk-item="desk-send-the-retro-notes"' not in section:
+    sys.exit("desk-send-the-retro-notes: an untouched item fell off the active desk")
 PY
 
 # Root confinement holds in single-hub mode too.

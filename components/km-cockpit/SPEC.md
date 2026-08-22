@@ -95,6 +95,36 @@ answered-but-undone rows as executed, then it invented the status split and was 
 this section is brought up to that implementation. The reference deployment leads and the
 specification follows it here; every other implementation moves to meet this section.
 
+**The owner's desk: a hand lane derived from the queue, never written** (added v1.36). The queue
+carries the deployment owner's **personal follow-ups** — what the owner is waiting on and what the
+owner owes someone — as bullets under a `## Owner's desk` heading. This is a **hand lane**: distinct
+from decision tiers A/B/C, nothing on it defaults, nothing expires, and nothing on it ever occupies a
+decision row. The cockpit renders the desk in **its own section, after Hubs**, and derives it from the
+queue on every request. Four obligations bind any implementation:
+
+- **Derive, never edit.** The desk on screen is parsed live from the queue file; the cockpit never
+  writes the queue, exactly as §1 requires of every surface. One bullet is one item, at the queue's
+  own granularity, never a split invented from prose punctuation.
+- **The id is derived: `desk-<slug>`.** A bullet has no id of its own, so the id is `desk-` plus a
+  slug of the bullet's leading **bold phrase** (falling back to its first words when there is no bold
+  lead). A derived id survives edits to the rest of the bullet, so a ticked item does not re-surface
+  when its date or owed detail changes. The stated limit: **renaming the bold lead mints a new id**,
+  which returns a previously ticked item to the desk — a deliberate re-nudge over a silent drop.
+- **The control is a tick, not a dismiss.** Hiding a live commitment without resolving it is the
+  failure to avoid. Marking an item done appends an owner-store record
+  (`{"id": "desk-<slug>", "answer": "done", "done": true, "item": "<text>"}`) to the append-only
+  answers store; the tick rides the **ordinary answers channel**, so a normal `pull` consumes it like
+  any answer and the supervisor prunes the nudge from the queue in its own session. Undo is a further
+  appended record; the append-only store's last record wins. A ticked item moves off the active list
+  into a done disclosure that opens onto the items themselves, each with Undo.
+- **Owner-supplied desk text may not size a layout** (§8). Desk item text arrives from the queue and
+  renders in a bounded track; its grids are registered in `OWNER_TEXT_GRIDS`.
+
+This rule is owed to the reference deployment: its cockpit parsed the decision tiers only, so desk
+nudges added to the queue were invisible on the owner's surface, then it added the desk section and
+this contract is brought up to that implementation. The reference deployment leads and the
+specification follows it here; every other implementation moves to meet this section.
+
 **Rotation semantics: a record is consumed exactly once.** `pull` and `questions` print pending
 records and move them to the processed file in one call. **Pull consumes for the whole estate:**
 whoever pulls owns immediate surfacing and execution of every record returned — never only the

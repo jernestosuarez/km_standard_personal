@@ -503,6 +503,35 @@ STYLE = """
    color:var(--km-accent); font:800 9px ui-monospace, monospace; text-align:center; }
  .watch-text { min-width:0; font-size:13px; }
  .watch-item time,.watch-date { color:var(--km-muted); font:700 10px ui-monospace, monospace; white-space:nowrap; }
+ .desk { margin-top:26px; }
+ .desk-title { display:flex; align-items:baseline; gap:14px; margin-bottom:10px; }
+ .desk-title h2 { margin:0; font-size:20px; }
+ .desk-title p { margin:0; color:var(--km-muted); font-size:12px; }
+ .desk-items { border:1px solid var(--km-line); border-radius:8px; background:var(--km-surface);
+   box-shadow:var(--km-shadow); overflow:hidden; }
+ .desk-item { display:grid; grid-template-columns:46px minmax(0,1fr) auto; gap:12px;
+   align-items:start; padding:13px 15px; border-top:1px solid var(--km-line); }
+ .desk-item:first-child { border-top:0; }
+ .desk-badge { padding:2px 5px; border-radius:3px; background:var(--km-accent-soft);
+   color:var(--km-accent); font:800 9px ui-monospace, monospace; text-align:center; }
+ .desk-text { min-width:0; font-size:13px; }
+ .desk-controls { display:flex; align-items:center; gap:8px; }
+ .desk-note { color:var(--km-muted); font-size:11px; }
+ .desk-note:empty { display:none; }
+ .desk-note.desk-error { color:var(--km-urgent); }
+ .desk-strip { display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+   padding:11px 15px; margin:0; border:1px dashed var(--km-line); border-radius:6px;
+   background:var(--km-accent-soft); color:var(--km-muted); font-size:12px; }
+ .desk-done-disclosure { margin-top:12px; }
+ .desk-done-disclosure > summary { cursor:pointer; color:var(--km-muted);
+   font:800 10px ui-monospace, monospace; letter-spacing:.04em; text-transform:uppercase; }
+ .desk-done-note { margin:9px 0; color:var(--km-muted); font-size:12px; }
+ .desk-done-list { margin:0; padding:0; list-style:none; border:1px solid var(--km-line);
+   border-radius:8px; background:var(--km-surface); overflow:hidden; }
+ .desk-done-item { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:10px;
+   align-items:center; padding:10px 14px; border-top:1px solid var(--km-line); font-size:12.5px; }
+ .desk-done-item:first-child { border-top:0; }
+ .desk-done-item .feedat { white-space:nowrap; }
  .portfolio-section { margin-top:34px; }
  .portfolio-title { display:flex; align-items:end; justify-content:space-between; gap:22px; margin-bottom:16px; }
  .portfolio-title h2 { margin:0; font-size:24px; line-height:1.15; letter-spacing:-.02em; }
@@ -592,6 +621,8 @@ STYLE = """
     .supervisor-actions-title p { margin-top:4px; }
     .supervisor-action-list li { grid-template-columns:1fr; gap:5px; }
     .supervisor-action-meta { text-align:left; white-space:normal; }
+   .desk-title { display:block; } .desk-title p { margin-top:4px; }
+   .desk-item { grid-template-columns:1fr; gap:6px; }
     .watchlist-title { display:block; } .watchlist-title p { margin-top:4px; }
    .watch-item { grid-template-columns:32px 38px minmax(0,1fr); }
    .watch-item time,.watch-date { grid-column:3; }
@@ -664,6 +695,40 @@ function supAsk(aid) {
   supSend(aid, 'question', el.value.trim());
   el.value = '';
 }
+async function tick(id) {
+  const note = document.getElementById('desk-note-' + id);
+  try {
+    const r = await fetch('/desk', {method: 'POST',
+      headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id: id})});
+    if (!r.ok) {
+      if (note) { note.textContent = await r.text(); note.classList.add('desk-error'); }
+      return;
+    }
+    document.querySelectorAll('[data-desk-item="' + id + '"]').forEach(
+      el => el.style.display = 'none');
+    document.querySelectorAll('[data-desk-strip="' + id + '"]').forEach(
+      el => el.style.display = '');
+  } catch (e) {
+    if (note) { note.textContent = 'Not recorded — the cockpit server did not respond.';
+      note.classList.add('desk-error'); }
+  }
+}
+async function untick(id) {
+  const strip = document.querySelector('[data-desk-strip="' + id + '"]');
+  try {
+    const r = await fetch('/desk', {method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({id: id, undo: true})});
+    if (!r.ok) {
+      if (strip) strip.textContent = await r.text();
+      return;
+    }
+  } catch (e) {
+    if (strip) strip.textContent = 'Not restored — the cockpit server did not respond.';
+    return;
+  }
+  location.reload();
+}
 async function viewfrag(id, p) {
   const box = document.getElementById('frag-' + id);
   box.style.display = '';
@@ -697,12 +762,13 @@ window.addEventListener('load', refresh);
 
 def page(title, inner, sub="", active="", context=None):
     nav = [("home", "/", "OVERVIEW"), ("decisions", "/decisions", "DECISIONS"),
-           ("activity", "/activity", "ACTIVITY"), ("hubs", "/hubs", "HUBS")]
+           ("activity", "/activity", "ACTIVITY"), ("hubs", "/hubs", "HUBS"),
+           ("desk", "/desk", "YOUR DESK")]
     links = "".join(
         f'<a class="{"active" if key == active else ""}" href="{href}">{label}</a>'
         for key, href, label in nav)
     heading = {"home": "Overview", "decisions": "Decisions", "activity": "Activity",
-               "hubs": "Hubs"}.get(active, title.split(" — ", 1)[0])
+               "hubs": "Hubs", "desk": "Your desk"}.get(active, title.split(" — ", 1)[0])
     context_html = context if context is not None else """<h2>Status guide</h2>
 <dl><dt>Needs decision</dt><dd>An open Tier A or B item is linked to the hub, or a proposal awaits your decision.</dd>
 <dt>Pending changes</dt><dd>A proposal in the hub still needs decision routing.</dd>
@@ -908,6 +974,8 @@ OWNER_TEXT_GRIDS = {
     ".activity-summary": ((5,), "the recorded answer or execution note"),
     ".watch-item": ((3,), "the tier-C row's text"),
     ".supervisor-action-list li": ((1,), "the supervisor-action text from the queue"),
+    ".desk-item": ((2,), "the owner's desk item text from the queue"),
+    ".desk-done-item": ((1,), "the ticked desk item text from the queue"),
 }
 UNBOUNDED_TRACK_MAX = ("auto", "max-content")
 
@@ -1579,6 +1647,194 @@ def render_hub_portfolio(rows, heading="Knowledge hub portfolio", intro=None, sh
 
 
 # ---------- pages ----------
+
+# ---------- The owner's desk (added v1.36; SPEC.md §3, STANDARD.md → "The owner's desk") ----------
+# The desk holds the deployment owner's PERSONAL follow-ups: things the owner is waiting on and
+# things the owner owes someone. They are a HAND LANE, not estate decisions: they never default,
+# they never expire, and they never occupy a decision row in tiers A/B/C. The desk lives in its own
+# section, after Hubs. Until this section existed the cockpit parsed the decision tiers only, so
+# every desk nudge added to the queue was invisible on the owner's surface while the estate believed
+# it was surfaced.
+#
+# The control is a TICK, not a Dismiss. Dismissing a commitment would hide a live obligation; a tick
+# records "done" so the estate can stop nudging. The tick rides the ANSWERS channel —
+# {"id": "desk-<slug>", "answer": "done", "done": true, "item": "<text>"} — so the ordinary
+# supervisor `pull` consumes it exactly like an answer and the nudge is pruned from the queue in the
+# supervisor's own session. The cockpit NEVER edits the queue file: the desk on screen is derived
+# from the file on every request, and the owner's tick is owner-side state, appended, never a rewrite.
+#
+# IDS. Desk items are prose bullets with no ids of their own, so the id is DERIVED: "desk-" plus a
+# slug of the bullet's leading **bold phrase** (falling back to its first words when a bullet carries
+# no bold lead). A derived id survives the owner or the supervisor editing the rest of the bullet —
+# dates and owed items change while the commitment stays the same. The stated limit: RENAMING THE
+# BOLD LEAD MINTS A NEW ID, so a ticked item whose lead is reworded returns to the desk. That failure
+# direction is deliberate — the estate re-nudges rather than silently dropping a commitment the owner
+# never ticked.
+
+DESK_PREFIX = "desk-"
+DESK_HEADING_RE = re.compile(r"^##\s+Owner'?s desk\b", re.I)
+
+
+def _join_wrapped(raw):
+    """Join continuation lines onto the row or bullet they belong to: long bullets wrap in the
+    queue file, and parsing them line-by-line once produced mangled items."""
+    joined = []
+    for line in raw.splitlines():
+        if joined and line.startswith("  ") and not line.lstrip().startswith(("-", "|", "#", "<")) \
+                and (joined[-1].lstrip().startswith("|") or joined[-1].lstrip().startswith("- ")):
+            joined[-1] += " " + line.strip()
+        else:
+            joined.append(line)
+    return joined
+
+
+def desk_slug(text, limit=48):
+    """Deterministic, url/onclick-safe slug: link labels kept, markdown emphasis dropped,
+    everything outside [a-z0-9] collapsed to a hyphen."""
+    t = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", text)
+    t = re.sub(r"[*_`~]", "", t)
+    t = re.sub(r"[^a-z0-9]+", "-", t.lower()).strip("-")
+    return t[:limit].strip("-") or "item"
+
+
+def parse_desk(raw=None):
+    """The items under the queue file's "## Owner's desk" heading, one card per bullet. Read-only.
+    One bullet = one item: the granularity is the queue's own, never a split the cockpit invents out
+    of prose punctuation. Returns [{id, label, text}] in file order."""
+    if raw is None:
+        if QUEUE is None or not QUEUE.exists():
+            return []
+        raw = QUEUE.read_text(encoding="utf-8")
+    items, inside, used = [], False, {}
+    for line in _join_wrapped(raw):
+        if line.startswith("##"):
+            inside = bool(DESK_HEADING_RE.match(line))
+            continue
+        if not inside:
+            continue
+        if line.startswith("<!--"):
+            break
+        if not line.startswith("- "):
+            continue
+        text = line[2:].strip()
+        if not text:
+            continue
+        lead = re.match(r"\*\*(.+?)\*\*", text)
+        label = lead.group(1).strip() if lead else " ".join(text.split()[:8])
+        slug = desk_slug(label)
+        used[slug] = used.get(slug, 0) + 1
+        # Two bullets whose leads slug identically are disambiguated by order of appearance.
+        rid = DESK_PREFIX + (slug if used[slug] == 1 else f"{slug}-{used[slug]}")
+        items.append({"id": rid, "label": label, "text": text})
+    return items
+
+
+def desk_records():
+    """Every desk record, oldest first, from BOTH the unpulled and the pulled answer stores: a tick
+    must not reappear on the desk merely because the supervisor pulled it."""
+    recs = [r for r in read_jsonl(PROCESSED) + read_jsonl(ANSWERS)
+            if str(r.get("id", "")).startswith(DESK_PREFIX)]
+    return sorted(recs, key=lambda r: r.get("at", ""))
+
+
+def desk_ticks(records=None):
+    """Effective ticks: id -> the record that ticked it. Append-only store, last record wins, an
+    untick is itself a record. Read-only."""
+    latest = {}
+    for r in (desk_records() if records is None else records):
+        latest[r["id"]] = r
+    return {rid: r for rid, r in latest.items() if r.get("done")}
+
+
+def record_desk_tick(item_id, undo=False, items=None, now=None):
+    """Append one tick (or its undo) for a desk item. Returns (http-code, message). Validates
+    against the live desk parsed from the queue; appends only to the append-only owner store; never
+    touches the queue file, never executes anything."""
+    item_id = (item_id or "").strip()
+    items = parse_desk() if items is None else items
+    item = next((i for i in items if i["id"] == item_id), None)
+    if item is None:
+        return 404, (f"{item_id or 'that item'} is not an item on your desk — the desk is parsed "
+                     "live from the queue on every request")
+    CFG.mkdir(parents=True, exist_ok=True)
+    record = {"id": item_id, "answer": "not done" if undo else "done", "done": not undo,
+              "item": item["text"][:300], "at": now or time.strftime("%Y-%m-%d %H:%M:%S")}
+    if undo:
+        record["undo"] = True
+    with ANSWERS.open("a") as f:
+        f.write(json.dumps(record) + "\n")
+    return 200, ("Back on your desk." if undo else
+                 "Marked done — the Supervisor drops the nudge on its next pull.")
+
+
+def desk_control(rid):
+    """The owner's only control on a desk item. Deliberately NOT Dismiss: these are live
+    commitments, and hiding one without resolving it is the failure mode to avoid."""
+    return (f'<div class="desk-controls">'
+            f'<button class="small" title="Record this as done. The Supervisor removes the '
+            f'nudge from the queue on its next pull; you can undo it here." '
+            f'onclick="tick(\'{rid}\')">Mark done</button>'
+            f'<span class="desk-note" id="desk-note-{rid}" role="status"></span></div>')
+
+
+def desk_strip(rid):
+    """The Undo affordance, rendered with the item and revealed the instant it is ticked — same
+    page render, no reload, so a mis-click is recoverable on the spot."""
+    return (f'<div class="desk-strip" data-desk-strip="{rid}" style="display:none" '
+            f'role="status"><span>Marked <b>done</b> — the Supervisor prunes the nudge on its '
+            f'next pull.</span><button class="small" onclick="untick(\'{rid}\')">Undo</button>'
+            f'</div>')
+
+
+def desk_done_entry(item, at=""):
+    """One line in the "N done" disclosure: enough to recognise the item, and a way back."""
+    text = item["text"][:180] + ("…" if len(item["text"]) > 180 else "")
+    when = (f'<span class="feedat">done {html.escape(at)}</span>' if at else
+            '<span class="feedat">done</span>')
+    return (f'<li class="desk-done-item"><span class="desk-text">{md_inline(text)}</span>'
+            f'{when}<button class="small" onclick="untick(\'{item["id"]}\')">Undo</button></li>')
+
+
+def render_desk_done_disclosure(entries):
+    """The small foot disclosure — never a count that dead-ends: it opens onto the items themselves,
+    each with Undo."""
+    if not entries:
+        return ""
+    return (f'<details class="desk-done-disclosure"><summary>{len(entries)} marked done'
+            '</summary><p class="desk-done-note">These stay in the queue until the KM Supervisor '
+            'picks the tick up on its next pull and removes the nudge. Undo any of them here.</p>'
+            f'<ul class="desk-done-list">{"".join(entries)}</ul></details>')
+
+
+def render_desk(items=None, ticks=None):
+    """The owner's desk section. Compact cards, clearly separated from the decision tiers: nothing
+    here is a decision and nothing here is owed by the Supervisor. A ticked item moves off the active
+    list into the done disclosure."""
+    items = parse_desk() if items is None else items
+    ticks = desk_ticks() if ticks is None else ticks
+    rows, done = [], []
+    for item in items:
+        rid = item["id"]
+        if rid in ticks:
+            done.append(desk_done_entry(item, ticks[rid].get("at", "")))
+            continue
+        rows.append(f"""<article class="desk-item" data-desk-item="{html.escape(rid)}">
+<span class="desk-badge">DESK</span>
+<div class="desk-text">{md_inline(item["text"])}</div>
+{desk_control(rid)}</article>{desk_strip(rid)}""")
+    body = (f'<div class="desk-items">{"".join(rows)}</div>' if rows else
+            '<div class="empty-state">Nothing open on your desk. Your own follow-ups appear here '
+            'when the queue carries an <b>Owner\'s desk</b> section.</div>')
+    return f"""<section class="desk" id="desk" aria-labelledby="desk-heading">
+<div class="desk-title"><h2 id="desk-heading">Your desk</h2>
+<p>Your own follow-ups: what you are waiting on and what you owe someone. Not decisions, and not
+Supervisor work. Nothing here defaults or expires: an item stays until you mark it done.</p></div>
+{body}{render_desk_done_disclosure(done)}</section>"""
+
+
+def desk_page():
+    return page("KM Cockpit — Your desk", render_desk(), active="desk")
+
 
 def home():
     cards = parse_cards()
@@ -2463,6 +2719,8 @@ class H(BaseHTTPRequestHandler):
             self._send(200, activity(q.get("hub", [None])[0]))
         elif u.path == "/hubs":
             self._send(200, hubs_page())
+        elif u.path == "/desk":
+            self._send(200, desk_page())
         elif u.path.startswith("/hubs/"):
             key = urllib.parse.unquote(u.path[len("/hubs/"):])
             rendered = hub_profile_page(key)
@@ -2532,6 +2790,9 @@ class H(BaseHTTPRequestHandler):
         elif self.path == "/supervisor-request":
             code, msg = record_supervisor_request(
                 data.get("action", ""), data.get("type", ""), data.get("text", ""))
+            self._send(code, msg, "text/plain")
+        elif self.path == "/desk":
+            code, msg = record_desk_tick(data.get("id", ""), undo=bool(data.get("undo")))
             self._send(code, msg, "text/plain")
         else:
             self._send(404, "not found")
