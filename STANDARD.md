@@ -1,28 +1,31 @@
 ---
 type: brief
-title: Knowledge Management Standard: Hub Framework (v1.38)
-description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, an optional Agent Tier for named, discoverable agent instances, and an optional record-boundary layer for governed use of systems of record.
+title: Knowledge Management Standard: Hub Framework (v1.39)
+description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, an optional Agent Tier for named, discoverable agent instances, an optional record-boundary layer for governed use of systems of record, and an editions boundary that names where consuming the standard ends and evolving it begins.
 tags: [standard, knowledge-management, governance, okf, agents]
 resource: template/
 timestamp: 2026-08-21
 ---
 
-# Knowledge Management Standard: Hub Framework (v1.38)
+# Knowledge Management Standard: Hub Framework (v1.39)
 
-**Published v1.38** (2026-08-22, owner push: the KM Standard status card. A read-only Home card
-surfaces the standard checkout the deployment tracks, showing the version it is pinned to and its push
-state against origin (in sync, or commits drafted locally and not yet pushed). The card is display
-only and grows no controls, and it never links the checkout, which lives outside the estate root).
-The preceding published version is **v1.37** (2026-08-22, a desk tick is never a decision awaiting
+**Published v1.39** (2026-08-22, owner push: editions and the run/evolve boundary. The standard
+names one structural line dividing the estate's tiers into a run-set that consumes a pinned standard
+and operates a live estate (Reader, Supervisor, cockpit, hubs, and the pinned canonical standard) and
+an evolve-set that invents tooling and authors the standard (Machinery, Standard-Steward), and defines
+two editions as profiles over one standard version: a Consumer/Run edition that consumes releases and
+cannot author, and a Builder/Full edition that adds the authority to invent and author or fork. The
+boundary asserts no license, price, or commercial term; it is drawn so an owner MAY later attach a
+licensing policy at the line without any structural change. It implements `rfcs/RFC-006`). The
+preceding published version is **v1.38** (2026-08-22, the KM Standard status card. A read-only Home
+card surfaces the standard checkout the deployment tracks, showing the version it is pinned to and its
+push state against origin (in sync, or commits drafted locally and not yet pushed). The card is
+display only and grows no controls, and it never links the checkout, which lives outside the estate
+root). The version before that is **v1.37** (2026-08-22, a desk tick is never a decision awaiting
 execution. Desk ticks ride the ordinary answers channel, so the cockpit's decision accounting now
 excludes `desk-<slug>` ids from every set it feeds (pending, queued, executed, recorded); a cleared
 personal follow-up is the owner's hand lane and no longer reads as a decision awaiting Supervisor
-execution). The version before that is **v1.36** (2026-08-22, the owner's desk. The queue admits an
-owner's-desk hand lane of the deployment owner's personal follow-ups, the things the owner is waiting
-on and the things the owner owes, kept in its own section after Hubs and distinct from decision tiers
-A, B, and C; nothing on it defaults or expires. The cockpit derives the desk from the queue and never
-writes the queue, and an item is marked done through the owner-side answer store rather than a queue
-rewrite). **v1.23** (stations, compartments, and the resolution plane) **remains drafted
+execution). **v1.23** (stations, compartments, and the resolution plane) **remains drafted
 and unpublished**: its sections are marked with their version and bind nothing until its own push.
 Deployment pins resolve the version they pinned until their Supervisor re-pins.
 
@@ -3645,6 +3648,149 @@ its scope is simply the hub itself.
   session remains a valid way to operate a hub. This layer serves workspaces that need an addressable
   instance an application can discover; it is not a requirement that every hub have one.
 
+## Editions and the run/evolve boundary (added in v1.39, drafted and unpublished)
+
+This section implements `rfcs/RFC-006`. It names one structural line already latent in a tiered
+deployment, maps every component to one side of it, and defines two editions as profiles over the
+**same** standard version. It is boundary doctrine only: it adds no schema, no check, and no
+mechanism, and it changes nothing an existing hub or deployment does. Sections marked with this
+version bind nothing until v1.39's own owner push.
+
+### The run/evolve boundary
+
+A deployment's tiers divide by one intent: some **consume and operate** a fixed standard, and some
+**invent and author** the instruments and the standard itself. That division is the boundary.
+
+- **Run-set** = the tiers and components that consume a published standard and operate a live estate:
+  the Reader, the Supervisor (including the queue, the cockpit, and the routines it runs), the hubs,
+  and the **pinned canonical standard** the whole set conforms to. The run-set reads the standard as
+  authoritative and does not author it.
+- **Evolve-set** = the tiers that invent instruments and author the standard: the Machinery tier,
+  which invents and battle-tests tooling, and the Standard-Steward tier, which authors, evolves, and
+  may fork the standard and runs the leakage guard. The evolve-set writes what the run-set consumes.
+
+The line is the same two-flow model a tiered deployment already runs: **consumption** (standard to
+hubs, the standard authoritative, the hubs conform) and **invention and harvest** (deployment to
+standard, the deployment authoritative, the standard brought up to it at agreed intervals). The
+run-set is the consumption flow; the evolve-set is the invention flow.
+
+The mapping is total: every component maps to exactly one side, and none straddles it.
+
+| Component | What it does | Set | In Consumer / Run edition | In Builder / Full edition |
+|---|---|---|---|---|
+| **Reader** | Read-only consumption of hub knowledge (query, brief, present); authors nothing | Run-set | Yes, once harvested (see *The Reader prerequisite*) | Yes |
+| **Supervisor** | Routes, runs routines, owns the owner queue and the cockpit, operates hubs | Run-set | Yes | Yes |
+| **The cockpit** (`components/km-cockpit`) | The owner's decision and answer surface, operated by the Supervisor | Run-set | Yes | Yes |
+| **Hubs** | Hold governed knowledge, admit and reconcile under their own governance | Run-set | Yes | Yes |
+| **The pinned canonical standard** | The conformance target the run-set reads as authoritative | Run-set | Yes, pinned to a published version, consumed read-only | Yes, and MAY be evolved or forked |
+| **Machinery** | Invents and battle-tests tooling before it is harvested | Evolve-set | No | Yes |
+| **Standard-Steward** | Authors, evolves, and may fork the reusable standard; runs the leakage guard | Evolve-set | No | Yes |
+
+Three properties of the mapping are stated rather than left implicit:
+
+1. **The pinned standard is in the run-set on the consume side, not the author side.** A run-set holds
+   the standard the way a hub holds it: pinned to a published version, read as authoritative, never
+   authored. The same artifact appears in both editions, and only the Builder edition carries the
+   authority (through the Standard-Steward) to change it.
+2. **Operating a hub is run-set; inventing the instrument a hub uses is evolve-set.** The Supervisor
+   running a routine is consumption. The Machinery tier building a new routine is invention. A
+   deployment can do the first forever without ever doing the second, which is what makes a Consumer
+   edition coherent.
+3. **The cockpit is a run-set component even though it is a reusable standard component.** It ships
+   with the standard, but a deployment operates it (Supervisor) rather than authors it. Changing the
+   cockpit component itself is Standard-Steward work and therefore evolve-set.
+
+### Two editions, each a profile over one standard
+
+Both editions run the **same** published standard version. An edition is not a variant of the
+standard, not a branch, and not a second normative surface. It is a **profile**: a declared statement
+of which side or sides of the boundary a deployment installs and is authorized to act on. This keeps
+editions inside the standard's existing profile-and-overlay machinery.
+
+- **Consumer / Run edition** = the run-set, pinned to a published standard version. It consumes
+  releases and operates a live estate: it reads, routes, runs routines, operates hubs, and presents
+  through the cockpit. It **cannot author**: it carries neither the Machinery tier nor the
+  Standard-Steward tier, and it holds the standard pinned and read-only. A Consumer deployment that
+  wants a standard change requests it upstream, because it has no evolve-set to make it in.
+- **Builder / Full edition** = the run-set **plus** the evolve-set. It does everything a Consumer
+  edition does, and additionally can invent tooling (Machinery) and evolve or fork the standard
+  (Standard-Steward). A Builder deployment that forks the standard becomes its own steward of that
+  fork, with the harvest and leakage-guard discipline that role carries.
+
+The editions are strictly nested: the Builder edition is the Consumer edition plus the evolve-set,
+with no component removed and none altered. The nesting is what makes the boundary safe to draw:
+
+- **Nothing a Consumer edition does changes when the evolve-set is added.** A hub operates the same, a
+  routine runs the same, the cockpit presents the same. Adding the evolve-set adds the authority to
+  invent and author; it does not reach back and change consumption behaviour.
+- **No deployment is forced into an edition.** A deployment declares which edition it runs; the
+  standard defines the two shapes and binds neither on. This is the same no-cost-to-decline discipline
+  the standard applies to its other optional layers: a deployment that declares nothing about editions
+  runs exactly as it does today.
+- **Existing hubs change nothing.** Editions are a packaging concept above the hub. A hub does not
+  know which edition it runs inside, and no hub file changes because an edition is declared.
+
+### The boundary asserts no license
+
+This is a hard requirement of this section. The standard **asserts no license, price, or commercial
+term.** This section defines only the boundary. It draws that boundary cleanly enough that an owner
+**MAY** later attach a licensing or commercial policy at the line, for example treating the evolve-set
+as owned or paid, **without the standard itself encoding any such policy, and without any structural
+change.** The line sits in the same place, the component mapping is identical, the two editions are
+defined identically, and a Consumer deployment behaves identically, whether or not any policy exists.
+
+A policy, if an owner ever writes one, binds only the parties who accept it and lives only in the
+owner's own overlay or business terms, outside the canonical standard. The canonical standard remains
+a license-neutral description of a boundary that anyone may adopt for free. This section encodes no
+license, and any later version implementing editions carries no price-shaped, license-shaped, or paid-tier
+field anywhere in the canonical surface.
+
+### The key doctrine: the authority crosses, the artifact does not
+
+The pinned canonical standard sits in the run-set, on the consume side, in **both** editions. The
+same artifact is present whether a deployment consumes or authors. What the Builder edition adds is
+the **authority** to author that artifact, carried by the evolve-set (the Standard-Steward). Stated as
+one line: **the artifact does not cross the boundary, the authority does.** An edition is therefore a
+statement about who may author, not a statement about which standard is installed.
+
+### The Consumer edition is RFC-004 Part III reading (c)
+
+RFC-004 Part III examined "multi-tenancy" and found reading **(c)** to be *several independent
+deployments of the standard, many organisations each running their own estate, one maintainer serving
+all*, which it judged a bounded gap rather than a layer. The **Consumer / Run edition is the concrete,
+bounded form of reading (c)**: a fleet of Consumer-edition run-sets, each pinned to a published
+version, each consuming releases from one upstream steward, none carrying an evolve-set, with the one
+maintainer serving all being a Builder edition (or the canonical steward) authoring the standard the
+fleet consumes. Readings (a) and (b) are untouched and remain where RFC-004 left them.
+
+### The Reader prerequisite: a tracked gap, not a defect
+
+The Consumer edition's read-only consumption tier, the Reader, is **not in the canonical standard
+today.** It is a deployment invention that has never been harvested; the canonical `STANDARD.md` uses
+the word "reader" only in its ordinary sense and defines no Reader tier, agent, or component. v1.39
+defines the editions boundary and the two edition shapes, all of which are complete without the
+Reader. The Consumer edition's **run-set is completed** by harvesting and genericising the Reader into
+the standard, which is the separate effort designed in `rfcs/RFC-007` (its own drafted-and-unpublished
+version, on the reference-deployment exemption, under the leakage guard).
+
+Until that harvest lands, a Consumer edition can be **defined** (this section does that) but not fully
+**shipped**, because one run-set component does not yet exist in generic form. This is a known,
+tracked gap, not a defect: the boundary and the two editions are complete now, and the Consumer
+edition's completeness waits on the named Reader harvest.
+
+### What this section does not do
+
+- It asserts, encodes, or implies no license, price, or commercial term. It draws a boundary only.
+- It forces no deployment into an edition; a deployment that declares nothing runs as it does today.
+- It changes nothing any existing hub does, and it forks the standard into no second normative surface.
+- It adds no schema, check, or mechanism. The boundary is documentation doctrine, and RFC-006 states
+  that no new instrument is strictly required by the boundary itself. An optional edition declaration
+  in the organization profile is a possible later addition, deliberately not made here.
+- It claims no enforced control. Tier separation is convention stated as such, the same posture the
+  standard takes toward agent scope; describing the run/evolve line as a technical control over what a
+  deployment can do would be a false assurance.
+- It does not implement the Reader (`rfcs/RFC-007`) or the routines (`rfcs/RFC-005`); it references them.
+
 ## Version history (added in v1.10)
 
 The version ledger. **A published version number is never reused.** Before publishing, read this
@@ -3694,6 +3840,7 @@ happened once (see the v1.9 row) and the ledger exists so it does not happen twi
 | v1.36 | 2026-08-22 | Drafted and published 2026-08-22 (owner push). The owner's desk. Resolves deviation **dev-0005**, harvested from the reference deployment, where the owner asked that his own follow-ups be separated into their own section after Hubs. The queue admits a hand lane of the deployment owner's personal follow-ups (what the owner is waiting on and what the owner owes), written as bullets under an "## Owner's desk" heading; each bullet's id is derived as `desk-<slug>` from its leading bold phrase, so an id survives edits to the rest of the bullet, while renaming the lead mints a new id and re-surfaces the item, a deliberate re-nudge chosen over a silent drop. The desk is a hand lane distinct from decision tiers A, B, and C: nothing on it defaults, nothing expires, and it never occupies a decision row. The cockpit renders the desk in its own section after Hubs, derives it from the queue on every request, and never writes the queue; the owner's only control is Mark done, which appends a record to the owner-side answer store (`{"id": "desk-<slug>", "answer": "done", "done": true}`) and rides the ordinary answers channel, so the Supervisor prunes the nudge on its next pull, and Undo is a further appended record. A ticked item moves to a done disclosure and off the active list. The control is a tick and never a dismiss, because hiding a live commitment without resolving it is the failure to avoid. `components/km-cockpit/SPEC.md` §3 carries the clause and names the reference deployment as the source the specification follows here, so a conformance pass never drags the lab back to the last release; the queue schema in this document gains the owner's-desk hand lane and the `desk-<slug>` id shape. `tests/test_km_cockpit.sh` proves both directions: a desk bullet renders in the desk section and not in tiers A/B/C, a done desk record moves the item to the done disclosure and off the active list, and the desk derives from the queue without the cockpit writing the queue file; the fixtures fail closed when empty. This harvest only adds the desk: the desk-tick execution-fold defect and the dismissal machinery of separate deviations were deliberately kept out of it. |
 | v1.37 | 2026-08-22 | Drafted and published 2026-08-22 (owner push). A desk tick is never a decision awaiting execution. Resolves deviation **dev-0013**, harvested from the reference deployment, where the owner (2026-08-20) saw "decisions pending to be executed" listing a personal follow-up he had already marked done as if it were work awaiting the Supervisor. Desk ticks ride the ordinary answers channel (added v1.36), so a `desk-<slug>` done record sits in the owner-side answer store, and `state()` built its decision and execution sets by reading those stores raw by id, so a cleared follow-up landed in the pending, queued, executed, and recorded accounting and read as answered, awaiting Supervisor execution. `state()` now excludes `desk-` ids from every set it feeds: from pending (the answer store), from queued (the pulled-answer store), and from the execution ledger it folds into executed and recorded, which hardens the recorded-to-queued fold against any future desk record as well. Desk rendering is untouched; the desk section (`render_desk`/`desk_ticks`) stays the only place desk ids surface. `components/km-cockpit/SPEC.md` §3 gains the clause (a desk tick never counts as a decision, and the desk lane is the only place desk ids appear) and names the reference deployment as the source the specification follows here, so a conformance pass never drags the lab back to the last release. A rendered-surface case in `tests/test_km_cockpit.sh` proves both directions on one live state: a ticked `desk-<slug>` record appears in none of pending, queued, or executed (a desk id in the recorded set folds into queued, so the queued assertion covers it) yet still renders in the desk done disclosure, while a genuine decision awaiting execution still counts; the check fails closed when the state carries no decision ids. The negative direction was confirmed against the unfixed `state()` and then restored. This harvest changes only the `state()` exclusion; desk rendering and the dismissal machinery of separate deviations were kept out of it. |
 | v1.38 | 2026-08-22 | Drafted and published 2026-08-22 (owner push). The KM Standard status card. Resolves deviation **dev-0003**, harvested from the reference deployment, where the owner asked to see the standard's own version and push state on the cockpit. A read-only Home card surfaces the standard checkout the deployment tracks: the version it is pinned to (read from the checkout's `STANDARD.md` title line) and its push state against origin (in sync, N commits not yet pushed with their subjects available, or origin carries commits not yet pulled). The card is display only and grows no controls, exactly as `components/km-cockpit/SPEC.md` §1 requires of every surface, so a standard change that needs the owner is a governed tier-A/B decision and never a button here; it reads local git alone, states that the origin comparison is as of the last fetch, and never contacts the network, so the render never depends on connectivity; a missing or unreadable checkout reports itself rather than fabricating state; and it emits no file link into the checkout, which lives outside the estate root and whose file-serving confinement (§4) this card must not widen. The checkout is configured by `standard_repo_path` in the deployment manifest; when that key is absent the card does not render, so a deployment that keeps no local checkout shows nothing rather than a guess. `components/km-cockpit/SPEC.md` §3 gains the clause and names the reference deployment as the source the specification follows here, so a conformance pass never drags the lab back to the last release. `tests/test_km_cockpit.sh` proves both directions on one live server: an in-sync checkout renders the pinned version and reads as in sync, while an extra local commit flips the same card to commits not yet pushed; the check fails closed when the card does not render. The negative direction was confirmed against a tree without the card and then restored. This harvest only adds the status card; no other deviation's surface was pulled in. |
+| v1.39 | 2026-08-22 | Drafted and published 2026-08-22 (owner push). Editions and the run/evolve boundary, implementing `rfcs/RFC-006`. A deployment owner named one gap: the standard defined no clean boundary between consuming the standard and evolving it, and no way for tiers to package into editions. This version names one structural line already latent in a tiered deployment. **The run-set** consumes a published standard and operates a live estate (the Reader, the Supervisor with its queue, cockpit and routines, the hubs, and the pinned canonical standard read as authoritative); **the evolve-set** invents instruments and authors the standard (the Machinery tier and the Standard-Steward tier, which may fork it and runs the leakage guard). Every component maps to exactly one side by a table in the new "Editions and the run/evolve boundary" section; the line is the deployment's own consumption-versus-invention two-flow model made explicit. **Two editions are profiles over one standard version, strictly nested:** a Consumer/Run edition is the run-set, pinned and read-only, that consumes releases and cannot author; a Builder/Full edition adds the evolve-set and the authority to invent tooling and evolve or fork the standard. No component is removed or altered between them, no deployment is forced into an edition, and no existing hub changes, on the same no-cost-to-decline discipline the standard's other optional layers carry. **The key doctrine:** the pinned standard sits in the run-set, on the consume side, in both editions; only the Builder edition adds the authority to author it, so the artifact does not cross the boundary, the authority does. **License-agnostic by hard requirement:** the standard asserts no license, price, or commercial term; the section defines only the boundary, drawn so an owner MAY later attach a licensing policy at the line without any structural change, that policy living outside the canonical standard in the owner's own overlay. The Consumer edition is the concrete, bounded form of RFC-004 Part III reading (c) (many independent deployments, one maintainer serving all). **Boundary doctrine only:** no schema, check, or mechanism is added, because RFC-006 states no new instrument is strictly required by the boundary itself and an optional edition-declaration field is deliberately deferred; tier separation is stated as convention, never as an enforced control. **A known, tracked gap, not a defect:** the Consumer edition's Reader tier is not yet in the canonical standard, so v1.39 defines the editions boundary while the Consumer run-set is completed by the separate Reader harvest designed in `rfcs/RFC-007`. Neither the Reader (RFC-007) nor the routines (RFC-005) is implemented here; both are referenced. |
 
 ---
 
