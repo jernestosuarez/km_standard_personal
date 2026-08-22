@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.34"/>
+  <img src="assets/badges/version.svg" alt="standard v1.35"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 2 adopted"/>
   <img src="assets/badges/license.svg" alt="license: free to adopt"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,10 +28,8 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.34** (2026-08-21, a bookkeeping note is not work done: an execution record
-carries an optional status, where an absent status means a genuine execution and `recorded` means
-the answer was captured but the work is still owed, so a captured answer no longer reads as executed
-and instead surfaces as awaiting Supervisor execution; v1.23 remains an unpublished draft awaiting its own push). The full ledger of released versions, and the rule that a
+**Current version: v1.35** (2026-08-22, hub merge, absorb-and-tombstone under a re-run interview,
+with two lighter cases routed away from it; v1.34 is the preceding published version and v1.23 remains an unpublished draft awaiting its own push). The full ledger of released versions, and the rule that a
 published version number is never reused, is in [`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.
 
