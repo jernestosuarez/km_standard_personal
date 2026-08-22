@@ -117,10 +117,30 @@ routing-keywords: "pilot, example"
 ---
 EOF
 
+# A tracked KM Standard checkout for the status card (dev-0003): a local git repo with an origin,
+# so the card can read a pinned version (STANDARD.md title line) and a real local-vs-origin state.
+std="$work/std"
+stdorigin="$work/std-origin.git"
+git init -q -b main "$std" \
+  && git -C "$std" config user.email t@example.test \
+  && git -C "$std" config user.name "Test" \
+  && printf '# Knowledge Management Standard: Hub Framework (v9.9)\n\nbody\n' > "$std/STANDARD.md" \
+  && git -C "$std" add STANDARD.md \
+  && git -C "$std" commit -q -m "v9.9" \
+  && git init -q --bare "$stdorigin" \
+  && git -C "$std" remote add origin "$stdorigin" \
+  && git -C "$std" push -q -u origin main
+if [ -d "$std/.git" ] && git -C "$std" rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1; then
+  pass "standard checkout fixture built (repo + origin, upstream set)"
+else
+  die "could not build the standard checkout fixture, failing closed"; exit 1
+fi
+
 cat > "$hub/cockpit/km-cockpit.json" <<EOF
 {
   "estate_root": "..",
   "queue_path": "QUEUE.md",
+  "standard_repo_path": "$std",
   "port": $PORT,
   "organization_name": "Example Organization",
   "state_dir": "$state",
@@ -409,6 +429,47 @@ if not m or not m.group(0).strip():
     sys.exit("desk done disclosure did not render, failing closed")
 if "desk-chase-the-vendor-sow" not in m.group(0):
     sys.exit("desk-chase-the-vendor-sow: the ticked item vanished from the done disclosure")
+PY
+
+# --- dev-0003: the KM Standard status card (pinned version and push/pin state) ---------------
+# A read-only Home card surfaces the tracked standard checkout: its pinned version (STANDARD.md
+# title line) and its push state against origin. Display only, never a control, and it never links
+# the checkout (which lives outside the estate root). Both directions on one live server: an
+# in-sync checkout reads "In sync with origin"; an extra local commit flips the SAME card to
+# "not yet pushed". Fails closed when the card does not render.
+python3 - "$PORT" <<'PY' && pass "standard status card renders the pinned version and reads as in sync with origin (dev-0003, direction 1)" \
+  || die "dev-0003 status card wrong for an in-sync checkout (see message above)"
+import sys, re, urllib.request
+home = urllib.request.urlopen(f"http://127.0.0.1:{sys.argv[1]}/").read().decode()
+m = re.search(r'<section class="card standard-card".*?</section>', home, re.S)
+if not m or not m.group(0).strip():
+    sys.exit("standard status card did not render, fixture extraction empty, failing closed")
+card = m.group(0)
+if "v9.9" not in card:
+    sys.exit("card does not show the pinned version from STANDARD.md's title line")
+if "In sync with origin" not in card:
+    sys.exit("an in-sync checkout is not reported as in sync")
+if "not yet pushed" in card:
+    sys.exit("an in-sync checkout wrongly reads as having unpushed commits")
+PY
+
+# Direction 2: a change in the checkout's push state changes the card. An extra LOCAL commit
+# (never pushed) must flip the same card from "in sync" to "commits not yet pushed".
+git -C "$std" commit -q --allow-empty -m "local drafting, unpushed"
+python3 - "$PORT" <<'PY' && pass "an unpushed local commit flips the same card to 'not yet pushed to origin' (dev-0003, direction 2)" \
+  || die "dev-0003 status card did not track a push-state change (see message above)"
+import sys, re, urllib.request
+home = urllib.request.urlopen(f"http://127.0.0.1:{sys.argv[1]}/").read().decode()
+m = re.search(r'<section class="card standard-card".*?</section>', home, re.S)
+if not m or not m.group(0).strip():
+    sys.exit("standard status card did not render after the commit, failing closed")
+card = m.group(0)
+if "v9.9" not in card:
+    sys.exit("the pinned version vanished after a push-state change")
+if "not yet pushed" not in card:
+    sys.exit("an unpushed local commit is not reported as awaiting push")
+if "In sync with origin" in card:
+    sys.exit("the card still reads 'in sync' after an unpushed local commit")
 PY
 
 # Root confinement holds in single-hub mode too.
