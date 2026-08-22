@@ -133,6 +133,35 @@ into the decision accounting), and excluded desk ids from every decision and exe
 section is brought up to that fix too. The reference deployment leads and the specification follows
 it here; every other implementation moves to meet this section.
 
+**The KM Standard status card: read-only visibility on the tracked standard checkout** (added
+v1.38). The Home surface may carry a status card for the KM Standard itself, showing the version the
+deployment is pinned to and the checkout's push state. Its data source is not the queue but a
+separate local read of the standard checkout the deployment tracks, configured by
+`standard_repo_path` in the manifest; when that key is absent the card does not render, so a
+deployment that keeps no local checkout shows nothing rather than a guess. Four obligations bind any
+implementation:
+
+- **Display only, never a pen.** The card renders state and grows no controls, exactly as §1
+  requires of every surface. A standard change that needs the owner's word is a governed tier-A/B
+  decision, never a button on this card.
+- **The pinned version comes from the checkout's `STANDARD.md` title line.** The version identifier
+  in the H1 title is the pinned version the card reports; when it cannot be read the card says so
+  rather than showing an empty or invented version.
+- **Push state is local git only, never a network call.** The card compares the local branch to its
+  configured upstream and reports one of: in sync, N commits not yet pushed (with the unpushed
+  subjects available), or origin carries commits not yet pulled. It reads local git alone, states
+  that the origin comparison is as of the last fetch, and never contacts the network, so the render
+  never depends on connectivity. A missing checkout or a failing git reports itself instead of
+  fabricating state.
+- **The card never links the checkout.** The standard checkout lives outside the estate root, and
+  every file-serving route confines resolved paths to that root (§4); this card widens no boundary
+  and emits no file link into the checkout.
+
+This card is owed to the reference deployment, whose owner asked to see the standard's own version
+and push state on the cockpit; this section is brought up to that implementation. The reference
+deployment leads and the specification follows it here, so a conformance pass never drags the lab
+back to the last release; every other implementation moves to meet this section.
+
 **Rotation semantics: a record is consumed exactly once.** `pull` and `questions` print pending
 records and move them to the processed file in one call. **Pull consumes for the whole estate:**
 whoever pulls owns immediate surfacing and execution of every record returned — never only the

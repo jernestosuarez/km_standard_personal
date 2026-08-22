@@ -23,7 +23,9 @@ mutating QUEUE.md; `reply` keyed to the same ref lands back on the action row).
 
 Deployment is CONFIGURATION ONLY: a manifest (km-cockpit.json beside this file, or
 $KM_COCKPIT_CONFIG) carries the estate root, queue path, hub-registry path, port, organization
-name, and state directory. The per-hub attribution map derives from the governed hub registry;
+name, state directory, and an optional standard-repo path (the tracked KM Standard checkout the
+Home status card reads for its pinned version and push state; omit it and the card does not
+render). The per-hub attribution map derives from the governed hub registry;
 with no registry configured the cockpit runs in SINGLE-HUB mode against a hub-local queue file —
 the same data contract, so minting a supervisor tier later is a manifest change, not a rebuild.
 
@@ -79,6 +81,10 @@ HUBS = {}            # hub key -> (display name, directory, keywords) — derive
 GOV_KEY = None       # the governance-tier pseudo-hub key (multi-hub mode only)
 FALLBACK_KEY = "estate"  # attribution fallback when no keyword matches
 INITIATED = set()    # hub directories with full governance (registry status `hub`)
+STANDARD_REPO = None  # tracked KM Standard checkout for the status card, or None if not configured
+
+# The pinned version reported by the status card: the vX.Y in the STANDARD.md H1 title line.
+STD_VERSION_RE = re.compile(r"^#\s+.*\((v\d[\w.]*)\b", re.M)
 
 CFG = Path.home() / ".config/km-cockpit"
 
@@ -159,7 +165,7 @@ def load_config(path=None):
     """Read the deployment manifest and derive every estate binding. Fail closed: a cockpit with
     no manifest serves nothing. Relative paths: estate_root resolves against the manifest's own
     directory; queue_path and hub_registry_path resolve against estate_root."""
-    global ROOT, SUP, QUEUE, BRIEFS, HUB_REGISTRY, PORT, ORG, CFG, NOTIFY
+    global ROOT, SUP, QUEUE, BRIEFS, HUB_REGISTRY, PORT, ORG, CFG, NOTIFY, STANDARD_REPO
     cfg_path = Path(path or os.environ.get("KM_COCKPIT_CONFIG")
                     or SCRIPT_DIR / "km-cockpit.json").resolve()
     if not cfg_path.exists():
@@ -175,6 +181,8 @@ def load_config(path=None):
     BRIEFS = SUP / "queue-briefs"
     reg = cfg.get("hub_registry_path", "")
     HUB_REGISTRY = (ROOT / reg).resolve() if reg else None
+    std = cfg.get("standard_repo_path", "")
+    STANDARD_REPO = (ROOT / std).resolve() if std else None
     PORT = int(cfg.get("port", 8485))
     ORG = str(cfg["organization_name"])
     NOTIFY = bool(cfg.get("notifications", True))
@@ -1848,6 +1856,99 @@ def desk_page():
     return page("KM Cockpit — Your desk", render_desk(), active="desk")
 
 
+def standard_info(repo=None):
+    """Read-only LOCAL state of the tracked KM Standard checkout for the Home status card.
+    Local git plumbing only, never a fetch and never any network call: the render must not depend
+    on connectivity, and the origin comparison is honestly 'as of the last fetch' (the mtime of
+    .git/FETCH_HEAD). A missing or unreadable checkout reports itself instead of fabricating state.
+    When no checkout is configured (STANDARD_REPO is None), the card does not render."""
+    repo = Path(repo) if repo else STANDARD_REPO
+    info = {"configured": True, "ok": False, "missing": False, "error": "",
+            "version": "", "ahead": 0, "behind": 0, "unpushed": [], "fetched": ""}
+    if repo is None:
+        info["configured"] = False
+        return info
+    if not repo.is_dir() or not (repo / ".git").exists():
+        info["missing"] = True
+        info["error"] = f"standard checkout not found at {repo}"
+        return info
+    try:  # pinned version: the H1 title line "(vX.Y)"
+        text = (repo / "STANDARD.md").read_text(encoding="utf-8", errors="replace")[:6000]
+        m = STD_VERSION_RE.search(text)
+        info["version"] = m.group(1) if m else ""
+    except OSError:
+        pass
+    try:  # push state: local branch versus its configured upstream, local git only
+        r = subprocess.run(["git", "-C", str(repo), "rev-list", "--left-right", "--count",
+                            "@{u}...HEAD"], capture_output=True, text=True, timeout=10)
+        if r.returncode == 0:
+            behind, ahead = (int(x) for x in r.stdout.split())
+            info["behind"], info["ahead"], info["ok"] = behind, ahead, True
+            if ahead:
+                lg = subprocess.run(["git", "-C", str(repo), "log", "@{u}..HEAD",
+                                     "--format=%h %s"], capture_output=True, text=True, timeout=10)
+                if lg.returncode == 0:
+                    info["unpushed"] = [s for s in lg.stdout.strip().splitlines() if s][:20]
+        else:
+            info["error"] = ((r.stderr.strip() or "git failed").splitlines()[0])[:160]
+    except Exception as e:
+        info["error"] = f"git unavailable: {e}"[:160]
+    try:
+        info["fetched"] = time.strftime("%Y-%m-%d %H:%M",
+                                        time.localtime((repo / ".git" / "FETCH_HEAD").stat().st_mtime))
+    except OSError:
+        pass
+    return info
+
+
+def render_standard_card(info):
+    """The KM Standard status card on Home: read-only visibility on the standard checkout the
+    deployment tracks, showing the version it is pinned to and the checkout's push state against
+    origin. Display only, never a control (a surface, not a pen, SPEC.md §1); a standard change
+    that needs the owner is a governed tier-A/B decision, never a button here. The checkout lives
+    OUTSIDE the estate root, so this card emits no file link into it: the file-serving routes'
+    root confinement (§4) is a boundary this card must not widen. Returns "" when no checkout is
+    configured, so a deployment that keeps none shows nothing rather than a guess."""
+    if not info.get("configured"):
+        return ""
+    lines = []
+    if info["missing"]:
+        lines.append('<div class="std-line">The tracked KM Standard checkout is <b>unavailable</b>, '
+                     'so nothing is shown rather than guessed.</div>'
+                     f'<div class="std-line std-path">{html.escape(info["error"])}</div>')
+    else:
+        if info["version"]:
+            lines.append(f'<div class="std-line"><b>Pinned to {html.escape(info["version"])}</b> '
+                         '<span class="std-muted">(from STANDARD.md&rsquo;s title line)</span></div>')
+        else:
+            lines.append('<div class="std-line">Pinned version not readable from '
+                         'STANDARD.md&rsquo;s title line.</div>')
+        if info["ok"]:
+            if info["ahead"]:
+                n = info["ahead"]
+                subjects = "".join(f"<li><code>{html.escape(s)}</code></li>"
+                                   for s in info["unpushed"])
+                lines.append(f'<div class="std-line"><b>{n} commit{"s" if n != 1 else ""} not yet '
+                             f'pushed to origin</b><details><summary>unpushed commit'
+                             f'{"s" if n != 1 else ""}</summary><ul>{subjects}</ul></details></div>')
+            else:
+                lines.append('<div class="std-line"><b>In sync with origin</b> '
+                             '<span class="std-muted">(as of the last fetch)</span></div>')
+            if info["behind"]:
+                lines.append(f'<div class="std-line">origin carries <b>{info["behind"]} '
+                             f'commit{"s" if info["behind"] != 1 else ""}</b> not yet pulled '
+                             'locally.</div>')
+        else:
+            lines.append('<div class="std-line">Local-vs-origin state unavailable: '
+                         f'{html.escape(info["error"] or "git failed")}.</div>')
+        fetched = info["fetched"]
+        lines.append('<div class="std-line std-muted">Origin state is as of the last local fetch'
+                     + (f": {html.escape(fetched)}" if fetched else " (no fetch recorded)")
+                     + '. This card reads local git only and never contacts the network.</div>')
+    return ('<section class="card standard-card" aria-labelledby="standard-heading">'
+            '<h2 id="standard-heading">KM Standard</h2>' + "".join(lines) + "</section>")
+
+
 def home():
     cards = parse_cards()
     st = state()
@@ -1893,6 +1994,7 @@ def home():
     rows = hub_portfolio(cards, st, read_jsonl(EXECUTIONS))
     attention = [row for row in rows if row["status"] != "Current"]
     supervisor_actions = render_supervisor_actions(parse_supervisor_actions())
+    standard_card = render_standard_card(standard_info())
     watchlist = render_watchlist(c_)
     portfolio = render_hub_portfolio(
         attention,
@@ -1902,6 +2004,7 @@ def home():
     )
     inner = (stats + urgent_rows
              + supervisor_actions
+             + standard_card
              + watchlist
              + portfolio
              )
