@@ -119,11 +119,19 @@ queue on every request. Four obligations bind any implementation:
   into a done disclosure that opens onto the items themselves, each with Undo.
 - **Owner-supplied desk text may not size a layout** (§8). Desk item text arrives from the queue and
   renders in a bounded track; its grids are registered in `OWNER_TEXT_GRIDS`.
+- **A desk tick never counts as a decision** (added v1.37). Because the tick rides the answers
+  channel, the decision accounting must exclude `desk-<slug>` ids from every set it feeds (pending,
+  queued, executed, recorded), or a cleared personal follow-up reads as a decision awaiting Supervisor
+  execution. The desk section derived above is the only place desk ids ever surface; they are the
+  owner's hand lane and count as neither a decision nor an execution anywhere else.
 
 This rule is owed to the reference deployment: its cockpit parsed the decision tiers only, so desk
 nudges added to the queue were invisible on the owner's surface, then it added the desk section and
-this contract is brought up to that implementation. The reference deployment leads and the
-specification follows it here; every other implementation moves to meet this section.
+this contract is brought up to that implementation. That deployment then found that a cleared
+follow-up still read as a decision awaiting execution (the tick rode the answers channel straight
+into the decision accounting), and excluded desk ids from every decision and execution set; this
+section is brought up to that fix too. The reference deployment leads and the specification follows
+it here; every other implementation moves to meet this section.
 
 **Rotation semantics: a record is consumed exactly once.** `pull` and `questions` print pending
 records and move them to the processed file in one call. **Pull consumes for the whole estate:**

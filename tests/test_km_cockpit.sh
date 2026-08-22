@@ -376,6 +376,41 @@ if 'data-desk-item="desk-send-the-retro-notes"' not in section:
     sys.exit("desk-send-the-retro-notes: an untouched item fell off the active desk")
 PY
 
+# --- dev-0013: a desk tick is never a decision awaiting execution ----------------------------
+# Desk ticks ride the ANSWERS channel, so state() must exclude DESK_PREFIX ids from the decision
+# accounting or a cleared personal follow-up reads as "answered, awaiting Supervisor execution".
+# desk-chase-the-vendor-sow was ticked above (a done record in the answer store); it must appear
+# in NONE of pending/queued/executed/recorded, yet STILL render in the desk done disclosure. Both
+# directions on the same live state, with a genuine decision (z9, awaiting execution) as the canary
+# that the exclusion did not swallow real work. Fails closed if /api/state carries no decision ids.
+python3 - "$PORT" <<'PY' && pass "desk tick counts in NO decision/execution set yet still renders in the done disclosure; a real decision still counts (dev-0013, both directions)" \
+  || die "dev-0013 desk-execution exclusion wrong in one direction (see message above)"
+import sys, re, json, urllib.request
+base = f"http://127.0.0.1:{sys.argv[1]}"
+s = json.load(urllib.request.urlopen(base + "/api/state"))
+# /api/state serves pending, queued, executed; a desk id in `recorded` would fold into `queued`
+# (state() folds recorded -> queued), so the queued assertion covers the recorded set too.
+sets = {k: (list(s[k]) if isinstance(s[k], list) else list(s[k].keys()))
+        for k in ("pending", "queued", "executed")}
+if not any(sets.values()):
+    sys.exit("state carried no decision ids in any set (fixture empty), failing closed")
+# Direction 1: no desk id may appear in any decision/execution set.
+for name, ids in sets.items():
+    leaked = [i for i in ids if str(i).startswith("desk-")]
+    if leaked:
+        sys.exit(f"{name}: desk ids counted as decisions/executions {leaked}: the dev-0013 defect")
+# Canary: the exclusion must not swallow a genuine decision awaiting execution.
+if "z9" not in sets["queued"]:
+    sys.exit("z9: a real decision awaiting execution stopped counting: the fix over-reached")
+# Direction 2: the ticked desk item still surfaces in the desk done disclosure.
+desk = urllib.request.urlopen(base + "/desk").read().decode()
+m = re.search(r'<details class="desk-done-disclosure">.*?</details>', desk, re.S)
+if not m or not m.group(0).strip():
+    sys.exit("desk done disclosure did not render, failing closed")
+if "desk-chase-the-vendor-sow" not in m.group(0):
+    sys.exit("desk-chase-the-vendor-sow: the ticked item vanished from the done disclosure")
+PY
+
 # Root confinement holds in single-hub mode too.
 code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/view?p=/etc/hosts")
 [ "$code" = "403" ] && pass "root confinement refuses an outside path" || die "confinement -> $code"

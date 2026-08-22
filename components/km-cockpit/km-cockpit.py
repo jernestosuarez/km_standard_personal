@@ -1392,18 +1392,30 @@ def state():
     # so the absence of a status can only mean "executed", never "unknown".
     executed, recorded = {}, {}
     for r in read_jsonl(EXECUTIONS):
+        # A desk tick is the owner's own follow-up (DESK_PREFIX), never a decision, so it must
+        # never land in executed/recorded; it is the same exclusion the desk lane applies
+        # elsewhere, extended to the execution ledger. Without it a cleared personal follow-up
+        # would fold (via recorded -> queued) into "awaiting Supervisor execution" (dev-0013).
+        if str(r.get("id", "")).startswith(DESK_PREFIX):
+            continue
         if r.get("status") == "recorded":
             recorded[r["id"]] = r
             executed.pop(r["id"], None)      # a later "recorded" reopens; discipline over presence
         else:
             executed[r["id"]] = r
             recorded.pop(r["id"], None)      # a real execution supersedes an earlier bookkeeping note
-    pending = [r["id"] for r in read_jsonl(ANSWERS) if r["id"] not in executed]
+    # Desk ticks ride the ANSWERS channel ({"id": "desk-<slug>", "answer": "done", ...}), so the
+    # decision accounting must skip them or a cleared personal follow-up reads as a decision
+    # awaiting execution. The desk lane is derived separately (render_desk/desk_ticks) and stays
+    # the only place desk ids surface (dev-0013).
+    pending = [r["id"] for r in read_jsonl(ANSWERS)
+               if r["id"] not in executed and not str(r["id"]).startswith(DESK_PREFIX)]
     # A pulled answer whose row is STILL open in QUEUE.md means the row was reopened/repaired
     # (sequencing rule: pull updates the queue immediately; ledger #7: such rows return to open).
     open_ids = {c["id"] for c in parse_cards()}
     queued = [r["id"] for r in read_jsonl(PROCESSED)
-              if r["id"] not in executed and r["id"] not in pending and r["id"] not in open_ids]
+              if r["id"] not in executed and r["id"] not in pending and r["id"] not in open_ids
+              and not str(r["id"]).startswith(DESK_PREFIX)]
     # A "recorded" row (answer captured, work owed) is the SAME owner-visible state as queued —
     # "answered, awaiting Supervisor execution" — so fold it in and let every renderer handle it.
     # It stays in `recorded` for provenance. An open row is excluded: an answered row still on the
