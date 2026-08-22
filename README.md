@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.37"/>
+  <img src="assets/badges/version.svg" alt="standard v1.38"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 2 adopted"/>
   <img src="assets/badges/license.svg" alt="license: free to adopt"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,9 +28,9 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.37** (2026-08-22, a desk tick is never a decision awaiting execution; the
-cockpit's decision accounting excludes cleared personal follow-ups so they no longer read as work
-awaiting the Supervisor; v1.36 is the preceding published version and v1.23 remains an unpublished draft awaiting its own push). The full ledger of released versions, and the rule that a
+**Current version: v1.38** (2026-08-22, the KM Standard status card; a read-only Home card surfaces
+the standard checkout the deployment tracks, showing the version it is pinned to and its push state
+against origin; v1.37 is the preceding published version and v1.23 remains an unpublished draft awaiting its own push). The full ledger of released versions, and the rule that a
 published version number is never reused, is in [`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.
 
