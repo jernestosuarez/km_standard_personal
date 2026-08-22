@@ -330,8 +330,23 @@ echo
 
 echo "[ DEPLOYMENT ]"
 deployment_file="$HUB/km-deployment.md"
+merged_tombstone="$HUB/MERGED-INTO.md"
 deployment_errors=0
-if [ ! -f "$deployment_file" ]; then
+# Hub merge (v1.35, drafted and unpublished). An absorbed hub is tombstoned, never deleted: its
+# directory and git history stay, its registry row keeps a `merged` status with a `merged-into`
+# column, and its admission rule becomes a refusal. A tombstoned hub is EXPECTED not to scan green,
+# because a green scan would assert the directory is still a live hub. So when MERGED-INTO.md is
+# present this block reports a TOMBSTONE in place of the interview and keyword checks a live hub
+# runs. This is a tombstone, not a quarantine: the estate scan quarantines a hub-shaped directory
+# ABSENT from the registry, while a merged hub keeps its registry row and reports a tombstone here.
+if [ -f "$merged_tombstone" ]; then
+  merged_into=$(fm_field "$merged_tombstone" "merged-into")
+  echo "  TOMBSTONE: this hub is merged into ${merged_into:-the survivor named in MERGED-INTO.md}; nothing here is current"
+  echo "    A merged hub is tombstoned, never deleted. Its content lives in the survivor, its"
+  echo "    admission rule is a refusal, and its registry row carries status merged. This scan is"
+  echo "    expected not to go green, and this is a tombstone, not a quarantine."
+  deployment_errors=$((deployment_errors + 1))
+elif [ ! -f "$deployment_file" ]; then
   echo "  ! MISSING DEPLOYMENT BINDING: km-deployment.md"
   deployment_errors=$((deployment_errors + 1))
 elif ! printf '%s\n' "$readable_docs" | grep -qxF "$deployment_file"; then

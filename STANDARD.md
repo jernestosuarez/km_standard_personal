@@ -18,9 +18,10 @@ instead surfaces as awaiting Supervisor execution). The preceding published vers
 both summon the owner for a decision and say nothing is ready for them yet). The version before that
 is **v1.32** (2026-08-20, the harness projection — the hub definition in `km-deployment.md` is the
 home of record for the facts the agent-instruction files restate, the copies live in bounded marked
-regions, and drift is reported and never repaired). **v1.23** (stations, compartments, and the
-resolution plane) **remains drafted and unpublished**: its sections are marked with their version and
-bind nothing until its own push.
+regions, and drift is reported and never repaired). **v1.35** (hub merge, absorb-and-tombstone
+under a re-run interview, with two lighter cases routed away from it) and **v1.23** (stations,
+compartments, and the resolution plane) **remain drafted and unpublished**: their sections are
+marked with their version and bind nothing until their own push.
 Deployment pins resolve the version they pinned until their Supervisor re-pins.
 
 **Status:** Active standard. Framework-agnostic, works with Claude, GPT, Gemini, or any other LLM agent, and equally well with no agent at all (plain human use).
@@ -2510,12 +2511,19 @@ material, not yet evidence of anything.
 ### `hub-registry.md`: the routing map
 
 One row per initiative folder. Routing keywords are harvested from each hub's `CLAUDE.md` scope guard
-and `07_glossary.md` tag vocabulary. Two status values:
+and `07_glossary.md` tag vocabulary. Status values:
 
 | Status | Meaning | Can receive dispatched proposals? |
 |---|---|---|
 | `hub` | An initiated hub with full governance (`changes/`, manifest, scan) | Yes |
 | `repo` | A plain folder for a real initiative, not yet a hub | No, facts park in `_unrouted/` |
+| `merged` | A tombstoned hub absorbed into another; carries a `merged-into` column naming the survivor (added in v1.35, drafted and unpublished) | No, the row is a tombstone; content lives in the survivor |
+
+The `merged-into` column is empty for `hub` and `repo` rows and names the survivor folder for a
+`merged` row. A `merged` row **stays in the registry** rather than being deleted: a hub-shaped
+directory absent from the registry is quarantined by the estate scan, and a tombstoned hub must
+report a tombstone, not a quarantine (see "Hub merge: absorb-and-tombstone" below). A deployment that
+never merges carries the extra column empty and is otherwise unaffected.
 
 ### `relationships.md`: the edge graph
 
@@ -2596,8 +2604,9 @@ standard defines a minimum, and everything else is adopted against a named condi
 
 A directory at the workspace root holding exactly four things:
 
-1. **`hub-registry.md`** — one row per hub: folder, status (`hub`/`repo`), owner, routing
-   keywords (each hub's row is written by its own `/km-init` interview);
+1. **`hub-registry.md`** — one row per hub: folder, status (`hub`/`repo`, and `merged` with a
+   `merged-into` column where a hub has been absorbed, v1.35, drafted and unpublished), owner,
+   routing keywords (each hub's row is written by its own `/km-init` interview);
 2. **`QUEUE.md`** — the estate's owner queue (the mechanism above, at its smallest);
 3. **`_inbox/`** — the drop zone; inbox-first applies to the supervisor from day one;
 4. **its own git history** — `git init` at minting; auditability without bureaucracy, as above.
@@ -2670,6 +2679,178 @@ the cross-cutting source and review the routing table before any live dispatch.
 - It does not auto-create hubs or auto-confirm edges, both require an explicit owner decision.
 - It does not replace the per-hub gather process; it *invokes the same extraction discipline* across
   hubs and routes the results. Inside a single hub, the ordinary gather process remains the right tool.
+
+---
+
+### Hub merge: absorb-and-tombstone (added in v1.35, drafted and unpublished)
+
+> **Drafted and unpublished (v1.35).** This section is designed in
+> [`rfcs/RFC-004`](rfcs/RFC-004-harness-projection-hub-merge-multi-tenancy.md) Part II and binds
+> nothing until its own owner push. It answers the second of the three gaps a deployment owner named
+> (2026-08-18): there was no mechanism for combining two hubs when an engagement turns out to be one
+> thing rather than two, or when a hub was stood up too early, and the only paths were leaving both
+> or hand-moving content, neither of which preserves provenance. Every primitive it needs already
+> exists in the standard; this section is the first to combine them and name the act. The mechanism
+> is drafted from design and not yet proven by a run, the same status the adoption mode carried at
+> v1.28.
+
+#### Three cases wear one word, and only one is a merge
+
+The first duty of the design is to refuse two of the three cases people call a merge. A merge
+process that never returns "these two should stay two" is a rubber stamp, exactly as an adoption
+pass that never returns "this should not become a hub" is not being run honestly.
+
+| Case | What it actually is | Route |
+|---|---|---|
+| **Two hubs overlap** (they share sources, entities, or facts) | A routing question | **Not a merge.** Typed references and the single-home-of-record rule already solve it, and `relationships.md` records the edge. Merging on overlap destroys two working admission rules to fix a problem references already fix. |
+| **A hub was stood up too early** (little content, no answered competency questions) | The value gate arriving late | **Withdrawal**, below. Cheap, and it stays cheap. |
+| **The engagement turned out to be one thing** (both hubs have real content, history, and settled facts) | A merge | **Absorb-and-tombstone**, below. |
+
+#### Withdrawal: the early-hub case
+
+A hub with no answered competency questions never earned its existence, so the act is the value gate
+arriving late rather than a structural merge.
+
+1. Its content re-homes as **ordinary intake** into the receiving hub: inbox, date gate,
+   reconciliation pre-check, proposal, approval, commit. At this volume the standard governance flow
+   is the right size and no new mechanism is needed.
+2. The receiving hub's routing keywords **absorb** the withdrawn hub's, or sources that were reaching
+   the withdrawn hub stop reaching anything. This is the one step a hand-move reliably forgets.
+3. The directory is **tombstoned** exactly as in absorb-and-tombstone property 5. **Never deleted.**
+4. **No re-interview** of the receiving hub, unless its admission rule actually changes.
+
+#### Absorb-and-tombstone: the real merge
+
+Six properties. Directional throughout, except where existing doctrine determines the answer, which
+is noted.
+
+**1. Direction is declared, and a third hub is never created.** One hub is the **survivor**; the
+other is **absorbed**. Merging two hubs into a newly created third orphans both histories and is
+forbidden: it converts an act that preserves provenance into one that discards it wholesale, which is
+the failure the owner named. The survivor is chosen on **whose competency questions survive**, never
+on size, age, or content volume: the questions are the only measure of a hub's worth in the standard,
+and a merge is precisely the moment worth is re-decided. The owner decides; both hub definitions
+record the direction and the authority.
+
+**2. The interview runs again, on the survivor.** A merge changes what the hub *is*, so it changes
+the hub definition, so the initiation interview runs again and re-stamps `initiation-interview`. This
+follows from the existing rule that a hub's definition is produced and never assumed, applied to the
+one event that most changes it. The union of the two hubs' answers is the **pre-fill**, presented
+with its source, and never the answer (the pre-fill rule of v1.28 applies unchanged, and hardest
+here):
+
+- **The union of two admission rules is almost never the right admission rule.** If it were, the two
+  hubs would not have needed merging. A merged hub whose scope guard is the literal concatenation of
+  the two originals is the tell that the merge was bookkeeping rather than a decision.
+- **Routing keywords are the union**, or sources stop arriving. This is the mechanical half, and the
+  half hand-merges lose.
+- **The sensitivity posture is the stricter of the two, and is elicited, never computed.** Two hubs
+  merging usually had two audiences.
+
+Because it is an initiation act producing a hub definition, merge is a **mode of the initiation
+skill**, not a separate skill. This is v1.28's own reasoning for the adoption mode: two entry
+conditions producing one hub definition would otherwise drift into two definitions of a hub.
+
+**3. Content crosses at the granularity its provenance already has.** A hand-move destroys
+provenance, and re-inboxing every file would make the mechanism unusable. The split is by what the
+artifact already carries:
+
+| Artifact class | How it crosses |
+|---|---|
+| **Entity notes** (decisions, risks, stakeholders, milestones, partners, relationships, claims, corrections) | **Re-homed, not re-digested.** They already carry their own frontmatter and provenance. The merge adds a `movedFrom:` lineage field naming the absorbed hub and the original path, and changes nothing else. One proposal per folder class, not per note. |
+| **Sources and their digests** | Moved with their `sources/dates-register.md` rows and `transcript-index.md` entries **carried over verbatim**. A source's recorded date is evidence and is never re-derived by the merge; re-deriving it is how a merge silently re-dates a hub's whole history. |
+| **Reconciliation topic files** | **Merged row by row, through reconciliation itself** (property 4). |
+| **Narrative rollups (`00`-`07`)** | **Never concatenated.** Two `01_project-brief.md` files cannot both be `lifecycle: active`; the currency rule already says one current document per purpose and reports the collision rather than picking a winner. The survivor's numbered docs are amended by ordinary proposals; the absorbed hub's move to the survivor's `archive/`, marked `superseded` with `superseded-by:` pointing at the counterpart. |
+| **`working-docs/`, `shareable/`** | Moved with lifecycle markers intact; `publication-log.md` rows carry over, because who received what is not re-derivable. |
+| **The absorbed hub's `corrections/`** | Crosses **in full.** A correction is a rule about how the organization works and it survives the hub that learned it: this is the promotion ladder pointing sideways rather than up. A duplicate of a rule the survivor already holds is retired with a pointer, never deleted. |
+
+For volume, the merge uses the bulk-corpus intake shape the standard already records as guidance
+(catalogue, boundary interview, domain split, per-domain extract): one proposal per domain rather
+than one per file. Governance is not weakened, every proposal is still approved, applied, logged, and
+committed under the survivor's own flow.
+
+**4. Reconciliation is where the merge actually happens.** Two hubs that were secretly one engagement
+hold contradicting settled facts. That is not a side effect of merging; **it is the merge**, and the
+reconciliation layer is the mechanism the standard already ships for it. Each absorbed settled row is
+checked against the survivor's ledger. Agreement is recorded; a contradiction opens a **dispute
+file**, adjudicated by the owner through the ordinary three options, and **every adjudication captures
+a `corrections/` note** before the dispute file is deleted, because the verdict without the reasoning
+is a loss the standard already names. **A merge that raises zero disputes should be suspected of
+having skipped the check**, never celebrated: two hubs describing one engagement with no
+contradiction between them is possible and uncommon, and a clean run is exactly what an unrun check
+also looks like.
+
+**5. The absorbed hub is tombstoned, never deleted.** Determined by existing doctrine rather than
+invented here: an accepted record is superseded, not rewritten; retired notes are kept; a falsified
+assertion is retracted in place. Applied to a whole hub:
+
+- The **directory stays** and its **git history stays.** Every external pointer into it still
+  resolves, which is the provenance property hand-moving fails to preserve.
+- It gains a **`MERGED-INTO.md` tombstone**: the survivor, the date, the owner's authority, the
+  survivor's applying commits, and a plain statement that nothing in the directory is current.
+- Its **admission rule becomes a refusal** ("this hub is merged into X; admit nothing"), so a routing
+  pass or an agent that still reaches it is told, rather than quietly filing into a dead hub.
+- Its **agent definition is retired** and the agent registry regenerated.
+- Its **registry row stays, with a new status.** The registry gains `merged` and a `merged-into`
+  column, **the one schema change this section requires.** The row must stay, because a hub-shaped
+  directory absent from the registry is quarantined by the estate scan, and a tombstoned hub should
+  report a **tombstone, not a quarantine.**
+- Its **scan is expected not to go green**, and this is correct rather than a defect to fix: the
+  directory is no longer a live hub, and a green scan would assert that it is. `hub-scan.sh`'s
+  `[ DEPLOYMENT ]` block detects `MERGED-INTO.md` and reports a `TOMBSTONE` finding naming the
+  survivor, in place of the interview and keyword checks a live hub runs.
+
+**6. Estate references are re-pointed by the Supervisor, and re-pointing keeps its history.**
+Relationship edges naming the absorbed hub, semantic-layer references, open queue rows, escalations,
+unrouted backlog entries, and any decision-surface hub map are rewritten by the Supervisor, because
+cross-hub state is estate state and no hub owns it. Per the retract-in-place rule, an edge is
+**re-pointed with its history kept**, never deleted. Merge is therefore **Supervisor-mediated under
+owner authority** and is not available to a hub agent: it is cross-hub by construction, which is
+escalation-class work.
+
+#### What this must NOT do
+
+1. **It must not delete the absorbed hub or rewrite its history.** The one lawful history redaction
+   the standard contemplates exists for erasure obligations, and a merge is not one.
+2. **It must not concatenate narrative documents.** Two actives for one purpose is a collision to
+   report, and the owner supersedes one.
+3. **It must not auto-resolve contradictions.** Detection automates; adjudication is the owner's.
+4. **It must not skip the interview** on the strength of already knowing what both hubs are. The
+   union is a pre-fill, never an answer.
+5. **It must not advertise reversibility.** Unmerging is not a mechanism, and this design does not
+   pretend otherwise. Once content has crossed into the survivor's governance and been adjudicated,
+   the two hubs are not recoverable as two by running anything backwards; what is recoverable is
+   every individual artifact, from git, which is a different and lesser promise. **The reversible act
+   is the decision not to merge yet**, and the design says so where an operator will read it, because
+   a mechanism that implies reversibility invites being run on a hunch.
+6. **It must not run across a compartment boundary.** See the open limit below.
+
+#### The open limit: a compartment-crossing guard, written but inert
+
+**A merge across differing compartment declarations is refused by this design, and the guard has
+nothing to bind to yet.** Merging a hub declared never-public into one declared counterparty-facing
+would declassify everything in it as a side effect of a structural act; that is a disclosure decision
+and must be answered as one, before and separately. The vocabulary that would express the guard
+(`station`, `exposure`, and the compartment model) is drafted and unpublished at v1.23, so **the
+guard as written binds nothing until v1.23 publishes.** This is a real limit on this section, not a
+reason to defer it: the other five properties stand on published doctrine, and the guard becomes
+checkable the day the vocabulary does.
+
+#### The reference deployment leads this mechanism
+
+This section is drafted from design and has not yet been performed by a running deployment. When the
+reference deployment first performs a merge it does so as the lab in which the mechanism is proven,
+and the standard is brought up to what that deployment learns rather than the deployment being
+dragged back to this drafted text. A conformance pass that finds the reference deployment ahead of
+this section reports the gap and harvests it; it never reverts the deployment to the last release.
+
+#### What it costs a deployment to adopt
+
+Almost nothing until it is used: one new status value and one column in the hub registry, one mode on
+the initiation skill, one section in the standard. Hubs gain nothing and change nothing. A deployment
+that never merges pays the registry schema change and no more. The cost lands entirely on the merge
+itself, and it is real: an interview, a domain-split intake, and a reconciliation pass whose size is
+the number of contradictions between the two ledgers. That is the correct place for the cost to land.
 
 ---
 
@@ -2938,10 +3119,13 @@ adopts it.
 4. **Estate events force a Q&A (lifecycle gates).** Some events may not proceed silently; each
    fires a structured owner interview: **hub initiation** (a hub-shaped directory not in the
    hub registry is quarantined — never scanned green — until the initiation interview runs;
-   see `/km-init`); a **new outbound surface** (sensitivity interview and lint coverage before
-   first publish); **standard adoption or version change** (nothing publishes without the
-   owner's push); a **new counterpart class** (identity and data-protection interview before
-   minting).
+   see `/km-init`); a **hub merge** (the initiation interview re-runs on the survivor and the
+   absorbed hub is tombstoned, its registry row kept with status `merged` so it reports a
+   tombstone rather than a quarantine; Supervisor-mediated under owner authority, v1.35,
+   drafted and unpublished; see "Hub merge: absorb-and-tombstone"); a **new outbound surface**
+   (sensitivity interview and lint coverage before first publish); **standard adoption or
+   version change** (nothing publishes without the owner's push); a **new counterpart class**
+   (identity and data-protection interview before minting).
 5. **Owner-facing output has a fixed, short shape.** Every owner-facing turn ends, in order:
    **NEEDS YOU** (the linked rows or cards, bounded, first — or "nothing needs you"), **DONE**
    (one line per completed thing, links inline), **FYI** (optional, three lines maximum), and
@@ -3495,6 +3679,7 @@ happened once (see the v1.9 row) and the ledger exists so it does not happen twi
 | v1.32 | 2026-08-20 | Drafted and published 2026-08-20 (owner push). The harness projection: the hub definition is the home of record for the facts the instruction files restate. Answers the first of the three gaps a deployment owner named (2026-08-18), designed in `rfcs/RFC-004`, and unblocked by his ruling that `km-deployment.md` is the home and `CLAUDE.md`/`AGENTS.md` carry a projected copy with drift REPORTED and never repaired. **The defect, verified in a deployment:** the initiation interview substitutes one set of elicited answers into both the hub manifest and the two instruction files, once, and nothing keeps them equal — in one hub an owner widened the admission rule in the instruction file only, so every registry-reading surface went on attributing sources by a rule he had already superseded; in another the hub definition carried exclusions the instruction file lacked. The standard was itself confused about which file was the home: §"Thin definitions" said `CLAUDE.md` while the interview, the quarantine gate and every registry-reading surface used `km-deployment.md`. That sentence is **corrected**. **The upper bound, and the reason nothing here generates a file whole:** a retrofit wave across seven hubs found each carrying four to eight sections with no template counterpart at all, including owner-authored text existing nowhere else, so the template is not the superset and a generator that assumed it was would delete the deployment's own judgement. (1) **A closed set of ten fact classes** homed in `km-deployment.md`, marked with `<!-- km:fact -->`; a projected copy lives in an instruction file inside `<!-- km:project <class> -->`, and **every unmarked line is owner-authored by definition** and is never read, compared or touched. The hub owner's name is deliberately NOT projected: it appears nine times per file, inline inside sentences, and bounding it would mean nine markers around sentence fragments. (2) **`[ PROJECTION ]` in `hub-scan.sh`** — `DRIFT`, `DANGLING`, `UNBALANCED MARKERS`, `MISPLACED SOURCE` and `HARNESS MIRROR DIVERGENCE` as errors, `UNPROJECTED TEXT` beside a projected fact as an advisory, and a **coverage line on every run** naming classes declared, regions found, files read, regions compared, and classes not projected. Text is compared as words, so reflowing a region is not drift and rewording it is. The block **refuses** rather than passes when the home of record is missing or unreadable. (3) **Nothing repairs drift**, and the report prints both texts so the owner can decide from the report: the verified case proves either side can hold the newer truth, and a projector that made the instruction file match would have reverted a recorded ruling and reported success. (4) **The counter-argument is carried into the design rather than dropped.** The owner wrote his widening in the instruction file because that is the file he reads, and a design that fights where its owner writes loses quietly. So: his text is never destroyed, the marker names the home of record on the line above it where he is typing, the catch is at the next session start, there is deliberately **no `Stop`-hook gate** (it fires while he is still mid-edit, and interrupting an owner halfway through writing a rule is the same failure as overwriting it), and text written *between* regions — where an owner amending a fact actually writes — is named by file and line as an advisory rather than an error, because a gate that reddens a hub for a legitimate sentence gets switched off and takes `DRIFT` with it. (5) **Skills are compared, not declared.** The two runtime trees a hub installs hold two copies of every procedure and drift as facts do (demonstrated: mirror directories left un-backfilled across five hubs); `[ PROJECTION ]` compares them slug by slug and tolerates exactly one designed difference, each tree naming its own harness instruction file. The declared-skill-set list proposed in the RFC was **not taken**: its evidence is fully covered by comparing the installed trees, and the alternative added a hand-maintained manifest, which is the artifact class that produced the blind spot this version is narrowing. **Both directions proved**, 16 cases (`tests/test_hub_scan_canaries.sh` 14a–14m): each finding fires on the class it models, the block refuses on evidence it cannot read, and it does **not** fire on a rewrapped region, a region's own label line, the one designed per-runtime skill difference, or a single-runtime deployment. The suite was re-run against a deliberately neutered comparison and exactly the two drift cases failed, so it is known to detect a dead block. Two over-match cases were found by the instrument itself on its first run: byte-comparing the shipped skill mirrors reported a legitimate per-runtime difference as divergence, and a naive interleaved-text rule would have reported every region's own label line, giving each conformant hub three permanent advisories on day one. **Stated limits:** a fact living only in an instruction file, in no region and no source, cannot be compared with anything — the same shape as the manifest defect the git-backed integrity check could never catch — so the unprojected set is reported as a number and a list, the evidence base can represent absence directly, and text beside a projected fact is named; what remains is that **the declared list cannot be proven complete**, which is a judgement reviewed at the hub's cadence and the same limit already stated for routing keywords. A changed hub owner is reconciled by hand. **Trade-offs recorded:** (a) the shipped template projects three of ten classes and that is the healthy state, not a backlog — every projection is a second copy, so the coverage line reports what is *not* projected without implying it should be; (b) `UNPROJECTED TEXT` is advisory by choice, which means a fact written beside a region is named but does not gate; (c) the mirror comparison normalises exactly one noun and would report any future legitimate per-runtime difference as drift, which is deliberate — the maintainer normalises it or accepts it, and the check never widens on its own; (d) a hub adopts this by installing the current template scan and wrapping the facts its instruction files already restate, three regions per file, reconciling whatever divergence that surfaces; a deployment that wraps nothing stays green and its coverage line says so. |
 | v1.33 | 2026-08-20 | Drafted and published 2026-08-21 (owner push). The neutral preparing badge. Resolves deviation **dev-0007**, harvested from the reference deployment, where the owner's screenshot on 2026-08-19 caught one gated card carrying the red "needs you" tier badge and the "being prepared, nothing for you to do yet" flag at the same glance, a card that both summoned him and told him there was nothing for him yet. A gated or incomplete decision card now renders a neutral grey "Preparing" badge in its glance and never its actionable tier badge, so a single glance can never both summon the owner for a decision and say nothing is ready for him yet; the tier is named only in the badge's title tooltip. The actionable tiers are unchanged, and the dismissal machinery of a separate deviation was deliberately kept out of this harvest. `components/km-cockpit/SPEC.md` §4 carries the clause and names the reference deployment as the source the specification follows here, so a conformance pass never drags the lab back to the last release. A rendered-surface case in `tests/test_km_cockpit.sh` proves both directions: a gated tier-A card's glance carries the neutral "Preparing" badge and not the tier-A label "Needs you", and an ungated tier-A card still renders "Needs you"; the fixture extraction fails closed when it is empty. |
 | v1.34 | 2026-08-21 | Drafted and published 2026-08-21 (owner push). A bookkeeping note is not work done. Resolves deviation **dev-0009**, harvested from the reference deployment, where the owner saw executed rows still logged and hubs shown as awaiting execution when the work was done ("very low discipline"): the unattended answer pickup had written execution records that were captures of his answer, not the work being done, and the cockpit counted any execution record as done, so undone rows read as executed and the executed tally was inflated. An execution record now carries an optional `status`. Absent means a genuine execution, so every record written before this field existed stays real and unchanged; `status: "recorded"` means the answer was captured but the work is still owed. `state()` splits the two, so only genuine executions count as executed, and a `recorded` capture folds into the same owner-visible state as a queued answer (answered, awaiting Supervisor execution), with a later `recorded` for an id reopening it, discipline over the mere presence of a record. The "answers executed" tile counts only genuine executions and the "awaiting supervisor execution" surface now includes captured-but-owed ids, so the two counts stay coherent. The `exec` CLI takes an optional status so a pickup can write a capture that never reads as done. The dismissal and desk machinery of a separate deviation was deliberately kept out of this harvest, and this component ships no execution-ledger scan, so the reference deployment's "not-executed-but-no-status is a ledger lie" scan check has no home here and was not built. The same rule is stated in `components/km-cockpit/SPEC.md` §3, which names the reference deployment as the source the specification follows here, so a conformance pass never drags the lab back to the last release. A rendered-surface case in `tests/test_km_cockpit.sh` proves both directions on one live state: a `recorded` capture does not count as executed and does surface as awaiting execution, while a status-absent record still counts as executed; the check fails closed when the state is empty. |
+| v1.35 | 2026-08-22 | **DRAFTED AND UNPUBLISHED.** Hub merge, implementing `rfcs/RFC-004` Part II. Answers the second of the three gaps a deployment owner named (2026-08-18): there was no mechanism for combining two hubs when an engagement turns out to be one thing rather than two, or when a hub was stood up too early, and the only paths were leaving both or hand-moving content, neither of which preserves provenance. Every primitive already existed in the standard; this version is the first to combine them and name the act. **Three cases wear one word and only one is a merge:** two hubs that overlap are a routing question already solved by typed references and single-home-of-record (not a merge); a hub stood up too early is a **withdrawal** (its content re-homes as ordinary intake, the receiving hub absorbs its routing keywords, the directory is tombstoned, and there is no re-interview unless the admission rule changes); an engagement that was really one thing is the real merge, **absorb-and-tombstone**. Refusing the two lighter cases is the design's first duty: a merge process that never returns "these two should stay two" is a rubber stamp. **Absorb-and-tombstone, six properties.** (1) Direction is declared, the survivor chosen on whose competency questions survive, and a third hub is never created. (2) The initiation interview runs again on the survivor and re-stamps `initiation-interview`; the union of the two hubs' answers is a pre-fill and never the answer (the union of two admission rules is almost never the right one, routing keywords are the union or sources stop arriving, sensitivity is the stricter of the two and is elicited); merge is a **mode of the initiation skill**, not a separate skill, by v1.28's own reasoning. (3) Content crosses at the granularity its provenance already has: entity notes re-homed with a `movedFrom:` field and not re-digested, sources with their `dates-register.md` rows and `transcript-index.md` entries carried over verbatim, reconciliation topics merged row by row, narrative rollups never concatenated (the absorbed hub's move to the survivor's `archive/` marked `superseded`), `corrections/` crossing in full. (4) Reconciliation is where the merge actually happens: each absorbed settled row is checked against the survivor's ledger, a contradiction opens a dispute file adjudicated by the owner, every adjudication captures a `corrections/` note, and a merge that raises zero disputes is suspect rather than clean. (5) The absorbed hub is tombstoned, never deleted: directory and git history stay, a `MERGED-INTO.md` tombstone names the survivor, the admission rule becomes a refusal, the agent is retired, and the **registry row stays with a new `merged` status and a `merged-into` column** so the estate scan reports a tombstone rather than a quarantine; the hub's own scan is expected not to go green, and `[ DEPLOYMENT ]` in `hub-scan.sh` reports a `TOMBSTONE` finding naming the survivor in place of the interview and keyword checks a live hub runs. (6) Estate references are re-pointed by the Supervisor with history kept; merge is Supervisor-mediated under owner authority and not available to a hub agent. **The one schema change** is the registry's `merged` status and `merged-into` column; a deployment that never merges carries the extra column empty. **What this must NOT do:** delete the absorbed hub or rewrite its history, concatenate narrative documents, auto-resolve contradictions, skip the interview, advertise reversibility (the reversible act is the decision not to merge yet), or run across a compartment boundary. **The open limit, stated:** a merge across differing compartment declarations is refused, but the vocabulary that expresses the guard (`station`, `exposure`, the compartment model) is drafted and unpublished at v1.23, so the guard as written binds nothing until v1.23 publishes; the other five properties stand on published doctrine. **Surfaces changed:** a new "Hub merge: absorb-and-tombstone" section under the Supervisor Tier; the hub registry schema (`skills/km-supervise/_KM_Supervisor_template/hub-registry.md` and the two registry tables in `STANDARD.md`); `hub-scan.sh`'s `[ DEPLOYMENT ]` tombstone detection; a merge mode and a withdrawal mode on the initiation skill (`skills/km-init/SKILL.md`). **Both directions proved** (`tests/test_hub_merge.sh`): a tombstoned hub (a `MERGED-INTO.md` present, a valid live binding otherwise) reports `TOMBSTONE` naming the survivor and does not report the `HUB NOT INITIATED` quarantine and does not go green, while the same hub with the tombstone removed scans green and asserts it is a live hub (the defect the detection exists to catch); an ordinary uninterviewed hub-shaped directory with no tombstone reports the quarantine and not a tombstone, so the two classifications are distinguished; the negative direction was confirmed against a scan with tombstone detection removed and then restored; the fixture extraction fails closed when it is empty; and the skill-mode conformance cases prove the initiation skill declares the merge mode reruns the interview with the union as pre-fill and the withdrawal mode does not re-interview. **Stated limits:** the interview-rerun and union-pre-fill behaviours are prose in the initiation skill and are proved only at the level of the skill's declared text, the same status the v1.28 adoption mode carried, so the skill path itself is drafted from design and not yet proven by a run; and the estate-scan quarantine-versus-tombstone classification is registry-membership convention, mechanised here at the per-hub scan through the `MERGED-INTO.md` tombstone. The reference deployment leads this mechanism: when it first performs a merge the standard is brought up to what it learns, and a conformance pass never reverts it to this drafted text. |
 
 ---
 

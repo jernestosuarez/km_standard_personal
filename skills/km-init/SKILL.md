@@ -8,12 +8,14 @@ description: Use when standing up a new knowledge hub, or adopting a directory t
 You have been invoked as `/km-init`. Produce a governed knowledge hub's **definition** by running
 the purpose interview, and stand up whatever the directory does not already have.
 
-## Two entry conditions, one interview
+## Entry conditions, one interview
 
 | Mode | Entry condition | What it writes |
 |---|---|---|
 | **`/km-init <path>`** (create) | No hub exists at the path | The full scaffold from `template/`, the deployment binding, the agent definition, the registry row |
 | **`/km-init --adopt <path>`** (adopt) | A directory already exists and is not an initiated hub | The hub definition, the scope guard, the registry row, and **only** the scaffold files that are absent |
+| **`/km-init --merge <absorbed> <survivor>`** (merge) | Two initiated hubs are one engagement | Re-runs the interview on the survivor from the union pre-fill, re-homes the absorbed hub's content, and tombstones the absorbed hub. Supervisor-mediated. See "Merge and withdrawal modes" below. (v1.35, drafted and unpublished) |
+| **`/km-init --withdraw <early> <receiving>`** (withdrawal) | A hub was stood up too early | Re-homes the early hub's content as ordinary intake, absorbs its routing keywords into the receiving hub, and tombstones it. No re-interview unless the admission rule changes. Supervisor-mediated. See "Merge and withdrawal modes" below. (v1.35, drafted and unpublished) |
 
 The **adoption mode** exists because a control that makes existing artifacts non-conformant must
 ship with the act that makes them conformant (STANDARD.md → "A gate needs a route back"). A hub
@@ -33,8 +35,97 @@ the missing interview record) and, where a supervisor tier exists, the estate's 
 the hub registry). **One interview clears both.** Clearing one and not the other leaves the hub
 non-conformant with a check nobody was watching, so never stop halfway.
 
-Run Steps 0, 0.5 and 1 in **both** modes. In adopt mode, skip Step 3 (directory creation) and Step
-4's file copying except for genuinely missing files, and follow Step 4.7 for what to write.
+Run Steps 0, 0.5 and 1 in **both** the create and adopt modes. In adopt mode, skip Step 3 (directory
+creation) and Step 4's file copying except for genuinely missing files, and follow Step 4.7 for what
+to write.
+
+---
+
+## Merge and withdrawal modes (v1.35, drafted and unpublished)
+
+> **Drafted and unpublished (v1.35).** These modes are designed in
+> `../../STANDARD.md` → "Hub merge: absorb-and-tombstone" and in `rfcs/RFC-004` Part II, and bind
+> nothing until that version's own owner push. They are drafted from design and not yet proven by a
+> run, the same status the adoption mode carried at v1.28.
+
+**Both modes are Supervisor-mediated under owner authority and are not available to a hub agent.** A
+merge is cross-hub by construction, which is escalation-class work: the Supervisor re-points estate
+references, and the owner decides direction, the survivor, and every contradiction. A hub agent that
+is asked to merge or withdraw refuses and escalates.
+
+**Before either mode: which of three cases is this?** Only one is a merge. Refuse the other two.
+
+| Case | Route |
+|---|---|
+| Two hubs overlap (share sources, entities, or facts) | **Not a merge.** A routing question: typed references and single-home-of-record already solve it, and `relationships.md` records the edge. Do not merge on overlap. |
+| A hub was stood up too early (little content, no answered competency questions) | **Withdrawal mode** below. |
+| The engagement turned out to be one thing (both hubs have real content, history, settled facts) | **Merge mode** below. |
+
+A merge process that never returns "these two should stay two" is a rubber stamp. State which case
+this is, with its evidence, before writing anything.
+
+### Merge mode: `--merge <absorbed> <survivor>`
+
+1. **Declare direction.** The owner names the survivor and the absorbed hub. The survivor is chosen
+   on **whose competency questions survive**, never on size, age, or content volume. Never create a
+   third hub. Both hub definitions record the direction and the owner's authority.
+2. **Re-run the interview on the survivor (Step 1), from the union as pre-fill.** A merge changes
+   what the hub *is*, so the initiation interview runs again and re-stamps `initiation-interview`.
+   The union of the two hubs' answers is the **pre-fill**, presented with its source, and never the
+   answer (Step 0.5's reconcile-before-asking, applied hardest here). The union of two admission
+   rules is almost never the right admission rule; routing keywords are the union or sources stop
+   arriving; sensitivity is the stricter of the two and is elicited, never computed.
+3. **Cross content at the granularity its provenance already has.** Entity notes are re-homed with a
+   `movedFrom:` field and not re-digested (one proposal per folder class); sources move with their
+   `sources/dates-register.md` rows and `transcript-index.md` entries carried over verbatim (never
+   re-date a source); narrative rollups (`00`-`07`) are never concatenated (the absorbed hub's move
+   to the survivor's `archive/`, marked `superseded`); the absorbed hub's `corrections/` crosses in
+   full. Use the bulk-corpus intake shape (catalogue, boundary interview, domain split, per-domain
+   extract), one proposal per domain, each still approved, applied, logged, and committed under the
+   survivor's flow.
+4. **Reconcile row by row.** Each absorbed settled row is checked against the survivor's ledger; a
+   contradiction opens a dispute file, adjudicated by the owner, and every adjudication captures a
+   `corrections/` note before the dispute file is deleted. A merge that raises **zero disputes** is
+   suspect and should be re-checked, never celebrated.
+5. **Tombstone the absorbed hub (Step "Tombstone", below).**
+6. **The Supervisor re-points estate references** with history kept: relationship edges, semantic
+   layer references, open queue rows, escalations, unrouted backlog, any decision-surface hub map.
+
+### Withdrawal mode: `--withdraw <early> <receiving>`
+
+A hub with no answered competency questions never earned its existence, so this is the value gate
+arriving late rather than a structural merge.
+
+1. Re-home the early hub's content as **ordinary intake** into the receiving hub (inbox, date gate,
+   reconciliation pre-check, proposal, approval, commit). At this volume the standard governance flow
+   is the right size.
+2. The receiving hub's routing keywords **absorb** the withdrawn hub's, or sources that were reaching
+   it stop reaching anything. This is the one step a hand-move reliably forgets.
+3. **Tombstone the withdrawn hub (Step "Tombstone", below).**
+4. **No re-interview** of the receiving hub, unless its admission rule actually changes.
+
+### Tombstone: absorbed, never deleted
+
+The absorbed or withdrawn hub is tombstoned, never deleted:
+
+- The **directory and its git history stay**, so every external pointer still resolves.
+- Write a **`MERGED-INTO.md`** carrying OKF frontmatter with a `merged-into:` field naming the
+  survivor, the date, the owner's authority, and the survivor's applying commits, and a plain
+  statement that nothing in the directory is current. `hub-scan.sh`'s `[ DEPLOYMENT ]` block reads
+  this file and reports a `TOMBSTONE` finding, so the hub's scan is **expected not to go green**.
+- The **admission rule becomes a refusal** ("this hub is merged into X; admit nothing").
+- The **agent definition is retired** and the agent registry regenerated.
+- The **registry row stays, with status `merged` and the `merged-into` column** naming the survivor.
+  Never delete the row: a hub-shaped directory absent from the registry is quarantined by the estate
+  scan, and a tombstoned hub must report a **tombstone, not a quarantine.**
+
+### What these modes must NOT do
+
+Do not delete the absorbed hub or rewrite its history; do not concatenate narrative documents; do not
+auto-resolve contradictions; do not skip the interview on the strength of already knowing what both
+hubs are; do not advertise reversibility (the reversible act is the decision **not** to merge yet);
+do not run across a compartment boundary. The compartment-crossing guard is written but inert until
+v1.23 publishes the `station`/`exposure` vocabulary it binds to.
 
 ---
 
