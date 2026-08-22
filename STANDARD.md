@@ -7,17 +7,29 @@ resource: template/
 timestamp: 2026-08-21
 ---
 
-# Knowledge Management Standard: Hub Framework (v1.39)
+# Knowledge Management Standard: Hub Framework (v1.40 draft)
 
-**Published v1.39** (2026-08-22, owner push: editions and the run/evolve boundary. The standard
-names one structural line dividing the estate's tiers into a run-set that consumes a pinned standard
-and operates a live estate (Reader, Supervisor, cockpit, hubs, and the pinned canonical standard) and
-an evolve-set that invents tooling and authors the standard (Machinery, Standard-Steward), and defines
-two editions as profiles over one standard version: a Consumer/Run edition that consumes releases and
-cannot author, and a Builder/Full edition that adds the authority to invent and author or fork. The
-boundary asserts no license, price, or commercial term; it is drawn so an owner MAY later attach a
-licensing policy at the line without any structural change. It implements `rfcs/RFC-006`). The
-preceding published version is **v1.38** (2026-08-22, the KM Standard status card. A read-only Home
+**v1.40 is DRAFTED and UNPUBLISHED** (2026-08-22): the Reader tier, the scoped reader, and the honest
+isolation boundary. The standard adds a read-only consumption tier that produces outputs from the
+estate and authors none of it: a Reader context with a stated contract, a `.km-tier` marker naming it
+`reader`, an `outputs/` area, and the reading subset of the standard that still binds it. It defines
+the **scoped reader**, a reader locked to a declared, closed list of hubs that refuses everything
+outside it, as the per-compartment and per-tenant consumption face of RFC-002 (compartments) and the
+Consumer edition of RFC-006, and it states plainly that a scoped reader's isolation is **convention
+unless the hosting enforces it** with separate installs, storage, or credentials, claiming no enforced
+tenant isolation. `km-brief` is named as the Reader skill that already ships; a dedicated query skill
+is deferred to a later harvest, the Reader answering meanwhile through `km-brief` and direct query.
+This completes the Consumer edition's run-set that RFC-006 named as its one missing component. It
+implements `rfcs/RFC-007`. The drafted change is marked with its version and **binds nothing until its
+own owner push**. The current published version is **v1.39** (2026-08-22, owner push: editions and the
+run/evolve boundary. The standard names one structural line dividing the estate's tiers into a run-set
+that consumes a pinned standard and operates a live estate (Reader, Supervisor, cockpit, hubs, and the
+pinned canonical standard) and an evolve-set that invents tooling and authors the standard (Machinery,
+Standard-Steward), and defines two editions as profiles over one standard version: a Consumer/Run
+edition that consumes releases and cannot author, and a Builder/Full edition that adds the authority to
+invent and author or fork. The boundary asserts no license, price, or commercial term; it is drawn so
+an owner MAY later attach a licensing policy at the line without any structural change. It implements
+`rfcs/RFC-006`). The preceding published version is **v1.38** (2026-08-22, the KM Standard status card. A read-only Home
 card surfaces the standard checkout the deployment tracks, showing the version it is pinned to and its
 push state against origin (in sync, or commits drafted locally and not yet pushed). The card is
 display only and grows no controls, and it never links the checkout, which lives outside the estate
@@ -3778,6 +3790,11 @@ Until that harvest lands, a Consumer edition can be **defined** (this section do
 tracked gap, not a defect: the boundary and the two editions are complete now, and the Consumer
 edition's completeness waits on the named Reader harvest.
 
+**Update (v1.40, drafted and unpublished):** that harvest has landed. The Reader tier is now defined
+in the standard under *The Reader tier* below, implementing `rfcs/RFC-007`, so the Consumer edition's
+run-set exists in generic form and the tracked gap named here is closed. This paragraph binds nothing
+until v1.40's own owner push; the v1.39 account above is left as the historical record of the gap.
+
 ### What this section does not do
 
 - It asserts, encodes, or implies no license, price, or commercial term. It draws a boundary only.
@@ -3790,6 +3807,198 @@ edition's completeness waits on the named Reader harvest.
   standard takes toward agent scope; describing the run/evolve line as a technical control over what a
   deployment can do would be a false assurance.
 - It does not implement the Reader (`rfcs/RFC-007`) or the routines (`rfcs/RFC-005`); it references them.
+
+## Reader tier: read-only consumption (added in v1.40, drafted and unpublished)
+
+This section implements `rfcs/RFC-007`. It defines the **Reader**, the read-only consumption tier the
+editions section named as the one run-set component missing from the standard in generic form, and the
+**scoped reader**, the reader locked to a declared subset of hubs that is the per-compartment and
+per-tenant consumption face of RFC-002 and the Consumer edition (RFC-006). It is a tier a deployment
+MAY adopt; a deployment that runs no separate reading context runs exactly as it does today. Sections
+marked with this version bind nothing until v1.40's own owner push.
+
+### What a Reader is
+
+A Reader is a context whose whole purpose is to **produce outputs from the estate without authoring the
+estate.** Reading the estate and building the estate are different sessions with different contracts,
+and the Reader makes the consumption flow into a session type decided by which context was opened rather
+than by anything anyone remembered. A Reader answers questions and produces briefs, drafts, analyses,
+comparisons, and summaries drawn from committed knowledge. It is the consumption face of the run-set.
+
+### The Reader contract
+
+A Reader context is governed by a contract stated in full in its own governing file, not by a remembered
+rule. The contract has four clauses:
+
+1. **It produces outputs; it does not change the estate.** It writes results into its own `outputs/`
+   area, or wherever the owner directs, and never into a hub, the semantic layer, or the registry. A
+   stray write into a governed tree becomes an uncommitted change the next build session's scan reports
+   as an integrity error, so the read/build split is protected by keeping writes out of the record
+   entirely.
+2. **The consumption acts are out of scope, listed rather than implied.** No proposals, no directives,
+   no dispatching hub agents, no queue rows, no corrections notes, no commits, no running any hub or
+   estate scan, no refreshing a handover, no regenerating an index. A Reader that starts doing these has
+   stopped being a Reader.
+3. **Reading anything readable is in scope.** History is often the fastest answer to "when did we decide
+   this and what did it replace," so the whole readable tree, including version history, is the Reader's
+   to consult.
+4. **A defect found is noted in one line and left.** A stale fact, a broken link, a contradiction: the
+   Reader states it and carries on answering the question it was asked. It does not investigate, design a
+   fix, or open the machinery. This is the reading-side twin of the build tier's discipline, and it is
+   the clause that keeps the read/build split from eroding one convenience at a time.
+
+### The reading subset of the standard that still binds
+
+A Reader is not exempt from the standard; it is bound by the subset of it that governs reading rather
+than writing, and that subset is stated in full rather than by pointing at the whole corrections
+registry, because most estate rules govern acts a Reader cannot perform. The reading subset:
+
+- **The evidence hierarchy binds.** Curated hub documents and the semantic layer outrank raw
+  transcripts; a hub-produced artifact is never evidence for itself; the first-order source is read
+  before its contents are characterised, because a summary compresses away the distinction being asked
+  about.
+- **The home of record is consulted first.** Hubs and the semantic layer frame a topic before any
+  transcript does. An answer is never built primarily from a raw source when a hub already frames it.
+- **Every claim carries its provenance where it appears**, not in a source list at the end. A claim
+  whose origin cannot be stated is reported as such rather than asserted.
+- **Restricted content is never surfaced** in anything that leaves the session, and a digest inherits
+  the most restrictive marking of what it summarises. A marking that lives only in prose still marks the
+  content, even though no instrument sees it.
+- **Identity is resolved, never constructed.** A person's name is resolved against the semantic layer
+  before it is written, and a contact detail is never built from a name.
+- **Voice binds anything the owner would send or sign**, and estate separation binds absolutely: a
+  Reader never references an unrelated estate.
+
+### The marker, the governing file, and the outputs area
+
+A Reader must be recognisable as a Reader by inspection, not by memory. A Reader context declares its
+identity through three things, shipped as the reader scaffold under `template/reader/`:
+
+- **A tier marker** at the context root, the file `.km-tier`, whose first line is the word `reader`.
+  A scoped reader additionally declares its scope in this file (see below). The marker is the
+  machine-and-human-readable statement that this is a consumption context, the twin of the deployment
+  manifest a hub carries, and opening the directory is what selects the contract.
+- **A governing context file** stating the Reader contract in full, the way a hub's agent-instruction
+  file states the hub's. The scaffold ships this as `CLAUDE.md` with an `AGENTS.md` mirror, on the
+  standard's framework-agnostic convention; this file, not a remembered rule, is what binds the session.
+- **An `outputs/` area** for results, and an optional `correction notes/` area for the one-line defects
+  the Reader is permitted to record and hand back.
+
+The marker is a **declaration of identity**, not an enforced control. What it buys is that the contract
+is selected structurally by which context was opened, which is the whole point of a separate tier.
+
+### The reader skills a Reader uses
+
+A Reader's skills are the consumption skills: those that read committed knowledge and produce an output,
+carrying none that author, propose, route, or operate. Of the skills the standard ships, **`km-brief`
+is the Reader skill** and it ships today: it reads committed entity notes and produces a memo, briefing,
+or status report without touching the record. It is the one shipped skill a Reader can use without
+violating the read-only contract.
+
+A dedicated query or answer skill, for the Reader's most common act ("what do we know about X," "what
+did we decide and why"), is **deferred to a later harvest**, and is not added here. The Reader answers
+that act through `km-brief` and direct query of the home of record, carrying provenance per claim and
+respecting restricted markings by the reading subset above. A reader-safe form of research gathering
+(the read half of a gather that stops at an answer rather than authoring a proposal) is likewise
+deferred, and whether it is a mode of an existing skill or a new one is a harvest decision, not made
+here. Naming these as deferred keeps a later session from reading "the Reader mostly ships" off the
+presence of `km-brief`.
+
+### The scoped reader
+
+The reusable, valuable mechanism is the **scoped reader**: a reader restricted to a declared subset of
+hubs and nothing else. A scoped reader is a Reader (the whole contract above binds it unchanged) plus a
+**scope declaration**:
+
+- **The scope is a named, closed list of hubs** the reader may read, declared in the reader's `.km-tier`
+  marker on a `scope:` line as a comma-separated list of hub names. Closed on purpose, the same
+  discipline a closed fact-class list applies: an open scope (`*`, `all`, or an empty list) makes the
+  boundary claim unstatable and is not a scoped reader.
+- **Everything outside the scope is refused, not filtered.** A question needing material outside the
+  declared hubs is answered "this is out of scope for this reader" and stopped, rather than answered
+  partially from whatever happens to be visible. The contract is stated firmly precisely because the
+  surrounding material may or may not be physically present.
+- **The scoped reader ignores the scoped hub's own build files.** A hub carries its own agent
+  instructions, scan, and hooks for the people who maintain it; a scoped reader is a reader, not that
+  hub's agent, and its contract is the reader's context file, not the hub's. This keeps a delegated
+  reader from being captured by the instructions of the thing it was sent to read.
+
+### Where the scoped reader connects: compartments and the Consumer edition
+
+The scoped reader is the consumption-side counterpart of two mechanisms the standard has already
+designed, and stating the connection is most of its value:
+
+- **RFC-002 compartments.** A compartment is hub-level access: each hub declares an owner, an audience,
+  and a boundary, with cross-compartment flow default-deny. A scoped reader is **how a compartment is
+  consumed**: the declared hub subset of a scoped reader is the read-side projection of a compartment's
+  membership. The two are the same boundary named from opposite sides, one governing membership between
+  hubs and the other governing a reader's view across them. A scoped reader's declared hub list is a
+  local declaration that lives with the reader, not in the canonical standard, exactly as a
+  compartment's audience and boundary values are hub-local content.
+- **RFC-006 the Consumer edition.** The Consumer edition is the run-set pinned to a published version. A
+  scoped reader is **how a single Consumer deployment presents a per-tenant or per-audience view**: one
+  estate, several scoped readers, each locked to the hubs one consumer is entitled to see. This is the
+  bounded, honest form of per-audience access: one operator's estate showing different consumers
+  different compartments through scoped readers, not several mutually invisible operators, which is a
+  separate and still-unclaimed layer.
+
+### The honest isolation boundary
+
+This is the load-bearing honesty of the tier, stated plainly so no later session mistakes a convenience
+for a control. The standard says, deliberately and repeatedly, that agent scope is convention and not an
+enforced control, and that a false assurance is worse than an acknowledged gap. A scoped reader is
+subject to exactly that limit:
+
+- **The scope declaration is a convention.** A reader's marker naming three hubs does not, by itself,
+  prevent the reader from reading a fourth if the fourth is present and readable. The declaration binds
+  behaviour the way every agent contract in the standard binds behaviour: by being the contract the
+  context reads, not by being a wall the filesystem enforces.
+- **Isolation becomes real only when the hosting makes it real.** Genuine isolation between a scoped
+  reader and the hubs it may not see comes from **what is physically present and permitted**: the other
+  knowledge areas simply not being in the shared workspace, and write commands denied by the local host
+  configuration. The reader scaffold ships a host permission file that denies git write commands as one
+  such second-layer control, but that denies writing, not reading; it does not wall off a tree that is
+  present. Real read isolation is separate installations, separate storage, or separate credentials,
+  which are decisions the hosting makes and the standard does not perform.
+- **The standard's contribution is the honest description of where the boundary is and is not.** The
+  standard defines the scoped-reader contract, the closed scope declaration, and the refuse-out-of-scope
+  behaviour, and states exactly which part of that is convention (all of it, absent hosting enforcement)
+  and which part is real (only what the hosting enforces). That honest description is the deliverable,
+  and it is worth shipping precisely because it stops a deployment from reading "scoped reader" as
+  "isolated tenant" when nothing underneath it enforces isolation.
+
+The standard therefore **refuses to describe a scoped reader as an enforced tenant boundary.** A scoped
+reader whose only isolation is its own prose is a reader that will read whatever is put in front of it;
+presenting that as tenant isolation to a third party would be the false assurance the standard holds to
+be worse than an acknowledged gap. The standard describes the boundary honestly and points at the
+hosting for enforcement; it does not pretend the prose is the enforcement.
+
+### Relation to the editions, and what it costs to adopt
+
+The Reader is the run-set component RFC-006 named as absent, and this section is the harvest that lets a
+Consumer edition be shipped rather than only defined. What it costs a deployment:
+
+- **To run a Reader, once:** one Reader context with its marker, its governing contract file, and its
+  `outputs/` area, plus whichever reader skills it uses. A deployment that declines runs as today.
+- **Per scoped reader, once:** a scope declaration naming the closed hub subset, and a hosting decision
+  about whether the isolation is real (separate install, storage, or credentials) or convention only.
+  The standard states which it is; the deployment chooses.
+- **Ongoing:** nothing. A Reader consumes; it adds no maintenance to any hub, and a hub does not know a
+  Reader is reading it.
+
+### What this section does not do
+
+- It claims no enforced isolation. A scoped reader's isolation is convention unless the hosting enforces
+  it; describing the scope declaration as a technical tenant boundary would be a false assurance.
+- It does not let a Reader author the estate. A Reader produces outputs into its own area and never
+  writes a hub, the semantic layer, or the registry, and never proposes, dispatches, routes, commits, or
+  runs a scan.
+- It does not redesign the editions (RFC-006) or the compartments (RFC-002); it references both and
+  defines only the Reader tier and the scoped reader that consume them.
+- It does not overstate what ships. Only `km-brief` is a Reader skill today; the dedicated query skill
+  and reader-safe gather are named as deferred.
+- It forces no deployment into running a Reader, and it ships no reference deployment's specifics: the
+  scaffold is the generic tier class, carrying no deployment's hubs, proper nouns, paths, or people.
 
 ## Version history (added in v1.10)
 
@@ -3841,6 +4050,7 @@ happened once (see the v1.9 row) and the ledger exists so it does not happen twi
 | v1.37 | 2026-08-22 | Drafted and published 2026-08-22 (owner push). A desk tick is never a decision awaiting execution. Resolves deviation **dev-0013**, harvested from the reference deployment, where the owner (2026-08-20) saw "decisions pending to be executed" listing a personal follow-up he had already marked done as if it were work awaiting the Supervisor. Desk ticks ride the ordinary answers channel (added v1.36), so a `desk-<slug>` done record sits in the owner-side answer store, and `state()` built its decision and execution sets by reading those stores raw by id, so a cleared follow-up landed in the pending, queued, executed, and recorded accounting and read as answered, awaiting Supervisor execution. `state()` now excludes `desk-` ids from every set it feeds: from pending (the answer store), from queued (the pulled-answer store), and from the execution ledger it folds into executed and recorded, which hardens the recorded-to-queued fold against any future desk record as well. Desk rendering is untouched; the desk section (`render_desk`/`desk_ticks`) stays the only place desk ids surface. `components/km-cockpit/SPEC.md` §3 gains the clause (a desk tick never counts as a decision, and the desk lane is the only place desk ids appear) and names the reference deployment as the source the specification follows here, so a conformance pass never drags the lab back to the last release. A rendered-surface case in `tests/test_km_cockpit.sh` proves both directions on one live state: a ticked `desk-<slug>` record appears in none of pending, queued, or executed (a desk id in the recorded set folds into queued, so the queued assertion covers it) yet still renders in the desk done disclosure, while a genuine decision awaiting execution still counts; the check fails closed when the state carries no decision ids. The negative direction was confirmed against the unfixed `state()` and then restored. This harvest changes only the `state()` exclusion; desk rendering and the dismissal machinery of separate deviations were kept out of it. |
 | v1.38 | 2026-08-22 | Drafted and published 2026-08-22 (owner push). The KM Standard status card. Resolves deviation **dev-0003**, harvested from the reference deployment, where the owner asked to see the standard's own version and push state on the cockpit. A read-only Home card surfaces the standard checkout the deployment tracks: the version it is pinned to (read from the checkout's `STANDARD.md` title line) and its push state against origin (in sync, N commits not yet pushed with their subjects available, or origin carries commits not yet pulled). The card is display only and grows no controls, exactly as `components/km-cockpit/SPEC.md` §1 requires of every surface, so a standard change that needs the owner is a governed tier-A/B decision and never a button here; it reads local git alone, states that the origin comparison is as of the last fetch, and never contacts the network, so the render never depends on connectivity; a missing or unreadable checkout reports itself rather than fabricating state; and it emits no file link into the checkout, which lives outside the estate root and whose file-serving confinement (§4) this card must not widen. The checkout is configured by `standard_repo_path` in the deployment manifest; when that key is absent the card does not render, so a deployment that keeps no local checkout shows nothing rather than a guess. `components/km-cockpit/SPEC.md` §3 gains the clause and names the reference deployment as the source the specification follows here, so a conformance pass never drags the lab back to the last release. `tests/test_km_cockpit.sh` proves both directions on one live server: an in-sync checkout renders the pinned version and reads as in sync, while an extra local commit flips the same card to commits not yet pushed; the check fails closed when the card does not render. The negative direction was confirmed against a tree without the card and then restored. This harvest only adds the status card; no other deviation's surface was pulled in. |
 | v1.39 | 2026-08-22 | Drafted and published 2026-08-22 (owner push). Editions and the run/evolve boundary, implementing `rfcs/RFC-006`. A deployment owner named one gap: the standard defined no clean boundary between consuming the standard and evolving it, and no way for tiers to package into editions. This version names one structural line already latent in a tiered deployment. **The run-set** consumes a published standard and operates a live estate (the Reader, the Supervisor with its queue, cockpit and routines, the hubs, and the pinned canonical standard read as authoritative); **the evolve-set** invents instruments and authors the standard (the Machinery tier and the Standard-Steward tier, which may fork it and runs the leakage guard). Every component maps to exactly one side by a table in the new "Editions and the run/evolve boundary" section; the line is the deployment's own consumption-versus-invention two-flow model made explicit. **Two editions are profiles over one standard version, strictly nested:** a Consumer/Run edition is the run-set, pinned and read-only, that consumes releases and cannot author; a Builder/Full edition adds the evolve-set and the authority to invent tooling and evolve or fork the standard. No component is removed or altered between them, no deployment is forced into an edition, and no existing hub changes, on the same no-cost-to-decline discipline the standard's other optional layers carry. **The key doctrine:** the pinned standard sits in the run-set, on the consume side, in both editions; only the Builder edition adds the authority to author it, so the artifact does not cross the boundary, the authority does. **License-agnostic by hard requirement:** the standard asserts no license, price, or commercial term; the section defines only the boundary, drawn so an owner MAY later attach a licensing policy at the line without any structural change, that policy living outside the canonical standard in the owner's own overlay. The Consumer edition is the concrete, bounded form of RFC-004 Part III reading (c) (many independent deployments, one maintainer serving all). **Boundary doctrine only:** no schema, check, or mechanism is added, because RFC-006 states no new instrument is strictly required by the boundary itself and an optional edition-declaration field is deliberately deferred; tier separation is stated as convention, never as an enforced control. **A known, tracked gap, not a defect:** the Consumer edition's Reader tier is not yet in the canonical standard, so v1.39 defines the editions boundary while the Consumer run-set is completed by the separate Reader harvest designed in `rfcs/RFC-007`. Neither the Reader (RFC-007) nor the routines (RFC-005) is implemented here; both are referenced. |
+| v1.40 | 2026-08-22 | Drafted and unpublished. The Reader tier, the scoped reader, and the honest isolation boundary, implementing `rfcs/RFC-007` and completing the Consumer edition's run-set that v1.39 (RFC-006) named as its one missing component. A deployment owner named the gap: the standard had no read-only consumption tier and defined no Reader identity, marker, contract, or scoping mechanism. This version adds a **Reader tier**: a read-only consumption context that produces outputs from the estate and authors none of it, with a four-clause contract (produces outputs not estate changes; the consumption acts are out of scope and listed; reading anything readable is in scope; a defect is noted in one line and left), the reading subset of the standard that still binds it (evidence hierarchy, home of record first, provenance per claim, restricted never surfaced, identity resolved not constructed, voice, estate separation), and a scaffold under `template/reader/` (a `.km-tier` marker whose first line is `reader`, a governing `CLAUDE.md` with an `AGENTS.md` mirror, an `outputs/` area, an optional `correction notes/` area, and a host permission file that denies git write commands). It defines the **scoped reader**: a reader locked to a named, closed list of hubs declared on a `scope:` line in the marker, that refuses everything outside the list rather than answering partially, and that ignores its target hub's own build files. The scoped reader is stated as the read-side projection of an RFC-002 compartment and the per-tenant consumption face of the RFC-006 Consumer edition, both by reference, neither redesigned. **The honest isolation boundary:** a scoped reader's isolation is convention unless the hosting enforces it with separate installs, storage, or credentials; the shipped git-write denial denies writing not reading, and the standard refuses to describe a scoped reader as an enforced tenant boundary, on the same posture it takes toward agent scope. **Reader skills, minimal:** `km-brief` is named as the Reader skill that already ships; a dedicated query skill and a reader-safe gather are named as deferred to a later harvest, the Reader answering meanwhile through `km-brief` and direct query, so no heavy new skill is authored. A `reader-scan.sh` in the scaffold validates the reader declaration's shape (marker present and first line `reader`, governing file present, `outputs/` present, and any declared scope a non-empty closed list), canaried both directions in `tests/test_reader_scaffold.sh`; it validates the declaration, not isolation, and states that limit in its own coverage line. No enforced tenant isolation is asserted, encoded, or implied. Marked with its version and binds nothing until its own owner push. |
 
 ---
 

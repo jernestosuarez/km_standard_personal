@@ -2,3 +2,8 @@
 .superpowers/
 outputs/
 work/
+
+# The Reader scaffold ships an outputs/ convention doc; re-include just that path (it holds only the
+# scaffold README, never estate outputs). The blanket outputs/ exclusion above is otherwise unchanged.
+!template/reader/outputs/
+!template/reader/outputs/README.md
