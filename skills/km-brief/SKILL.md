@@ -19,6 +19,25 @@ the git commit is the publish boundary for both push and pull.
 
 ---
 
+## Read the index first
+
+Start from each entity folder's `index.md`, not by enumerating notes. That is the whole point of the
+index: navigate one level at a time instead of loading every note into context. Open individual notes
+only for the entities the artifact actually needs.
+
+The index lists **active** notes only — it already excludes retired and superseded facts.
+
+## Lifecycle filter — non-negotiable
+
+When querying entity notes, **include only `lifecycle: active`**. Exclude `superseded` and `retired`.
+
+A retired fact was true once; surfacing it in a memo presents it as true now. The note is kept on
+disk for the audit trail — that is not the same as being fit to publish. If a retired fact is
+genuinely needed (e.g. "what did we believe in March?"), say so explicitly and date it.
+
+Also honour `confidence`: if an artifact rests on `low`-confidence facts, say so in the artifact
+rather than laundering them into assertions by omission.
+
 ## Step 1 — Ask (if not already given)
 
 - **Audience:** e.g. "upper management", "the team", a named partner.
