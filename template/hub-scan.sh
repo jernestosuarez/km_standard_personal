@@ -389,7 +389,7 @@ else
     # reading the field attributed nothing. Checked only once the interview date is valid: a hub
     # that was never interviewed has one defect, not two, and both are fixed by the same act.
     # Stated limit: this proves the field was filled in, never that the keywords are the right ones.
-    # Validated ENTRY BY ENTRY since v1.44 (added in v1.44, drafted and unpublished), because the
+    # Validated ENTRY BY ENTRY since v1.44 (added in v1.44), because the
     # field is a comma-separated LIST and the v1.28 arms tested the whole value. A value of ", ," is
     # neither "" nor placeholder-bearing, so it fell through every arm and the hub scanned green
     # carrying no keyword at all, the exact state v1.28 was written to prevent, reached by a value

@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.43"/>
+  <img src="assets/badges/version.svg" alt="standard v1.44"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 2 adopted"/>
   <img src="assets/badges/license.svg" alt="license: free to adopt"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,15 +28,15 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.43** (2026-08-23, one canonical copy, and the mirrors are mirrors; the
-`skills/km-brief/SKILL.md` copy the README advertises as distributable was missing nineteen governance
-lines its two runtime mirrors carry — read the index first, include only `lifecycle: active` and
-exclude `superseded` and `retired`, and declare low-confidence facts — so the copy a deployment was
-invited to install could publish a retired fact as true now while the frontmatter check reported the
-three copies in agreement; the advertised copy is raised to the safer body, `skills/<slug>/SKILL.md`
-is named the canonical copy with the runtime trees as its mirrors, and
-`tests/test_skill_distribution_parity.sh` compares the governed instruction body rather than the
-frontmatter alone; v1.42 is the preceding published version and v1.23 remains an unpublished draft awaiting its own push). The full ledger of released versions, and the rule that a
+**Current version: v1.44** (2026-08-23, a check that reads a compound value validates its parts,
+never the whole alone; `routing-keywords` in the deployment binding is a comma-separated list, and the
+gate v1.28 put on it tested the whole value for emptiness and for an unsubstituted placeholder, so a
+value of `", ,"` was neither, fell through every arm, and the hub scanned green carrying no keyword at
+all while a supervisor registry and a decision surface attributed nothing to it; the field is now
+validated entry by entry, requiring at least one well-formed keyword and naming a stray empty entry as
+an advisory rather than a quarantine, and the generalised rule is stated in the Standard Maintainer
+section with both demonstrations that earned it and with the sweep of every shipped check recorded
+beside it; v1.43 is the preceding published version and v1.23 remains an unpublished draft awaiting its own push). The full ledger of released versions, and the rule that a
 published version number is never reused, is in [`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.
 

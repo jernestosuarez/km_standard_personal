@@ -205,7 +205,7 @@ if ! printf '%s\n' "$output" | grep -Fq "routing-keywords still carries an unsub
   fail "keywords-placeholder did not report the unsubstituted value"
 fi
 
-# The per-token gate (added in v1.44, drafted and unpublished; defect D6): four cases, and the
+# The per-token gate (added in v1.44; defect D6): four cases, and the
 # pair of directions is the point of them.
 #
 # routing-keywords is a comma-separated LIST, and until v1.44 the gate tested the whole value: an
