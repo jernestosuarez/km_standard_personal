@@ -1,43 +1,49 @@
 ---
 type: brief
-title: Knowledge Management Standard: Hub Framework (v1.39)
+title: Knowledge Management Standard: Hub Framework (v1.41)
 description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, an optional Agent Tier for named, discoverable agent instances, an optional record-boundary layer for governed use of systems of record, and an editions boundary that names where consuming the standard ends and evolving it begins.
 tags: [standard, knowledge-management, governance, okf, agents]
 resource: template/
 timestamp: 2026-08-21
 ---
 
-# Knowledge Management Standard: Hub Framework (v1.40 draft)
+# Knowledge Management Standard: Hub Framework (v1.41 draft)
 
-**v1.40 is DRAFTED and UNPUBLISHED** (2026-08-22): the Reader tier, the scoped reader, and the honest
-isolation boundary. The standard adds a read-only consumption tier that produces outputs from the
-estate and authors none of it: a Reader context with a stated contract, a `.km-tier` marker naming it
-`reader`, an `outputs/` area, and the reading subset of the standard that still binds it. It defines
-the **scoped reader**, a reader locked to a declared, closed list of hubs that refuses everything
-outside it, as the per-compartment and per-tenant consumption face of RFC-002 (compartments) and the
-Consumer edition of RFC-006, and it states plainly that a scoped reader's isolation is **convention
-unless the hosting enforces it** with separate installs, storage, or credentials, claiming no enforced
-tenant isolation. `km-brief` is named as the Reader skill that already ships; a dedicated query skill
-is deferred to a later harvest, the Reader answering meanwhile through `km-brief` and direct query.
-This completes the Consumer edition's run-set that RFC-006 named as its one missing component. It
-implements `rfcs/RFC-007`. The drafted change is marked with its version and **binds nothing until its
-own owner push**. The current published version is **v1.39** (2026-08-22, owner push: editions and the
-run/evolve boundary. The standard names one structural line dividing the estate's tiers into a run-set
-that consumes a pinned standard and operates a live estate (Reader, Supervisor, cockpit, hubs, and the
-pinned canonical standard) and an evolve-set that invents tooling and authors the standard (Machinery,
-Standard-Steward), and defines two editions as profiles over one standard version: a Consumer/Run
-edition that consumes releases and cannot author, and a Builder/Full edition that adds the authority to
-invent and author or fork. The boundary asserts no license, price, or commercial term; it is drawn so
-an owner MAY later attach a licensing policy at the line without any structural change. It implements
-`rfcs/RFC-006`). The preceding published version is **v1.38** (2026-08-22, the KM Standard status card. A read-only Home
+**v1.41 is DRAFTED and UNPUBLISHED** (2026-08-22): the Reader tier, the scoped reader, and the
+honest isolation boundary. The standard adds a read-only consumption tier that produces outputs from
+the estate and authors none of it: a Reader context with a stated contract, a `.km-tier` marker
+naming it `reader`, an `outputs/` area, and the reading subset of the standard that still binds it.
+It defines the **scoped reader**, a reader locked to a declared, closed list of hubs that refuses
+everything outside it, as the per-compartment and per-tenant consumption face of RFC-002
+(compartments) and the Consumer edition of RFC-006, and it states plainly that a scoped reader's
+isolation is **convention unless the hosting enforces it** with separate installs, storage, or
+credentials, claiming no enforced tenant isolation. `km-brief` is named as the Reader skill that
+already ships; a dedicated query skill is deferred to a later harvest, the Reader answering
+meanwhile through `km-brief` and direct query. This completes the Consumer edition's run-set that
+RFC-006 named as its one missing component. It implements `rfcs/RFC-007`. The drafted change is
+marked with its version and **binds nothing until its own owner push**. The current published
+version is **v1.40** (2026-08-22, owner push: the optional MCP query surface is quarantined and
+serves nothing. The surface predates the four-gate projection contract and never enforced it: a
+direct identifier lookup returned retired and superseded notes in full, and access clearance and
+projection-manifest membership were implemented nowhere on any path, while the surface's own
+documentation stated the lifecycle guarantee unconditionally. Every content-returning entry point
+now refuses and states why, and starting the surface reports the quarantine. **This quarantines and
+does not repair**: the gates are implemented and proved by a separate change, and only that change
+lifts the quarantine. A deployment that had the optional surface enabled loses it, which is the
+intended outcome). The preceding published version is **v1.39** (2026-08-22, editions and the
+run/evolve boundary. The standard names one structural line dividing the estate's tiers into a
+run-set that consumes a pinned standard and operates a live estate (Reader, Supervisor, cockpit,
+hubs, and the pinned canonical standard) and an evolve-set that invents tooling and authors the
+standard (Machinery, Standard-Steward), and defines two editions as profiles over one standard
+version: a Consumer/Run edition that consumes releases and cannot author, and a Builder/Full edition
+that adds the authority to invent and author or fork. The boundary asserts no license, price, or
+commercial term; it is drawn so an owner MAY later attach a licensing policy at the line without any
+structural change. It implements `rfcs/RFC-006`). The version before that is **v1.38** (2026-08-22,
+the KM Standard status card. A read-only Home
 card surfaces the standard checkout the deployment tracks, showing the version it is pinned to and its
 push state against origin (in sync, or commits drafted locally and not yet pushed). The card is
 display only and grows no controls, and it never links the checkout, which lives outside the estate
-root). The version before that is **v1.37** (2026-08-22, a desk tick is never a decision awaiting
-execution. Desk ticks ride the ordinary answers channel, so the cockpit's decision accounting now
-excludes `desk-<slug>` ids from every set it feeds (pending, queued, executed, recorded); a cleared
-personal follow-up is the owner's hand lane and no longer reads as a decision awaiting Supervisor
-execution). **v1.23** (stations, compartments, and the resolution plane) **remains drafted
+root). **v1.23** (stations, compartments, and the resolution plane) **remains drafted
 and unpublished**: its sections are marked with their version and bind nothing until its own push.
 Deployment pins resolve the version they pinned until their Supervisor re-pins.
 
@@ -47,7 +53,7 @@ Deployment pins resolve the version they pinned until their Supervisor re-pins.
 agent-only by construction. It adds nothing for a human reader and requires none of them to exist.
 The hub itself, every file, every rule, every check, remains plain markdown that works with no
 agent at all. The MCP server is an **additive consumption path**, never a dependency: delete it and
-the hub is unchanged.
+the hub is unchanged. **It is quarantined at v1.40 and serves nothing** (see *Query surface (MCP)*).
 
 ---
 
@@ -1272,6 +1278,27 @@ this file. See §"Never delete the reason" and §"The correction loop".
 
 ### Query surface (MCP): optional, agent-only
 
+> **QUARANTINED at v1.40 (drafted and unpublished). This surface serves nothing.**
+>
+> It predates the four-gate projection contract below and does not enforce it. `get_entity(id)`
+> applied the committed-state gate alone, so an identifier lookup returned retired and superseded
+> notes in full that `list_entities()` correctly withheld; access clearance and projection-manifest
+> membership are implemented on no path at all; and the content test is a denylist, so a note
+> carrying a restricted marking in an ordinary directory was content by construction. Every
+> content-returning entry point, the four tools and the three resources alike, now refuses and states
+> why, and starting the surface reports the quarantine rather than starting silently.
+>
+> **This is a quarantine and not a repair.** The gates are implemented and proved by a separate
+> change, and the quarantine lifts only when every required gate is enforced on every
+> content-returning path and each excluded content class is proved unreachable by identifier lookup
+> and by query. It is not lifted by a repair of one path while another stays unguarded. A deployment
+> that had the surface enabled loses it, which is the intended outcome: it stops answering rather
+> than answering under a contract it cannot keep. No hub content changes, and a deployment that never
+> enabled it is unaffected.
+>
+> The rest of this section describes the surface's design, which stands. Read it as the shape the
+> repair restores, not as a description of anything currently serving.
+
 The Ontology Layer promises that *someone else's agent can query the hub for a precise fact*. Until
 now that promise was unbuilt: "query" meant "read the markdown." `template/mcp/server.py` is a
 reference implementation that makes it real.
@@ -1307,11 +1334,18 @@ uncommitted edit, an open proposal, an inbox draft, an unresolved dispute: all i
 
 This is not a nicety. Without it, the MCP surface would quietly become the hole in Rule 2: work that
 never passed review would leak to external consumers, and the governance everything else enforces
-would be decorative. It also excludes `archive/`, retired and superseded notes, and the hub's own
-machinery (`.claude/`, skills, templates), a query surface that answers questions about its own
-tooling is noise burying the fact someone asked for.
+would be decorative. On the listing and query paths it also excludes `archive/`, retired and
+superseded notes, and the hub's own machinery (`.claude/`, skills, templates), a query surface that
+answers questions about its own tooling is noise burying the fact someone asked for. **It did not
+exclude them on `get_entity(id)`, and this text used to say it did**, without naming a path. The
+per-path qualification is the correction: a guarantee that holds on one retrieval path is never
+written as though it holds on all of them.
 
-**Committed = safe to expose.** The server must never be the thing that weakens that.
+**Committed is not cleared (corrected at v1.40).** This section previously read "committed = safe to
+expose", and that premise is withdrawn. Committing a fact records it, and it passed review to get
+there; it decides nothing about who may read it. Committed state is gate 1 of four, and a surface
+that treats it as sufficient is the defect this quarantine closes. The publish boundary itself
+stands, and the server must never be the thing that weakens it.
 
 ### Source connectors (SoR gateway): optional, inbound (added in v1.22)
 
@@ -3790,10 +3824,10 @@ Until that harvest lands, a Consumer edition can be **defined** (this section do
 tracked gap, not a defect: the boundary and the two editions are complete now, and the Consumer
 edition's completeness waits on the named Reader harvest.
 
-**Update (v1.40, drafted and unpublished):** that harvest has landed. The Reader tier is now defined
+**Update (v1.41, drafted and unpublished):** that harvest has landed. The Reader tier is now defined
 in the standard under *The Reader tier* below, implementing `rfcs/RFC-007`, so the Consumer edition's
 run-set exists in generic form and the tracked gap named here is closed. This paragraph binds nothing
-until v1.40's own owner push; the v1.39 account above is left as the historical record of the gap.
+until v1.41's own owner push; the v1.39 account above is left as the historical record of the gap.
 
 ### What this section does not do
 
@@ -3808,14 +3842,14 @@ until v1.40's own owner push; the v1.39 account above is left as the historical 
   deployment can do would be a false assurance.
 - It does not implement the Reader (`rfcs/RFC-007`) or the routines (`rfcs/RFC-005`); it references them.
 
-## Reader tier: read-only consumption (added in v1.40, drafted and unpublished)
+## Reader tier: read-only consumption (added in v1.41, drafted and unpublished)
 
 This section implements `rfcs/RFC-007`. It defines the **Reader**, the read-only consumption tier the
 editions section named as the one run-set component missing from the standard in generic form, and the
 **scoped reader**, the reader locked to a declared subset of hubs that is the per-compartment and
 per-tenant consumption face of RFC-002 and the Consumer edition (RFC-006). It is a tier a deployment
 MAY adopt; a deployment that runs no separate reading context runs exactly as it does today. Sections
-marked with this version bind nothing until v1.40's own owner push.
+marked with this version bind nothing until v1.41's own owner push.
 
 ### What a Reader is
 
@@ -4050,7 +4084,8 @@ happened once (see the v1.9 row) and the ledger exists so it does not happen twi
 | v1.37 | 2026-08-22 | Drafted and published 2026-08-22 (owner push). A desk tick is never a decision awaiting execution. Resolves deviation **dev-0013**, harvested from the reference deployment, where the owner (2026-08-20) saw "decisions pending to be executed" listing a personal follow-up he had already marked done as if it were work awaiting the Supervisor. Desk ticks ride the ordinary answers channel (added v1.36), so a `desk-<slug>` done record sits in the owner-side answer store, and `state()` built its decision and execution sets by reading those stores raw by id, so a cleared follow-up landed in the pending, queued, executed, and recorded accounting and read as answered, awaiting Supervisor execution. `state()` now excludes `desk-` ids from every set it feeds: from pending (the answer store), from queued (the pulled-answer store), and from the execution ledger it folds into executed and recorded, which hardens the recorded-to-queued fold against any future desk record as well. Desk rendering is untouched; the desk section (`render_desk`/`desk_ticks`) stays the only place desk ids surface. `components/km-cockpit/SPEC.md` §3 gains the clause (a desk tick never counts as a decision, and the desk lane is the only place desk ids appear) and names the reference deployment as the source the specification follows here, so a conformance pass never drags the lab back to the last release. A rendered-surface case in `tests/test_km_cockpit.sh` proves both directions on one live state: a ticked `desk-<slug>` record appears in none of pending, queued, or executed (a desk id in the recorded set folds into queued, so the queued assertion covers it) yet still renders in the desk done disclosure, while a genuine decision awaiting execution still counts; the check fails closed when the state carries no decision ids. The negative direction was confirmed against the unfixed `state()` and then restored. This harvest changes only the `state()` exclusion; desk rendering and the dismissal machinery of separate deviations were kept out of it. |
 | v1.38 | 2026-08-22 | Drafted and published 2026-08-22 (owner push). The KM Standard status card. Resolves deviation **dev-0003**, harvested from the reference deployment, where the owner asked to see the standard's own version and push state on the cockpit. A read-only Home card surfaces the standard checkout the deployment tracks: the version it is pinned to (read from the checkout's `STANDARD.md` title line) and its push state against origin (in sync, N commits not yet pushed with their subjects available, or origin carries commits not yet pulled). The card is display only and grows no controls, exactly as `components/km-cockpit/SPEC.md` §1 requires of every surface, so a standard change that needs the owner is a governed tier-A/B decision and never a button here; it reads local git alone, states that the origin comparison is as of the last fetch, and never contacts the network, so the render never depends on connectivity; a missing or unreadable checkout reports itself rather than fabricating state; and it emits no file link into the checkout, which lives outside the estate root and whose file-serving confinement (§4) this card must not widen. The checkout is configured by `standard_repo_path` in the deployment manifest; when that key is absent the card does not render, so a deployment that keeps no local checkout shows nothing rather than a guess. `components/km-cockpit/SPEC.md` §3 gains the clause and names the reference deployment as the source the specification follows here, so a conformance pass never drags the lab back to the last release. `tests/test_km_cockpit.sh` proves both directions on one live server: an in-sync checkout renders the pinned version and reads as in sync, while an extra local commit flips the same card to commits not yet pushed; the check fails closed when the card does not render. The negative direction was confirmed against a tree without the card and then restored. This harvest only adds the status card; no other deviation's surface was pulled in. |
 | v1.39 | 2026-08-22 | Drafted and published 2026-08-22 (owner push). Editions and the run/evolve boundary, implementing `rfcs/RFC-006`. A deployment owner named one gap: the standard defined no clean boundary between consuming the standard and evolving it, and no way for tiers to package into editions. This version names one structural line already latent in a tiered deployment. **The run-set** consumes a published standard and operates a live estate (the Reader, the Supervisor with its queue, cockpit and routines, the hubs, and the pinned canonical standard read as authoritative); **the evolve-set** invents instruments and authors the standard (the Machinery tier and the Standard-Steward tier, which may fork it and runs the leakage guard). Every component maps to exactly one side by a table in the new "Editions and the run/evolve boundary" section; the line is the deployment's own consumption-versus-invention two-flow model made explicit. **Two editions are profiles over one standard version, strictly nested:** a Consumer/Run edition is the run-set, pinned and read-only, that consumes releases and cannot author; a Builder/Full edition adds the evolve-set and the authority to invent tooling and evolve or fork the standard. No component is removed or altered between them, no deployment is forced into an edition, and no existing hub changes, on the same no-cost-to-decline discipline the standard's other optional layers carry. **The key doctrine:** the pinned standard sits in the run-set, on the consume side, in both editions; only the Builder edition adds the authority to author it, so the artifact does not cross the boundary, the authority does. **License-agnostic by hard requirement:** the standard asserts no license, price, or commercial term; the section defines only the boundary, drawn so an owner MAY later attach a licensing policy at the line without any structural change, that policy living outside the canonical standard in the owner's own overlay. The Consumer edition is the concrete, bounded form of RFC-004 Part III reading (c) (many independent deployments, one maintainer serving all). **Boundary doctrine only:** no schema, check, or mechanism is added, because RFC-006 states no new instrument is strictly required by the boundary itself and an optional edition-declaration field is deliberately deferred; tier separation is stated as convention, never as an enforced control. **A known, tracked gap, not a defect:** the Consumer edition's Reader tier is not yet in the canonical standard, so v1.39 defines the editions boundary while the Consumer run-set is completed by the separate Reader harvest designed in `rfcs/RFC-007`. Neither the Reader (RFC-007) nor the routines (RFC-005) is implemented here; both are referenced. |
-| v1.40 | 2026-08-22 | Drafted and unpublished. The Reader tier, the scoped reader, and the honest isolation boundary, implementing `rfcs/RFC-007` and completing the Consumer edition's run-set that v1.39 (RFC-006) named as its one missing component. A deployment owner named the gap: the standard had no read-only consumption tier and defined no Reader identity, marker, contract, or scoping mechanism. This version adds a **Reader tier**: a read-only consumption context that produces outputs from the estate and authors none of it, with a four-clause contract (produces outputs not estate changes; the consumption acts are out of scope and listed; reading anything readable is in scope; a defect is noted in one line and left), the reading subset of the standard that still binds it (evidence hierarchy, home of record first, provenance per claim, restricted never surfaced, identity resolved not constructed, voice, estate separation), and a scaffold under `template/reader/` (a `.km-tier` marker whose first line is `reader`, a governing `CLAUDE.md` with an `AGENTS.md` mirror, an `outputs/` area, an optional `correction notes/` area, and a host permission file that denies git write commands). It defines the **scoped reader**: a reader locked to a named, closed list of hubs declared on a `scope:` line in the marker, that refuses everything outside the list rather than answering partially, and that ignores its target hub's own build files. The scoped reader is stated as the read-side projection of an RFC-002 compartment and the per-tenant consumption face of the RFC-006 Consumer edition, both by reference, neither redesigned. **The honest isolation boundary:** a scoped reader's isolation is convention unless the hosting enforces it with separate installs, storage, or credentials; the shipped git-write denial denies writing not reading, and the standard refuses to describe a scoped reader as an enforced tenant boundary, on the same posture it takes toward agent scope. **Reader skills, minimal:** `km-brief` is named as the Reader skill that already ships; a dedicated query skill and a reader-safe gather are named as deferred to a later harvest, the Reader answering meanwhile through `km-brief` and direct query, so no heavy new skill is authored. A `reader-scan.sh` in the scaffold validates the reader declaration's shape (marker present and first line `reader`, governing file present, `outputs/` present, and any declared scope a non-empty closed list), canaried both directions in `tests/test_reader_scaffold.sh`; it validates the declaration, not isolation, and states that limit in its own coverage line. No enforced tenant isolation is asserted, encoded, or implied. Marked with its version and binds nothing until its own owner push. |
+| v1.40 | 2026-08-22 | Drafted and published 2026-08-22 (owner push). The optional MCP query surface is quarantined and serves nothing. It is not repaired here. **The finding.** The surface (`template/mcp/`) was written before the four-gate projection contract (added v1.24) and was never brought forward to it. Measured first-hand against the published tree at v1.39: the listing path `list_entities()` applied gates 1 and 2 (committed at HEAD, lifecycle-active) and neither 3 nor 4; the direct-identifier path `get_entity(id)` applied gate 1 **alone**, so an identifier lookup returned the complete raw text of retired and superseded notes that the listing path correctly withheld; the query path `query_facts()` applied gates 1 and 2 and neither 3 nor 4; and `hub_scope()` together with the three resources (`hub://about`, `hub://glossary`, `hub://index/{folder}`) applied gate 1 alone. Access-clearance and projection-manifest logic exist **nowhere** in the implementation, on any path. The content test is a **denylist**, excluding only `_inbox/`, `changes/`, `archive/`, `.claude/`, `.agents/`, `mcp/`, `docs/` and a short filename list, so a note carrying a restricted marking in an ordinary directory was content by construction. **The exposure, stated by path and by content class** so a deployment can assess what it actually ran rather than guess, naming no specific content: `get_entity(id)` could return the full frontmatter and body of any committed note in the eight entity directories, including notes that were **retired**, **superseded**, marked **`sensitivity: restricted`**, classed **`accessClass: restricted`**, or **absent from every projection manifest**; `list_entities()` could return the full frontmatter (not the body) of every **active** entity note including the **restricted-marked**, **restricted-class** and **manifest-absent** ones, and could not return retired or superseded notes; `query_facts()` could return the **path, title and match count** (not the body) of every committed markdown file outside the denylist, including **restricted-marked**, **restricted-class** and **manifest-absent** notes, and could not return retired or superseded ones; `hub_scope()` could return three named sections of `01_project-brief.md` verbatim; and the three resources could return the complete text of `00_about.md`, `07_glossary.md` and any entity folder's `index.md`, regardless of lifecycle, class or manifest membership. The surface reads **committed state only** (`git show HEAD:<path>`) and never the working tree, so that enumeration bounds what was reachable: uncommitted edits, open proposals, inbox drafts and unresolved disputes were never exposed. **The premise, corrected.** The section and the surface both read "committed = safe to expose". That is withdrawn. Committing a fact records it and it passed review to get there; it decides nothing about who may read it. Committed state is gate 1 of four, and a surface treating it as sufficient reproduces this defect. **The false guarantee, corrected.** `template/mcp/README.md` stated without qualification that retired and superseded notes are never returned. That was true of the listing and query paths and **false of `get_entity(id)`**, which is the worst form of the defect: an operator was told a control existed on every path and could reasonably have placed material behind it. Documentation now states only the guarantees the implementation keeps, names the path on which a partial guarantee does not hold, and names the two never-implemented gates as not enforced rather than omitting them. **What quarantine means here:** every content-returning entry point refuses and states the quarantine and its reason, so a caller learns why rather than reading an empty result; the refusal covers the four tools **and** the three resources, which the gate matrix framing the finding did not enumerate, because a refusal covering only the paths someone remembered to list is not a refusal; the surface does **not** degrade to the listing path merely because that path enforced lifecycle, since reasoning about which of four gates applies on which of several paths is exactly what failed here; and starting the surface reports the quarantine and exits rather than starting silently, reported **before** the dependency import so a clean environment meets the quarantine and not an `ImportError`. **Installation instructions corrected, after verification rather than on report:** the README said `pip install mcp` and "Python 3.8+". Verified against the package index, `mcp` 2.0.0 removed `mcp.server.fastmcp` outright, which is the interface `server.py` imports, so an unpinned install resolves to a release the surface cannot import and then exits claiming the package is missing when it is installed at the wrong major version; `mcp` 1.29.0 was confirmed to ship `mcp/server/fastmcp/` with `FastMCP` exported. Every published `mcp` release, 1.0.0 onward, declares `Requires-Python >=3.10`, so the stated 3.8 floor was satisfiable by no configuration carrying the dependency. The instructions are now `pip install "mcp>=1.29,<2"` at Python 3.10 or newer, with the move to the 2.x interface named as a migration this file does not contain. **One correction to the finding as first written:** the query path was reported as not enforcing lifecycle. Reproduced against the tree, it does. The record states what was measured, not what was alleged. **Both directions proved** (`tests/test_mcp_quarantine.sh`): all eleven content-returning entry points refuse and return no content against a synthetic hub committing one note of every named class, while the same assertions run against an unquarantined copy fail and the content comes back, so a pass is evidence of a refusal and not of an empty tree; the whole suite was also run against the pre-change surface and failed in nine places before being restored; the fixture fails closed when extraction is empty; and the instrument's own first draft carried a case-sensitive pattern that passed against the uncorrected file, found by the negative run and recorded in the test rather than smoothed away. **Explicitly not proved here:** no test asserts any of the four gates. A test passing because nothing is served must never read as a gate being proved, so the two never-implemented gates are asserted as an **acknowledged gap** and not as a control. **This quarantines and does not repair.** The gates are implemented and proved by the separate change `audit-mcp-projection-gates`, which is the only thing that lifts the quarantine, and it is not lifted by a repair of one path while another stays unguarded. **Adoption consequence, BREAKING and intended:** a deployment that had this optional surface enabled loses it. It stops answering rather than answering under a contract it cannot keep. A deployment that never enabled it is unaffected, no hub content changes in either case, and the hub remains fully readable as plain markdown through its own governed channels. An acknowledged gap is safer than a false assurance, and the quarantine is the acknowledgement. |
+| v1.41 | 2026-08-22 | Drafted and unpublished. The Reader tier, the scoped reader, and the honest isolation boundary, implementing `rfcs/RFC-007` and completing the Consumer edition's run-set that v1.39 (RFC-006) named as its one missing component. A deployment owner named the gap: the standard had no read-only consumption tier and defined no Reader identity, marker, contract, or scoping mechanism. This version adds a **Reader tier**: a read-only consumption context that produces outputs from the estate and authors none of it, with a four-clause contract (produces outputs not estate changes; the consumption acts are out of scope and listed; reading anything readable is in scope; a defect is noted in one line and left), the reading subset of the standard that still binds it (evidence hierarchy, home of record first, provenance per claim, restricted never surfaced, identity resolved not constructed, voice, estate separation), and a scaffold under `template/reader/` (a `.km-tier` marker whose first line is `reader`, a governing `CLAUDE.md` with an `AGENTS.md` mirror, an `outputs/` area, an optional `correction notes/` area, and a host permission file that denies git write commands). It defines the **scoped reader**: a reader locked to a named, closed list of hubs declared on a `scope:` line in the marker, that refuses everything outside the list rather than answering partially, and that ignores its target hub's own build files. The scoped reader is stated as the read-side projection of an RFC-002 compartment and the per-tenant consumption face of the RFC-006 Consumer edition, both by reference, neither redesigned. **The honest isolation boundary:** a scoped reader's isolation is convention unless the hosting enforces it with separate installs, storage, or credentials; the shipped git-write denial denies writing not reading, and the standard refuses to describe a scoped reader as an enforced tenant boundary, on the same posture it takes toward agent scope. **Reader skills, minimal:** `km-brief` is named as the Reader skill that already ships; a dedicated query skill and a reader-safe gather are named as deferred to a later harvest, the Reader answering meanwhile through `km-brief` and direct query, so no heavy new skill is authored. A `reader-scan.sh` in the scaffold validates the reader declaration's shape (marker present and first line `reader`, governing file present, `outputs/` present, and any declared scope a non-empty closed list), canaried both directions in `tests/test_reader_scaffold.sh`; it validates the declaration, not isolation, and states that limit in its own coverage line. No enforced tenant isolation is asserted, encoded, or implied. Marked with its version and binds nothing until its own owner push. |
 
 ---
 

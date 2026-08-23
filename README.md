@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.39"/>
+  <img src="assets/badges/version.svg" alt="standard v1.40"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 2 adopted"/>
   <img src="assets/badges/license.svg" alt="license: free to adopt"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,10 +28,11 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.39** (2026-08-22, editions and the run/evolve boundary; the standard names one
-structural line dividing the estate's tiers into a run-set that consumes a pinned standard and an
-evolve-set that authors it, and defines two editions as profiles over one standard version, asserting
-no license or commercial term; v1.38 is the preceding published version and v1.23 remains an unpublished draft awaiting its own push). The full ledger of released versions, and the rule that a
+**Current version: v1.40** (2026-08-22, the optional MCP query surface is quarantined and serves
+nothing; the surface predates the four-gate projection contract and never enforced it, so every
+content-returning entry point now refuses and states why, and starting the surface reports the
+quarantine — this quarantines and does not repair, and a deployment that had the optional surface
+enabled loses it; v1.39 is the preceding published version and v1.23 remains an unpublished draft awaiting its own push). The full ledger of released versions, and the rule that a
 published version number is never reused, is in [`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.
 
