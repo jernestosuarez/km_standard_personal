@@ -389,6 +389,20 @@ else
     # reading the field attributed nothing. Checked only once the interview date is valid: a hub
     # that was never interviewed has one defect, not two, and both are fixed by the same act.
     # Stated limit: this proves the field was filled in, never that the keywords are the right ones.
+    # Validated ENTRY BY ENTRY since v1.44 (added in v1.44, drafted and unpublished), because the
+    # field is a comma-separated LIST and the v1.28 arms tested the whole value. A value of ", ," is
+    # neither "" nor placeholder-bearing, so it fell through every arm and the hub scanned green
+    # carrying no keyword at all, the exact state v1.28 was written to prevent, reached by a value
+    # the check was not looking at the right granularity to see. The consuming surfaces drop empty
+    # entries silently, so nothing downstream reported it either. The placeholder arm was already
+    # correct for a list: it is a substring test, so a placeholder in any position still matches.
+    #
+    # The threshold is AT LEAST ONE usable entry, not every entry usable. A keyword list is a
+    # non-empty set, so one usable keyword is all a surface needs to attribute the hub; a reader
+    # scope is a closed list, where "closed" is a property of every member and one bad member
+    # destroys it. Same rule, different logics, and copying the stricter one here would quarantine
+    # a hub over a trailing comma. A stray empty entry beside real keywords is named as an
+    # advisory: a typo worth seeing, never grounds to stop a hub scanning.
     routing_keywords=$(fm_field "$deployment_file" "routing-keywords")
     case "$routing_keywords" in
       "")
@@ -400,6 +414,48 @@ else
         echo "  ! routing-keywords still carries an unsubstituted placeholder — run the /km-init"
         echo "    purpose interview and record the keywords it produced"
         deployment_errors=$((deployment_errors + 1))
+        ;;
+      *)
+        # Split on the delimiter by hand, so an EMPTY entry survives as a token rather than being
+        # absorbed into its neighbour or dropped off the end. IFS word splitting would erase the
+        # very entries this check exists to see. Same technique as the reader scope walk, which
+        # repaired the first instance of this class.
+        kw_usable=0; kw_entries=0; kw_empty=""
+        kw_rest="$routing_keywords"; kw_last=0
+        while [ "$kw_last" -eq 0 ]; do
+          case "$kw_rest" in
+            *,*) kw_token="${kw_rest%%,*}"; kw_rest="${kw_rest#*,}" ;;
+            *)   kw_token="$kw_rest"; kw_last=1 ;;
+          esac
+          kw_token=$(printf '%s' "$kw_token" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
+          kw_entries=$((kw_entries + 1))
+          # Well formed means: carries at least one alphanumeric character. Deliberately close to
+          # the floor. The field is documented lowercase and the consuming surface lower-cases what
+          # it reads, so demanding case here would reject a value the surface handles correctly.
+          # An entry of pure punctuation is different: no surface can match on it, and it is
+          # indistinguishable from a delimiter artifact.
+          if printf '%s' "$kw_token" | grep -q '[[:alnum:]]'; then
+            kw_usable=$((kw_usable + 1))
+          else
+            kw_empty="$kw_empty $kw_entries"
+          fi
+        done
+        if [ "$kw_usable" -eq 0 ]; then
+          echo "  ! routing-keywords carries no usable keyword: $kw_entries entry(ies), every one"
+          echo "    of them empty or punctuation only. A comma-separated list is judged entry by"
+          echo "    entry, because a value made of delimiters is neither absent nor a placeholder,"
+          echo "    and a supervisor registry and a decision surface still attribute nothing here"
+          deployment_errors=$((deployment_errors + 1))
+        else
+          for kw_i in $kw_empty; do
+            echo "  routing-keywords entry $kw_i is empty or punctuation only. A leading, trailing"
+            echo "    or repeated ',' is not a keyword; the hub is still attributable, so this is"
+            echo "    reported rather than gated"
+            adv
+          done
+          echo "  OK: routing-keywords declares $kw_usable usable keyword(s) of $kw_entries entry(ies)"
+          echo "      (the field is filled in; whether these are the RIGHT keywords is not checked)"
+        fi
         ;;
     esac
   fi

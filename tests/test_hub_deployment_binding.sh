@@ -205,6 +205,80 @@ if ! printf '%s\n' "$output" | grep -Fq "routing-keywords still carries an unsub
   fail "keywords-placeholder did not report the unsubstituted value"
 fi
 
+# The per-token gate (added in v1.44, drafted and unpublished; defect D6): four cases, and the
+# pair of directions is the point of them.
+#
+# routing-keywords is a comma-separated LIST, and until v1.44 the gate tested the whole value: an
+# empty arm matching only "" and a substring arm matching "{{". A value of ", ," is neither, so it
+# fell through every arm and the hub scanned green carrying no keyword at all, which is precisely
+# the state v1.28 added the gate to prevent. The consuming surfaces drop empty tokens silently, so
+# nothing anywhere reported the hub as unattributable.
+#
+# Two cases prove the gate fires on the class, and two prove it does not fire on a legitimate
+# declaration, because a check that matches everything proves as little as one that matches
+# four were run against the UNREPAIRED scan first, where the two firing cases fail, which is what
+# makes them evidence that the gate detects the defect rather than agreeing with whatever the scan
+# already did.
+keywords_case() { # <name> <value> <expect-status> <expect-text>
+  local hub output status
+  hub=$(prepare_hub "$1" canonical "$CANONICAL_REVISION" "" "" "" "")
+  mutate_binding "$hub" "s|^routing-keywords: .*|routing-keywords: \"$2\"|" \
+    "apply: routing keywords fixture ($1)"
+  # Assert the fixture actually carries the value under test. A sed that silently matched nothing
+  # would leave the template default in place, and the case would then pass by testing a hub that
+  # never carried the defect.
+  if ! grep -Fq "routing-keywords: \"$2\"" "$hub/km-deployment.md"; then
+    fail "$1: the fixture does not carry routing-keywords: \"$2\" (the mutation did not apply)"
+  fi
+  set +e
+  output=$(bash "$hub/hub-scan.sh" 2>&1)
+  status=$?
+  set -e
+  if [ "$status" -ne "$3" ]; then
+    printf '%s\n' "$output" >&2
+    fail "$1 returned $status, expected $3"
+  fi
+  if ! printf '%s\n' "$output" | grep -Fq "$4"; then
+    printf '%s\n' "$output" >&2
+    fail "$1 did not report: $4"
+  fi
+}
+
+# Fires: every token trims to nothing. Neither empty nor placeholder-bearing as a whole value.
+keywords_case keywords-all-empty-tokens ', ,' 1 \
+  "routing-keywords carries no usable keyword"
+# Fires: a lone delimiter, which leaves no real keyword on either side of it.
+keywords_case keywords-lone-delimiter ',' 1 \
+  "routing-keywords carries no usable keyword"
+# Does NOT fire: a legitimate multi-keyword list. The deployment block reports its own OK line.
+# The value differs from the one prepare_hub substitutes, so the fixture mutation is a real edit
+# and the guard above is testing a hub that was actually changed.
+keywords_case keywords-legitimate-list 'delta, epsilon, zeta' 0 \
+  "OK: canonical standard binding is complete"
+# Does NOT fire: one legitimate keyword and no delimiter at all.
+keywords_case keywords-single 'alpha' 0 \
+  "OK: canonical standard binding is complete"
+
+# A stray empty entry BESIDE real keywords is named but does not quarantine the hub. One usable
+# keyword is all a surface needs to attribute the hub, so a trailing or repeated comma is a typo
+# worth seeing rather than grounds to stop a hub scanning. Asserted so the threshold cannot drift
+# in either direction without a test saying so.
+stray=$(prepare_hub keywords-stray-entry canonical "$CANONICAL_REVISION" "" "" "" "")
+mutate_binding "$stray" 's|^routing-keywords: .*|routing-keywords: "alpha, , beta"|' \
+  'apply: stray empty entry (fixture)'
+set +e
+output=$(bash "$stray/hub-scan.sh" 2>&1)
+status=$?
+set -e
+if [ "$status" -ne 0 ]; then
+  printf '%s\n' "$output" >&2
+  fail "keywords-stray-entry returned $status, expected 0 (an advisory, never a quarantine)"
+fi
+if ! printf '%s\n' "$output" | grep -Fq "routing-keywords entry 2 is empty"; then
+  printf '%s\n' "$output" >&2
+  fail "keywords-stray-entry did not name the empty entry"
+fi
+
 species_bad=$(prepare_hub species-invalid canonical "$CANONICAL_REVISION" "" "" "" "")
 declare_species "$species_bad" "station: everywhere"
 set +e
