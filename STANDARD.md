@@ -3948,6 +3948,13 @@ hubs and nothing else. A scoped reader is a Reader (the whole contract above bin
   marker on a `scope:` line as a comma-separated list of hub names. Closed on purpose, the same
   discipline a closed fact-class list applies: an open scope (`*`, `all`, or an empty list) makes the
   boundary claim unstatable and is not a scoped reader.
+- **Every member of the list is closed, or the list is not.** The scope is judged token by token and
+  never as one whole value. An open token is an open scope wherever it sits, so `*, hub-alpha` is
+  rejected exactly as a bare `*` is; and an empty entry, a duplicate, or a token that is not a well
+  formed hub identifier (the standard's own hub slug) is rejected rather than absorbed into its
+  neighbour. A declaration that cannot be evaluated at all, such as a marker declaring `scope:` twice,
+  is refused rather than passed, because a check reporting by absence must never report *could not be
+  evaluated* as *nothing found*.
 - **Everything outside the scope is refused, not filtered.** A question needing material outside the
   declared hubs is answered "this is out of scope for this reader" and stopped, rather than answered
   partially from whatever happens to be visible. The contract is stated firmly precisely because the

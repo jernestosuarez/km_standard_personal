@@ -1,7 +1,8 @@
 # Reader tier: a read-only consumption context
 
-> This file mirrors `CLAUDE.md`. The two are the same contract under the standard's framework-agnostic
-> convention: `CLAUDE.md` is read by Claude Code, `AGENTS.md` by other agent surfaces. Keep them equal.
+> This file mirrors `CLAUDE.md`. The two carry the same contract text under the standard's
+> framework-agnostic convention: `CLAUDE.md` is read by Claude Code, `AGENTS.md` by other agent
+> surfaces. This note is the only permitted difference between them; keep the contract itself equal.
 
 You are in a **read session**. This directory is not a hub and holds no knowledge of its own. It
 exists so that reading the estate and building the estate are **different sessions with different

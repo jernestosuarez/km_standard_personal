@@ -3,7 +3,10 @@
 outputs/
 work/
 
-# The Reader scaffold ships an outputs/ convention doc; re-include just that path (it holds only the
-# scaffold README, never estate outputs). The blanket outputs/ exclusion above is otherwise unchanged.
+# The Reader scaffold ships an outputs/ convention doc, and only that. Re-include the directory so the
+# doc is reachable, then re-ignore everything inside it and re-include the doc alone, so a reader that
+# has actually produced output cannot surface that output as untracked material in the distribution.
+# The blanket outputs/ exclusion above is otherwise unchanged.
 !template/reader/outputs/
+template/reader/outputs/*
 !template/reader/outputs/README.md

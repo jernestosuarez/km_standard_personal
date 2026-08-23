@@ -103,13 +103,13 @@ c="$work/no-outputs"; mkfixture "$c"; rm -rf "$c/outputs"
 run_case "missing outputs area errors" "$c" 1 "outputs/ area missing"
 
 c="$work/open-star"; mkfixture "$c"; printf 'reader\nscope: *\n' > "$c/.km-tier"
-run_case "open scope '*' errors" "$c" 1 "scope is OPEN"
+run_case "open scope '*' errors" "$c" 1 "OPEN token"
 
 c="$work/open-all"; mkfixture "$c"; printf 'reader\nscope: all\n' > "$c/.km-tier"
-run_case "open scope 'all' errors" "$c" 1 "scope is OPEN"
+run_case "open scope 'all' errors" "$c" 1 "OPEN token"
 
 c="$work/open-empty"; mkfixture "$c"; printf 'reader\nscope:\n' > "$c/.km-tier"
-run_case "empty scope errors" "$c" 1 "scope is OPEN"
+run_case "empty scope errors" "$c" 1 "scope declared but empty"
 
 # --- Direction 3: REFUSE (exit 2) on input that cannot be evaluated ---
 run_case "nonexistent context refuses (not a pass)" "$work/does-not-exist" 2 "REFUSED"
@@ -209,6 +209,46 @@ fi
 c="$work/marker-unreadable"; mkfixture "$c"; chmod 000 "$c/.km-tier"
 run_case "unreadable marker refuses (not a pass)" "$c" 2 "REFUSED"
 chmod 644 "$c/.km-tier"
+
+# --- Distribution guarantees: the mirrors, and generated output ---
+#
+# The scaffold states that CLAUDE.md and AGENTS.md carry the same contract and differ only by the
+# mirror note AGENTS.md opens with. A stated equivalence that nothing checks drifts, so check it.
+
+mirror_note_last=6   # lines 3-6: the blockquote AGENTS.md opens with, plus its trailing blank line
+if diff -q <(sed "3,${mirror_note_last}d" "$SCAFFOLD/AGENTS.md") "$SCAFFOLD/CLAUDE.md" >/dev/null 2>&1; then
+  pass "instruction mirrors carry the same contract apart from the documented mirror note"
+else
+  die "instruction mirrors differ beyond the documented mirror note"
+fi
+
+# and the check must be able to fail: a contract edit made in one mirror only is a defect
+m="$work/mirror-drift"; mkfixture "$m"
+printf '\nAn edit made in one mirror only.\n' >> "$m/CLAUDE.md"
+if diff -q <(sed "3,${mirror_note_last}d" "$m/AGENTS.md") "$m/CLAUDE.md" >/dev/null 2>&1; then
+  die "mirror check did not fire on a one-sided contract edit"
+else
+  pass "mirror check fires on a one-sided contract edit"
+fi
+
+# Generated reader output must not surface as untracked material; the shipped convention doc must.
+if command -v git >/dev/null 2>&1 && git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1; then
+  gen="$SCAFFOLD/outputs/.km-canary-generated-output.md"
+  printf 'synthetic generated output\n' > "$gen"
+  if git -C "$ROOT" check-ignore -q "$gen"; then
+    pass "generated reader output is ignored, so it cannot surface as untracked material"
+  else
+    die "generated reader output would surface as untracked material"
+  fi
+  rm -f "$gen"
+  if git -C "$ROOT" ls-files --error-unmatch "template/reader/outputs/README.md" >/dev/null 2>&1; then
+    pass "the shipped outputs/ convention document stays tracked"
+  else
+    die "the shipped outputs/ convention document is not tracked"
+  fi
+else
+  echo "SKIP: git unavailable or not a work tree; distribution-ignore cases not run (coverage gap, not a pass)"
+fi
 
 # --- The suite's own fail-closed proof ---
 #
