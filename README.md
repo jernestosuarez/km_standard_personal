@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.41"/>
+  <img src="assets/badges/version.svg" alt="standard v1.42"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 2 adopted"/>
   <img src="assets/badges/license.svg" alt="license: free to adopt"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,12 +28,12 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.41** (2026-08-23, the Reader tier, the scoped reader, and the honest
-isolation boundary; the standard adds a read-only consumption tier that produces outputs from the
-estate and authors none of it, with a stated contract, a `reader` tier marker, an `outputs/` area and
-the reading subset of the standard that still binds it, and it defines the scoped reader, locked to a
-declared closed list of hubs, whose isolation is convention unless the hosting enforces it — no
-enforced tenant isolation is claimed; v1.40 is the preceding published version and v1.23 remains an unpublished draft awaiting its own push). The full ledger of released versions, and the rule that a
+**Current version: v1.42** (2026-08-23, published text is not draft text; sections and shipped
+files that v1.35, v1.39 and v1.40 marked as drafted kept the marking after those versions published,
+so seventeen markings across five files told a reader that binding obligations bound nothing — all of
+them are cleared with each version attribution kept, `scripts/validate_published_not_draft.py` reads
+publication status from the version-history table and applies it across the whole governed surface,
+and the clearing step and that check are written into the documented publish ritual; v1.41 is the preceding published version and v1.23 remains an unpublished draft awaiting its own push). The full ledger of released versions, and the rule that a
 published version number is never reused, is in [`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.
 
