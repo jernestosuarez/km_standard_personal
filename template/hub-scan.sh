@@ -332,7 +332,7 @@ echo "[ DEPLOYMENT ]"
 deployment_file="$HUB/km-deployment.md"
 merged_tombstone="$HUB/MERGED-INTO.md"
 deployment_errors=0
-# Hub merge (v1.35, drafted and unpublished). An absorbed hub is tombstoned, never deleted: its
+# Hub merge (v1.35). An absorbed hub is tombstoned, never deleted: its
 # directory and git history stay, its registry row keeps a `merged` status with a `merged-into`
 # column, and its admission rule becomes a refusal. A tombstoned hub is EXPECTED not to scan green,
 # because a green scan would assert the directory is still a live hub. So when MERGED-INTO.md is

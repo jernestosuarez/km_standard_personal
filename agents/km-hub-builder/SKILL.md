@@ -129,14 +129,18 @@ Never reuse a published version identifier. Inspect both version history and Git
 selecting the next version.
 
 Publishing is its own step, and it is not finished when the header carries the new number. While a
-version is drafted, mark each section it adds with that version and state that the section binds
-nothing until its own owner push. The publishing commit then clears those markings from the section
-bodies, keeps the version attribution, changes no other word, and leaves untouched any marking that
-belongs to a version still drafted. Flipping only the title, the lead, the version row, the README
-and the badge leaves published text telling a reader that binding sections carry no obligation, and
-a deployment reading its own copy is entitled to act on that. Run the standard's own
-published-not-draft check inside the publishing commit, so the clearing step is verified rather than
-remembered.
+version is drafted, mark everything it adds with that version and state that the material binds
+nothing until its own owner push. The publishing commit then clears those markings everywhere the
+version wrote them, in the standard's own sections and in every shipped file it touched, keeps the
+version attribution, changes no other word, and leaves untouched any marking belonging to a version
+still drafted. Flipping only the title, the lead, the version row, the README and the badge leaves
+published material telling a reader that a binding obligation carries none, and a deployment reading
+its own copy is entitled to act on that. The shipped files matter most, because a marking left in a
+skill or a template installs the false claim into every deployment that adopts the version. Run the
+standard's own published-not-draft check across the governed surface inside the publishing commit,
+so the clearing step is verified rather than remembered, and never accept a check scoped to the
+document alone: one that passes while the installed files carry the defect certifies the wrong
+class.
 
 ## Verify and commit
 

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Canaries for hub merge (v1.35, drafted and unpublished) — RFC-004 Part II.
+# Canaries for hub merge (v1.35) — RFC-004 Part II.
 #
 # WHY THIS FILE EXISTS
 #

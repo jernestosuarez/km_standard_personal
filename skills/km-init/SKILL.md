@@ -14,8 +14,8 @@ the purpose interview, and stand up whatever the directory does not already have
 |---|---|---|
 | **`/km-init <path>`** (create) | No hub exists at the path | The full scaffold from `template/`, the deployment binding, the agent definition, the registry row |
 | **`/km-init --adopt <path>`** (adopt) | A directory already exists and is not an initiated hub | The hub definition, the scope guard, the registry row, and **only** the scaffold files that are absent |
-| **`/km-init --merge <absorbed> <survivor>`** (merge) | Two initiated hubs are one engagement | Re-runs the interview on the survivor from the union pre-fill, re-homes the absorbed hub's content, and tombstones the absorbed hub. Supervisor-mediated. See "Merge and withdrawal modes" below. (v1.35, drafted and unpublished) |
-| **`/km-init --withdraw <early> <receiving>`** (withdrawal) | A hub was stood up too early | Re-homes the early hub's content as ordinary intake, absorbs its routing keywords into the receiving hub, and tombstones it. No re-interview unless the admission rule changes. Supervisor-mediated. See "Merge and withdrawal modes" below. (v1.35, drafted and unpublished) |
+| **`/km-init --merge <absorbed> <survivor>`** (merge) | Two initiated hubs are one engagement | Re-runs the interview on the survivor from the union pre-fill, re-homes the absorbed hub's content, and tombstones the absorbed hub. Supervisor-mediated. See "Merge and withdrawal modes" below. (v1.35) |
+| **`/km-init --withdraw <early> <receiving>`** (withdrawal) | A hub was stood up too early | Re-homes the early hub's content as ordinary intake, absorbs its routing keywords into the receiving hub, and tombstones it. No re-interview unless the admission rule changes. Supervisor-mediated. See "Merge and withdrawal modes" below. (v1.35) |
 
 The **adoption mode** exists because a control that makes existing artifacts non-conformant must
 ship with the act that makes them conformant (STANDARD.md → "A gate needs a route back"). A hub
@@ -41,12 +41,12 @@ to write.
 
 ---
 
-## Merge and withdrawal modes (v1.35, drafted and unpublished)
+## Merge and withdrawal modes (v1.35)
 
-> **Drafted and unpublished (v1.35).** These modes are designed in
-> `../../STANDARD.md` → "Hub merge: absorb-and-tombstone" and in `rfcs/RFC-004` Part II, and bind
-> nothing until that version's own owner push. They are drafted from design and not yet proven by a
-> run, the same status the adoption mode carried at v1.28.
+> **Added in v1.35.** These modes are designed in
+> `../../STANDARD.md` → "Hub merge: absorb-and-tombstone" and in `rfcs/RFC-004` Part II. They are
+> drafted from design and not yet proven by a run, the same status the adoption mode carried at
+> v1.28.
 
 **Both modes are Supervisor-mediated under owner authority and are not available to a hub agent.** A
 merge is cross-hub by construction, which is escalation-class work: the Supervisor re-points estate
