@@ -128,6 +128,16 @@ its passing line, and report a partial read as a coverage gap rather than foldin
 Never reuse a published version identifier. Inspect both version history and Git history before
 selecting the next version.
 
+Publishing is its own step, and it is not finished when the header carries the new number. While a
+version is drafted, mark each section it adds with that version and state that the section binds
+nothing until its own owner push. The publishing commit then clears those markings from the section
+bodies, keeps the version attribution, changes no other word, and leaves untouched any marking that
+belongs to a version still drafted. Flipping only the title, the lead, the version row, the README
+and the badge leaves published text telling a reader that binding sections carry no obligation, and
+a deployment reading its own copy is entitled to act on that. Run the standard's own
+published-not-draft check inside the publishing commit, so the clearing step is verified rather than
+remembered.
+
 ## Verify and commit
 
 Define acceptance criteria before editing and verify each criterion afterward. Run the most focused
