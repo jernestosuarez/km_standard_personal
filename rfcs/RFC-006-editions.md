@@ -21,6 +21,24 @@ timestamp: 2026-08-22
 > maintainer to design rather than implement. **The gap is the owner's; every mechanism below is the
 > maintainer's, drafted so it can be argued with.** No design statement here is owner-ruled, and
 > nothing here asserts, encodes, or implies any license, price, or commercial term.
+>
+> **Status corrected 2026-08-24 (v1.50). The banner above is the statement of the day it was
+> written and it is left standing; what follows records what has happened since.** This design was
+> **adopted by v1.39** (published 2026-08-22), which implements the editions model and the
+> run/evolve boundary in `STANDARD.md` → *Editions and the run/evolve boundary*. Two things it
+> describes were deliberately **not** taken, and the version records both: **no schema, check or
+> mechanism was added**, because the design states none is strictly required by the boundary itself,
+> and the optional edition-declaration field discussed below was **deferred**. Tier separation is
+> published as convention and never as an enforced control. The Reader, which this document names as
+> the Consumer edition's one missing component, was a tracked gap at v1.39 and was closed by v1.41
+> implementing RFC-007; the routines of RFC-005 remain unimplemented. The design below is unchanged.
+> See [the RFC index](README.md) for the disposition of the whole set.
+>
+> One clause below has also been overtaken by a later publication and is left as written: the
+> requirement that the standard stay "free to adopt" was the owner's framing on the day, and v1.49
+> repaired the repository's licence claim to state that **no licence has been declared**, so default
+> copyright applies until one is. Free adoption remains the owner's stated intent. The
+> boundary this document draws is unaffected, since it was license-agnostic by design.
 
 ## Provenance discipline
 

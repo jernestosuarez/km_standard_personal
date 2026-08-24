@@ -18,6 +18,21 @@ timestamp: 2026-08-19
 > maintainer to design rather than implement, and to say honestly which of the three is not ready.
 > **No design statement in this RFC is owner-ruled.** The gaps are the owner's; every mechanism
 > below is the maintainer's, drafted so it can be argued with.
+>
+> **Status corrected 2026-08-24 (v1.50). The banner above is the statement of the day it was
+> written and it is left standing; what follows records what has happened since.** Two of this
+> document's three Parts have been implemented and published. **Part I was adopted by v1.32**
+> (published 2026-08-20), in a narrowed form that version itself records: `hub-owner` is not
+> projected, the declared-skill-set list of §5 was **not taken**, because comparing the two
+> installed runtime trees to each other covers the same evidence without adding a hand-maintained
+> manifest, and "unclaimed class" became a coverage number rather than an advisory. **Part II was
+> adopted by v1.35** (published 2026-08-22), with one guard that cannot bind yet: a merge across
+> differing compartment declarations is refused in vocabulary drafted at v1.23, which has not
+> published. **Part III remains unadopted** and its own verdict of *premature* stands; reading (c)
+> later took concrete, bounded form as the Consumer edition in v1.39, while readings (a) and (b) are
+> untouched. The design below is unchanged, and that includes the Part I status addendum, which
+> carries its own date of 2026-08-20 and describes v1.32's state on that day rather than today's.
+> See [the RFC index](README.md) for the disposition of the whole set.
 
 ## Provenance discipline
 

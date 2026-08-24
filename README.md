@@ -12,7 +12,7 @@ timestamp: 2026-07-02
 
 <p align="center">
   <img src="assets/badges/version.svg" alt="standard v1.49"/>
-  <img src="assets/badges/rfcs.svg" alt="RFCs: 2 adopted"/>
+  <img src="assets/badges/rfcs.svg" alt="RFCs: 3 adopted, 1 partial, 3 open"/>
   <img src="assets/badges/license.svg" alt="license: pending"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
   <img src="assets/badges/agents.svg" alt="agents: MCP-ready"/>
@@ -67,7 +67,7 @@ tied to any specific company, industry, or AI vendor.
 |---|---|
 | [`STANDARD.md`](STANDARD.md) | The full standard — architecture, governance rules, frontmatter spec, ontology layer, checklists. Read this first. |
 | [`template/`](template/) | A ready-to-copy reference hub: stub docs, `context.jsonld`, `km-deployment.md`, entity-note folders (`decisions/`, `risks/`, `stakeholders/`, `milestones/`, `partners/`, `corrections/`, plus the optional `relationships/`, `claims/`, and `sources/systems/`), governance files, and the per-hub agent skills (`km-intake`, `km-propose`, `km-gather`, `km-start`, `km-handover`, `km-brief`) already wired up for Claude Code and AGENTS.md-compatible tools. |
-| [`rfcs/`](rfcs/RFC-001-sor-gateway.md) | Design RFCs. RFC-001 — the record boundary / systems-of-record gateway (published as v1.22, 2026-08-16): motivation, migration, implementation notes, and open questions for Rule 6, `accessClass`, `SourceSystem`, `Claim`, bitemporal validity, and inbound connectors. RFC-002 — stations, compartments, and the resolution plane (drafted as v1.23, awaiting owner push), with per-ruling provenance tags. |
+| [`rfcs/`](rfcs/README.md) | Design RFCs, seven of them, each a dated design record that is never rewritten to agree with what happened afterwards. **Start at [`rfcs/README.md`](rfcs/README.md), the index**, which records for every proposal its status, the published version that implemented it, where a design was implemented in narrowed form, and how the RFC badge above is generated from that table rather than counted by hand. |
 | [`contracts/organization-profile.schema.json`](contracts/organization-profile.schema.json) | Portable JSON contract for an approved Enterprise Knowledge Layer organization profile. |
 | [`scripts/validate_organization_profile.py`](scripts/validate_organization_profile.py) | Dependency-free validator for profile shape, compatibility, safe paths, and module eligibility. |
 | [`skills/km-init/`](skills/km-init/SKILL.md) | Workspace-level skill: runs the purpose interview and either stands up a brand-new hub from `template/` or adopts a directory that already exists, writing only what it lacks. |

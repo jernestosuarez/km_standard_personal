@@ -19,6 +19,22 @@ timestamp: 2026-08-22
 > tier dispatched the maintainer to design the Reader tier and its scoping mechanism, not to harvest or
 > implement them. **The gap is the owner's; every mechanism below is the maintainer's, drafted so it
 > can be argued with.** No design statement here is owner-ruled.
+>
+> **Status corrected 2026-08-24 (v1.50). The banner above is the statement of the day it was
+> written and it is left standing; what follows records what has happened since.** This design was
+> **adopted by v1.41** (published 2026-08-23), which adds the Reader tier, its contract, its
+> `template/reader/` scaffold and the scoped reader to `STANDARD.md` → *The Reader tier*, completing
+> the Consumer edition run-set RFC-006 named as incomplete. The version was drafted as v1.40 and
+> renumbered when v1.40 published as something else, because a published version identifier is never
+> reused. Two things were narrowed on the way in, and the version records both: **the reader skills
+> were kept minimal**, with `km-brief` named as the Reader skill that already ships and a dedicated
+> query skill and a reader-safe gather deferred to a later harvest rather than authored; and the
+> **isolation claim was kept honest**, the standard stating that a scoped reader's isolation is
+> convention unless the hosting enforces it and refusing to describe it as an enforced tenant
+> boundary. One defect was found and repaired inside that implementation rather than here: the
+> scaffold's first scope parser compared the declared scope as a single value, so it accepted an
+> open token hidden in a list; the published check validates the scope token by token. The design
+> below is unchanged. See [the RFC index](README.md) for the disposition of the whole set.
 
 ## Provenance discipline
 
