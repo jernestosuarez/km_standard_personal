@@ -39,6 +39,13 @@ timestamp: 2026-08-22
 > repaired the repository's licence claim to state that **no licence has been declared**, so default
 > copyright applies until one is. Free adoption remains the owner's stated intent. The
 > boundary this document draws is unaffected, since it was license-agnostic by design.
+>
+> **Licence declared 2026-08-24 (v1.53). The sentence above is the position of the day it was
+> written and it is left standing; this line records what has happened since.** The owner has made
+> the choice v1.49 left open: **this repository is licensed under Apache-2.0**, with the complete
+> text in [`LICENSE`](../LICENSE) and the attribution notice in [`NOTICE`](../NOTICE), so default
+> copyright no longer applies to it. The standard still asserts no licence on any deployment, which
+> is what keeps this document's boundary license-agnostic exactly as designed.
 
 ## Provenance discipline
 

@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.52"/>
+  <img src="assets/badges/version.svg" alt="standard v1.53"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 3 adopted, 1 partial, 3 open"/>
   <img src="assets/badges/license.svg" alt="license: Apache-2.0"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,24 +28,28 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.52** (2026-08-24, a status is read where a status is declared, and quoted
-everywhere else; two checks read publication status out of the version-history table and both
-searched the draft-declaration token *anywhere* in a row, while the rule the first one's own
-docstring stated is narrower and correct — a row is unpublished when its description **opens with**
-a declaration; the difference was measured during the v1.50 publish rather than theorised, because
-that row evidenced a claim by reproducing the v1.23 row's own `**DRAFT — awaiting owner push**`
-verbatim mid-description, so once its opener had been flipped to its published stamp
-`validate_ledger_dates.py` reported `2 excluded as drafted, v1.23, v1.50` and never opened v1.50's
-date column while `validate_published_not_draft.py` reported `49 published, 2 unpublished` and
-exempted every draft marking naming v1.50 from judgement, three of them real and stale — **both
-returned PASS over an incomplete publication**, and the cause was house practice rather than an
-unusual input, since quoting the text a rule governs is what a remediation record does constantly;
-**the rule is now anchored to the opening of the description cell**, tolerating whitespace and
-emphasis and nothing else, and **it has one home**, `scripts/publication_status.py`, which both
-instruments import and neither duplicates; the negative direction is the whole proof, because the
-tree passed before the repair and would pass under a pattern that had stopped matching, so the
-canaries run the same fixtures through the superseded pattern and run the real material at
-`1444b15` in both states; v1.51 is the preceding published version and v1.23 remains an
+**Current version: v1.53** (2026-08-24, the repository declares a licence, and it is Apache-2.0,
+closing the decision audit finding F-07 opened and v1.49 made honest; v1.49 withdrew an advertised
+grant that no file in the tree supported and recorded that the choice belonged to the deployment
+owner alone, and he has now made it — asked what licence to adopt he accepted the recommendation of
+**Apache-2.0**, and asked directly he confirmed that he is the author and the copyright holder;
+**the deciding property is the express patent grant of Section 3**, which a specification other
+organizations implement needs and which MIT and CC0 do not give, with institutional legal review
+treating Apache-2.0 as routine and permissive licensing of the run-set leaving a later commercial
+policy on the evolve-set open exactly as the v1.39 editions boundary reserves; **one licence covers
+the whole repository** rather than splitting specification from code, because 147 markdown files and
+41 code files interleave them and any split would put the boundary through files rather than between
+them; `LICENSE` carries the complete unmodified Apache License 2.0, verified against the published
+SHA-256 of the canonical text before the Appendix copyright field was filled, and `NOTICE` carries
+the attribution notice its Section 4(d) refers to; **the claim that no attribution is required is
+withdrawn as false**, since Section 4 makes preserving the copyright notice, the licence and the
+`NOTICE` attribution a condition of the grant, and that sentence had stood on this page since the
+repository's first commit; **and what the standard asserts is unchanged by one word** — the
+repository now carries a licence and the standard still asserts none on any deployment, which are
+separate facts about separate objects; no delta spec and no check ride this version, both refused
+with their reasons recorded, because declaring a licence for one repository imposes no rule on any
+deployment and nothing in this tree can keep a licence claim honest; v1.52 is the preceding
+published version and v1.23 remains an
 unpublished draft awaiting its own push). The full
 ledger of released versions, and the rule that a published version number is never reused, is in
 [`STANDARD.md`](STANDARD.md) → *Version history*.
