@@ -7,7 +7,7 @@
 #   bash km-publish.sh --preflight [source.html]
 #
 # Renders with WeasyPrint, bootstrapped at a pinned version into a virtual environment OUTSIDE the
-# tree (see "BOOTSTRAP" below; added in v1.51, drafted and unpublished), then applies the source's
+# tree (see "BOOTSTRAP" below; added in v1.51), then applies the source's
 # guards sidecar (<source-basename>.guards) to the rendered PDF's extracted text. One rule per line:
 #
 #   FORBID <ere>        build FAILS if the pattern is present  (case-insensitive)
@@ -47,13 +47,12 @@
 #
 # Exit: 0  built, and guards passed (or none present)
 #       1  a guard FAILED — the artifact must not be issued
-#       2  REFUSED: usage, missing input, a guard that could not be evaluated, or (added in v1.51,
-#          drafted and unpublished) an environment the build could not be performed in at all: no
-#          usable interpreter, an override that cannot work, a required external binary absent, or
-#          a renderer that would not install. Exit 1 is a claim about the DOCUMENT, a guard fired,
-#          and none of those are that. The bootstrap this replaces exited 1 on a missing
-#          interpreter, which put "your document reintroduced a corrected defect" and "this host has
-#          no Python" behind one status.
+#       2  REFUSED: usage, missing input, a guard that could not be evaluated, or (added in v1.51) an
+#          environment the build could not be performed in at all: no usable interpreter, an override
+#          that cannot work, a required external binary absent, or a renderer that would not install.
+#          Exit 1 is a claim about the DOCUMENT, a guard fired, and none of those are that. The
+#          bootstrap this replaces exited 1 on a missing interpreter, which put "your document
+#          reintroduced a corrected defect" and "this host has no Python" behind one status.
 # ---------------------------------------------------------------------------------------------
 set -euo pipefail
 
@@ -204,7 +203,7 @@ run_guards() {
 
 # ---------------------------------------------------------------------------------------------
 # BOOTSTRAP: FINDING AN INTERPRETER, PINNING THE RENDERER, AND STAYING OUT OF THE TREE
-# (added in v1.51, drafted and unpublished; this material binds nothing until its own owner push)
+# (added in v1.51)
 #
 # What this replaces, quoted as it stood, because the shape of the defect is the argument:
 #
@@ -448,10 +447,10 @@ if [ "${1:-}" = "--check-guards" ]; then
 fi
 
 # --- subcommand: resolve the environment and the external tools, render nothing ----------------
-# This is what makes the bootstrap testable (added in v1.51, drafted and unpublished). Before it,
-# reaching the bootstrap required a render, so the branch that fails on every host but the author's
-# was the branch nothing could exercise. --preflight runs discovery and the binary checks, reports
-# what it resolved, installs nothing, and refuses on anything that would fail a real build.
+# This is what makes the bootstrap testable (added in v1.51). Before it, reaching the bootstrap
+# required a render, so the branch that fails on every host but the author's was the branch nothing
+# could exercise. --preflight runs discovery and the binary checks, reports what it resolved,
+# installs nothing, and refuses on anything that would fail a real build.
 if [ "${1:-}" = "--preflight" ]; then
   shift
   PRESRC=""

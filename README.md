@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.50"/>
+  <img src="assets/badges/version.svg" alt="standard v1.51"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 3 adopted, 1 partial, 3 open"/>
   <img src="assets/badges/license.svg" alt="license: pending"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,27 +28,27 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.50** (2026-08-24, the design record states what became of every proposal in
-this repository, closing audit finding F-09; the repository is about to be forked, and a fork carries
-the design record to readers who cannot ask anyone which proposals are live, which have been
-implemented and which bind nothing, and it answered that question on three surfaces and got it wrong
-on all three; the badge above read `2 adopted` and this page carried the same string as the image's
-`alt` text, over a directory of **seven** RFCs of which the version ledger records three as
-implemented; `rfcs/` held no index at all, while this page's own navigation badge sends a reader
-there; the package overview below described two of the seven and stopped; and three status banners
-still said *"no normative edits ride this RFC"* while v1.32 and v1.35 had implemented RFC-004's first
-two Parts, v1.39 the editions model of RFC-006, and v1.41 the Reader tier of RFC-007;
-[`rfcs/README.md`](rfcs/README.md) is added as the home of record for disposition, one row per RFC
-carrying status, the implementing version, the decision date, relationships and the narrowing each
-implementation recorded; three banners gain a dated status note and no design body changes, on the
-v1.45 rule that a dated record corrected to agree with the present is falsified rather than repaired;
-**the badge is generated from that index** by the same instrument that validates it, so a hand edit to
-the image or to its `alt` text fails the release gate, and it now reads `3 adopted, 1 partial,
-3 open`; **three of the source report's own claims did not survive verification and are published
-rather than dropped**, RFC-002's `DRAFT` being true because v1.23 has never published, RFC-005 being
-neither absent nor stale because it landed under v1.45 with its banner corrected then, and RFC-007,
-which the report does not mention, having carried the identical false sentence; v1.49 is the preceding
-published version and v1.23 remains an
+**Current version: v1.51** (2026-08-24, the one executable this standard ships is made portable, and
+its platform claim is narrowed to the platform it was actually run on, closing audit finding F-10;
+`tools/km-publish.sh` found its interpreter with a single hardcoded glob over
+`/opt/homebrew/bin/python3.1*`, the Apple Silicon Homebrew prefix, which exists on no other kind of
+host, so a usable interpreter standing first on `PATH` was never seen and the refusal then told the
+operator there was *"no Homebrew python3"* and prescribed `brew install`; the renderer was installed
+unpinned, the environment was built at `tools/.venv` inside the repository with no ignore rule in
+either tree and no scan exemption, so a hub that rendered one document failed its own
+`[ INTEGRITY ]` check at every session start afterwards, and `pdfinfo` and `pdftotext` were called
+with no presence check at all; **discovery is now an explicit `KM_PUBLISH_PYTHON` override, then
+`PATH`, then the conventional prefixes**, with an override that cannot work refused by name rather
+than searched past; **the renderer is pinned** at one named version with its reason beside it;
+**the environment moves outside every governed tree**, under the user's cache directory, keyed by
+the pin and relocatable, with the ignore rules and the scan exemptions kept as well for the tree
+that already has one; the poppler binaries are checked before the work, and an environment the build
+cannot be performed in exits 2 rather than 1, because exit 1 is a claim about the document; a
+`--preflight` subcommand makes the bootstrap testable at all, which is why nothing had ever tested
+it; **and the platform claim is narrowed to what was exercised** — macOS on Apple Silicon was run
+end to end, while Linux, Intel macOS and every other Unix host are written and unverified and the
+tool, the skill and the version row each say so, and native Windows is out of scope; v1.50 is the
+preceding published version and v1.23 remains an
 unpublished draft awaiting its own push). The full
 ledger of released versions, and the rule that a published version number is never reused, is in
 [`STANDARD.md`](STANDARD.md) → *Version history*.

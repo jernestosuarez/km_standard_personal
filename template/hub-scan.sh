@@ -188,15 +188,14 @@ else
   # so a new top-level doc is caught automatically. Named files inside sources/ are re-included
   # because the provenance indexes are monitored even though their folder is not.
   #
-  # A Python virtual environment is exempted (added in v1.51, drafted and unpublished; binds
-  # nothing until its own owner push). It is generated runtime state, never hub content, and before
-  # v1.51 nothing here mentioned it: the shared renderer built one at tools/.venv, no ignore rule
-  # covered it, and this block therefore reported `?? tools/.venv/` and called err, so a hub that
-  # rendered a single document FAILED its own session-start scan every session afterwards and the
-  # remedy an operator reaches for is committing a virtual environment into a governed hub. Audit
-  # finding F-10. The renderer now builds outside the tree and template/.gitignore covers the
-  # in-tree case, so this exemption is the third layer, and it is the one that reaches a hub created
-  # before v1.51 whose ignore file is a copy of the old one.
+  # A Python virtual environment is exempted (added in v1.51). It is generated runtime state, never
+  # hub content, and before v1.51 nothing here mentioned it: the shared renderer built one at
+  # tools/.venv, no ignore rule covered it, and this block therefore reported `?? tools/.venv/` and
+  # called err, so a hub that rendered a single document FAILED its own session-start scan every
+  # session afterwards and the remedy an operator reaches for is committing a virtual environment
+  # into a governed hub. Audit finding F-10. The renderer now builds outside the tree and
+  # template/.gitignore covers the in-tree case, so this exemption is the third layer, and it is the
+  # one that reaches a hub created before v1.51 whose ignore file is a copy of the old one.
   #
   # The pathspec spelling is the one PROVED to exclude against the git that runs it, not the one
   # that reads best. Against a fixture hub carrying both tools/.venv/ and .venv/, ':(exclude)*/.venv'
@@ -845,10 +844,10 @@ echo "[ LINKS ]"
 # Wiki-links in frontmatter are load-bearing graph edges (owner, decidedBy, subject, correctedBy...).
 # A typo produces a dangling edge that fails silently — the fact simply stops being reachable.
 # Index every note basename once, then check membership. One filesystem walk, not one per link.
-# A virtual environment is excluded here too (added in v1.51, drafted and unpublished; binds
-# nothing until its own owner push): a venv carrying the pinned renderer holds two LICENSE.md files
-# under site-packages, and admitting them would put a package's licence text into the hub's own note
-# index, where a hub note could then resolve a wiki-link against it. Audit finding F-10.
+# A virtual environment is excluded here too (added in v1.51): a venv carrying the pinned renderer
+# holds two LICENSE.md files under site-packages, and admitting them would put a package's licence
+# text into the hub's own note index, where a hub note could then resolve a wiki-link against it.
+# Audit finding F-10.
 note_index=$(find "$HUB" -name '*.md' -not -path '*/.git/*' -not -path '*/_inbox/*' \
              -not -path '*/.venv/*' 2>/dev/null \
              | sed 's#.*/##; s#\.md$##' | sort -u)

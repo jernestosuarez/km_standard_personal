@@ -1,8 +1,7 @@
 #!/bin/bash
 # km-unrepaired-tree: v1.51 | case 10 is the unrepaired-tree run: tools/km-publish.sh is extracted from published main at 44622d5 and driven with `ls` shimmed to return nothing, which is what a host with no Apple Silicon Homebrew prefix presents, while a usable python3.12 stands first on PATH; it exits 1 with "ERROR: no Homebrew python3. One-off setup:  brew install python@3.12 pango gdk-pixbuf libffi" and never looks at PATH. Case 11 is the second unrepaired run: template/hub-scan.sh extracted from the same commit, over a fixture hub carrying tools/.venv/, prints "! UNCOMMITTED OR UNTRACKED MONITORED FILES: ?? tools/.venv/" in its [ INTEGRITY ] block. Case 11d is the third: the same unrepaired scan, over the same fixture hub with a LICENSE.md placed inside tools/.venv/ (which is what the pinned renderer's environment actually carries under site-packages), indexes 23 note names against the repaired scan's 22, so the vendored licence was a name a hub wiki-link could have resolved against. All three are paired here with the repaired tree on the same input, which is what makes any of them evidence.
 # Canaries for the publisher's portability repair in tools/km-publish.sh, template/hub-scan.sh and
-# the two ignore files (v1.51, drafted and unpublished; this material binds nothing until its own
-# owner push). Audit finding F-10.
+# the two ignore files (v1.51). Audit finding F-10.
 #
 # WHY THIS FILE EXISTS
 #

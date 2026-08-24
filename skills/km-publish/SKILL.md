@@ -68,11 +68,10 @@ Create `working-docs/<topic>/<slug>/` with:
 - **Facts in the source must match the hub docs.** Where a document restates something a numbered doc
   holds, the hub doc is the record; on divergence, stop and surface it.
 - Renderer is WeasyPrint via the shared tool, which bootstraps itself at a **pinned** version into a
-  virtual environment **outside the hub tree** (added in v1.51, drafted and unpublished; binds
-  nothing until its own owner push). Office-suite "export to PDF" is a preview, never an issue path
-  — it drops page breaks and background fills.
+  virtual environment **outside the hub tree** (added in v1.51). Office-suite "export to PDF" is a
+  preview, never an issue path — it drops page breaks and background fills.
 
-## Environment (added in v1.51, drafted and unpublished)
+## Environment (added in v1.51)
 
 Run `bash <tools-path>/km-publish.sh --preflight <NAME>.html` before a first build on a new machine,
 or when a build fails in a way that looks environmental. It resolves the interpreter, reports the pin
