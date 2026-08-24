@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: v1.47 | case 9 is the unrepaired-tree run: the check is run against the version-history table of published main at a2756e2, before either row was corrected, where it names both real disagreements (v1.33 2026-08-20 against 16109ea 2026-08-21, v1.40 2026-08-22 against 9c14f85 2026-08-23) and reports exactly two, so the failure is selective rather than a blanket match.
+# km-unrepaired-tree: v1.52 | re-stated for the anchoring repair, and case 10 is its evidence: over the ledger at 1444b15 with the v1.50 row's opener flipped to its published stamp, the unrepaired check reported "2 excluded as drafted: v1.23, v1.50" and exited 0, never opening v1.50's date column, because the row quotes another row's declaration mid-description; the repaired check excludes v1.23 alone, compares v1.50 by tag, and catches a wrong date on it. Case 9 stands unchanged as the v1.47 run: against published main at a2756e2 the check names both real disagreements (v1.33 2026-08-20 against 16109ea 2026-08-21, v1.40 2026-08-22 against 9c14f85 2026-08-23) and reports exactly two, so the failure is selective rather than a blanket match.
 # Canaries for the ledger date-integrity check (scripts/validate_ledger_dates.py), added in v1.47.
 #
 # WHAT THIS PROVES, AND WHAT IT DOES NOT.
@@ -50,6 +50,10 @@ CHECK="$ROOT/scripts/validate_ledger_dates.py"
 PRE_REPAIR_COMMIT="a2756e2"
 # The two rows that commit carries whose date column its publish commit does not support.
 PRE_REPAIR_EXPECTED=2
+# The v1.50 draft commit, added in v1.52: its row opens with a draft declaration and reproduces the
+# v1.23 declaration verbatim further along the same cell, which is the material the scope defect was
+# found in.
+QUOTING_COMMIT="1444b15"
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
@@ -292,6 +296,101 @@ if git -C "$ROOT" cat-file -e "$PRE_REPAIR_COMMIT:STANDARD.md" 2>/dev/null; then
   fi
 else
   echo "GAP: commit $PRE_REPAIR_COMMIT is not present in this clone, so the pre-repair evidence"
+  echo "     case could not be run. This is a coverage gap in this run, not a verdict."
+fi
+
+# ── 10. THE QUOTED DECLARATION: a published row that reproduces one is still compared ────────────
+# Added in v1.52. Until then the exclusion searched the declaration token anywhere in the
+# description, so a published row that quoted another row's declaration was excluded from
+# comparison and its date column was never opened, while the run exited 0. An exclusion is a silent
+# withdrawal of coverage, which is the worst shape for this defect to take.
+
+# 10a POSITIVE: the row is published, quotes a declaration, and its date is wrong. It must be
+# caught, which it can only be if it was compared at all.
+make_ledger "$work/quotewrong/L.md" \
+  "| v1.44 | 2026-08-22 | Drafted and published 2026-08-22 (owner push). Evidence: the other row carries \`**DRAFT — awaiting owner push**\` of its own. |"
+quotewrong_out=$(run_check "$work/quotewrong/L.md"); quotewrong_status=$?
+if [ "$quotewrong_status" -eq 1 ] \
+   && printf '%s' "$quotewrong_out" | grep -q "v1.44 claims 2026-08-22 in its date column" \
+   && printf '%s' "$quotewrong_out" | grep -q "is authored 2026-08-23"; then
+  echo "PASS: a published row quoting a declaration is compared rather than excluded, so a wrong"
+  echo "      date in it is still caught"
+else
+  echo "FAIL: a published row quoting a declaration was excluded from comparison (exit"
+  echo "      $quotewrong_status)"
+  printf '%s\n' "$quotewrong_out"
+  fail=1
+fi
+
+# 10b NEGATIVE: the same quotation inside a row that genuinely opens with a declaration. Without
+# this, 10a would be satisfied by a check that had stopped excluding anything at all.
+make_ledger "$work/quotedraft/L.md" \
+  "| v1.44 | 2026-08-23 | A fixture row whose date is correct. |" \
+  "| v9.9 | 2026-01-01 | **DRAFT — awaiting owner push.** Evidence: the other row carries \`**DRAFT — awaiting owner push**\` of its own. |"
+quotedraft_out=$(run_check "$work/quotedraft/L.md"); quotedraft_status=$?
+if [ "$quotedraft_status" -eq 0 ] \
+   && printf '%s' "$quotedraft_out" | grep -qE "1 excluded as drafted" \
+   && printf '%s' "$quotedraft_out" | grep -q "v9.9" \
+   && ! printf '%s' "$quotedraft_out" | grep -q "COVERAGE GAP"; then
+  echo "PASS: a row that opens with a declaration and quotes another one is still excluded, so the"
+  echo "      repair reads the opening rather than ignoring the token everywhere"
+else
+  echo "FAIL: a genuinely drafted row carrying a quotation was misread (exit $quotedraft_status)"
+  printf '%s\n' "$quotedraft_out"
+  fail=1
+fi
+
+# 10c THE REAL MATERIAL. The ledger at $QUOTING_COMMIT is the v1.50 draft, whose row opens with a
+# declaration and reproduces the v1.23 declaration further along the same cell. Three runs: as it
+# stands, where v1.50 is genuinely awaiting its push and must stay excluded; with only the opener
+# flipped to the published stamp, where it must be compared; and with the opener flipped and the
+# date column moved back a day, where the restored coverage must actually catch something. The
+# second run is the state the v1.50 publish was measured in, and the unrepaired check passed it
+# while reporting v1.50 among the versions it had excluded.
+if git -C "$ROOT" cat-file -e "$QUOTING_COMMIT:STANDARD.md" 2>/dev/null; then
+  mkdir -p "$work/quoting"
+  git -C "$ROOT" show "$QUOTING_COMMIT:STANDARD.md" > "$work/quoting/plain.md"
+  python3 - "$work/quoting/plain.md" "$work/quoting/flipped.md" "$work/quoting/flipped-wrong.md" <<'FLIP'
+import sys
+plain = open(sys.argv[1], encoding="utf-8").read()
+flipped = plain.replace(
+    "| v1.50 | 2026-08-24 | **DRAFT, awaiting owner push.** The design record",
+    "| v1.50 | 2026-08-24 | Drafted and published 2026-08-24 (owner push). The design record", 1)
+if flipped == plain:
+    raise SystemExit("the v1.50 opener was not found; the fixture no longer models the defect")
+wrong = flipped.replace(
+    "| v1.50 | 2026-08-24 | Drafted and published",
+    "| v1.50 | 2026-08-23 | Drafted and published", 1)
+open(sys.argv[2], "w", encoding="utf-8").write(flipped)
+open(sys.argv[3], "w", encoding="utf-8").write(wrong)
+FLIP
+  quoting_prepared=$?
+  qplain_out=$(run_check "$work/quoting/plain.md"); qplain_status=$?
+  qflip_out=$(run_check "$work/quoting/flipped.md"); qflip_status=$?
+  qwrong_out=$(run_check "$work/quoting/flipped-wrong.md"); qwrong_status=$?
+  if [ "$quoting_prepared" -eq 0 ] \
+     && [ "$qplain_status" -eq 0 ] \
+     && printf '%s' "$qplain_out" | grep -qE "2 excluded as drafted" \
+     && printf '%s' "$qplain_out" | grep -q "publish commit): v1.23, v1.50" \
+     && [ "$qflip_status" -eq 0 ] \
+     && printf '%s' "$qflip_out" | grep -qE "1 excluded as drafted" \
+     && printf '%s' "$qflip_out" | grep -qE "publish commit\): v1.23$" \
+     && [ "$qwrong_status" -eq 1 ] \
+     && printf '%s' "$qwrong_out" | grep -q "v1.50 claims 2026-08-23 in its date column" \
+     && printf '%s' "$qwrong_out" | grep -q "is authored 2026-08-24"; then
+    echo "PASS: at $QUOTING_COMMIT the real v1.50 row stays excluded while its opener declares it,"
+    echo "      is compared the moment the opener alone is flipped, and a wrong date in that"
+    echo "      compared row is caught, so the restored coverage is real"
+  else
+    echo "FAIL: the real quoting row was not read correctly in all three states (exit"
+    echo "      $qplain_status / $qflip_status / $qwrong_status)"
+    printf '%s\n' "$qplain_out"
+    printf '%s\n' "$qflip_out"
+    printf '%s\n' "$qwrong_out"
+    fail=1
+  fi
+else
+  echo "GAP: commit $QUOTING_COMMIT is not present in this clone, so the quoted-declaration evidence"
   echo "     case could not be run. This is a coverage gap in this run, not a verdict."
 fi
 

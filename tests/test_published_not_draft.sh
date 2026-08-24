@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: v1.42 | run against the repository at 40f3829 before the repair, where it names 15 real stale draft markings across five files; the count is asserted rather than a bare non-zero exit.
+# km-unrepaired-tree: v1.52 | re-stated for the anchoring repair, and case 11 is its evidence: over the tree at 1444b15 with the v1.50 row's opener flipped to its published stamp, the unrepaired check reported "49 published, 2 unpublished" and exited 0, exempting three real stale markings that name v1.50; the repaired check exits 1 and names all three, and still leaves the same tree's genuine v1.50 markings alone when the opener is left as it stands. The v1.42 run stands unchanged in case 10: against 40f3829 the check names 15 real stale markings across five files, with the count asserted rather than a bare non-zero exit.
 # Canaries for the published-not-draft check (scripts/validate_published_not_draft.py), added in
 # v1.42.
 #
@@ -45,6 +45,13 @@ PRE_REPAIR_COMMIT="40f3829"
 # across four shipped files. Two further bare binds-nothing clauses are unversioned by design and
 # are reached through their own headings instead; see the check's docstring.
 PRE_REPAIR_EXPECTED=15
+# The v1.50 draft commit, added in v1.52: its row opens with a draft declaration and reproduces the
+# v1.23 declaration verbatim further along the same cell, which is the material the scope defect was
+# found in.
+QUOTING_COMMIT="1444b15"
+# With only that row's opener flipped to the published stamp, three markings in STANDARD.md name
+# v1.50: the lead paragraph, and the drafted section body twice.
+QUOTING_FLIPPED_EXPECTED=3
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
@@ -399,6 +406,92 @@ if git -C "$ROOT" cat-file -e "$PRE_REPAIR_COMMIT^{commit}" 2>/dev/null; then
   fi
 else
   echo "GAP: commit $PRE_REPAIR_COMMIT is not present in this clone, so the pre-repair evidence"
+  echo "     case could not be run. This is a coverage gap in this run, not a verdict."
+fi
+
+# ── 11. THE QUOTED DECLARATION: a published row that reproduces one is still published ──────────
+# Added in v1.52. Until then the check searched the declaration token anywhere in everything after
+# the version cell, so a published row that quoted another row's declaration classified as
+# unpublished and every marking naming that version was exempted from judgement while the run
+# exited 0. Quoting the text a rule governs is ordinary practice here, which is why this is a case
+# and not a footnote.
+
+QUOTING_PUBLISHED_ROW='Drafted and published 2026-01-02 (owner push). Evidence for the claim above: the other row carries `**DRAFT — awaiting owner push**` of its own.'
+QUOTING_DRAFT_ROW='**DRAFT — awaiting owner push.** Evidence for the claim above: the other row carries `**DRAFT — awaiting owner push**` of its own.'
+
+# 11a POSITIVE: the row is published and quotes a declaration, so the v9.2 marking is stale.
+make_root "$work/quotepub" "$LEGIT_MARKING" "$QUOTING_PUBLISHED_ROW"
+quotepub_out=$(run_check "$work/quotepub"); quotepub_status=$?
+if [ "$quotepub_status" -eq 1 ] \
+   && printf '%s' "$quotepub_out" | grep -q "v9.2 is published"; then
+  echo "PASS: a quotation of a declaration inside a published row does not make that row a draft,"
+  echo "      so the markings naming it are judged rather than exempted"
+else
+  echo "FAIL: a published row quoting a declaration was still read as unpublished (exit"
+  echo "      $quotepub_status)"
+  printf '%s\n' "$quotepub_out"
+  fail=1
+fi
+
+# 11b NEGATIVE: the same quotation inside a row that genuinely opens with a declaration. Without
+# this, 11a would be satisfied by a rule that had simply stopped recognising declarations.
+make_root "$work/quotedraft" "$LEGIT_MARKING" "$QUOTING_DRAFT_ROW"
+quotedraft_out=$(run_check "$work/quotedraft"); quotedraft_status=$?
+if [ "$quotedraft_status" -eq 0 ] \
+   && printf '%s' "$quotedraft_out" | grep -q "1 unpublished" \
+   && printf '%s' "$quotedraft_out" | grep -q "2 judged against the table"; then
+  echo "PASS: a row that opens with a declaration and quotes another one is still unpublished, so"
+  echo "      the repair reads the opening rather than ignoring the token everywhere"
+else
+  echo "FAIL: a genuinely drafted row carrying a quotation was misread (exit $quotedraft_status)"
+  printf '%s\n' "$quotedraft_out"
+  fail=1
+fi
+
+# 11c THE REAL MATERIAL. The tree at $QUOTING_COMMIT is the v1.50 draft, whose row opens with a
+# declaration and reproduces the v1.23 declaration further along the same cell. Two runs: as it
+# stands, where v1.50 is genuinely awaiting its push and must stay exempt; and with only the opener
+# flipped to the published stamp, which is the single edit a publishing commit makes, where the
+# three markings naming v1.50 must be caught. The second run is the state the v1.50 publish was
+# measured in, and the unrepaired check passed it.
+if git -C "$ROOT" cat-file -e "$QUOTING_COMMIT^{commit}" 2>/dev/null; then
+  mkdir -p "$work/quoting-plain" "$work/quoting-flipped"
+  git -C "$ROOT" archive "$QUOTING_COMMIT" | tar -x -C "$work/quoting-plain"
+  cp -R "$work/quoting-plain/." "$work/quoting-flipped/"
+  python3 - "$work/quoting-flipped/STANDARD.md" <<'FLIP'
+import sys
+path = sys.argv[1]
+text = open(path, encoding="utf-8").read()
+flipped = text.replace(
+    "| v1.50 | 2026-08-24 | **DRAFT, awaiting owner push.** The design record",
+    "| v1.50 | 2026-08-24 | Drafted and published 2026-08-24 (owner push). The design record", 1)
+if flipped == text:
+    raise SystemExit("the v1.50 opener was not found; the fixture no longer models the defect")
+open(path, "w", encoding="utf-8").write(flipped)
+FLIP
+  flip_prepared=$?
+  plain_out=$(run_check "$work/quoting-plain"); plain_status=$?
+  flipped_out=$(run_check "$work/quoting-flipped"); flipped_status=$?
+  flipped_found=$(printf '%s' "$flipped_out" | grep -c "v1.50 is published, but this text still marks it")
+  if [ "$flip_prepared" -eq 0 ] \
+     && [ "$plain_status" -eq 0 ] \
+     && printf '%s' "$plain_out" | grep -q "2 unpublished" \
+     && [ "$flipped_status" -eq 1 ] \
+     && [ "$flipped_found" -eq "$QUOTING_FLIPPED_EXPECTED" ] \
+     && printf '%s' "$flipped_out" | grep -q "STANDARD.md:12: v1.50 is published" \
+     && ! printf '%s' "$flipped_out" | grep -q "v1.23 is published"; then
+    echo "PASS: at $QUOTING_COMMIT the real v1.50 row stays exempt while its opener declares it, and"
+    echo "      naming $flipped_found stale markings the moment the opener alone is flipped, with"
+    echo "      the quotation untouched and v1.23 left alone"
+  else
+    echo "FAIL: the real quoting row was not read correctly in both states (exit $plain_status /"
+    echo "      $flipped_status, $flipped_found markings named, $QUOTING_FLIPPED_EXPECTED expected)"
+    printf '%s\n' "$plain_out"
+    printf '%s\n' "$flipped_out"
+    fail=1
+  fi
+else
+  echo "GAP: commit $QUOTING_COMMIT is not present in this clone, so the quoted-declaration evidence"
   echo "     case could not be run. This is a coverage gap in this run, not a verdict."
 fi
 

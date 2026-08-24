@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# km-unrepaired-tree: v1.47 | run against published main at a2756e2 before either row was corrected, where it fails and names both real disagreements: v1.33 claiming 2026-08-20 against publish commit 16109ea authored 2026-08-21, and v1.40 claiming 2026-08-22 against publish commit 9c14f85 authored 2026-08-23; 47 rows read, 26 compared, 1 excluded, 20 unresolved. Proved in both directions by tests/test_ledger_dates.sh.
+# km-unrepaired-tree: v1.52 | re-stated for the anchoring repair. Run against the tree at 1444b15 with the v1.50 row's opener flipped to its published stamp, the state the v1.50 publish was measured in, the unrepaired check reports "2 excluded as drafted: v1.23, v1.50" and exits 0, never comparing v1.50's date column, because the row quotes another row's declaration mid-description. The repaired check reports 1 excluded, compares v1.50 and resolves it by tag. The v1.47 run this declaration replaces still holds: against a2756e2 the check fails and names both real disagreements, v1.33 claiming 2026-08-20 against 16109ea authored 2026-08-21 and v1.40 claiming 2026-08-22 against 9c14f85 authored 2026-08-23, and case 9 still asserts it. Both directions in tests/test_ledger_dates.sh.
 """Fail when a version-history row's date column disagrees with the commit that published it.
 
 WHY THIS EXISTS. The version-history table of `STANDARD.md` is this repository's only record of when
@@ -34,10 +34,17 @@ shifted into the reader's locale. The v1.33 publish commit is 2026-08-21 00:24:4
 an act a person performed on a day, and the day is the one in the offset they were in.
 
 THREE OUTCOMES, KEPT APART. Folding any two of these together produces a wrong instrument.
-  - EXCLUDED: the ledger declares the version still drafted, using the same convention
-    `validate_published_not_draft.py` reads, so publication status has one home of record. A drafted
-    version has no publish commit by construction; reporting it as a gap would be a gap that can
-    never close, and a permanent false gap trains a reader to stop reading gaps.
+  - EXCLUDED: the row declares itself still in draft. The rule that decides that is not in this
+    file: it is `publication_status.py`, which `validate_published_not_draft.py` reads as well, so
+    publication status has one home of record in fact and not only in intent. A version awaiting its
+    push has no publish commit by construction; reporting it as a gap would be a gap that can never
+    close, and a permanent false gap trains a reader to stop reading gaps. The rule is ANCHORED: a
+    row is excluded when its DESCRIPTION CELL OPENS WITH a declaration, and a declaration reproduced
+    further along the same cell is a quotation. Until v1.52 this file held its own copy of the rule
+    and searched the token anywhere in the description, so the v1.50 row, which evidenced a statement
+    by reproducing the v1.23 row's declaration verbatim, was excluded from date comparison after its
+    own opener had been flipped to a published stamp. This check reported "2 excluded as drafted" and
+    exited 0 over a version whose date it had never opened.
   - UNRESOLVED: no tag and no subject resolves it. This is a STRUCTURAL coverage gap, not a pass and
     not a failure. The ledger runs back to v1.0 and tagging began at v1.22, and four further versions
     were published inside a later version's train and have no commit of their own. It is reported on
@@ -72,13 +79,17 @@ import subprocess
 import sys
 from pathlib import Path
 
-HISTORY_HEADING = re.compile(r"^#{1,6}\s+Version history\b")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from publication_status import (  # noqa: E402  the path is set immediately above
+    HISTORY_HEADING,
+    opens_with_draft_declaration,
+    split_row,
+)
+
 ANY_HEADING = re.compile(r"^#{1,6}\s")
 SEPARATOR_ROW = re.compile(r"^\|[\s:|-]+$")
 HEADER_ROW = re.compile(r"^\|\s*Version\s*\|", re.I)
-VERSION_ROW = re.compile(r"^\|\s*(v\d+\.\d+)\s*\|\s*([^|]*?)\s*\|(.*)$")
 DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-DRAFT_ROW = re.compile(r"\*\*DRAFT\b|\bDRAFT\s*[—–-]\s*awaiting owner push")
 DRAFT_SUBJECT = re.compile(r"\(draft\)", re.I)
 
 UNIT = "\x1f"
@@ -130,13 +141,13 @@ def read_rows(ledger):
             continue
         if SEPARATOR_ROW.match(line) or HEADER_ROW.match(line):
             continue
-        match = VERSION_ROW.match(line)
-        if not match:
+        cells = split_row(line)
+        if cells is None:
             raise FailClosed(
                 "%s:%d: a table row could not be parsed into a version and a date: %r"
                 % (ledger.name, number + 1, line[:80])
             )
-        version, date, rest = match.group(1), match.group(2), match.group(3)
+        version, date, rest = cells
         if not DATE.match(date):
             raise FailClosed(
                 "%s:%d: row %s has %r in its date column, which is not a date; a row that cannot be "
@@ -226,7 +237,10 @@ def check(root, ledger):
     by_method = {"tag": 0, "subject": 0}
 
     for version, date, rest, line_number in rows:
-        if DRAFT_ROW.search(rest):
+        # The status rule lives in publication_status.py and reads the opening of the description.
+        # Searching the whole description is what excluded a published version from comparison
+        # because its row quoted another row's declaration; see THREE OUTCOMES above.
+        if opens_with_draft_declaration(rest):
             excluded.append((version, date))
             continue
         sha, commit_date, method = resolve(root, version, tags, subjects)

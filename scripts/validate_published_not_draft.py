@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# km-unrepaired-tree: v1.42 | run against the repository at 40f3829 before the repair, where it fails and names 15 real stale draft markings across five files; proved in both directions by tests/test_published_not_draft.sh.
+# km-unrepaired-tree: v1.52 | re-stated for the anchoring repair. Run against the tree at 1444b15 with the v1.50 row's opener flipped to its published stamp, the state the v1.50 publish was measured in, the unrepaired check reports "49 published, 2 unpublished" and exits 0, exempting every marking naming v1.50 because the row quotes another row's declaration mid-description. The repaired check reports "50 published, 1 unpublished" over the same tree and judges those markings. The v1.42 run this declaration replaces still holds: against 40f3829 the check fails and names 15 real stale markings across five files, and case 10 still asserts it. Both directions in tests/test_published_not_draft.sh.
 """Fail when any governed surface marks material as drafted-and-unpublished for a version the
 STANDARD.md version-history table records as published.
 
@@ -15,11 +15,21 @@ carried none. The shipped surfaces matter most: a skill, a template registry, or
 the false claim installs it into a deployment.
 
 ONE HOME OF RECORD. Publication status is read from the version-history table of `STANDARD.md` and
-from nowhere else, then applied to every scanned file. A row is unpublished only when its description
-opens with an explicit draft declaration (`**DRAFT`, or `DRAFT - awaiting owner push`); every other
-row is published. Defaulting an unrecognised row to published is the strict direction: it can raise a
-false alarm a maintainer resolves by reading the row, and it can never let a stale marking through.
-Because the set comes from the table, the check keeps working as versions publish, with no edit here.
+from nowhere else, then applied to every scanned file. Whether a row is unpublished is decided by
+`publication_status.py`, which is the one place that rule lives and which `validate_ledger_dates.py`
+reads as well, so no two instruments can disagree about a row. The rule is anchored: a row is
+unpublished when its DESCRIPTION CELL OPENS WITH a draft declaration, and a declaration reproduced
+further along the same cell is a quotation and carries no status. Defaulting an unrecognised opener
+to published is the strict direction: it can raise a false alarm a maintainer resolves by reading the
+row, and it can never let a stale marking through. Because the set comes from the table, the check
+keeps working as versions publish, with no edit here.
+
+WHY THE RULE IS ANCHORED (v1.52). Until v1.52 this check held its own copy of the rule and searched
+the token anywhere in everything after the version cell, the date column included. The v1.50 row
+evidenced a statement by reproducing the v1.23 row's declaration verbatim, so once v1.50's own opener
+was flipped to its published stamp this check went on reading v1.50 as unpublished and exempted every
+marking naming it from judgement, while exiting 0. Quoting the text a rule governs is ordinary
+practice in this repository, which is why the class was worth a version rather than a paraphrase.
 
 WHAT IS IN SCOPE. Every file with a scanned suffix under the roots in SCAN_ROOTS: the standard
 itself, the README, the shipped skills, the hub template, the components, the agent contracts, the
@@ -59,7 +69,8 @@ heading, which is where the version is named.
 
 FAIL CLOSED. The check exits 2, without a verdict about markings, when `STANDARD.md` cannot be read
 or is empty, when it carries no version-history heading, when the table yields no rows or no
-published row, when a version is recorded twice, when a scanned file cannot be decoded, when an
+published row, when a row cannot be split into a version, a date and a description, when a version
+is recorded twice, when a scanned file cannot be decoded, when an
 exemption declares no reason, when no file was scanned at all, or when any marking is attributed to
 a version the table does not record.
 
@@ -78,9 +89,14 @@ import re
 import sys
 from pathlib import Path
 
-HISTORY_HEADING = re.compile(r"^#{1,6}\s+Version history\b")
-HISTORY_ROW = re.compile(r"^\|\s*(v\d+\.\d+)\s*\|(.*)$")
-DRAFT_ROW = re.compile(r"\*\*DRAFT\b|\bDRAFT\s*[—–-]\s*awaiting owner push")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from publication_status import (  # noqa: E402  the path is set immediately above
+    HISTORY_HEADING,
+    ROW_LINE,
+    is_published,
+    split_row,
+)
+
 VERSION_ID = re.compile(r"\bv\d+\.\d+\b")
 PLACEHOLDER = re.compile(r"\bv[XN]\.[YMZ]\b")
 BLOCK_PREFIX = re.compile(r"^[>#\s]*[>#]\s*|^\s+")
@@ -137,7 +153,7 @@ def history_row_lines(lines):
     for index, line in enumerate(lines):
         if HISTORY_HEADING.match(line):
             for later in range(index + 1, len(lines)):
-                if HISTORY_ROW.match(lines[later]):
+                if ROW_LINE.match(lines[later]):
                     rows.add(later)
             break
     return rows
@@ -157,16 +173,29 @@ def classify_versions(lines, source):
 
     published = {}
     for index in range(heading_at + 1, len(lines)):
-        match = HISTORY_ROW.match(lines[index])
-        if not match:
+        if not ROW_LINE.match(lines[index]):
             continue
-        version, description = match.group(1), match.group(2)
+        cells = split_row(lines[index])
+        if cells is None:
+            # A line that opens like a row and cannot be split into version, date and description
+            # is not a row whose status can be read. Refusing is the only safe answer: skipping it
+            # would leave the version unclassified, and any marking naming it would then be
+            # reported as attributed to a version the table does not record, which blames the
+            # marking for a defect in the row.
+            raise FailClosed(
+                "%s:%d: a version-history row could not be split into a version, a date and a "
+                "description: %r" % (source, index + 1, lines[index][:80])
+            )
+        version, _date, description = cells
         if version in published:
             raise FailClosed(
                 "version %s appears twice in the version-history table of %s; the table is "
                 "ambiguous" % (version, source)
             )
-        published[version] = not DRAFT_ROW.search(description)
+        # The status rule lives in publication_status.py, and it reads the description cell only.
+        # Passing the whole row here is what let a quoted declaration classify a published version
+        # as unpublished; see WHY THE RULE IS ANCHORED above.
+        published[version] = is_published(description)
 
     if not published:
         raise FailClosed(
