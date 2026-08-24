@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.45"/>
+  <img src="assets/badges/version.svg" alt="standard v1.46"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 2 adopted"/>
   <img src="assets/badges/license.svg" alt="license: free to adopt"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,20 +28,23 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.45** (2026-08-24, published text names only documents a reader can open;
-published `main` cited `rfcs/RFC-005` twice in `STANDARD.md` while `rfcs/` carried every other RFC and
-not that one, so the standard named a design document no reader could open, and RFC-006 and RFC-007
-both rested on it: nine dangling references across three files, which escaped every check the
-repository ships because the reference is written as a code-formatted path rather than a Markdown
-link; the routines design document now lands on the published branch as design only, with its status
-banner corrected and nothing else in it changed, and `scripts/validate_rfc_references.py` reads
-identifiers from prose, from version-ledger rows and from the design documents' own dependency
-sections, derives the set that exists from the `rfcs/` directory rather than from a list held in the
-check, refuses rather than passes on input it cannot evaluate, states its coverage on a passing run,
-and is proved against the published tree that carried the defect, where it names all nine references;
-v1.44 is the preceding published version and v1.23 remains an unpublished draft awaiting its own
-push). The full ledger of released versions, and the rule that a
-published version number is never reused, is in [`STANDARD.md`](STANDARD.md) → *Version history*.
+**Current version: v1.46** (2026-08-24, a release gate runs before publication, and it declares what
+it cannot do; this repository had no CI, no single test entry point and, until the day before this
+version, no version tags: seventeen suites and three validators, every one of them run by hand and
+chosen from memory, and the cause is worse than the missing file, because verification has been
+performed by the same actor that authored the change and it failed three times;
+`tools/km-release-gate.py` is now one command that discovers what to run rather than holding a list
+of it, runs every suite and every validator alongside shell, Python, JSON and relative-link checks,
+reports anything discovered but skipped with its reason and the canaries that cover it, refuses
+rather than passes on an unreadable file, an unrunnable check or an empty discovery set, and states
+its coverage on a passing run; a pinned GitHub Actions workflow runs it on push and pull request;
+and every check now carries `km-unrepaired-tree:`, recording what it found when it was run against
+the tree it was written to catch, and a declaration that is missing, that names the wrong version,
+or that an edit left un-restated fails the gate; two limits are stated rather than hidden, since the
+gate cannot run an organisation leakage scan and cannot supply a second actor; v1.45 is the
+preceding published version and v1.23 remains an unpublished draft awaiting its own push). The full
+ledger of released versions, and the rule that a published version number is never reused, is in
+[`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.
 
 A reproducible, organization-agnostic framework for standing up a governed, agent-readable knowledge
