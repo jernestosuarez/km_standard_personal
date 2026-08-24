@@ -13,7 +13,7 @@ timestamp: 2026-07-02
 <p align="center">
   <img src="assets/badges/version.svg" alt="standard v1.52"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 3 adopted, 1 partial, 3 open"/>
-  <img src="assets/badges/license.svg" alt="license: pending"/>
+  <img src="assets/badges/license.svg" alt="license: Apache-2.0"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
   <img src="assets/badges/agents.svg" alt="agents: MCP-ready"/>
 </p>
@@ -108,11 +108,31 @@ skill (adopted when a source first spans two hubs).
 
 ## License / reuse
 
-**No licence has been declared for this repository, so default copyright applies and no reuse grant
-is in force.** Free adoption is the owner's stated intent: this standard is meant to be adopted,
-adapted, forked, and redistributed for any organization's internal or external knowledge management
-needs, with no attribution required. Intent is not a licence, so until one is declared a reader may
-rely on that intent as a statement of direction and never as permission. Choosing a licence, or
-choosing not to, is an open decision and it belongs to the repository owner. Nothing on this page is
-legal advice. The open decision is recorded in [`STANDARD.md`](STANDARD.md) → *The boundary asserts
-no license*.
+**This repository is licensed under the Apache License, Version 2.0.** The complete text is in
+[`LICENSE`](LICENSE) and the attribution notice is in [`NOTICE`](NOTICE). The grant is in force: it
+is a licence rather than a statement of intent, which is what this page could offer while the
+decision was open at v1.49. Copyright 2026 Carlos Correia.
+
+What an adopter may rely on, in the licence's own terms rather than this page's:
+
+- **Use, adapt, fork, and redistribute**, for internal or external knowledge management, commercially
+  or not, with no fee and no permission to ask for (§2, §4).
+- **An express patent grant** from each contributor over their own contributions, irrevocable except
+  under the defensive termination clause that ends it for an adopter who brings patent litigation
+  over the work (§3). That grant is why this licence was chosen for a specification other
+  organizations implement.
+- **One licence over the whole repository.** The specification prose and the code are not split,
+  because the tree interleaves them: templates, skills, and scaffolds are both at once.
+
+What the licence asks in return: **keep the copyright notice, the licence text, and the `NOTICE`
+attribution, and mark the files you changed** (§4). Attribution is a condition of the grant. This
+page previously said that no attribution was required; that is false under Apache-2.0, and it is
+withdrawn here.
+
+**The repository now carries a licence. The standard still asserts none.** Those are separate facts
+about separate objects. Licensing this repository puts no licence, price, or commercial term on any
+hub, estate, or deployment that adopts the standard, and it changes nothing in the editions boundary.
+Both facts are recorded in [`STANDARD.md`](STANDARD.md) → *The boundary asserts no license*.
+
+Nothing on this page is legal advice, and where this summary and [`LICENSE`](LICENSE) differ,
+[`LICENSE`](LICENSE) governs.
