@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.46"/>
+  <img src="assets/badges/version.svg" alt="standard v1.47"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 2 adopted"/>
   <img src="assets/badges/license.svg" alt="license: free to adopt"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,21 +28,25 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.46** (2026-08-24, a release gate runs before publication, and it declares what
-it cannot do; this repository had no CI, no single test entry point and, until the day before this
-version, no version tags: seventeen suites and three validators, every one of them run by hand and
-chosen from memory, and the cause is worse than the missing file, because verification has been
-performed by the same actor that authored the change and it failed three times;
-`tools/km-release-gate.py` is now one command that discovers what to run rather than holding a list
-of it, runs every suite and every validator alongside shell, Python, JSON and relative-link checks,
-reports anything discovered but skipped with its reason and the canaries that cover it, refuses
-rather than passes on an unreadable file, an unrunnable check or an empty discovery set, and states
-its coverage on a passing run; a pinned GitHub Actions workflow runs it on push and pull request;
-and every check now carries `km-unrepaired-tree:`, recording what it found when it was run against
-the tree it was written to catch, and a declaration that is missing, that names the wrong version,
-or that an edit left un-restated fails the gate; two limits are stated rather than hidden, since the
-gate cannot run an organisation leakage scan and cannot supply a second actor; v1.45 is the
-preceding published version and v1.23 remains an unpublished draft awaiting its own push). The full
+**Current version: v1.47** (2026-08-24, a version-history date is derived from the commit that
+published the version; two of this ledger's forty-seven rows stated a day on which nothing happened,
+and they were wrong in different halves: v1.40 carried a staging brief's date into both its date
+column and its stamp while its draft commit, its publish commit and the overlay re-pin that adopted
+it were all on the following day, and v1.33 derived its stamp at publish time and left its date
+column at the draft date, so the row contradicted itself in published text from the moment it
+published; a version-history row is this repository's only publication record, so a wrong date in one
+is a false statement in published text; this version corrects both rows, changing three date tokens
+and no other word in either, deliberately does not rewrite the pushed v1.40 publish commit subject or
+the annotated tag that carry the original date, and states in the row which pushed objects retain it
+and which already carried the right one; `scripts/validate_ledger_dates.py` compares every row's date
+column against the author date of the commit that published that version, resolving the mapping from
+the repository through an annotated tag or a search of commit subjects rather than from any table
+held in the check, **comparing in the commit's own recorded offset**, because a check reading UTC
+would have certified the false v1.33 row as correct, keeping a drafted version apart from an
+unresolvable one, refusing rather than passing on input it could not evaluate, and stating its
+coverage on a passing run; the publish ritual and the drafting contract now derive the date column
+and the stamp from the same commit in one act; v1.46 is the preceding published version and v1.23
+remains an unpublished draft awaiting its own push). The full
 ledger of released versions, and the rule that a published version number is never reused, is in
 [`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.

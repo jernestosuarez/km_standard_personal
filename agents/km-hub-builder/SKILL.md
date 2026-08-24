@@ -142,7 +142,7 @@ construction is not evidence: compare the published row against the commit, whic
 pair. Where a pushed commit subject or tag carries a date the ledger now corrects, correct the ledger
 and leave the pushed objects alone, then record in the version row which objects retain the original
 date and which already carried the right one, so the asymmetry is explained rather than discovered.
-(Added in v1.47, drafted and unpublished; this paragraph binds nothing until its own owner push.)
+(Added in v1.47.)
 
 Publishing is its own step, and it is not finished when the header carries the new number. While a
 version is drafted, mark everything it adds with that version and state that the material binds
