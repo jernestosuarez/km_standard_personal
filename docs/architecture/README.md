@@ -8,9 +8,9 @@ timestamp: 2026-08-16
 
 # Architecture Documentation
 
-> **A HISTORICAL SNAPSHOT OF v1.22, NOT THE CURRENT ARCHITECTURE** (labelled in v1.48, drafted and
-> unpublished; this label binds nothing until its own owner push). This set describes the standard as
-> it stood at **v1.22** (published 2026-08-16), with **v1.23 riding as draft** and marked as such
+> **A HISTORICAL SNAPSHOT OF v1.22, NOT THE CURRENT ARCHITECTURE** (labelled in v1.48). This set
+> describes the standard as it stood at **v1.22** (published 2026-08-16), with **v1.23 riding as
+> draft** and marked as such
 > wherever it appears. **It is not maintained forward.** The standard has added or materially changed
 > at least nine surfaces since: the KM Cockpit and the owner queue's decision surface, the projection
 > contract's four gates, the three-surface model, the supervisor threshold and the minimum tier, hub

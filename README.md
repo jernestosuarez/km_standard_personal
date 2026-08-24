@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.47"/>
+  <img src="assets/badges/version.svg" alt="standard v1.48"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 2 adopted"/>
   <img src="assets/badges/license.svg" alt="license: free to adopt"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,25 +28,26 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.47** (2026-08-24, a version-history date is derived from the commit that
-published the version; two of this ledger's forty-seven rows stated a day on which nothing happened,
-and they were wrong in different halves: v1.40 carried a staging brief's date into both its date
-column and its stamp while its draft commit, its publish commit and the overlay re-pin that adopted
-it were all on the following day, and v1.33 derived its stamp at publish time and left its date
-column at the draft date, so the row contradicted itself in published text from the moment it
-published; a version-history row is this repository's only publication record, so a wrong date in one
-is a false statement in published text; this version corrects both rows, changing three date tokens
-and no other word in either, deliberately does not rewrite the pushed v1.40 publish commit subject or
-the annotated tag that carry the original date, and states in the row which pushed objects retain it
-and which already carried the right one; `scripts/validate_ledger_dates.py` compares every row's date
-column against the author date of the commit that published that version, resolving the mapping from
-the repository through an annotated tag or a search of commit subjects rather than from any table
-held in the check, **comparing in the commit's own recorded offset**, because a check reading UTC
-would have certified the false v1.33 row as correct, keeping a drafted version apart from an
-unresolvable one, refusing rather than passing on input it could not evaluate, and stating its
-coverage on a passing run; the publish ritual and the drafting contract now derive the date column
-and the stamp from the same commit in one act; v1.46 is the preceding published version and v1.23
-remains an unpublished draft awaiting its own push). The full
+**Current version: v1.48** (2026-08-24, three fork-facing documents are repaired to what this system
+actually does; the repository is about to be forked, and a fork carries its pages to readers who
+cannot ask anyone what one meant; `template/README.md`, copied verbatim into every hub the standard
+creates, said "It checks all four rules in one pass" over a four-item summary while the standard has
+defined six rules since v1.22, and told a reader to find a fact by opening a numbered document while
+the model is one entity note per instance with the numbered documents as narrative rollups;
+`STANDARD.md` said its governance layer "enforces six rules" while no instrument validates Rule 5 at
+all; and `docs/architecture/` described the architecture as of v1.22 while this page listed the set
+in the present tense with no qualifier, nine surfaces after v1.22; each false statement is quoted in
+the version row as it stood and repaired minimally, with every claim that was true preserved; the
+architecture set is **labelled a historical v1.22 snapshot wherever it is linked rather than
+refreshed**, because a snapshot honestly labelled is true while a snapshot presented as current is
+not, and refreshing six pages is a substantial authoring job that would ride unreviewed inside a
+documentation-truth change; `scripts/validate_template_rule_summary.py` derives the rule set from
+`STANDARD.md`'s own rule headings and holds the template's landing page to it in two independent
+arms, the enumeration and any count written before the word "rules", proved in both directions and
+against the unrepaired tree; **the other two repairs are covered by no instrument, and that is stated
+rather than implied away**, because an enforcement claim and a currency claim are judgements no
+evidence in the tree represents; v1.47 is the preceding published version and v1.23 remains an
+unpublished draft awaiting its own push). The full
 ledger of released versions, and the rule that a published version number is never reused, is in
 [`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.
