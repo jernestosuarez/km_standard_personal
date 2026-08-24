@@ -1,4 +1,5 @@
 #!/bin/bash
+# km-unrepaired-tree: v1.42 | run against the repository at 40f3829 before the repair, where it names 15 real stale draft markings across five files; the count is asserted rather than a bare non-zero exit.
 # Canaries for the published-not-draft check (scripts/validate_published_not_draft.py), added in
 # v1.42.
 #

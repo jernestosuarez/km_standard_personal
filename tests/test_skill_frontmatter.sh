@@ -1,4 +1,5 @@
 #!/bin/bash
+# km-unrepaired-tree: unrecorded | added in v1.27, before this declaration was required; the file records no run against an unrepaired frontmatter check and one is not reconstructed here.
 # Fixtures for skill-file frontmatter (v1.27), STANDARD.md §"Skill files declare their trigger".
 #
 # Every skill file this standard ships must carry YAML frontmatter with exactly the two fields a

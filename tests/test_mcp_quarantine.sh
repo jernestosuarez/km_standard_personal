@@ -1,4 +1,5 @@
 #!/bin/bash
+# km-unrepaired-tree: v1.40 | case 5 is the unrepaired-tree run: the same assertions against an UNQUARANTINED copy of the surface are required to FAIL there, so a pass in cases 2 to 4 is evidence of a refusal rather than of an empty tree.
 # Fixtures for the v1.40 quarantine of the optional MCP query surface (template/mcp/).
 #
 # WHAT THIS PROVES, AND WHAT IT DOES NOT.

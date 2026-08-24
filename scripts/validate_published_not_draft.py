@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# km-unrepaired-tree: v1.42 | run against the repository at 40f3829 before the repair, where it fails and names 15 real stale draft markings across five files; proved in both directions by tests/test_published_not_draft.sh.
 """Fail when any governed surface marks material as drafted-and-unpublished for a version the
 STANDARD.md version-history table records as published.
 

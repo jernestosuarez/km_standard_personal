@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# km-unrepaired-tree: unrecorded | added in v1.14, before this declaration was required; no run against an unrepaired tree is recorded for it and one is not reconstructed here.
+# km-gate-instrument: tests/test_organization_profile.py | an instrument, not a self-running validator: it takes a required profile path and --canonical-version, so the gate runs its canaries instead of running it.
 import argparse
 import datetime as dt
 import json

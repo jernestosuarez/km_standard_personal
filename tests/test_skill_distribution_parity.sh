@@ -1,4 +1,5 @@
 #!/bin/bash
+# km-unrepaired-tree: v1.43 | case R3 runs the check against the unrepaired tree at 10d7950, where it names the real divergence between the advertised skill copy and its two mirrors.
 # Governed-body parity for skills shipped in more than one location (v1.43),
 # STANDARD.md §"Skill files declare their trigger, not their title" → "One canonical copy, and the
 # mirrors are mirrors".

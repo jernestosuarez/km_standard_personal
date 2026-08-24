@@ -1,3 +1,5 @@
+# km-unrepaired-tree: unrecorded | added in v1.14, before this declaration was required; the file records no run against an unrepaired profile validator and one is not reconstructed here.
+#
 import json
 import subprocess
 import tempfile

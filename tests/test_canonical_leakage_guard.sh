@@ -1,4 +1,5 @@
 #!/bin/bash
+# km-unrepaired-tree: v1.29 | case 3 is the unrepaired-tree run: against the v1.28 instrument the ignored boundary construct returned exit 0 on a tree full of matches, and the case now requires 1 or 2 and never 0.
 # Canaries for tests/test_canonical_leakage.sh (v1.29), the canonical leakage instrument.
 #
 # The instrument reports leakage by matching, so its failure mode is "found nothing" — the same shape

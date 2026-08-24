@@ -1,4 +1,5 @@
 #!/bin/bash
+# km-unrepaired-tree: v1.30 | cases 5c and 5d are the unrepaired-tree run: against a shimmed grep that ignores boundary constructs the runner is required to refuse, the branch nothing else on a compliant host exercises.
 # Canaries for the publish guard runner in tools/km-publish.sh (v1.30).
 #
 # A FORBID guard reports a defect by MATCHING, so its pass is an ABSENCE — the same output as a

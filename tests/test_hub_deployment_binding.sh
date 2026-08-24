@@ -1,4 +1,5 @@
 #!/bin/bash
+# km-unrepaired-tree: v1.44 | the four routing-keywords cases were run against the UNREPAIRED scan first, where the two firing cases fail, which is what makes them evidence that the gate detects the defect rather than agreeing with what the scan already did.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

@@ -1,4 +1,5 @@
 #!/bin/bash
+# km-unrepaired-tree: unrecorded | added in v1.19, before this declaration was required; the file records no run against an unrepaired hub-scan and one is not reconstructed here.
 # Fixtures for the [ CORRECTIONS ] block (v1.19) in template/hub-scan.sh.
 #
 # The block binds the estate corrections registry at hub session start, but ONLY in a multi-hub

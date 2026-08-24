@@ -1,4 +1,5 @@
 #!/bin/bash
+# km-unrepaired-tree: v1.41 | every scope-bypass case was run against the UNREPAIRED scanner and passed there (exit 0, "closed scope of N hub(s)"), which is what makes them evidence rather than decoration.
 # Canaries for template/reader/reader-scan.sh (v1.41) - the Reader-context declaration validator.
 #
 # WHY THIS FILE EXISTS

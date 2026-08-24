@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# km-unrepaired-tree: none | an installer rather than a check: it has no violation class to run against an unrepaired tree, and its refusal to replace an unmanaged file is exercised by the package tests.
+# km-gate-instrument: agents/km-hub-builder/tests/test-agent-package.sh | an installer, not a check: it takes required destination arguments and writes adapters, so the gate runs the package tests that drive it instead of running it against the maintainer's own machine.
 set -euo pipefail
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)

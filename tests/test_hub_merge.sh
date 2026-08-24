@@ -1,4 +1,5 @@
 #!/bin/bash
+# km-unrepaired-tree: v1.35 | the NEG case is the unrepaired-tree run: with tombstone detection removed the scan reports the quarantine and no tombstone, so the case-A assertions are shown to detect a dead block.
 # Canaries for hub merge (v1.35) — RFC-004 Part II.
 #
 # WHY THIS FILE EXISTS

@@ -1,4 +1,5 @@
 #!/bin/bash
+# km-unrepaired-tree: v1.45 | run against published main at c3e4ffe before the RFC landed, where it names all nine real dangling references at their exact lines and reports only RFC-005, so the failure is selective.
 # Canaries for the RFC reference-integrity check (scripts/validate_rfc_references.py), added in
 # v1.45.
 #

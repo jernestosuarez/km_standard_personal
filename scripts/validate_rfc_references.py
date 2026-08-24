@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# km-unrepaired-tree: v1.45 | run against published main at c3e4ffe before the RFC landed, where it fails and names all nine real dangling references; proved in both directions by tests/test_rfc_reference_integrity.sh.
 """Fail when text in the governed surface names an RFC that does not exist in `rfcs/`.
 
 rfc-reference-exempt: this instrument's own docstring names identifiers to define what it matches.

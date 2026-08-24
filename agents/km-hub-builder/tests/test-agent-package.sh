@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# km-unrepaired-tree: unrecorded | added with the agent package, before this declaration was required; the file records no run against an unrepaired package and one is not reconstructed here.
 set -euo pipefail
 
 package_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)

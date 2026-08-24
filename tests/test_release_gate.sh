@@ -1,0 +1,415 @@
+#!/bin/bash
+# km-unrepaired-tree: v1.46 | run against deliberately broken trees before the gate was trusted: a suite made to fail, a suite whose interpreter is absent, an emptied discovery set, a stripped declaration, a broken relative link, unparseable JSON, a shell syntax error and a Python syntax error. Every one of those trees was gated and every one produced FAIL or REFUSED, never PASS.
+#
+# Canaries for the release gate (tools/km-release-gate.py), added in v1.46.
+#
+# WHAT THIS PROVES, AND WHAT IT DOES NOT.
+#
+# It proves the gate fails when a discovered suite fails, refuses when a discovered suite cannot be
+# executed, refuses when the discovery set is empty, fails when a required unrepaired-tree
+# declaration is missing or empty, and fails on each static check it runs. It proves the gate does
+# NOT fire on a tree in which everything passes, and that its passing line states its coverage. It
+# proves the declaration mechanism in both directions: a check this change ADDS may not plead
+# `unrecorded`, and a check this change CHANGES must have its declaration line among the lines the
+# change added, with the repaired form of each required to pass.
+#
+# It does NOT prove that an adversarial pass by a second actor took place, because no runner can.
+# It does NOT prove that any unrepaired-tree declaration is TRUE; it proves one was made and, where
+# a base revision resolves, that it was re-stated when its check was edited. That gap is the point
+# of limit 2 in the gate's own header and is stated rather than papered over.
+#
+# It does NOT prove an organisation's tree is leakage-free. Nothing here can: the denylist lives
+# outside this repository by design. What runs here is the leakage INSTRUMENT's canaries.
+#
+# BOTH DIRECTIONS. A gate reports by failing, so a green run against the real repository proves
+# nothing on its own. Every case below builds a fixture repository, breaks exactly one thing, and
+# requires the stated verdict; case 1 and case 14 give it trees that are whole and require PASS.
+#
+# All fixture content is synthetic. No real person, organization or initiative is named.
+set -u
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+GATE="$ROOT/tools/km-release-gate.py"
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+fail=0
+
+DECL='# km-unrepaired-tree: v9.9 | fixture check written for this canary run; run first against the fixture tree with the violation present, where it failed.'
+
+note() { printf '%s\n' "$*"; }
+
+# run_gate <fixture-dir> [extra-args...] -> prints combined output, returns the gate's status.
+# The status is read UNPIPED, because a pipeline reports the tail of the pipe and would mask it.
+run_gate() {
+  local d="$1"; shift
+  local out status
+  out=$(cd "$d" && KM_GATE_BASE="${KM_GATE_BASE:-}" python3 "$GATE" --root "$d" "$@" 2>&1)
+  status=$?
+  printf '%s' "$out"
+  return $status
+}
+
+# expect <name> <fixture> <expected-status> <needle>
+expect() {
+  local name="$1" d="$2" want="$3" needle="$4"; shift 4
+  local out status
+  out=$(run_gate "$d" "$@")
+  status=$?
+  if [ "$status" -ne "$want" ]; then
+    note "FAIL: $name: expected exit $want, got $status"
+    printf '%s\n' "$out" | sed 's/^/       /'
+    fail=1
+    return
+  fi
+  if ! printf '%s\n' "$out" | grep -Fq "$needle"; then
+    note "FAIL: $name: exit $want as expected, but the output never said: $needle"
+    printf '%s\n' "$out" | sed 's/^/       /'
+    fail=1
+    return
+  fi
+  note "PASS: $name"
+}
+
+# mkfixture <dir>: a whole tree with one suite, one validator, a standard, a README, a JSON file.
+mkfixture() {
+  local d="$1"
+  mkdir -p "$d/tests" "$d/scripts"
+  printf '#!/bin/bash\n%s\necho "alpha suite passed"\nexit 0\n' "$DECL" > "$d/tests/test_alpha.sh"
+  printf '#!/usr/bin/env python3\n%s\nprint("alpha validator passed")\n' "$DECL" \
+    > "$d/scripts/validate_alpha.py"
+  printf '# Fixture Standard (v9.9)\n\nSee [the readme](README.md).\n' > "$d/STANDARD.md"
+  printf '# Fixture readme\n\nSee [the standard](STANDARD.md).\n' > "$d/README.md"
+  printf '{"fixture": true}\n' > "$d/data.json"
+  git -C "$d" init -q 2>/dev/null
+  git -C "$d" config user.email fixture@example.invalid
+  git -C "$d" config user.name Fixture
+  git -C "$d" add -A >/dev/null
+  git -C "$d" commit -qm "fixture" >/dev/null
+  git -C "$d" rev-parse HEAD
+}
+
+# ================================================================================================
+# 1. The negative direction: a whole tree PASSES, and the passing line states its coverage.
+#    A gate that fired here would prove as little as one that never fires.
+# ================================================================================================
+c="$work/clean"; base=$(mkfixture "$c")
+KM_GATE_BASE="$base" expect "1. a whole tree passes" "$c" 0 "PASS release-gate:"
+KM_GATE_BASE="$base" expect "1b. the passing line states its coverage" "$c" 0 \
+  "2 check(s) discovered under tests/ and scripts/, 2 run"
+KM_GATE_BASE="$base" expect "1c. the passing output states the leakage limit" "$c" 0 \
+  "does not run an organisation leakage scan and cannot"
+KM_GATE_BASE="$base" expect "1c2. the passing output states the second-actor limit" "$c" 0 \
+  "No runner supplies a second actor"
+KM_GATE_BASE="$base" expect "1c3. the passing output states the exit-status limit" "$c" 0 \
+  "cannot see inside it"
+KM_GATE_BASE="$base" expect "1d. the passing line counts what the static phases looked at" "$c" 0 \
+  "relative link(s) resolved across"
+
+# ================================================================================================
+# 2. A discovered suite FAILS -> the gate fails and names it.
+# ================================================================================================
+c="$work/suitefail"; base=$(mkfixture "$c")
+printf '#!/bin/bash\n%s\necho "alpha suite broke"\nexit 1\n' "$DECL" > "$c/tests/test_alpha.sh"
+KM_GATE_BASE="$base" expect "2. a failing suite fails the gate" "$c" 1 "tests/test_alpha.sh: exited 1"
+
+# ================================================================================================
+# 3. A discovered VALIDATOR fails -> the gate fails. Both categories are run, not the suites alone.
+# ================================================================================================
+c="$work/valfail"; base=$(mkfixture "$c")
+printf '#!/usr/bin/env python3\n%s\nimport sys\nsys.exit(3)\n' "$DECL" \
+  > "$c/scripts/validate_alpha.py"
+KM_GATE_BASE="$base" expect "3. a failing validator fails the gate" "$c" 1 \
+  "scripts/validate_alpha.py: exited 3"
+
+# ================================================================================================
+# 4. A discovered suite CANNOT EXECUTE -> REFUSED. An unrunnable check is not a passing one, and
+#    the gate must not fold "I could not run it" into a verdict about the tree.
+# ================================================================================================
+c="$work/unrunnable"; base=$(mkfixture "$c")
+printf '#!/bin/bash\n%s\nkm-no-such-interpreter-xyz\n' "$DECL" > "$c/tests/test_alpha.sh"
+KM_GATE_BASE="$base" expect "4. a suite that cannot execute refuses" "$c" 2 \
+  "exited 127"
+KM_GATE_BASE="$base" expect "4b. the refusal says it is not a pass" "$c" 2 \
+  "A refusal is not a pass"
+
+# ================================================================================================
+# 5. An EMPTY discovery set -> REFUSED. An empty set is not a clean one.
+# ================================================================================================
+c="$work/empty"; mkdir -p "$c"
+git -C "$c" init -q 2>/dev/null
+git -C "$c" config user.email fixture@example.invalid
+git -C "$c" config user.name Fixture
+printf '# Fixture Standard (v9.9)\n' > "$c/STANDARD.md"
+git -C "$c" add -A >/dev/null && git -C "$c" commit -qm empty >/dev/null
+expect "5. an empty discovery set refuses" "$c" 2 "the discovery set is empty"
+
+# 5b. A discovery scope where one of the two directories yields nothing is equally blind.
+c="$work/halfempty"; base=$(mkfixture "$c")
+git -C "$c" rm -q "scripts/validate_alpha.py" >/dev/null
+KM_GATE_BASE="$base" expect "5b. a discovery directory yielding nothing refuses" "$c" 2 \
+  "no tracked check was discovered in any scripts/ directory"
+
+# 5c. Not a repository at all. An unlistable tree is not an empty one.
+c="$work/norepo"; mkdir -p "$c/tests"
+expect "5c. a tree that is not a repository refuses" "$c" 2 "git ls-files failed"
+
+# ================================================================================================
+# 6. A MISSING declaration fails the gate. This is the mechanism Part C is about.
+# ================================================================================================
+c="$work/nodecl"; base=$(mkfixture "$c")
+printf '#!/bin/bash\necho ok\n' > "$c/tests/test_alpha.sh"
+KM_GATE_BASE="$base" expect "6. a missing unrepaired-tree declaration fails the gate" "$c" 1 \
+  "no km-unrepaired-tree declaration"
+
+# 6b. A declaration whose result text is empty is a token, not a declaration.
+c="$work/emptydecl"; base=$(mkfixture "$c")
+printf '#!/bin/bash\n# km-unrepaired-tree: v9.9 | \necho ok\n' > "$c/tests/test_alpha.sh"
+KM_GATE_BASE="$base" expect "6b. a declaration with no result text fails the gate" "$c" 1 \
+  "states no result"
+
+# 6c. The other direction, on the very file case 6 stripped: restore it byte for byte and the gate
+#     passes. A gate that failed here would be failing on everything, which proves nothing.
+c="$work/nodecl"
+git -C "$c" checkout -- tests/test_alpha.sh
+KM_GATE_BASE="$base" expect "6c. the stripped declaration restored, the gate passes" "$c" 0 \
+  "PASS release-gate:"
+
+# ================================================================================================
+# 7. CURRENCY, sub-rule ADDED: a check this change adds may not plead `unrecorded`.
+# ================================================================================================
+c="$work/added"; base=$(mkfixture "$c")
+printf '#!/bin/bash\n# km-unrepaired-tree: unrecorded | nothing was run.\necho ok\n' \
+  > "$c/tests/test_beta.sh"
+git -C "$c" add tests/test_beta.sh >/dev/null
+KM_GATE_BASE="$base" expect "7. an added check pleading 'unrecorded' fails the gate" "$c" 1 \
+  "added by this change and declares 'unrecorded'"
+
+# 7b. The repaired form: the same added check naming the drafted version passes.
+printf '#!/bin/bash\n%s\necho ok\n' "$DECL" > "$c/tests/test_beta.sh"
+KM_GATE_BASE="$base" expect "7b. the added check naming the drafted version passes" "$c" 0 \
+  "PASS release-gate:"
+
+# 7c. An added check naming some OTHER version is not current either.
+printf '#!/bin/bash\n# km-unrepaired-tree: v1.1 | run long ago against something else.\necho ok\n' \
+  > "$c/tests/test_beta.sh"
+KM_GATE_BASE="$base" expect "7c. an added check naming a stale version fails the gate" "$c" 1 \
+  "the version being drafted is v9.9"
+
+# ================================================================================================
+# 8. CURRENCY, sub-rule CHANGED: editing a check without re-stating its declaration fails.
+# ================================================================================================
+c="$work/changed"; base=$(mkfixture "$c")
+printf '#!/bin/bash\n%s\necho "alpha suite passed"\necho "and something new"\n' "$DECL" \
+  > "$c/tests/test_alpha.sh"
+KM_GATE_BASE="$base" expect "8. a changed check with an untouched declaration fails the gate" "$c" 1 \
+  "without its km-unrepaired-tree line being among"
+
+# 8b. The repaired form: re-state the declaration and the same edit passes.
+printf '#!/bin/bash\n# km-unrepaired-tree: v9.9 | re-stated for this edit; re-run against the fixture tree carrying the violation, where it failed.\necho "alpha suite passed"\necho "and something new"\n' \
+  > "$c/tests/test_alpha.sh"
+KM_GATE_BASE="$base" expect "8b. the declaration re-stated, the same edit passes" "$c" 0 \
+  "PASS release-gate:"
+
+# 8c. No base resolvable at all -> a COVERAGE GAP, never folded into the verdict. The branch is
+#     renamed away from the names the gate falls back to, so nothing resolves on any host.
+c="$work/nobase"; base=$(mkfixture "$c")
+git -C "$c" branch -M km-fixture-trunk
+KM_GATE_BASE="km-no-such-revision-xyz" expect "8c. an unresolvable base is a coverage gap, not a verdict" \
+  "$c" 0 "COVERAGE GAP: no base revision was resolvable"
+
+# 8d. An unresolvable explicit base FALLS BACK to the usual branch rather than giving up. A first
+#     push to a new branch reports an all-zero revision, and a gate that reported a coverage gap on
+#     every branch's first push would check currency almost never.
+c="$work/fallback"; base=$(mkfixture "$c")
+git -C "$c" branch -M main
+KM_GATE_BASE="0000000000000000000000000000000000000000" \
+  expect "8d. an unresolvable explicit base falls back to the usual branch" "$c" 0 \
+  "declaration currency checked against main"
+
+# ================================================================================================
+# 9. The INSTRUMENT exemption: skipped with its reason, and refused unless something covers it.
+# ================================================================================================
+c="$work/instrument"; base=$(mkfixture "$c")
+printf '#!/bin/bash\n%s\n# km-gate-instrument: tests/test_alpha.sh | takes a required argument and exits 2 when run bare.\n[ $# -eq 1 ] || exit 2\n' \
+  "$DECL" > "$c/tests/test_gamma.sh"
+git -C "$c" add tests/test_gamma.sh >/dev/null
+KM_GATE_BASE="$base" expect "9. an instrument is skipped with its reason and its canaries named" "$c" 0 \
+  "skip  tests/test_gamma.sh (instrument; canaries tests/test_alpha.sh)"
+KM_GATE_BASE="$base" expect "9b. the coverage line counts the skip rather than hiding it" "$c" 0 \
+  "1 skipped as instruments covered by their canaries"
+
+# 9c. An instrument naming canaries that will not run is a check deleted by one comment line.
+printf '#!/bin/bash\n%s\n# km-gate-instrument: tests/test_nowhere.sh | takes a required argument.\nexit 2\n' \
+  "$DECL" > "$c/tests/test_gamma.sh"
+KM_GATE_BASE="$base" expect "9c. an instrument whose canaries do not run refuses" "$c" 2 \
+  "is not a check this pass will run"
+
+# 9d. An instrument declaration with no reason refuses. No exclusion is silent.
+printf '#!/bin/bash\n%s\n# km-gate-instrument: tests/test_alpha.sh | \nexit 2\n' \
+  "$DECL" > "$c/tests/test_gamma.sh"
+KM_GATE_BASE="$base" expect "9d. an instrument exemption with no reason refuses" "$c" 2 \
+  "declares km-gate-instrument with no reason"
+
+# ================================================================================================
+# 10. The static checks, one broken thing each.
+# ================================================================================================
+c="$work/shellsyntax"; base=$(mkfixture "$c")
+printf '#!/bin/bash\n%s\nif [ 1 -eq 1 ]; then\n' "$DECL" > "$c/broken.sh"
+git -C "$c" add broken.sh >/dev/null
+KM_GATE_BASE="$base" expect "10. a shell syntax error fails the gate" "$c" 1 \
+  "broken.sh: shell syntax error"
+
+c="$work/pysyntax"; base=$(mkfixture "$c")
+printf '#!/usr/bin/env python3\n%s\ndef broken(\n' "$DECL" > "$c/broken.py"
+git -C "$c" add broken.py >/dev/null
+KM_GATE_BASE="$base" expect "10b. a Python syntax error fails the gate" "$c" 1 \
+  "broken.py: Python syntax error"
+
+c="$work/badjson"; base=$(mkfixture "$c")
+printf '{"unterminated": \n' > "$c/data.json"
+KM_GATE_BASE="$base" expect "10c. unparseable JSON fails the gate" "$c" 1 \
+  "data.json: does not parse as JSON"
+
+c="$work/badjsonld"; base=$(mkfixture "$c")
+printf 'not json at all\n' > "$c/graph.jsonld"
+git -C "$c" add graph.jsonld >/dev/null
+KM_GATE_BASE="$base" expect "10d. unparseable JSON-LD fails the gate" "$c" 1 \
+  "graph.jsonld: does not parse as JSON"
+
+c="$work/badlink"; base=$(mkfixture "$c")
+printf '# Fixture readme\n\nSee [the missing thing](docs/absent.md).\n' > "$c/README.md"
+KM_GATE_BASE="$base" expect "10e. a relative link resolving to nothing fails the gate" "$c" 1 \
+  "link target 'docs/absent.md' resolves to nothing"
+
+# ================================================================================================
+# 11. The link check does NOT over-fire. A check that matches everything proves as little as one
+#     that matches nothing.
+# ================================================================================================
+c="$work/goodlinks"; base=$(mkfixture "$c")
+printf '# Fixture readme\n\n[std](STANDARD.md) [anchored](STANDARD.md#heading) [remote](https://example.invalid/x)\n[spaced](data.json) and a fenced example that names nothing real:\n\n```\n[broken](does/not/exist.md)\n```\n' \
+  > "$c/README.md"
+KM_GATE_BASE="$base" expect "11. resolving, anchored, remote and fenced links do not fire" "$c" 0 \
+  "PASS release-gate:"
+
+# ================================================================================================
+# 12. An UNDECODABLE tracked file refuses. A file skipped into a verdict is a verdict about a file
+#     nobody read.
+# ================================================================================================
+c="$work/undecodable"; base=$(mkfixture "$c")
+printf 'valid start \377\376 invalid\n' > "$c/notes.md"
+git -C "$c" add notes.md >/dev/null
+KM_GATE_BASE="$base" expect "12. an undecodable tracked file refuses" "$c" 2 \
+  "could not be decoded as UTF-8"
+
+# ================================================================================================
+# 13. The link exemption needs a reason, and the reason is printed.
+# ================================================================================================
+c="$work/linkexempt"; base=$(mkfixture "$c")
+printf '# Fixture readme\n\nkm-gate-link-exempt: this fixture names paths that are deliberately absent.\n\n[gone](docs/absent.md)\n' \
+  > "$c/README.md"
+KM_GATE_BASE="$base" expect "13. a link exemption with a reason is honoured and printed" "$c" 0 \
+  "this fixture names paths that are deliberately absent"
+
+printf '# Fixture readme\n\nkm-gate-link-exempt:\n\n[gone](docs/absent.md)\n' > "$c/README.md"
+KM_GATE_BASE="$base" expect "13b. a link exemption with no reason refuses" "$c" 2 \
+  "declares km-gate-link-exempt with no reason"
+
+# ================================================================================================
+# 14. The whole-tree pass once more, after every case above has broken something, so a fixture
+#     that leaked state into the clean tree cannot hide.
+# ================================================================================================
+c="$work/clean2"; base=$(mkfixture "$c")
+KM_GATE_BASE="$base" expect "14. a whole tree still passes at the end of the run" "$c" 0 \
+  "PASS release-gate:"
+
+# ================================================================================================
+# 16. Declarations are read from the file's LEADING COMMENT BLOCK and nowhere else.
+#
+#     This is not a hypothetical. On the gate's first full run against the real repository it
+#     REFUSED, because this very file writes instrument declarations into the fixtures it builds and
+#     a whole-file search read one of them as this file's own. The class is fixed rather than the
+#     one file exempted, and it is proved in both directions here.
+# ================================================================================================
+c="$work/headerscope"; base=$(mkfixture "$c")
+{
+  printf '#!/bin/bash\n%s\n' "$DECL"
+  printf '# a fixture this check writes, whose CONTENT carries the declaration syntax:\n'
+  printf 'cat <<EOF_FIXTURE > /dev/null\n'
+  printf '# km-gate-instrument: tests/test_nowhere.sh | a fixture line, not this file own claim.\n'
+  printf '# km-unrepaired-tree: unrecorded | a fixture line, not this file own claim.\n'
+  printf 'EOF_FIXTURE\n'
+  printf 'exit 0\n'
+} > "$c/tests/test_alpha.sh"
+KM_GATE_BASE="$base" expect "16. declaration syntax in a file body is not read as its own" "$c" 0 \
+  "PASS release-gate:"
+
+# 16b. The other direction: with the header declaration gone, one buried in the body does NOT save
+#      it. A scope that accepted the body would make case 16 pass for the wrong reason.
+{
+  printf '#!/bin/bash\n'
+  printf 'cat <<EOF_FIXTURE > /dev/null\n'
+  printf '%s\n' "$DECL"
+  printf 'EOF_FIXTURE\n'
+  printf 'exit 0\n'
+} > "$c/tests/test_alpha.sh"
+KM_GATE_BASE="$base" expect "16b. a declaration buried in the body does not satisfy the rule" "$c" 1 \
+  "no km-unrepaired-tree declaration"
+
+# ================================================================================================
+# 17. THE ACKNOWLEDGED GAP, asserted as a gap and not as a control.
+#
+#     The gate reads a check's EXIT STATUS. A check that fails internally and still returns 0 passes,
+#     and no runner that treats a check as a black box can do otherwise. This was found by running
+#     the gate against a deliberately broken tree: a real suite was given a command that does not
+#     exist, the suite swallowed the 127 because it does not run under `set -e`, it exited 0 on its
+#     own accounting, and the gate PASSED. The case below pins that behaviour so it is a documented
+#     limit rather than a surprise, and so a future change that closes it fails here loudly instead
+#     of quietly redefining what a pass means.
+# ================================================================================================
+c="$work/swallowed"; base=$(mkfixture "$c")
+printf '#!/bin/bash\n%s\nkm-no-such-command-deliberate-break\nexit 0\n' "$DECL" \
+  > "$c/tests/test_beta.sh"
+git -C "$c" add tests/test_beta.sh >/dev/null
+KM_GATE_BASE="$base" expect "17. a check that swallows its own failure still passes (KNOWN GAP)" \
+  "$c" 0 "PASS release-gate:"
+note "     ^ this is the acknowledged gap, not a control. The canary rule the standard already"
+note "       carries is what reaches inside a check; the gate reaches only its exit status."
+
+# ================================================================================================
+# 18. A run that executed no check cannot be recorded as a release verdict.
+# ================================================================================================
+c="$work/staticonly"; base=$(mkfixture "$c")
+KM_GATE_BASE="$base" expect "18. --no-suites is labelled STATIC ONLY on the verdict line itself" \
+  "$c" 0 "PASS release-gate (STATIC ONLY, NOT A RELEASE VERDICT):" --no-suites
+KM_GATE_BASE="$base" expect "18b. --no-suites reports the unexecuted checks as a coverage gap" \
+  "$c" 0 "COVERAGE GAP: --no-suites was passed" --no-suites
+out=$(run_gate "$c" --no-suites)
+if printf '%s\n' "$out" | grep -Fq "PASS release-gate:"; then
+  note "FAIL: 18c. a static-only run still prints a line that reads as an ordinary pass"
+  fail=1
+else
+  note "PASS: 18c. a static-only run prints no line that reads as an ordinary pass"
+fi
+
+# ================================================================================================
+# 15. THE STATED LIMITS. None of them is a test of the tree; all three are assertions that the gate
+#     says out loud what it cannot do, because a green line is otherwise read as "safe to publish".
+# ================================================================================================
+if grep -Fq "IT CANNOT RUN THE ORGANISATION LEAKAGE SCAN" "$GATE" &&
+   grep -Fq "IT CANNOT SUPPLY A SECOND ACTOR" "$GATE" &&
+   grep -Fq "S EXIT STATUS AND CANNOT SEE INSIDE IT" "$GATE"; then
+  note "PASS: 15. the gate states all three of its limits in its own header"
+else
+  note "FAIL: 15. the gate does not state all three of its limits in its own header"
+  fail=1
+fi
+
+if [ "$fail" -eq 0 ]; then
+  note ""
+  note "release-gate canaries passed"
+  exit 0
+else
+  note ""
+  note "release-gate canaries FAILED"
+  exit 1
+fi

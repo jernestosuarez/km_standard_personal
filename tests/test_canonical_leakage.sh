@@ -1,4 +1,6 @@
 #!/bin/bash
+# km-unrepaired-tree: v1.29 | the instrument itself was repaired from a demonstrated false pass on the unrepaired tree: asking for a boundary the engine ignores, it printed "canonical leakage check passed" against a tree carrying 89 matching lines in one file.
+# km-gate-instrument: tests/test_canonical_leakage_guard.sh | an instrument, not a self-running suite: it takes a required denylist pattern argument and exits 2 with a usage line when run bare, so the gate runs its canaries instead of running it.
 # The canonical leakage instrument: scan every tracked text file for a denylist pattern.
 #
 # This check reports leakage by MATCHING, so a pass is an ABSENCE, and an absence is evidence only

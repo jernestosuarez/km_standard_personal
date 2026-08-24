@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# km-unrepaired-tree: unrecorded | added with the agent package, before this declaration was required; no run against an unrepaired tree is recorded for it and one is not reconstructed here.
+# km-gate-instrument: agents/km-hub-builder/tests/test-agent-package.sh | an instrument, not a self-running check: it takes a required --profile path and exits 2 with a usage line when run bare, so the gate runs the package tests that drive it instead.
 set -euo pipefail
 
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)

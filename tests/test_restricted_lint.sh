@@ -1,4 +1,5 @@
 #!/bin/bash
+# km-unrepaired-tree: unrecorded | added in v1.16 and narrowed in v1.21, before this declaration was required; the file records no run against an unrepaired lint and one is not reconstructed here.
 # Fixtures for the [ RESTRICTED ] check (v1.16; narrowed in v1.21) in template/hub-scan.sh and
 # for the restricted-note exclusion in template/build-indexes.sh.
 #

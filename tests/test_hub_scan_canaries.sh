@@ -1,4 +1,5 @@
 #!/bin/bash
+# km-unrepaired-tree: v1.30 | each case injects one known violation into a clean fixture hub and requires the block to fire, which is the unrepaired tree built per block; eleven blocks that reported by absence had nothing proving they could fire before this file existed.
 # Canaries for template/hub-scan.sh (v1.30; [ QUEUE ] added v1.31) — the session-start integrity
 # and governance scan.
 #

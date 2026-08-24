@@ -1,4 +1,5 @@
 #!/bin/bash
+# km-unrepaired-tree: unrecorded | added in v1.24, before this declaration was required; the file records no run against an unrepaired cockpit and one is not reconstructed here.
 # Fixtures for the KM Cockpit side component (components/km-cockpit/, v1.24).
 #
 # Two halves:

@@ -142,10 +142,36 @@ so the clearing step is verified rather than remembered, and never accept a chec
 document alone: one that passes while the installed files carry the defect certifies the wrong
 class.
 
+Run the repository's release gate in the same commit, and do not substitute a hand-picked selection
+of checks for it. One command discovers every check the repository ships and runs it, because a
+verification assembled from memory is the failure this obligation exists to close, and a check chosen
+by the person who wrote the change is chosen by the person least able to see what it misses. Let the
+gate decide what to run: discovery keeps a newly added check inside the gate with no edit anywhere,
+and anything it skips must say why and name what covers it.
+
+Where the change adds or edits a check, record what that check found when it was run against the
+unrepaired tree, in the check itself, in the form the gate reads. Do this before the repair is in the
+working tree, because afterwards the run is no longer available and reconstructing it is not the same
+act. This is the highest-yield step in the loop and the easiest to skip: it is what distinguishes a
+check that detects the defect from a check that agrees with whatever the repaired tree already did. A
+check the change adds names the version being drafted; a check the change edits has its declaration
+re-stated by that edit. Do not write a declaration for a run that did not happen, and do not read the
+gate's green as covering it: the gate can see that a declaration was made, never that it is true.
+
+Read the gate's two stated limits into every report you write. A green gate does not mean a push is
+free of organization leakage, because the denylist that scan needs is generated from an
+organization's own entity names and is kept outside a publishable canonical repository by design, so
+the gate proves the instrument through its canaries and only a deployment's own local pre-push hook
+scans an actual push. And a green gate does not mean anyone other than you looked. The minimum viable
+independence is an adversarial pass by someone who did not author the change, against the specific
+class being repaired, and no runner supplies it. State both as limits rather than as work deferred.
+
 ## Verify and commit
 
 Define acceptance criteria before editing and verify each criterion afterward. Run the most focused
-tests first, then full consistency checks, leakage checks, and `git diff --check`.
+tests first, then the repository's own release gate as one command rather than a selection of checks
+you remember, then leakage checks and `git diff --check`. A gate that refuses is not a gate that
+passed: treat it as a verification you do not have and say so.
 
 If a repository is stored in synchronized storage and a read or Git operation fails transiently,
 retry as directed by the profile before concluding that a file or repository is absent. Never run

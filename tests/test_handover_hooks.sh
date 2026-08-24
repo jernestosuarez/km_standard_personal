@@ -1,4 +1,5 @@
 #!/bin/bash
+# km-unrepaired-tree: unrecorded | added in v1.18, before this declaration was required; the file records no run against an unrepaired handover hook and one is not reconstructed here.
 # Isolated guard tests for template/handover-hooks.sh (v1.18, hub handover write side).
 #
 # The Stop gate can BLOCK a session from ending, so it must be proven to fire exactly when it should
