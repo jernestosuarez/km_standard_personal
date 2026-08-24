@@ -67,5 +67,29 @@ Create `working-docs/<topic>/<slug>/` with:
   hub owner, because each guard traces to a correction.
 - **Facts in the source must match the hub docs.** Where a document restates something a numbered doc
   holds, the hub doc is the record; on divergence, stop and surface it.
-- Renderer is WeasyPrint via the shared tool, which self-bootstraps into a local venv. Office-suite
-  "export to PDF" is a preview, never an issue path — it drops page breaks and background fills.
+- Renderer is WeasyPrint via the shared tool, which bootstraps itself at a **pinned** version into a
+  virtual environment **outside the hub tree** (added in v1.51, drafted and unpublished; binds
+  nothing until its own owner push). Office-suite "export to PDF" is a preview, never an issue path
+  — it drops page breaks and background fills.
+
+## Environment (added in v1.51, drafted and unpublished)
+
+Run `bash <tools-path>/km-publish.sh --preflight <NAME>.html` before a first build on a new machine,
+or when a build fails in a way that looks environmental. It resolves the interpreter, reports the pin
+and the environment path, checks the external binaries, installs nothing, and renders nothing.
+
+- **The interpreter is discovered, not hardcoded.** `KM_PUBLISH_PYTHON` names one explicitly and is
+  honoured before any search; an override that cannot work is refused by name rather than searched
+  past. Otherwise `PATH` is searched newest-first, then the conventional install prefixes. The
+  minimum is **CPython 3.10**, which is what the pinned renderer's own metadata declares.
+- **The environment lives outside the tree**, under the user's cache directory, keyed by the pinned
+  version, and `KM_PUBLISH_VENV` relocates it. **Never commit a virtual environment to the hub**, and
+  if you find one in a hub that predates v1.51, delete it: it is ignored and exempt from
+  `[ INTEGRITY ]`, so removing it changes nothing the hub asserts.
+- **`pdftotext` and `pdfinfo` (poppler) are checked before rendering.** `pdftotext` is required when
+  the source has a `.guards` sidecar, because guards are applied to extracted text; a missing
+  `pdfinfo` warns and the build proceeds, with the page count and any `PAGES` rule reported as
+  unevaluated.
+- **Platforms:** macOS on Apple Silicon is exercised. Linux, Intel macOS and other Unix hosts are
+  **written and unverified**: the path is portable by construction and was not run there. Native
+  Windows is out of scope.

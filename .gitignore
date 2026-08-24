@@ -23,3 +23,12 @@ template/reader/outputs/*
 # weakens a guard that protects everything else. Excluding the file is the option that costs least
 # and hides nothing. See the v1.49 version row in STANDARD.md.
 /KM-STANDARD-AUDIT-2026-08-22.md
+
+# Python virtual environments (added in v1.51, drafted and unpublished; binds nothing until its own
+# owner push). tools/km-publish.sh now builds its environment OUTSIDE the tree, under the user's
+# cache directory, so in the normal case nothing here is generated at all. This rule is belt and
+# braces for two real cases: KM_PUBLISH_VENV lets an operator legitimately point the environment back
+# inside a tree, and any tree that ran the pre-v1.51 publisher already has a tools/.venv sitting in it
+# that no new tool version removes. Before v1.51 no rule covered it: `git check-ignore -v tools/.venv`
+# exited 1 with no output, so rendering one document dirtied the working tree. Audit finding F-10.
+.venv/

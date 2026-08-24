@@ -187,10 +187,29 @@ else
   # Denylist semantics: everything at the hub root is monitored EXCEPT the working areas below,
   # so a new top-level doc is caught automatically. Named files inside sources/ are re-included
   # because the provenance indexes are monitored even though their folder is not.
+  #
+  # A Python virtual environment is exempted (added in v1.51, drafted and unpublished; binds
+  # nothing until its own owner push). It is generated runtime state, never hub content, and before
+  # v1.51 nothing here mentioned it: the shared renderer built one at tools/.venv, no ignore rule
+  # covered it, and this block therefore reported `?? tools/.venv/` and called err, so a hub that
+  # rendered a single document FAILED its own session-start scan every session afterwards and the
+  # remedy an operator reaches for is committing a virtual environment into a governed hub. Audit
+  # finding F-10. The renderer now builds outside the tree and template/.gitignore covers the
+  # in-tree case, so this exemption is the third layer, and it is the one that reaches a hub created
+  # before v1.51 whose ignore file is a copy of the old one.
+  #
+  # The pathspec spelling is the one PROVED to exclude against the git that runs it, not the one
+  # that reads best. Against a fixture hub carrying both tools/.venv/ and .venv/, ':(exclude)*/.venv'
+  # and ':(exclude)*/.venv/' each excluded NOTHING while producing no error, the same
+  # silent-inertness class the publish guard runner's boundary probe exists to catch, and it looks
+  # exactly like a clean tree. ':(exclude,glob)**/.venv' with its ':(exclude,glob)**/.venv/**'
+  # partner excluded both, at every depth including the root, and tests/test_km_publish_portability.sh
+  # holds that pair to it in both directions.
   changes=$(
     git -C "$HUB" status --porcelain -- . \
       ':(exclude)_inbox' ':(exclude)changes' ':(exclude)working-docs' ':(exclude)shareable' \
-      ':(exclude)sources' ':(exclude).claude'
+      ':(exclude)sources' ':(exclude).claude' \
+      ':(exclude,glob)**/.venv' ':(exclude,glob)**/.venv/**'
     git -C "$HUB" status --porcelain -- \
       sources.config.md sources/transcript-index.md sources/publication-log.md sources/dates-register.md
     # SourceSystem notes (Rule 6) are governed content inside the otherwise-unmonitored sources/,
@@ -826,7 +845,12 @@ echo "[ LINKS ]"
 # Wiki-links in frontmatter are load-bearing graph edges (owner, decidedBy, subject, correctedBy...).
 # A typo produces a dangling edge that fails silently — the fact simply stops being reachable.
 # Index every note basename once, then check membership. One filesystem walk, not one per link.
-note_index=$(find "$HUB" -name '*.md' -not -path '*/.git/*' -not -path '*/_inbox/*' 2>/dev/null \
+# A virtual environment is excluded here too (added in v1.51, drafted and unpublished; binds
+# nothing until its own owner push): a venv carrying the pinned renderer holds two LICENSE.md files
+# under site-packages, and admitting them would put a package's licence text into the hub's own note
+# index, where a hub note could then resolve a wiki-link against it. Audit finding F-10.
+note_index=$(find "$HUB" -name '*.md' -not -path '*/.git/*' -not -path '*/_inbox/*' \
+             -not -path '*/.venv/*' 2>/dev/null \
              | sed 's#.*/##; s#\.md$##' | sort -u)
 #
 # Every edge actually tested is tallied, and the tally is printed on the passing line. Without it
@@ -1004,6 +1028,7 @@ restricted_surface_unreadable=0
 restricted_id_scan=$(
   find "$HUB" -name '*.md' -type f \
       -not -path '*/.git/*' \
+      -not -path '*/.venv/*' \
       -not -path "$HUB/_inbox/*" \
       -not -path "$HUB/shareable/*" \
       -not -path "$HUB/changes/*" 2>/dev/null | sort \

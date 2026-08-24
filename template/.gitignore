@@ -18,3 +18,11 @@ Thumbs.db
 # temporarily materialized records (batch processing), with a stated lifetime. Git never holds
 # it, so erasure is honored by construction. Wipe it when the batch completes.
 _scratch/
+
+# Python virtual environments (added in v1.51, drafted and unpublished). The shared renderer
+# (tools/km-publish.sh) builds its environment outside the tree, so a hub normally generates nothing
+# here. This rule covers the two cases where one lands in the hub anyway: an operator who points
+# KM_PUBLISH_VENV back inside the tree, and a hub that ran the pre-v1.51 publisher, which built
+# tools/.venv with no ignore rule anywhere and made the hub fail its own [ INTEGRITY ] check at every
+# session start afterwards. Audit finding F-10.
+.venv/
