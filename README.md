@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.49"/>
+  <img src="assets/badges/version.svg" alt="standard v1.50"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 3 adopted, 1 partial, 3 open"/>
   <img src="assets/badges/license.svg" alt="license: pending"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,30 +28,27 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.49** (2026-08-24, the repository's licence claim is made honest, and the
-record behind nine remediation packages is committed, closing audit finding F-07; this page claimed a
-reuse grant while the tree holds no `LICENSE`, `COPYING` or equivalent file, so default copyright
-applied and the advertised grant was not the effective one, and the same claim stood on the licence
-badge, on this page's `alt` text, and twice in `STANDARD.md`, in its closing line and in one clause
-of the editions section; **no licence is chosen here, and that is the shape of the repair rather than
-a gap in it**, because adding one would be a maintainer choosing the grant, the warranty position and
-the patent position on the owner's behalf, and deleting the reuse paragraph would withdraw an intent
-the owner holds; free adoption is preserved word for word and named as intent, what is withdrawn is
-only the implication that intent alone is operative, the badge now reads `license: pending`, and the
-open decision is recorded in [`STANDARD.md`](STANDARD.md) → *The boundary asserts no license*; the
-remediation record behind nine change packages is committed under `openspec/`, thirty-seven files,
-while the external QA report they name as their source is deliberately kept out, because a
-fail-closed leakage guard refuses a document that is not leaking when a word it denylists as an
-entity name is used in that document in its ordinary English sense, and editing the evidence or
-widening the guard were both refused, so the report stays out, the ignore rule is committed with its
-reason, and every citation names an external report of that date rather than a path a reader would
-try to open; `template/README.md` pointed at a governance document that exists under no such name and
-at a person a fork's reader does not have, and now names `STANDARD.md` and routes the reader through
-the hub's own `km-deployment.md`; **no check is added, and the argument is recorded rather than left
-as an omission**, because the one instrument that would catch F-07 cannot land while no licence
-exists, a check on grant-shaped wording would model word choice rather than truth, and the
-RFC-reference check does not reach a document named by title; v1.48 is the preceding published
-version and v1.23 remains an
+**Current version: v1.50** (2026-08-24, the design record states what became of every proposal in
+this repository, closing audit finding F-09; the repository is about to be forked, and a fork carries
+the design record to readers who cannot ask anyone which proposals are live, which have been
+implemented and which bind nothing, and it answered that question on three surfaces and got it wrong
+on all three; the badge above read `2 adopted` and this page carried the same string as the image's
+`alt` text, over a directory of **seven** RFCs of which the version ledger records three as
+implemented; `rfcs/` held no index at all, while this page's own navigation badge sends a reader
+there; the package overview below described two of the seven and stopped; and three status banners
+still said *"no normative edits ride this RFC"* while v1.32 and v1.35 had implemented RFC-004's first
+two Parts, v1.39 the editions model of RFC-006, and v1.41 the Reader tier of RFC-007;
+[`rfcs/README.md`](rfcs/README.md) is added as the home of record for disposition, one row per RFC
+carrying status, the implementing version, the decision date, relationships and the narrowing each
+implementation recorded; three banners gain a dated status note and no design body changes, on the
+v1.45 rule that a dated record corrected to agree with the present is falsified rather than repaired;
+**the badge is generated from that index** by the same instrument that validates it, so a hand edit to
+the image or to its `alt` text fails the release gate, and it now reads `3 adopted, 1 partial,
+3 open`; **three of the source report's own claims did not survive verification and are published
+rather than dropped**, RFC-002's `DRAFT` being true because v1.23 has never published, RFC-005 being
+neither absent nor stale because it landed under v1.45 with its banner corrected then, and RFC-007,
+which the report does not mention, having carried the identical false sentence; v1.49 is the preceding
+published version and v1.23 remains an
 unpublished draft awaiting its own push). The full
 ledger of released versions, and the rule that a published version number is never reused, is in
 [`STANDARD.md`](STANDARD.md) → *Version history*.
