@@ -10,3 +10,16 @@ work/
 !template/reader/outputs/
 template/reader/outputs/*
 !template/reader/outputs/README.md
+
+# The external QA report of 22 August 2026 is deliberately NOT carried in this repository. It is held
+# in the deployment's own records, and the change packages under openspec/ describe it as an external
+# report of that date rather than naming a path a reader would try to open.
+#
+# The reason is mechanical, and it is recorded so that a later maintainer does not "fix" it. The
+# canonical leakage guard denylists a term that the report uses in an ordinary English sense, so a
+# fail-closed control refuses a push carrying this file. The control is working correctly: it cannot
+# tell the two senses apart, and it exists because nobody can eyeball hundreds of denylist entries.
+# Editing an external report so that it passes a scan alters evidence, and exempting one term
+# weakens a guard that protects everything else. Excluding the file is the option that costs least
+# and hides nothing. See the v1.49 version row in STANDARD.md.
+/KM-STANDARD-AUDIT-2026-08-22.md
