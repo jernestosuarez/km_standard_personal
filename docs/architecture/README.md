@@ -1,18 +1,27 @@
 ---
 type: architecture
 title: Architecture Documentation Index
-description: Index of the documents describing the layered architecture the KM Standard implements, from systems of record through the canonical mechanism to the knowledge hubs and their consumers.
+description: Historical v1.22 snapshot of the layered architecture, from systems of record through the canonical mechanism to the knowledge hubs and their consumers. Not maintained forward; STANDARD.md describes the current system.
 tags: [architecture, standard, enterprise, deployment, record-boundary]
 timestamp: 2026-08-16
 ---
 
 # Architecture Documentation
 
-These documents describe the architecture the KM Standard implements as of **v1.22** (published
-2026-08-16; **v1.23 rides as draft** and is marked as such wherever it appears). They are
-organization-neutral: they describe the mechanism generically, and any organization adopting the
-standard can read them without translation. They are descriptive, not normative. Where they
-disagree with [`STANDARD.md`](../../STANDARD.md), `STANDARD.md` wins.
+> **A HISTORICAL SNAPSHOT OF v1.22, NOT THE CURRENT ARCHITECTURE** (labelled in v1.48, drafted and
+> unpublished; this label binds nothing until its own owner push). This set describes the standard as
+> it stood at **v1.22** (published 2026-08-16), with **v1.23 riding as draft** and marked as such
+> wherever it appears. **It is not maintained forward.** The standard has added or materially changed
+> at least nine surfaces since: the KM Cockpit and the owner queue's decision surface, the projection
+> contract's four gates, the three-surface model, the supervisor threshold and the minimum tier, hub
+> merge, the editions and run/evolve boundary, the Reader tier and the scoped reader, the quarantine
+> of the MCP query surface, and the release gate. **None of those is described here.** Read this set
+> as the record of what the architecture was at the record-boundary release, and read
+> [`STANDARD.md`](../../STANDARD.md) for what it is now.
+
+These documents are organization-neutral: they describe the mechanism generically, and any
+organization adopting the standard can read them without translation. They are descriptive, not
+normative. Where they disagree with [`STANDARD.md`](../../STANDARD.md), `STANDARD.md` wins.
 
 | Document | Covers |
 |---|---|

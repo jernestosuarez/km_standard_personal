@@ -44,6 +44,9 @@ Supporting structure:
 
 | Path | Purpose |
 |---|---|
+| `decisions/`, `risks/`, `stakeholders/`, `milestones/`, `partners/` | One note per instance. Each individual decision, risk, person, milestone and partner lives in its own note here; the numbered docs above are the narrative rollups over them |
+| `corrections/` | One note per correction: the standing rule a mistake produced |
+| `relationships/`, `claims/` | Optional entity notes: relationship assertions, and settled facts promoted to their own lifecycle |
 | `_inbox/` | Drop zone — all incoming files land here first |
 | `changes/` | Pending proposals and approvals |
 | `reconciliation/` | Adjudicated fact ledger |
@@ -60,8 +63,12 @@ Supporting structure:
 2. **Proposal/approval** — no hub doc is edited without a traceable proposal and approval
 3. **Git-backed integrity** — every hub is a git repository; `hub-scan.sh` checks for uncommitted/untracked drift in monitored files via `git status`, and `git log` is the audit trail
 4. **OKF frontmatter** — every monitored doc carries valid `type:` frontmatter
+5. **Source traceability**, every fact traces to a named origin; a fact whose origin cannot be named is flagged at intake and never blended into settled prose
+6. **The record boundary**, records stay in the systems that master them; this hub holds claims about records, with resolvable pointers, never shadow copies of operational data
 
-Run `bash hub-scan.sh` at the start of every session. It checks all four rules in one pass.
+Run `bash hub-scan.sh` at the start of every session. It checks rules 1 to 4 in one pass, and the
+outbound half of rule 6 through its restricted-content block. Rule 5 is procedural: no check
+validates it, and it binds exactly as the others do.
 
 Full governance reference: AI KM Hub Standard (available from the hub owner).
 
@@ -75,4 +82,7 @@ Full governance reference: AI KM Hub Standard (available from the hub owner).
 
 **Check hub health:** `bash hub-scan.sh`
 
-**Find a fact:** open the relevant numbered doc, or ask the agent to search across hub docs
+**Find a fact:** open its entity note. One note per decision, risk, stakeholder, milestone and
+partner lives in `decisions/`, `risks/`, `stakeholders/`, `milestones/` and `partners/`; the numbered
+docs are the narrative rollups over those notes and never the home of an individual fact. Or ask the
+agent to search across the hub.
