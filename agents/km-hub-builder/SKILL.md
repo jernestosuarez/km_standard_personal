@@ -128,6 +128,22 @@ its passing line, and report a partial read as a coverage gap rather than foldin
 Never reuse a published version identifier. Inspect both version history and Git history before
 selecting the next version.
 
+Derive the publication date from the publishing commit at the moment of publication, and never carry
+it in from a staging brief, from the draft date already sitting in the version row, or from your own
+sense of what day it is. Read the date column and the stamp off the same commit, in that commit's own
+recorded offset, in one act, so the two cannot disagree unless someone later edits one alone. A
+session that began yesterday and pushes after midnight is the session that supplies a wrong date, and
+it has done so twice: once by copying a brief's date into both fields, and once by deriving the stamp
+correctly and leaving the date column at the draft date, which is the ritual applied to half the row.
+The one time the class was caught before publication, it was caught because three independent pieces
+of evidence were checked against each other. A later sweep that compared each publish commit's
+subject date against that same commit's own timestamp found nothing, because a pair that agrees by
+construction is not evidence: compare the published row against the commit, which is a different
+pair. Where a pushed commit subject or tag carries a date the ledger now corrects, correct the ledger
+and leave the pushed objects alone, then record in the version row which objects retain the original
+date and which already carried the right one, so the asymmetry is explained rather than discovered.
+(Added in v1.47, drafted and unpublished; this paragraph binds nothing until its own owner push.)
+
 Publishing is its own step, and it is not finished when the header carries the new number. While a
 version is drafted, mark everything it adds with that version and state that the material binds
 nothing until its own owner push. The publishing commit then clears those markings everywhere the
