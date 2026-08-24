@@ -13,7 +13,7 @@ timestamp: 2026-07-02
 <p align="center">
   <img src="assets/badges/version.svg" alt="standard v1.48"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 2 adopted"/>
-  <img src="assets/badges/license.svg" alt="license: free to adopt"/>
+  <img src="assets/badges/license.svg" alt="license: pending"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
   <img src="assets/badges/agents.svg" alt="agents: MCP-ready"/>
 </p>
@@ -109,5 +109,11 @@ skill (adopted when a source first spans two hubs).
 
 ## License / reuse
 
-This standard is free to adopt, adapt, fork, and redistribute for any organization's internal or
-external knowledge management needs. No attribution required.
+**No licence has been declared for this repository, so default copyright applies and no reuse grant
+is in force.** Free adoption is the owner's stated intent: this standard is meant to be adopted,
+adapted, forked, and redistributed for any organization's internal or external knowledge management
+needs, with no attribution required. Intent is not a licence, so until one is declared a reader may
+rely on that intent as a statement of direction and never as permission. Choosing a licence, or
+choosing not to, is an open decision and it belongs to the repository owner. Nothing on this page is
+legal advice. The open decision is recorded in [`STANDARD.md`](STANDARD.md) → *The boundary asserts
+no license*.

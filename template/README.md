@@ -70,7 +70,10 @@ Run `bash hub-scan.sh` at the start of every session. It checks rules 1 to 4 in 
 outbound half of rule 6 through its restricted-content block. Rule 5 is procedural: no check
 validates it, and it binds exactly as the others do.
 
-Full governance reference: AI KM Hub Standard (available from the hub owner).
+Full governance reference: `STANDARD.md`, the Knowledge Management Standard: Hub Framework, in the KM
+Standard repository this hub was created from. The version, revision and source of that repository are
+recorded in this hub's [`km-deployment.md`](km-deployment.md), in `canonical-standard-version`,
+`canonical-standard-revision` and `canonical-standard-source`.
 
 ---
 
