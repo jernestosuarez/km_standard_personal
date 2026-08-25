@@ -189,6 +189,15 @@ tests first, then the repository's own release gate as one command rather than a
 you remember, then leakage checks and `git diff --check`. A gate that refuses is not a gate that
 passed: treat it as a verification you do not have and say so.
 
+Run the gate before staging, and know why that ordering is safe: the gate discovers checks in the
+**working tree**, so a check you authored moments ago is seen, syntax-checked, held to the
+added-check declaration rule and executed without being staged first. Do not stage a new check to
+make the gate notice it. That workaround was used once, when the gate discovered tracked paths only
+and an untracked check was invisible to it, and the workaround is what hid the gap for a version:
+the gate reported the same count and the same PASS with the new check present as without it. If a
+future gate is ever narrowed back to the index, this instruction is wrong and must move with it.
+(Added in v1.54, drafted and unpublished.)
+
 If a repository is stored in synchronized storage and a read or Git operation fails transiently,
 retry as directed by the profile before concluding that a file or repository is absent. Never run
 `git init` to repair a repository whose metadata may only be temporarily unreadable.

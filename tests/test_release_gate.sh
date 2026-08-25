@@ -147,7 +147,7 @@ expect "5. an empty discovery set refuses" "$c" 2 "the discovery set is empty"
 c="$work/halfempty"; base=$(mkfixture "$c")
 git -C "$c" rm -q "scripts/validate_alpha.py" >/dev/null
 KM_GATE_BASE="$base" expect "5b. a discovery directory yielding nothing refuses" "$c" 2 \
-  "no tracked check was discovered in any scripts/ directory"
+  "no check was discovered in any scripts/ directory, tracked or untracked"
 
 # 5c. Not a repository at all. An unlistable tree is not an empty one.
 c="$work/norepo"; mkdir -p "$c/tests"
@@ -392,15 +392,87 @@ else
 fi
 
 # ================================================================================================
-# 15. THE STATED LIMITS. None of them is a test of the tree; all three are assertions that the gate
+# 19. AN UNTRACKED CHECK-SHAPED FILE IS DISCOVERED, AND CANNOT PRODUCE A PASSING VERDICT.
+#
+#     The gate discovered checks with `git ls-files`, which lists the INDEX, while the maintainer
+#     contract in agents/km-hub-builder/SKILL.md orders the gate to be run BEFORE explicit staging.
+#     A check authored in the change being gated is therefore untracked at exactly the moment the
+#     gate runs, and the gate could not see it.
+#
+#     MEASURED ON THE REPOSITORY AT eb57f0f, published v1.53, before the repair:
+#       clean tree                     -> 33 check(s) discovered, PASS, exit 0
+#       + untracked tests/test_zz_probe.sh holding an unparseable line bash -n rejects
+#                                      -> 33 check(s) discovered, PASS, exit 0
+#     The count did not move, the file was never named, and 30 shell files were syntax-checked in
+#     both runs. The gate returned the verdict a clean tree returns over a check it had not seen.
+#
+#     WHY THIS SUITE NEVER CAUGHT IT. Every case above that introduces a new check file stages it
+#     with `git add` first: cases 7, 9, 10 and 17 all do. The workaround the v1.48 drafting agent
+#     used when it hit this gap on 2026-08-24, and reported rather than repaired, is written into
+#     the fixtures of the suite that exists to break this gate, so the untracked path was never
+#     reached. That is the finding underneath the finding, and it is why these cases stage nothing.
+# ================================================================================================
+c="$work/untracked"; base=$(mkfixture "$c")
+printf 'this is not valid shell ((((\n' > "$c/tests/test_zz_probe.sh"
+KM_GATE_BASE="$base" expect "19. an untracked invalid check cannot produce a passing verdict" "$c" 1 \
+  "tests/test_zz_probe.sh"
+KM_GATE_BASE="$base" expect "19b. it is named as a syntax error rather than merely failing to run" \
+  "$c" 1 "tests/test_zz_probe.sh: shell syntax error"
+
+# 19c. The other direction, on the same fixture: remove the untracked file and the tree passes. A
+#      case that failed here would be failing on everything, which proves nothing.
+rm -f "$c/tests/test_zz_probe.sh"
+KM_GATE_BASE="$base" expect "19c. with the untracked file gone, the same tree passes" "$c" 0 \
+  "PASS release-gate:"
+KM_GATE_BASE="$base" expect "19d. the coverage line states the untracked count as zero, not absent" \
+  "$c" 0 "0 discovered check(s) untracked"
+
+# 19e. An untracked check that PARSES is still a check this change adds, so the ADDED declaration
+#      rule reaches it. Before the repair it escaped that phase entirely, because
+#      `git diff --name-only <base>` never names an untracked path.
+printf '#!/bin/bash\necho ok\n' > "$c/tests/test_zz_new.sh"
+KM_GATE_BASE="$base" expect "19e. an untracked check with no declaration fails the gate" "$c" 1 \
+  "no km-unrepaired-tree declaration"
+
+printf '#!/bin/bash\n# km-unrepaired-tree: unrecorded | nothing was run.\necho ok\n' \
+  > "$c/tests/test_zz_new.sh"
+KM_GATE_BASE="$base" expect "19f. an untracked check pleading 'unrecorded' fails the gate" "$c" 1 \
+  "added by this change and declares 'unrecorded'"
+
+# 19g. The repaired form passes, is RUN, and is reported as untracked, so the provenance of a
+#      discovered check is stated rather than merged into one number.
+printf '#!/bin/bash\n%s\necho ok\n' "$DECL" > "$c/tests/test_zz_new.sh"
+KM_GATE_BASE="$base" expect "19g. an untracked check declaring the drafted version passes" "$c" 0 \
+  "PASS release-gate:"
+KM_GATE_BASE="$base" expect "19h. the run names it and marks it untracked" "$c" 0 \
+  "ok    tests/test_zz_new.sh (untracked)"
+KM_GATE_BASE="$base" expect "19i. the coverage line counts the untracked discovered check" "$c" 0 \
+  "1 discovered check(s) untracked"
+
+# 19j. AN IGNORED CHECK-SHAPED FILE IS NOT DISCOVERED. This is the residual gap, pinned here as a
+#      gap rather than as a control, so a later change that closes it fails loudly here instead of
+#      quietly redefining the scope. An ignored file is not a file the repository ships; the cost is
+#      that a path added to .gitignore leaves the gate by an edit to a different file.
+rm -f "$c/tests/test_zz_new.sh"
+printf 'tests/test_zz_ignored.sh\n' > "$c/.gitignore"
+git -C "$c" add .gitignore >/dev/null
+printf 'this is not valid shell ((((\n' > "$c/tests/test_zz_ignored.sh"
+KM_GATE_BASE="$base" expect "19j. an ignored check-shaped file is not discovered (KNOWN GAP)" "$c" 0 \
+  "PASS release-gate:"
+note "     ^ this is the acknowledged gap, not a control. Discovery honours the ignore rules, so a"
+note "       path added to .gitignore leaves the gate without any edit to the gate or to the check."
+
+# ================================================================================================
+# 15. THE STATED LIMITS. None of them is a test of the tree; all four are assertions that the gate
 #     says out loud what it cannot do, because a green line is otherwise read as "safe to publish".
 # ================================================================================================
 if grep -Fq "IT CANNOT RUN THE ORGANISATION LEAKAGE SCAN" "$GATE" &&
    grep -Fq "IT CANNOT SUPPLY A SECOND ACTOR" "$GATE" &&
-   grep -Fq "S EXIT STATUS AND CANNOT SEE INSIDE IT" "$GATE"; then
-  note "PASS: 15. the gate states all three of its limits in its own header"
+   grep -Fq "S EXIT STATUS AND CANNOT SEE INSIDE IT" "$GATE" &&
+   grep -Fq "IT DOES NOT SEE AN IGNORED FILE" "$GATE"; then
+  note "PASS: 15. the gate states all four of its limits in its own header"
 else
-  note "FAIL: 15. the gate does not state all three of its limits in its own header"
+  note "FAIL: 15. the gate does not state all four of its limits in its own header"
   fail=1
 fi
 

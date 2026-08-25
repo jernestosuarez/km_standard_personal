@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # km-release-gate: the one command that runs the whole gate and returns one verdict.
 #
-# km-unrepaired-tree: v1.46 | run against a deliberately broken tree (a suite made to fail, a suite made unexecutable, an emptied discovery set, a stripped declaration) and confirmed to refuse or fail in each; see tests/test_release_gate.sh.
+# km-unrepaired-tree: v1.54 | re-stated for the discovery-scope repair, and run against the unrepaired tree first: with an untracked tests/test_zz_probe.sh holding a line bash -n rejects, this gate reported "33 check(s) discovered" and "PASS release-gate", exit 0, the same count and the same verdict as the clean tree, having neither run nor named the check. Earlier, under v1.46, it was run against deliberately broken trees (a suite made to fail, a suite made unexecutable, an emptied discovery set, a stripped declaration) and refused or failed in each; see tests/test_release_gate.sh.
 #
 # Standard: STANDARD.md §"Publishing a version" step 5, and §"Standard Maintainer" under
 # "A gate runs before publication, and it declares what it cannot do".
@@ -24,7 +24,8 @@
 # WHAT THIS GATE CANNOT DO. The first two limits are stated here, in the standard, and in the CI
 # workflow, because a green line from this command is read as "safe to publish" and neither of them
 # is covered by it. The third was found by running this gate against a deliberately broken tree, and
-# it is recorded in the same place rather than in a report nobody re-reads.
+# it is recorded in the same place rather than in a report nobody re-reads. The fourth is the
+# residual scope of the v1.54 discovery repair, written down as a gap rather than left to be found.
 #
 # 1. IT CANNOT RUN THE ORGANISATION LEAKAGE SCAN. That scan needs a denylist generated from a real
 #    organisation's own entity names, and that denylist lives outside this repository BY DESIGN:
@@ -53,19 +54,51 @@
 #    exemptions, where an exemption with no stated reason is refused. The gate checks that a
 #    declaration was MADE. It cannot check that it is TRUE.
 #
-# ------------------------------------------------------------------------------------------------
-# DISCOVERY, AND WHY IT IS NOT A LIST.
+# 4. IT DOES NOT SEE AN IGNORED FILE. Discovery honours the repository's ignore rules, so a
+#    check-shaped file under an ignored path is not discovered. That line is drawn on purpose: an
+#    ignored file is not a file the repository ships, and a gate that ran a vendored dependency's
+#    own `tests/` directory would be unusable. The cost is real and is stated rather than hidden: a
+#    path added to `.gitignore` leaves the gate, by an edit to a file that is neither the gate nor
+#    the check. Case 19j of tests/test_release_gate.sh pins this as a gap and not as a control, so a
+#    later change that closes it fails there loudly instead of quietly redefining the scope.
 #
-# Every tracked `*.sh` and `*.py` file in any directory named `tests/` or `scripts/`, at the root or
-# nested anywhere in the tree, is a discovered check. The two directory names are a scope
-# declaration; the checks themselves are never enumerated here, so a suite added tomorrow is picked
-# up with no edit to this file. A list held beside a runner is a hand-maintained memory of directory
-# state, which is the artifact class this standard records as the one that rots.
+# ------------------------------------------------------------------------------------------------
+# DISCOVERY, AND WHY IT IS NOT A LIST, AND WHICH TREE IT READS.
+#
+# Every `*.sh` and `*.py` file in any directory named `tests/` or `scripts/`, at the root or nested
+# anywhere in the tree, is a discovered check. The two directory names are a scope declaration; the
+# checks themselves are never enumerated here, so a suite added tomorrow is picked up with no edit to
+# this file. A list held beside a runner is a hand-maintained memory of directory state, which is the
+# artifact class this standard records as the one that rots.
 #
 # The scope is deliberately not limited to the root `tests/` and `scripts/`. A suite sitting in a
 # component's own `tests/` directory is a suite, and a gate that looked only at the root would report
 # a clean tree for the place it never looked, which is the failure class this repository already
 # names.
+#
+# DISCOVERY READS THE WORKING TREE, NOT THE INDEX (v1.54). The set is tracked files UNION untracked
+# files that the ignore rules do not exclude. Until v1.54 it was tracked files alone, and that was
+# wrong for a reason with a schedule attached to it: the maintainer contract orders this gate to run
+# BEFORE explicit staging, so a check authored in the change being gated is untracked at exactly the
+# moment the gate runs. Measured on the tree at eb57f0f, an untracked `tests/test_zz_probe.sh`
+# holding a line `bash -n` rejects left the count at "33 check(s) discovered" and the verdict at
+# "PASS release-gate", exit 0. The file was neither run nor named. A gate that has not seen a check
+# has not run it, whatever its verdict says; the sentence was written by the v1.48 drafting agent
+# when it hit this, and the gap was reported and left open until an external reviewer reproduced it.
+#
+# So the tree this gate is a verdict about is the tree the maintainer is about to commit from, and
+# each discovered check carries whether it is tracked. The count of untracked discovered checks is
+# on the coverage line and each one is named on the run, because a coverage line exists so that a
+# recorded pass says what was looked at, and a number that merges what the repository ships with
+# what it does not says less than it appears to.
+#
+# THE TRADE, STATED. A scratch file shaped like a check and sitting where checks live will be
+# discovered, will be required to carry a declaration, and will be executed. That is the cost, it is
+# accepted deliberately, and the reason is that the repository has no other convention for what a
+# check is: the two directory names ARE the scope declaration. The union is confined to discovery.
+# The JSON parse and relative-link phases stay index-scoped, so a half-written markdown file in the
+# working tree does not redden the gate, and that narrower scope is a choice rather than an
+# oversight.
 #
 # Nothing discovered is ever silently dropped. A discovered check that cannot self-run because it
 # takes required arguments declares itself:
@@ -176,6 +209,29 @@ def git_tracked(root, patterns):
     return sorted(p for p in out.split("\0") if p)
 
 
+def git_untracked(root, patterns):
+    """Untracked, non-ignored paths under root matching the given pathspecs.
+
+    The mirror of git_tracked, and it exists for one reason: the contract orders this gate to run
+    before explicit staging, so a check written in the change being gated is untracked at exactly
+    the moment the gate runs. `--exclude-standard` keeps the ignore rules honoured, which is limit 4
+    in the header rather than an accident.
+    """
+    cmd = ["git", "-C", str(root), "ls-files", "-z", "--others", "--exclude-standard",
+           "--"] + list(patterns)
+    try:
+        proc = subprocess.run(cmd, capture_output=True)
+    except OSError as exc:
+        refuse("git could not be executed: {}".format(exc))
+    if proc.returncode != 0:
+        refuse(
+            "git ls-files --others failed in {} ({}); an unlisted working tree is not an empty "
+            "one".format(root, proc.stderr.decode("utf-8", "replace").strip())
+        )
+    out = proc.stdout.decode("utf-8", "surrogateescape")
+    return sorted(p for p in out.split("\0") if p)
+
+
 def read_text(root, rel):
     path = root / rel
     try:
@@ -212,9 +268,10 @@ def header_of(text):
 
 
 class Check(object):
-    def __init__(self, rel, text):
+    def __init__(self, rel, text, tracked=True):
         text = header_of(text)
         self.rel = rel
+        self.tracked = tracked
         self.instrument_canary = None
         self.instrument_reason = None
         self.declaration = None
@@ -241,15 +298,18 @@ def discover(root):
         for suffix in CHECK_SUFFIXES:
             patterns.append("{}/*{}".format(d, suffix))
             patterns.append("*/{}/*{}".format(d, suffix))
-    rels = git_tracked(root, patterns)
+    tracked = git_tracked(root, patterns)
+    untracked = [r for r in git_untracked(root, patterns) if r not in set(tracked)]
+    rels = sorted(set(tracked) | set(untracked))
     if not rels:
         refuse(
-            "the discovery set is empty: no tracked {} file in any {} directory. An empty set is "
-            "not a clean one".format(
+            "the discovery set is empty: no {} file in any {} directory, tracked or untracked. An "
+            "empty set is not a clean one".format(
                 " or ".join(CHECK_SUFFIXES), " or ".join(d + "/" for d in CHECK_DIRS)
             )
         )
-    checks = [Check(rel, read_text(root, rel)) for rel in rels]
+    untracked_set = set(untracked)
+    checks = [Check(rel, read_text(root, rel), rel not in untracked_set) for rel in rels]
 
     by_dir = {}
     for c in checks:
@@ -260,8 +320,9 @@ def discover(root):
                 break
     for d in CHECK_DIRS:
         if not by_dir.get(d):
-            refuse("no tracked check was discovered in any {}/ directory; a discovery scope that "
-                   "yields nothing is a blind gate, not a clean tree".format(d))
+            refuse("no check was discovered in any {}/ directory, tracked or untracked; a "
+                   "discovery scope that yields nothing is a blind gate, not a clean "
+                   "tree".format(d))
 
     runnable = set(c.rel for c in checks if c.runs)
     for c in checks:
@@ -383,6 +444,11 @@ def check_declarations(root, checks, self_rel, report):
             report.gap("git diff against {} failed, so declaration currency was not "
                        "checked".format(base))
         else:
+            # An untracked check is never named by `git diff --name-only <base>`, so before v1.54 it
+            # escaped this phase entirely: the one file class the ADDED sub-rule exists for was the
+            # one class it could not reach. It has no blob at the base, so exists_at answers False
+            # and it lands in the ADDED arm with no further branching.
+            changed = changed | set(c.rel for c in declared if not c.tracked)
             n_added = 0
             n_changed = 0
             for c in declared:
@@ -431,10 +497,17 @@ def check_declarations(root, checks, self_rel, report):
 # --- phase: static checks -----------------------------------------------------------------------
 
 
-def check_shell_syntax(root):
-    rels = git_tracked(root, ["*.sh"])
+def check_shell_syntax(root, extra=()):
+    """Tracked shell files, plus any discovered check that is one.
+
+    `extra` carries the untracked discovered checks (v1.54). Without them an unparseable check
+    authored in this change would be reported only by whatever its interpreter did when the gate
+    tried to run it, and a syntax error deserves to be named as a syntax error before anything is
+    executed.
+    """
+    rels = sorted(set(git_tracked(root, ["*.sh"])) | set(r for r in extra if r.endswith(".sh")))
     if not rels:
-        refuse("no tracked shell file was found; the shell syntax check scanned nothing")
+        refuse("no shell file was found; the shell syntax check scanned nothing")
     failures = []
     for rel in rels:
         read_text(root, rel)  # refuses on an unreadable or undecodable file
@@ -448,10 +521,11 @@ def check_shell_syntax(root):
     return failures, len(rels)
 
 
-def check_python_syntax(root):
-    rels = git_tracked(root, ["*.py"])
+def check_python_syntax(root, extra=()):
+    """Tracked Python files, plus any discovered check that is one. See check_shell_syntax."""
+    rels = sorted(set(git_tracked(root, ["*.py"])) | set(r for r in extra if r.endswith(".py")))
     if not rels:
-        refuse("no tracked Python file was found; the Python syntax check scanned nothing")
+        refuse("no Python file was found; the Python syntax check scanned nothing")
     failures = []
     for rel in rels:
         src = read_text(root, rel)
@@ -601,9 +675,11 @@ def main():
         decl_failures, decl_counts, decl_total = check_declarations(root, checks, self_rel, report)
         failures += decl_failures
 
-        shell_failures, shell_n = check_shell_syntax(root)
+        untracked_rels = [c.rel for c in checks if not c.tracked]
+
+        shell_failures, shell_n = check_shell_syntax(root, untracked_rels)
         failures += shell_failures
-        py_failures, py_n = check_python_syntax(root)
+        py_failures, py_n = check_python_syntax(root, untracked_rels)
         failures += py_failures
         json_failures, json_n = check_json(root)
         failures += json_failures
@@ -622,10 +698,11 @@ def main():
                 elapsed = time.time() - started
                 ran += 1
                 slowest.append((elapsed, c.rel))
+                mark = "" if c.tracked else " (untracked)"
                 if status == 0:
-                    print("  ok    {}  ({:.0f}s)".format(c.rel, elapsed))
+                    print("  ok    {}{}  ({:.0f}s)".format(c.rel, mark, elapsed))
                 else:
-                    print("  FAIL  {} (exit {}, {:.0f}s)".format(c.rel, status, elapsed))
+                    print("  FAIL  {}{} (exit {}, {:.0f}s)".format(c.rel, mark, status, elapsed))
                     for line in out.rstrip("\n").split("\n")[-25:]:
                         print("        {}".format(line))
                     failures.append("{}: exited {}".format(c.rel, status))
@@ -642,10 +719,12 @@ def main():
             "their canaries; {} unrepaired-tree declaration(s) read ({} naming a version, {} "
             "none-with-reason, {} unrecorded); {} shell file(s) syntax-checked; {} Python file(s) "
             "syntax-checked; {} JSON/JSON-LD file(s) parsed; {} relative link(s) resolved across "
-            "{} of {} markdown file(s), {} exempt by declaration".format(
+            "{} of {} markdown file(s), {} exempt by declaration; {} discovered check(s) "
+            "untracked".format(
                 len(checks), " and ".join(d + "/" for d in CHECK_DIRS), ran, len(instruments),
                 decl_total, decl_counts["v"], decl_counts["none"], decl_counts["unrecorded"],
                 shell_n, py_n, json_n, links_n, md_scanned, md_n, len(link_exempt),
+                len(untracked_rels),
             )
         )
 
@@ -691,6 +770,10 @@ def main():
         print("    3. This gate reads a check's exit status and cannot see inside it. A check that")
         print("       fails internally and returns success passes here. Canaries are what reach")
         print("       inside a check; this reaches only its verdict.")
+        print("    4. Discovery reads the working tree but honours the ignore rules, so a")
+        print("       check-shaped file under an ignored path is not discovered. An ignored file is")
+        print("       not one this repository ships; the cost is that a path added to .gitignore")
+        print("       leaves the gate without any edit to the gate or to the check.")
         return 0
 
     except Refusal as exc:
