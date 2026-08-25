@@ -11,7 +11,7 @@
 #   3. The count is of RULES IN FORCE: a note that is not scaffold, carries a rule:, and is
 #      lifecycle: active. Scaffold and a note whose rule has been retired or superseded are
 #      excluded, and the printed line states that predicate rather than a wider claim. (Added in
-#      v1.57, drafted and unpublished: this material binds nothing until its own owner push.)
+#      v1.57.)
 # All content here is synthetic; no real person, organization or initiative is named.
 set -u
 

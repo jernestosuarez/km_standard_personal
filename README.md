@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.56"/>
+  <img src="assets/badges/version.svg" alt="standard v1.57"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 3 adopted, 1 partial, 3 open"/>
   <img src="assets/badges/license.svg" alt="license: Apache-2.0"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,40 +28,30 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.56** (2026-08-25, claims made in prose that no instrument reads; the source is
-the same external review that produced v1.54 and v1.55, and these are the last of its findings, each
-reproduced on the tree at `aeec51a` before it was repaired because several of the reviewer's figures
-had moved since he measured them; **the licence file is sound and the prose around it was not**,
-because restoring the Appendix placeholder on the one line that differs makes `LICENSE` hash to the
-published digest of the canonical Apache-2.0 text, so the terms carry no edit and exactly one line
-differs, the Appendix boilerplate instantiated with the copyright line, which is the act the Appendix
-exists to be used for, and saying the file is *unmodified* and stopping there invites a reader to
-expect a byte-identical copy in the one file where an unexplained difference costs the most; **this
-page stated the Section 4 duties without their condition**, telling a reader who uses the standard
-internally, or modifies it and passes it on to nobody, that they owed notice-preservation duties they
-do not owe, when those duties attach to **redistribution** and `LICENSE` governs; **three drifted
-counts, and they are three different repairs**, which is the finding rather than an accident of
-tidying, since a count is corrected where it was false on the day it was written and left standing
-where it was true then and has been overtaken since — *eleven entry points*, which the MCP quarantine
-suite reported and the v1.40 row published while the surface declares **seven** by decorator, eleven
-being the size of the driver's own call list, so the row is corrected and the suite now derives the
-figure; *two stated limits*, which the maintainer contract has told every report to read since the
-version that introduced the gate while the gate printed three from that same version and four since
-v1.54, so both are corrected and the contract now states no count at all; and *147 markdown files*, a
-dated measurement supporting a dated decision, so only its missing date is repaired and the number is
-untouched; **the sweep the question demands** then read every count, version identifier and file
-reference this repository asserts in prose, finding one wrong enumeration where this page named six
-per-hub skills the template installs and it installs seven, `km-publish` being the omission, one
-stale pointer inside the gate to a copy of its limits that v1.55 had already deleted, one stale
-description of discovery in the CI definition, and one hardcoded count of the design set sitting
-beside a badge that derives it; **one check is added and it is the answer to the class, not to the
-instance**, `tests/test_readme_inventory.sh` deriving what the template ships and requiring this
-page's two enumerations to equal the derivation in both directions, which fails on the unrepaired
-tree naming `km-publish`; **what was deliberately not built is recorded with the reason**, because a
-check that models the wrong class closes a sweep and proves nothing; nothing a deployment installs
-changes and no hub turns red; v1.55 is the preceding
-published version and v1.23 remains an
-unpublished draft awaiting its own push). The full
+**Current version: v1.57** (2026-08-25, two defects in the session-start scan every hub inherits,
+both found in operation by a deployment and both harvested rather than invented here, each reproduced
+as a failing case and committed red before either repair was written; **the restricted check blocked
+a numbered curated document's own name**, because a root-level `0[0-9]_*.md` carrying a frontmatter
+`sensitivity: restricted` marker had its NAME blocked on every outbound surface, so a directive
+restricting that document's content could not name the document it was restricting and the hub's scan
+failed at every session start with its real integrity errors buried underneath, and a numbered
+document's name is the hub's public structure rather than a disclosive record identifier, so the
+marker now restricts the CONTENT and leaves the name nameable, which is the treatment
+`accessClass: restricted|record` has had since v1.22 under the crossing law *existence crosses;
+contents don't*; the narrowing is **root-scoped**, since a numbered name in a subdirectory is an
+ordinary note and stays blocked, because narrowing a security check is how a false positive becomes a
+false negative, and the body-marker path was examined and is deliberately unchanged; **the
+corrections counter read `lifecycle:` as if it meant `binds`**, when `lifecycle:` records whether a
+document is current and `rule:` is what makes a note a binding rule, and the v1.19 section that
+introduced the block already specified the count as the active notes whose `rule:` is in force, so
+the implementation never matched its own published specification and the registry's own `README.md` —
+a reference document, current, carrying no rule — was counted as a rule that binds, as was every
+scaffold document ever added; the predicate now has three arms, not scaffold, carries a `rule:`, is
+`lifecycle: active`, and the printed line states them; **both sweeps returned exactly one instance
+each**, and both findings of none are recorded rather than left silent; nothing in this version is
+redeployed anywhere, the canonical narrowing is the whole of it, and installing it into a hub is that
+hub's own act; v1.56 is the preceding published version and v1.23 remains an unpublished draft
+awaiting its own push). The full
 ledger of released versions, and the rule that a published version number is never reused, is in
 [`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.

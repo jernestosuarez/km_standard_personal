@@ -16,8 +16,7 @@
 # The v1.57 cases (1d-1g) prove both sides of the numbered-curated-document narrowing: a
 # root-level 0[0-9]_*.md or 10_*.md restricted in frontmatter is NAMEABLE on an outbound surface
 # while its body text is blocked, a numbered name in a subdirectory is still blocked, and the
-# body-marker path is unchanged. (Added in v1.57, drafted and unpublished: this material binds
-# nothing until its own owner push.)
+# body-marker path is unchanged. (Added in v1.57.)
 # All content here is synthetic; no real person, organization or initiative is named.
 set -u
 

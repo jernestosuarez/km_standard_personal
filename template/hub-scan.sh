@@ -49,8 +49,7 @@ echo
 # inherited by reference and never copied down (PROTOCOL.md §Self-improvement loop). Skipped silently
 # in a single-hub deployment.
 #
-# THE COUNT IS OF RULES IN FORCE, NOT OF CURRENT DOCUMENTS (corrected in v1.57, drafted and
-# unpublished: this correction binds nothing until its own owner push). `lifecycle:`
+# THE COUNT IS OF RULES IN FORCE, NOT OF CURRENT DOCUMENTS (corrected in v1.57). `lifecycle:`
 # records whether a DOCUMENT is current; it does not make a note a binding rule. `rule:` is what
 # does — STANDARD.md §"`rule:` is the whole point": a correction that produces no rule is probably
 # an ordinary edit and not a Correction at all. The v1.19 section that introduced this block
@@ -1020,8 +1019,7 @@ echo "[ RESTRICTED ]"
 #                         every outbound surface, so the governed route to changing such a file
 #                         was itself blocked.)
 # ONE EXCEPTION TO THE FRONTMATTER RULE, and it is v1.21's own reasoning reaching a case it should
-# always have covered (narrowed in v1.57, drafted and unpublished: this narrowing binds nothing
-# until its own owner push): on a NUMBERED CURATED DOCUMENT — a root-level
+# always have covered (narrowed in v1.57): on a NUMBERED CURATED DOCUMENT — a root-level
 # `0[0-9]_*.md` or `10_*.md`, the fixed hub structure — a frontmatter marker restricts the CONTENT
 # and leaves the NAME nameable. A numbered document's name is the hub's public structure, not a
 # disclosive record identifier, and blocking it made a directive that restricts such a document's
@@ -1079,8 +1077,7 @@ restricted_id_scan=$(
       # structure of STANDARD.md §"Hub Directory Structure" and its monitored-files glob, and
       # nothing else. Its NAME is the hub's public structure, not a disclosive record identifier,
       # so a frontmatter marker on one restricts its CONTENT and leaves the name nameable (added in
-      # v1.57, drafted and unpublished: it binds nothing until its own owner push;
-      # see the awk below). Root-scoped on purpose: a numbered name in a SUBDIRECTORY is an
+      # v1.57; see the awk below). Root-scoped on purpose: a numbered name in a SUBDIRECTORY is an
       # ordinary note, the standard treats no such file as curated structure, and widening this to
       # any `NN_*.md` anywhere would turn a false positive into a false negative.
       curated=0
@@ -1104,13 +1101,12 @@ restricted_id_scan=$(
           infm {
             if ($0=="---") infm=0
             # A frontmatter marker on a NUMBERED CURATED DOCUMENT sets classed instead of emitting
-            # the I record (added in v1.57, drafted and unpublished: it binds nothing until its own
-            # owner push): the content is blocked verbatim and the name stays nameable,
-            # which is exactly the treatment accessClass: restricted|record gets on the next line,
-            # for the reason the comment there already gives - existence crosses, contents do not
-            # (v1.22). Before this, a directive restricting the content of such a document could
-            # not name the document it was restricting, so the scan of the hub failed at every
-            # session start and buried the real integrity errors underneath.
+            # the I record (added in v1.57): the content is blocked verbatim and the name stays
+            # nameable, which is exactly the treatment accessClass: restricted|record gets on the
+            # next line, for the reason the comment there already gives - existence crosses,
+            # contents do not (v1.22). Before this, a directive restricting the content of such a
+            # document could not name the document it was restricting, so the scan of the hub
+            # failed at every session start and buried the real integrity errors underneath.
             # (No apostrophes in this comment: the awk program is a single-quoted shell word.)
             else if ($0 ~ mrk) { if (curated+0) classed=1; else print "I\t" stem }
             else if ($0 ~ cls) classed=1
