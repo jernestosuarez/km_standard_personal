@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: unrecorded | added in v1.16 and narrowed in v1.21, before this declaration was required; the file records no run against an unrepaired lint and one is not reconstructed here.
+# km-unrepaired-tree: v1.57 | cases 1d and 1e were run against the UNREPAIRED template/hub-scan.sh first and both fail there: the scan reported "! RESTRICTED IDENTIFIER '03_risks-decisions' on outbound surface: changes/2026-08-24_XX_restrict-claim_directive.md", and it raised no RESTRICTED SECTION TEXT finding at all over a verbatim quotation of the same document, exiting 0. Cases 1f and 1g pass on both trees by design: they pin the boundary the narrowing must not cross and the body-marker path it does not touch, and neither is offered as a detector. The v1.16 and v1.21 cases predate this declaration and no run against their own unrepaired trees is reconstructed here.
 # Fixtures for the [ RESTRICTED ] check (v1.16; narrowed in v1.21) in template/hub-scan.sh and
 # for the restricted-note exclusion in template/build-indexes.sh.
 #
@@ -13,6 +13,11 @@
 # classed restricted/record stays NAMEABLE on outbound surfaces (existence crosses), while its
 # BODY text does not travel and its class line on a surface is an error; build-indexes.sh
 # excludes classed notes from generated indexes.
+# The v1.57 cases (1d-1g) prove both sides of the numbered-curated-document narrowing: a
+# root-level 0[0-9]_*.md or 10_*.md restricted in frontmatter is NAMEABLE on an outbound surface
+# while its body text is blocked, a numbered name in a subdirectory is still blocked, and the
+# body-marker path is unchanged. (Added in v1.57, drafted and unpublished: this material binds
+# nothing until its own owner push.)
 # All content here is synthetic; no real person, organization or initiative is named.
 set -u
 

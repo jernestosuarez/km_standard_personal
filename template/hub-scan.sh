@@ -48,12 +48,42 @@ echo
 # registry binds every hub session: each lifecycle: active note there carries a rule: in force here,
 # inherited by reference and never copied down (PROTOCOL.md §Self-improvement loop). Skipped silently
 # in a single-hub deployment.
+#
+# THE COUNT IS OF RULES IN FORCE, NOT OF CURRENT DOCUMENTS (corrected in v1.57, drafted and
+# unpublished: this correction binds nothing until its own owner push). `lifecycle:`
+# records whether a DOCUMENT is current; it does not make a note a binding rule. `rule:` is what
+# does — STANDARD.md §"`rule:` is the whole point": a correction that produces no rule is probably
+# an ordinary edit and not a Correction at all. The v1.19 section that introduced this block
+# already specified the count as the active notes "whose rule: is in force", and the predicate
+# implemented here read `lifecycle: active` alone, so the registry's own README.md (a reference
+# document, current, carrying no rule) was counted as a rule that binds — and every scaffold
+# document ever added to the directory reproduced it, the count drifting by one more each time.
+# Three arms, all of which must hold, and the printed line below states them rather than a wider
+# claim: the file is not scaffold, it carries a `rule:`, and it is `lifecycle: active`.
+# Scaffold is the standard's own set (README.md, TEMPLATE.md, hub-manifest.md — §"Currency of
+# generated documents") plus a generated index.md, which carries `lifecycle: active` by
+# construction since v1.15 and is therefore the second shape that reads as current without ever
+# asserting anything. A loop rather than a pipeline: hub and estate paths contain spaces, and an
+# xargs formulation returns 0 on such a path without saying so.
+# STATED LIMIT: a DERIVED artifact of this registry — a generated digest of the rules — that
+# rendered `rule:` and `lifecycle: active` at column zero would be counted, because nothing in the
+# evidence distinguishes it from a note. No name pattern for such an artifact is written here: the
+# standard defines none, and a filename list beside a check is a hand-maintained memory of one
+# deployment's directory. The repair for that case belongs in the generator, or in naming the
+# artifact under the scaffold set above.
 _estate_corr="$(cd "$HUB/.." 2>/dev/null && pwd)/_KM_Supervisor/corrections"
 if [ -d "$_estate_corr" ]; then
   echo "[ CORRECTIONS ]"
-  _nactive=$(grep -rl '^lifecycle: active' "$_estate_corr"/*.md 2>/dev/null | wc -l | tr -d ' ')
-  echo "  ESTATE RULES BIND — read ../_KM_Supervisor/corrections/ (${_nactive} active) at session start;"
-  echo "  every lifecycle: active note's rule: is in force in this hub"
+  _nactive=0
+  for _f in "$_estate_corr"/*.md; do
+    [ -f "$_f" ] || continue
+    case "$(basename "$_f")" in README.md|TEMPLATE.md|hub-manifest.md|index.md) continue ;; esac
+    grep -q '^rule:' "$_f" 2>/dev/null || continue
+    grep -q '^lifecycle: active' "$_f" 2>/dev/null || continue
+    _nactive=$((_nactive + 1))
+  done
+  echo "  ESTATE RULES BIND — read ../_KM_Supervisor/corrections/ (${_nactive} active rule(s)) at session start;"
+  echo "  counted: notes that are not scaffold, carry a rule:, and are lifecycle: active — each is in force in this hub"
   echo
 fi
 
@@ -989,6 +1019,17 @@ echo "[ RESTRICTED ]"
 #                         v1.21 one restricted section made the whole file's name an error on
 #                         every outbound surface, so the governed route to changing such a file
 #                         was itself blocked.)
+# ONE EXCEPTION TO THE FRONTMATTER RULE, and it is v1.21's own reasoning reaching a case it should
+# always have covered (narrowed in v1.57, drafted and unpublished: this narrowing binds nothing
+# until its own owner push): on a NUMBERED CURATED DOCUMENT — a root-level
+# `0[0-9]_*.md` or `10_*.md`, the fixed hub structure — a frontmatter marker restricts the CONTENT
+# and leaves the NAME nameable. A numbered document's name is the hub's public structure, not a
+# disclosive record identifier, and blocking it made a directive that restricts such a document's
+# content unable to name the document it restricts, so the hub's scan failed at every session start
+# and buried its real integrity errors underneath. The BODY-marker path is deliberately UNCHANGED
+# and was examined rather than assumed: a body marker already emits section text and never the
+# name, so a numbered curated document marked in the body was already nameable and needs no
+# narrowing; applying one there would only widen what is blocked.
 # Three findings, all ERRORS: the marker itself on a surface (restricted content copied there
 # wholesale), the name of a frontmatter-restricted note on a surface, as a wiki-link or a bare
 # word (disclosing the existence and identity of the restricted record), and a verbatim line of
@@ -1034,6 +1075,16 @@ restricted_id_scan=$(
   | while IFS= read -r f; do
       # Leading paren keeps this case parseable inside $( ) on bash 3.2 (macOS default).
       case "$f" in (*/TEMPLATE.md|*/index.md) continue ;; esac
+      # A NUMBERED CURATED DOCUMENT is a root-level `0[0-9]_*.md` or `10_*.md` — the fixed hub
+      # structure of STANDARD.md §"Hub Directory Structure" and its monitored-files glob, and
+      # nothing else. Its NAME is the hub's public structure, not a disclosive record identifier,
+      # so a frontmatter marker on one restricts its CONTENT and leaves the name nameable (added in
+      # v1.57, drafted and unpublished: it binds nothing until its own owner push;
+      # see the awk below). Root-scoped on purpose: a numbered name in a SUBDIRECTORY is an
+      # ordinary note, the standard treats no such file as curated structure, and widening this to
+      # any `NN_*.md` anywhere would turn a false positive into a false negative.
+      curated=0
+      case "$f" in ("$HUB"/0[0-9]_*.md|"$HUB"/10_*.md) curated=1 ;; esac
       sz=$(file_size "$f"); sz=${sz:-0}
       got=$(head -c 1 "$f" 2>/dev/null | wc -c | tr -d ' '); got=${got:-0}
       if [ "$sz" -gt 0 ] && [ "$got" -eq 0 ]; then
@@ -1047,11 +1098,21 @@ restricted_id_scan=$(
         # only in FRONTMATTER (it is an OKF field, not a marker) and restricts the whole BODY
         # as C records while leaving the name nameable — existence crosses; contents don't
         # (v1.22). Binary files were already excluded by grep -I.
-        awk -v stem="$(basename "$f" .md)" -v mrk="$restricted_marker" -v cls="$restricted_class" '
+        awk -v stem="$(basename "$f" .md)" -v mrk="$restricted_marker" -v cls="$restricted_class" \
+            -v curated="$curated" '
           NR==1 && $0=="---" { infm=1; next }
           infm {
             if ($0=="---") infm=0
-            else if ($0 ~ mrk) print "I\t" stem
+            # A frontmatter marker on a NUMBERED CURATED DOCUMENT sets classed instead of emitting
+            # the I record (added in v1.57, drafted and unpublished: it binds nothing until its own
+            # owner push): the content is blocked verbatim and the name stays nameable,
+            # which is exactly the treatment accessClass: restricted|record gets on the next line,
+            # for the reason the comment there already gives - existence crosses, contents do not
+            # (v1.22). Before this, a directive restricting the content of such a document could
+            # not name the document it was restricting, so the scan of the hub failed at every
+            # session start and buried the real integrity errors underneath.
+            # (No apostrophes in this comment: the awk program is a single-quoted shell word.)
+            else if ($0 ~ mrk) { if (curated+0) classed=1; else print "I\t" stem }
             else if ($0 ~ cls) classed=1
             next
           }

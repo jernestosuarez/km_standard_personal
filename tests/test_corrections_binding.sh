@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: unrecorded | added in v1.19, before this declaration was required; the file records no run against an unrepaired hub-scan and one is not reconstructed here.
+# km-unrepaired-tree: v1.57 | the two counter cases were run against the UNREPAIRED template/hub-scan.sh first and both fail there: over a registry of two real rules plus a README and a generated index, neither carrying a rule:, the block printed "(4 active)" and claimed "every lifecycle: active note's rule: is in force in this hub". The v1.19 estate-layout, ordering and standalone-silence cases predate this declaration and no run against their own unrepaired tree is reconstructed here.
 # Fixtures for the [ CORRECTIONS ] block (v1.19) in template/hub-scan.sh.
 #
 # The block binds the estate corrections registry at hub session start, but ONLY in a multi-hub
@@ -8,6 +8,10 @@
 #   1. In an estate layout the block prints, immediately after [ HANDOVER ], and its active count
 #      counts lifecycle: active notes only (retired/superseded excluded).
 #   2. In a standalone hub the block is silent, so a single-hub deployment is unaffected.
+#   3. The count is of RULES IN FORCE: a note that is not scaffold, carries a rule:, and is
+#      lifecycle: active. Scaffold and a note whose rule has been retired or superseded are
+#      excluded, and the printed line states that predicate rather than a wider claim. (Added in
+#      v1.57, drafted and unpublished: this material binds nothing until its own owner push.)
 # All content here is synthetic; no real person, organization or initiative is named.
 set -u
 
