@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: v1.55 | re-stated for the exemption-anchoring and limits-mechanism repair. The seven assertions added here (13c, 13d, 13e, 20, 20b, 20c, 20d) were run against the unrepaired gate and the unrepaired workflow at 13dec55 before either was touched: 13c and 13d each reported "expected exit 1, got 0", the quoted token having exempted a document carrying a genuinely broken link; 20 reported "--limits printed 0 of 0 defined limits (exit 2)", the flag not existing; 20b and 20c failed with it. Two passed there, and only one of them legitimately: 13e, because a real declaration at the start of a line is honoured by both readers, and 20d, which passed for the wrong reason until its assertion was scoped to the comment block above runs-on. The v1.46 declaration this replaces still holds: run against deliberately broken trees before the gate was trusted: a suite made to fail, a suite whose interpreter is absent, an emptied discovery set, a stripped declaration, a broken relative link, unparseable JSON, a shell syntax error and a Python syntax error. Every one of those trees was gated and every one produced FAIL or REFUSED, never PASS.
+# km-unrepaired-tree: v1.58 | re-stated for the tree-stability repair and the limits-definition repair. The seven new assertions were run against the unrepaired gate at 510cf03 before either repair was written, and all seven were red. 21a and 21c: a fixture whose discovered suite edits another discovered check, and one whose suite creates a new check-shaped file, each reported 'expected exit 2, got 0' -- the gate returned PASS over a tree it had not read, and in the second case over a check it had never discovered, never held to the declaration rule and never executed. 21b, the same class asserted on its own fixture, reported 'expected exit 2, got 1'. 21d: a fixture whose suite moves HEAD with no file content differing reported 'expected exit 2, got 0', which is the half no content hash alone can see and is the reviewer's own observed case. 15a reported the gate typing 'the same four limits' in prose 185 lines below its own claim that the count 'is not restated in prose anywhere'; 15b reported four numbered limit headings in the header block, standing in file order 1, 3, 2, 4; 15c reported GATE_LIMITS, named twice by the header as the home of the single definition and defined nowhere, the definition being LIMITS. Two of the nine new assertions passed on the unrepaired tree and both legitimately, because their job is to pin a boundary rather than to detect a defect: 21e, which requires that a change OUTSIDE the discovery set is not caught, and 21f, which requires a stable tree to pass twice with the same verdict. The v1.55 declaration this replaces still holds: re-stated for the exemption-anchoring and limits-mechanism repair. The seven assertions added here (13c, 13d, 13e, 20, 20b, 20c, 20d) were run against the unrepaired gate and the unrepaired workflow at 13dec55 before either was touched: 13c and 13d each reported "expected exit 1, got 0", the quoted token having exempted a document carrying a genuinely broken link; 20 reported "--limits printed 0 of 0 defined limits (exit 2)", the flag not existing; 20b and 20c failed with it. Two passed there, and only one of them legitimately: 13e, because a real declaration at the start of a line is honoured by both readers, and 20d, which passed for the wrong reason until its assertion was scoped to the comment block above runs-on. The v1.46 declaration this replaces still holds: run against deliberately broken trees before the gate was trusted: a suite made to fail, a suite whose interpreter is absent, an emptied discovery set, a stripped declaration, a broken relative link, unparseable JSON, a shell syntax error and a Python syntax error. Every one of those trees was gated and every one produced FAIL or REFUSED, never PASS.
 #
 # Canaries for the release gate (tools/km-release-gate.py), added in v1.46.
 #
@@ -485,16 +485,61 @@ note "     ^ this is the acknowledged gap, not a control. Discovery honours the 
 note "       path added to .gitignore leaves the gate without any edit to the gate or to the check."
 
 # ================================================================================================
-# 15. THE STATED LIMITS. None of them is a test of the tree; all four are assertions that the gate
-#     says out loud what it cannot do, because a green line is otherwise read as "safe to publish".
+# 15. THE LIMITS ARE DEFINED IN ONE PLACE, AND THE FILE MAKES NO CLAIM ABOUT THEM IT MAINTAINS BY
+#     HAND. (Rewritten in v1.58, drafted and unpublished; these cases bind nothing until this
+#     version's owner push.)
+#
+#     Until v1.58 this case named four limits by their exact header wording in four hardcoded
+#     `grep -Fq` calls. That made the case itself the third maintained definition of the set: the
+#     tuple defined it, a numbered prose block in the gate's header argued each one again, and these
+#     assertions pinned that block's wording. The tuple's own comment nevertheless said "Adding a
+#     fifth limit is an edit to this tuple and to nothing else", which was false when it was written
+#     at v1.55 -- both other places already existed on that tree, so it is corrected under the v1.47
+#     rule rather than dated under v1.56's.
+#
+#     The repair reduced the count of definitions to one rather than describing the drift, and the
+#     three assertions below are what keeps it at one. Each is DERIVED: none of them names a limit.
 # ================================================================================================
-if grep -Fq "IT CANNOT RUN THE ORGANISATION LEAKAGE SCAN" "$GATE" &&
-   grep -Fq "IT CANNOT SUPPLY A SECOND ACTOR" "$GATE" &&
-   grep -Fq "S EXIT STATUS AND CANNOT SEE INSIDE IT" "$GATE" &&
-   grep -Fq "IT DOES NOT SEE AN IGNORED FILE" "$GATE"; then
-  note "PASS: 15. the gate states all four of its limits in its own header"
+
+# 15a. No surface states a count of the limits in prose. The gate's own header has claimed since
+#      v1.55 that "the count of them is not restated in prose anywhere", and 185 lines below it the
+#      tuple's comment said "the same four limits". A number typed beside the set it counts is the
+#      artifact class STANDARD.md records as the one that rots, and this file carried the claim and
+#      the counter-example at once.
+prose_counts=$(grep -nEi '(one|two|three|four|five|six|seven|eight|nine|ten|[0-9]+)[ -]+limits?\b' "$GATE" || true)
+if [ -z "$prose_counts" ]; then
+  note "PASS: 15a. the gate states no count of its own limits in prose; every surface derives it"
 else
-  note "FAIL: 15. the gate does not state all four of its limits in its own header"
+  note "FAIL: 15a. the gate types a count of its own limits in prose"
+  printf '%s\n' "$prose_counts" | sed 's/^/       /'
+  fail=1
+fi
+
+# 15b. The header does not enumerate the limits a second time. A numbered prose block that argues
+#      each limit is a second definition however carefully it is kept: on the unrepaired tree its
+#      four entries stood in file order 1, 3, 2, 4, which is what separate maintenance looks like.
+header_enum=$(grep -nE '^# [0-9]+\. [A-Z]' "$GATE" || true)
+if [ -z "$header_enum" ]; then
+  note "PASS: 15b. the header argues no numbered limit of its own; the definition carries its argument"
+else
+  note "FAIL: 15b. the header enumerates limits a second time, beside the definition"
+  printf '%s\n' "$header_enum" | sed 's/^/       /'
+  fail=1
+fi
+
+# 15c. Every constant the leading comment block names is a constant the file defines. The header
+#      pointed twice at `GATE_LIMITS` while the definition was named `LIMITS`, so the one sentence
+#      telling a reader where the single definition lives named nothing at all. This is the same
+#      class as a reference whose target is not in the tree (STANDARD.md, v1.45), one scope down.
+undefined_consts=$(awk 'NR==1{next} /^[[:space:]]*(#|$)/{print; next} {exit}' "$GATE" \
+  | grep -oE '\b[A-Z][A-Z0-9]*(_[A-Z0-9]+)+\b' | sort -u | while read -r n; do
+      grep -qE "^${n}[[:space:]]*=" "$GATE" || echo "$n"
+    done)
+if [ -z "$undefined_consts" ]; then
+  note "PASS: 15c. every constant the gate's header names is defined in the gate"
+else
+  note "FAIL: 15c. the gate's header names a constant the gate does not define"
+  printf '%s\n' "$undefined_consts" | sed 's/^/       /'
   fail=1
 fi
 
@@ -550,6 +595,88 @@ else
   note "FAIL: 20. the CI workflow is absent, so 20c and 20d proved nothing"
   fail=1
 fi
+
+# ================================================================================================
+# 21. THE VERDICT IS ABOUT THE TREE THE GATE DISCOVERED. (Added in v1.58, drafted and unpublished;
+#     these cases bind nothing until this version's owner push.)
+#
+#     Discovery and the declaration phase run first; the suites run after; the run takes about
+#     twenty minutes on the real repository. Nothing established that the tree at the verdict was
+#     the tree that was discovered, so a PASS could not name what it had judged. An external
+#     reviewer observed it live: the gate began on a clean branch, the branch changed underneath it,
+#     a discovered check was edited, and the gate returned PASS after ~900s still reporting zero
+#     changed declarations. The maintainer's own drafting agent was the thing editing the tree. The
+#     defect is that the gate cannot tell, not that anyone misbehaved -- twenty minutes is a wide
+#     window for a maintainer working alongside a run, and a gate whose PASS cannot name the tree it
+#     judged certifies nothing.
+#
+#     THE REPAIR IS NOT A SNAPSHOT, DELIBERATELY. Since v1.54 the gate reads the WORKING tree,
+#     tracked union untracked-not-ignored, because a check authored in the change being gated is
+#     untracked at exactly the moment the gate runs. Running against a snapshot of tracked content
+#     would silently undo v1.54 and reopen the defect that version closed. So the gate fingerprints
+#     what it read -- the same set discovery reads, by path and content, plus HEAD -- before and
+#     after, and REFUSES on any difference. A refusal is not a pass and is not a silent re-run.
+#
+#     Each mutator below sorts after the check it disturbs, so the disturbance lands after that
+#     check has run and the case is about the fingerprint rather than about execution order.
+# ================================================================================================
+
+# mkdrift <dir> <mutator-body>: a whole fixture plus a discovered suite that disturbs the tree.
+mkdrift() {
+  local d="$1" body="$2"
+  mkfixture "$d" >/dev/null
+  { printf '#!/bin/bash\n%s\n' "$DECL"; printf '%s\n' "$body"; printf 'exit 0\n'; } \
+    > "$d/tests/test_zz_mutator.sh"
+  git -C "$d" add -A >/dev/null
+  git -C "$d" commit -qm "mutator" >/dev/null
+  git -C "$d" rev-parse HEAD
+}
+
+# 21a/21b. A discovered check is EDITED while the gate runs. Each assertion gets its OWN fixture:
+#      a mutator leaves its mutation behind, so a second run over the same tree is a different tree
+#      and would be answered for a different reason. (Found by writing it the other way first.)
+c="$work/drift_content"
+base=$(mkdrift "$c" 'printf "\n# edited while the gate was running\n" >> tests/test_alpha.sh')
+KM_GATE_BASE="$base" expect "21a. a discovered check edited mid-run is refused, not passed" "$c" 2 \
+  "tests/test_alpha.sh"
+c="$work/drift_content2"
+base=$(mkdrift "$c" 'printf "\n# edited while the gate was running\n" >> tests/test_alpha.sh')
+KM_GATE_BASE="$base" expect "21b. the refusal says the tree changed while the gate ran" "$c" 2 \
+  "the tree changed while the gate ran"
+
+# 21c. A NEW check-shaped file appears while the gate runs. It was never discovered, never held to
+#      the declaration rule and never executed, and a verdict that covered it would be a lie.
+c="$work/drift_added"
+base=$(mkdrift "$c" 'printf "#!/bin/bash\nexit 0\n" > tests/test_zz_late.sh')
+KM_GATE_BASE="$base" expect "21c. a check appearing mid-run is refused, not silently uncovered" "$c" 2 \
+  "tests/test_zz_late.sh"
+
+# 21d. HEAD MOVES AND NO CONTENT DIFFERS. This is the half a content hash alone cannot see, and it
+#      is the reviewer's own case: the branch changed at 14:16. The fingerprint carries HEAD for
+#      exactly this reason.
+c="$work/drift_head"
+base=$(mkdrift "$c" 'git commit -q --allow-empty -m "moved underneath the gate"')
+KM_GATE_BASE="$base" expect "21d. HEAD moving mid-run is refused even when no file differs" "$c" 2 \
+  "HEAD moved"
+
+# 21e. THE RESIDUAL, PINNED AS A GAP AND NOT AS A CONTROL. The fingerprint covers the set discovery
+#      covers and nothing else, so a file outside that set can change mid-run and the gate will
+#      still pass. That is limit 5, stated in the gate's own output. A later change that widens the
+#      fingerprint fails here loudly instead of quietly redefining what a PASS covers.
+c="$work/drift_outside"
+base=$(mkdrift "$c" 'printf "\nedited while the gate was running\n" >> README.md')
+KM_GATE_BASE="$base" expect "21e. a change outside the discovery set is NOT caught (KNOWN GAP)" "$c" 0 \
+  "PASS release-gate:"
+note "     ^ this is the acknowledged residual, not a control. The fingerprint covers what discovery"
+note "       covers; a file outside it, and a file that changes and changes back, are not seen."
+
+# 21f. The stable tree must still pass, and the fingerprint must not make it flaky. Case 1 already
+#      requires PASS on a whole tree; this runs the same fixture twice and requires the same verdict
+#      both times, because a stability check that is itself unstable is worse than none.
+c="$work/stable"; base=$(mkfixture "$c")
+KM_GATE_BASE="$base" expect "21f. a stable tree passes" "$c" 0 "PASS release-gate:"
+KM_GATE_BASE="$base" expect "21f2. a stable tree passes again, with the same verdict" "$c" 0 \
+  "PASS release-gate:"
 
 if [ "$fail" -eq 0 ]; then
   note ""

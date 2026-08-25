@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: v1.55 | re-stated for the block-integrity repair. Run against the tree at 13dec55 with the closing '---' deleted from all three shipped copies of skills/km-brief/SKILL.md, the unrepaired check prints "PASS: every shipped skill file carries a conforming name/description frontmatter" and "ALL SKILL FRONTMATTER CHECKS PASSED", exit 0, because awk runs to end of file when no terminator exists and reads the whole body as the block. Four further malformations were probed on the same tree and all four passed it at exit 0 with 0 violation lines: a '...' terminator, a duplicated name key, a duplicated description key, and an extra key. The fifth, an empty block, was already caught at exit 1 with 6 violation lines. A sixth case was found while repairing rather than by probing, and it is the one that matters: requiring merely that SOME closing '---' exists is not enough, because every shipped skill file carries '---' horizontal rules in its prose, so deleting the real terminator moves the delimiter down the document and the block swallows 16 lines of body while both keys stay present and unique. Measured on the repaired check with only the terminator rule in place: exit 0. The repaired check therefore also requires every line inside the block to read as a mapping entry, a continuation, a comment or a blank, and it then fails all five with a named violation each and passes the clean tree unchanged. The v1.27 declaration this replaces was 'unrecorded'; that debt is discharged for the delimiter and duplicate-key rules only.
+# km-unrepaired-tree: v1.58 | re-stated for the folded-value repair. Run against the unrepaired tree at 510cf03 before any repair was written. A fixture whose description first line is 13 words and whose following indented lines are folded into the same plain scalar by any real YAML parser was accepted: check_tree returned exit 0 with zero violation lines, having measured 13 words against the 10-40 residency budget, while Ruby's YAML parser on the same host read the effective value as 97 words. A second fixture, an indented line placed before any key in the block so that it continues nothing at all, was also accepted at exit 0. Two new canaries were added for those and both reported 'canary NOT caught' on the unrepaired tree; the suite exited 1 with the other ten canaries still passing. The cause is two lines of the continuation arm: every indented line was skipped unconditionally, with no state, no record of which key it continued and no requirement that any key precede it, and the budget was then measured against the first physical line alone. A third case was found while repairing rather than by probing: the arm's tab pattern was written "\t"* inside double quotes, which is a literal backslash-t and matched no tab-indented line on this host, so that half of the arm had been inert since it was written. The positive-direction canary added with them, a legitimate two-line description inside the budget, passes on the unrepaired tree and on the repaired one, because its job is to pin the shape the reader must keep accepting rather than to detect the defect. The v1.55 declaration this replaces still holds in full: re-stated for the block-integrity repair. Run against the tree at 13dec55 with the closing '---' deleted from all three shipped copies of skills/km-brief/SKILL.md, the unrepaired check prints "PASS: every shipped skill file carries a conforming name/description frontmatter" and "ALL SKILL FRONTMATTER CHECKS PASSED", exit 0, because awk runs to end of file when no terminator exists and reads the whole body as the block. Four further malformations were probed on the same tree and all four passed it at exit 0 with 0 violation lines: a '...' terminator, a duplicated name key, a duplicated description key, and an extra key. The fifth, an empty block, was already caught at exit 1 with 6 violation lines. A sixth case was found while repairing rather than by probing, and it is the one that matters: requiring merely that SOME closing '---' exists is not enough, because every shipped skill file carries '---' horizontal rules in its prose, so deleting the real terminator moves the delimiter down the document and the block swallows 16 lines of body while both keys stay present and unique. Measured on the repaired check with only the terminator rule in place: exit 0. The repaired check therefore also requires every line inside the block to read as a mapping entry, a continuation, a comment or a blank, and it then fails all five with a named violation each and passes the clean tree unchanged. The v1.27 declaration this replaces was 'unrecorded'; that debt is discharged for the delimiter and duplicate-key rules only.
 # Fixtures for skill-file frontmatter (v1.27), STANDARD.md §"Skill files declare their trigger".
 #
 # Every skill file this standard ships must carry YAML frontmatter with exactly the two fields a
@@ -134,6 +134,31 @@ FIX
   "$@"
   if [ -n "$(check_tree "$work/canary")" ]; then pass "canary caught: $label"; else die "canary NOT caught: $label"; fi
 }
+
+# The other direction, and it is not optional here (added in v1.58, drafted and unpublished; this
+# material binds nothing until its own owner push). The continuation rule below tightens how the
+# block is read, and a reader tightened until it rejects legitimate input is the same defect wearing
+# the opposite sign: a check that fires on everything proves as little as one that fires on nothing.
+# `clean_canary` asserts that a mutation is NOT reported, so the tightening ships beside the shape it
+# must keep accepting.
+clean_canary() { # <label> <mutation-cmd>
+  local label="$1"; shift
+  rm -rf "$work/canary"
+  mkdir -p "$work/canary/skills/km-thing" "$work/canary/template/.claude/skills" "$work/canary/template/.agents/skills"
+  cat > "$work/canary/skills/km-thing/SKILL.md" <<'FIX'
+---
+name: km-thing
+description: Use when a synthetic fixture needs a conforming description that names its trigger and its own invocation, /km-thing, plainly.
+---
+
+# body
+FIX
+  if [ -n "$(check_tree "$work/canary")" ]; then die "clean canary base fixture is not clean"; return; fi
+  "$@"
+  local out2; out2="$(check_tree "$work/canary")"
+  if [ -z "$out2" ]; then pass "legitimate input still accepted: $label"
+  else die "legitimate input REJECTED: $label"; printf '%s\n' "$out2"; fi
+}
 f="$work/canary/skills/km-thing/SKILL.md"
 canary "missing frontmatter"      bash -c 'tail -n +5 "$0" > "$0.t" && mv "$0.t" "$0"' "$f"
 canary "missing description"      bash -c 'sed -i.bak "/^description:/d" "$0" && rm -f "$0.bak"' "$f"
@@ -149,6 +174,60 @@ canary "duplicate name key"       bash -c 'sed -i.bak "2a\\
 name: km-other" "$0" && rm -f "$0.bak"' "$f"
 canary "duplicate description key" bash -c 'sed -i.bak "3a\\
 description: A second and contradictory description that a first-match reader silently discards here." "$0" && rm -f "$0.bak"' "$f"
+
+# --- 4. the value a check reads is the LOGICAL value, never its first physical line (v1.58 draft) ---
+# Added in v1.58, drafted and unpublished; these cases bind nothing until this version's owner push.
+#
+# A plain YAML scalar folds every more-indented line that follows it into one value. The reader this
+# suite drives skipped every indented line as a continuation unconditionally -- no state, no record
+# of WHICH key it continued, and no requirement that any key precede it -- and then measured the
+# residency budget against `sed -n 's/^description: *//p' | head -1`, the first physical line alone.
+# So a description whose first line is inside the budget and whose folded value is far outside it
+# passed, and the runtime that reads the file with a real parser holds a value this check never saw.
+# This is the class STANDARD.md states under "A check that reads a compound value validates its
+# parts, never the whole alone": a value the standard defines as one thing, judged one fragment at a
+# time. Here it is the mirror image -- a value that is one thing across several lines, judged by one
+# line.
+write_folded_over_budget() { # first line inside the budget, folded value far outside it
+  cat > "$1" <<'FIX'
+---
+name: km-thing
+description: Use when a synthetic fixture needs a conforming description naming its trigger plainly.
+  This continuation line is folded into the description value by any real YAML parser, and it runs on
+  at considerable length precisely so that the effective value goes straight through the forty word
+  residency ceiling this check believes it is enforcing, with filler and yet more filler and still
+  more filler words added so the total is unambiguously far above that ceiling by any counting
+  method a reader might reasonably apply to it, and then a little more again for good measure.
+---
+
+# body
+FIX
+}
+write_folded_within_budget() { # the positive direction: a legitimate two-line description
+  cat > "$1" <<'FIX'
+---
+name: km-thing
+description: Use when a synthetic fixture needs a conforming description that names its trigger
+  and its own invocation, /km-thing, across two lines rather than one.
+---
+
+# body
+FIX
+}
+write_orphan_continuation() { # an indented line that continues nothing, because no key precedes it
+  cat > "$1" <<'FIX'
+---
+  this line is indented and no key precedes it, so it continues nothing at all
+name: km-thing
+description: Use when a synthetic fixture needs a conforming description that names its trigger and its own invocation, /km-thing, plainly.
+---
+
+# body
+FIX
+}
+canary "folded continuation carries the value over the budget" write_folded_over_budget "$f"
+canary "indented line continues no key"                        write_orphan_continuation "$f"
+clean_canary "a two-line description inside the budget"        write_folded_within_budget "$f"
 
 echo
 if [ "$fail" -eq 0 ]; then echo "ALL SKILL FRONTMATTER CHECKS PASSED"; else echo "SKILL FRONTMATTER CHECKS FAILED"; fi
