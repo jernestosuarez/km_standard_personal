@@ -175,8 +175,7 @@ re-stated by that edit. Do not write a declaration for a run that did not happen
 gate's green as covering it: the gate can see that a declaration was made, never that it is true.
 
 Read the gate's stated limits into every report you write, and take them **from the gate** rather
-than from this file (corrected in v1.56, drafted and unpublished; this instruction binds nothing
-until its own owner push). The gate holds them in one definition, prints them with its passing
+than from this file (corrected in v1.56). The gate holds them in one definition, prints them with its passing
 verdict, and prints them alone on request, so the current set is one command away and no other file
 needs a copy that will drift. This sentence carried such a copy: it said *two* from the version that
 introduced the gate onward, while the gate had printed three since that same version and four since

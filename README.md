@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.55"/>
+  <img src="assets/badges/version.svg" alt="standard v1.56"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 3 adopted, 1 partial, 3 open"/>
   <img src="assets/badges/license.svg" alt="license: Apache-2.0"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,34 +28,38 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.55** (2026-08-25, four defects from the external review, and two of them are
-one defect seen twice; the source is the same first independent pass over this repository that
-produced v1.54, whose release blocker landed there and whose four remaining P2 findings land here,
-each reproduced on the tree at `13dec55` before it was repaired because three of the same reviewer's
-earlier findings had not survived verification; **the skill-frontmatter check accepted an
-unterminated block**, confirming the opening delimiter and then extracting with an `awk` expression
-that runs to end of file, so with the closing delimiter deleted from all three shipped copies of one
-skill the suite still printed that every shipped skill file conforms, at exit 0, and four further
-malformations passed too; **a fifth was found while repairing and matters more**, because every
-shipped skill file carries horizontal rules in its prose, so requiring merely that *a* terminator
-exists moves the delimiter down the document and the block swallows the body with both keys present
-and unique; **a quoted exemption token disabled link checking for a whole document**, the gate
-searching raw markdown before fenced blocks were stripped and with no anchor, so a fenced example of
-the syntax removed `README.md` from the scan, took 25 links with it and hid a broken link at exit 0;
-**that is the class v1.52 repaired in one instrument and left standing in another**, which is the
-more useful finding than either instance, and the sweep it demands found the v1.52 anchor itself
-reachable, one ordinary sentence in the first 60 lines of `STANDARD.md` exempting the **home of
-record** from its own publication check and from the RFC reference check, both at exit 0; **the
-installer's replacement behaviour was asserted and never verified**, an installer altered to print
-its success lines and exit 0 without copying anything leaving the agent package suite passing; **and
-the CI workflow overstated pinning and understated limits**, calling a version-labelled runner image
-a pin when the platform redeploys the image behind the label, and documenting two of the gate's
-limits while the gate printed four; **the two generalisations are the point** — a directive token is
-a property of every reader in a repository, so all five machine-read tokens were enumerated and all
-three raw readers repaired under one anchoring rule, and a test whose subject changes a tree asserts
-the change, the sweep of all 23 shell suites finding the class in exactly one file because it is the
-only suite whose subject is a mutating tool; nothing a deployment installs changes and no hub turns
-red; v1.54 is the preceding
+**Current version: v1.56** (2026-08-25, claims made in prose that no instrument reads; the source is
+the same external review that produced v1.54 and v1.55, and these are the last of its findings, each
+reproduced on the tree at `aeec51a` before it was repaired because several of the reviewer's figures
+had moved since he measured them; **the licence file is sound and the prose around it was not**,
+because restoring the Appendix placeholder on the one line that differs makes `LICENSE` hash to the
+published digest of the canonical Apache-2.0 text, so the terms carry no edit and exactly one line
+differs, the Appendix boilerplate instantiated with the copyright line, which is the act the Appendix
+exists to be used for, and saying the file is *unmodified* and stopping there invites a reader to
+expect a byte-identical copy in the one file where an unexplained difference costs the most; **this
+page stated the Section 4 duties without their condition**, telling a reader who uses the standard
+internally, or modifies it and passes it on to nobody, that they owed notice-preservation duties they
+do not owe, when those duties attach to **redistribution** and `LICENSE` governs; **three drifted
+counts, and they are three different repairs**, which is the finding rather than an accident of
+tidying, since a count is corrected where it was false on the day it was written and left standing
+where it was true then and has been overtaken since — *eleven entry points*, which the MCP quarantine
+suite reported and the v1.40 row published while the surface declares **seven** by decorator, eleven
+being the size of the driver's own call list, so the row is corrected and the suite now derives the
+figure; *two stated limits*, which the maintainer contract has told every report to read since the
+version that introduced the gate while the gate printed three from that same version and four since
+v1.54, so both are corrected and the contract now states no count at all; and *147 markdown files*, a
+dated measurement supporting a dated decision, so only its missing date is repaired and the number is
+untouched; **the sweep the question demands** then read every count, version identifier and file
+reference this repository asserts in prose, finding one wrong enumeration where this page named six
+per-hub skills the template installs and it installs seven, `km-publish` being the omission, one
+stale pointer inside the gate to a copy of its limits that v1.55 had already deleted, one stale
+description of discovery in the CI definition, and one hardcoded count of the design set sitting
+beside a badge that derives it; **one check is added and it is the answer to the class, not to the
+instance**, `tests/test_readme_inventory.sh` deriving what the template ships and requiring this
+page's two enumerations to equal the derivation in both directions, which fails on the unrepaired
+tree naming `km-publish`; **what was deliberately not built is recorded with the reason**, because a
+check that models the wrong class closes a sweep and proves nothing; nothing a deployment installs
+changes and no hub turns red; v1.55 is the preceding
 published version and v1.23 remains an
 unpublished draft awaiting its own push). The full
 ledger of released versions, and the rule that a published version number is never reused, is in
