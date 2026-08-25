@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # km-release-gate: the one command that runs the whole gate and returns one verdict.
 #
-# km-unrepaired-tree: v1.54 | re-stated for the discovery-scope repair, and run against the unrepaired tree first: with an untracked tests/test_zz_probe.sh holding a line bash -n rejects, this gate reported "33 check(s) discovered" and "PASS release-gate", exit 0, the same count and the same verdict as the clean tree, having neither run nor named the check. Earlier, under v1.46, it was run against deliberately broken trees (a suite made to fail, a suite made unexecutable, an emptied discovery set, a stripped declaration) and refused or failed in each; see tests/test_release_gate.sh.
+# km-unrepaired-tree: v1.55 | re-stated for the exemption-anchoring repair, and run against the unrepaired tree first: with README.md given a broken relative link and a fenced text block quoting km-gate-link-exempt, check_links reported 0 failures, "153 of 154 markdown files scanned, 1 exempt" and 88 links resolved; the same tree without the fenced example reported 1 failure naming the broken link and 113 links resolved. A quotation removed a document from the scan and 25 links from the count at exit 0. The repaired reader reports the failure in both shapes and still honours a real declaration at the start of a line. The v1.54 declaration this replaces still holds: re-stated for the discovery-scope repair, and run against the unrepaired tree first: with an untracked tests/test_zz_probe.sh holding a line bash -n rejects, this gate reported "33 check(s) discovered" and "PASS release-gate", exit 0, the same count and the same verdict as the clean tree, having neither run nor named the check. Earlier, under v1.46, it was run against deliberately broken trees (a suite made to fail, a suite made unexecutable, an emptied discovery set, a stripped declaration) and refused or failed in each; see tests/test_release_gate.sh.
 #
 # Standard: STANDARD.md §"Publishing a version" step 5, and §"Standard Maintainer" under
 # "A gate runs before publication, and it declares what it cannot do".
 #
-#   python3 tools/km-release-gate.py [--root PATH] [--no-suites]
+#   python3 tools/km-release-gate.py [--root PATH] [--no-suites] [--limits]
 #
 # Exit: 0  PASS     everything discovered ran and every phase passed; the coverage line says what
 #                     was looked at
@@ -116,6 +116,29 @@
 # The reason is required and is printed on the passing run, so no exclusion is silent.
 #
 # ------------------------------------------------------------------------------------------------
+# EXEMPTIONS ARE DECLARED, NEVER QUOTED. (v1.55.)
+#
+# A declaration is a LINE, never a mention. The exemption above is honoured only when the token
+# begins its own line, after optional whitespace and at most one comment marker, only outside a
+# fenced code block, and only within the first EXEMPT_SCAN_LINES lines of the file. All three
+# conditions are needed, and the same rule now governs `published-not-draft-exempt:` and
+# `rfc-reference-exempt:` in scripts/, so the three instruments read their exemptions by one rule
+# rather than three.
+#
+# Until v1.55 this read was `re.search` over the RAW markdown, before strip_fenced and with no
+# anchor at all. Measured on the tree at 13dec55: README.md given a broken relative link and a
+# fenced `text` block quoting the token reported 0 link failures, `153 of 154 markdown files
+# scanned, 1 exempt`, 88 links resolved. The same tree without the fenced example reported 1 failure
+# naming the broken link and 113 links resolved. A quotation removed a document from the scan and 25
+# links from the count, at exit 0.
+#
+# This is the class v1.52 repaired in scripts/validate_published_not_draft.py, where a quoted
+# draft-declaration token silenced two publication checks and the repair anchored the read to where
+# the declaration is made. It was repaired there and left standing here, which is the more useful
+# finding than either instance: a directive read from raw text is a defect of the READER, so every
+# reader of every directive token in a repository is in scope the first time one of them is found.
+#
+# ------------------------------------------------------------------------------------------------
 # THE UNREPAIRED-TREE DECLARATION.
 #
 #   km-unrepaired-tree: <version|none|unrecorded> | <result>
@@ -172,7 +195,9 @@ CHECK_SUFFIXES = (".sh", ".py")
 
 DECL_RE = re.compile(r"km-unrepaired-tree:[ \t]*(v[0-9]+\.[0-9]+|none|unrecorded)[ \t]*\|[ \t]*(.*)")
 INSTRUMENT_RE = re.compile(r"km-gate-instrument:[ \t]*(\S+)[ \t]*\|[ \t]*(.*)")
-LINK_EXEMPT_RE = re.compile(r"km-gate-link-exempt:[ \t]*(.*)")
+# Anchored, and not read from a fence. See EXEMPTIONS ARE DECLARED, NEVER QUOTED above.
+EXEMPT_SCAN_LINES = 60
+LINK_EXEMPT_RE = re.compile(r"^[ \t]*(?:#+|//+|<!--|\*|-)?[ \t]*km-gate-link-exempt:[ \t]*(.*)$", re.M)
 # The H1 carries "(v1.46)" when published and "(v1.46 draft)" while drafted. The version being
 # drafted is the same number either way, so both forms are read.
 H1_VERSION_RE = re.compile(r"^# .*\((v[0-9]+\.[0-9]+)(?: draft)?\)\s*$", re.M)
@@ -181,6 +206,42 @@ INLINE_LINK_RE = re.compile(r"\[[^\]]*\]\(\s*<?([^)<>\s]+)>?(?:\s+[\"'][^)]*[\"'
 REF_DEF_RE = re.compile(r"^[^\S\n]{0,3}\[[^\]]+\]:[^\S\n]*(\S+)[^\S\n]*$", re.M)
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
 NON_RELATIVE_RE = re.compile(r"^(https?:|mailto:|ftp:|tel:|data:|#)", re.I)
+
+
+# ------------------------------------------------------------------------------------------------
+# THE LIMITS, DEFINED ONCE. (v1.55.)
+#
+# These are the same four limits the header block above argues for. They live here as data because
+# they are printed in three places: the passing verdict, the failing verdict's one-line summary, and
+# `--limits`, which exists so that .github/workflows/release-gate.yml can show them in the CI log
+# instead of carrying a hand copy. It carried one, it documented TWO of the four, and it had already
+# drifted by the time an external reviewer read it. Adding a fifth limit is an edit to this tuple and
+# to nothing else.
+LIMITS = (
+    ("This gate does not run an organisation leakage scan and cannot.",
+     "The denylist is generated from an organisation's own entity names and is kept outside",
+     "this repository by design. The instrument's canaries prove the instrument; the",
+     "deployment's own fail-closed pre-push hook is the only thing that scans a push."),
+    ("No runner supplies a second actor.",
+     "The gate requires the unrepaired-tree declaration and cannot verify that an adversarial",
+     "pass by someone other than the author took place, nor that any declaration it read is",
+     "true."),
+    ("This gate reads a check's exit status and cannot see inside it.",
+     "A check that fails internally and returns success passes here. Canaries are what reach",
+     "inside a check; this reaches only its verdict."),
+    ("Discovery reads the working tree but honours the ignore rules.",
+     "A check-shaped file under an ignored path is not discovered. An ignored file is not one",
+     "this repository ships; the cost is that a path added to .gitignore leaves the gate",
+     "without any edit to the gate or to the check."),
+)
+
+
+def print_limits(indent="    "):
+    """Print every limit in LIMITS, numbered. The only renderer; there is no second copy."""
+    for i, limit in enumerate(LIMITS, 1):
+        print("{}{}. {}".format(indent, i, limit[0]))
+        for line in limit[1:]:
+            print("{}   {}".format(indent, line))
 
 
 class Refusal(Exception):
@@ -574,15 +635,17 @@ def check_links(root):
     scanned = 0
     for rel in rels:
         text = read_text(root, rel)
-        m = LINK_EXEMPT_RE.search(text)
+        body = strip_fenced(text)
+        m = LINK_EXEMPT_RE.search("\n".join(body.split("\n")[:EXEMPT_SCAN_LINES]))
         if m:
             reason = m.group(1).strip()
+            if reason.endswith("-->"):
+                reason = reason[:-3].strip()
             if not reason:
                 refuse("{} declares km-gate-link-exempt with no reason".format(rel))
             exempt.append((rel, reason))
             continue
         scanned += 1
-        body = strip_fenced(text)
         targets = [(t, "inline") for t in INLINE_LINK_RE.findall(body)]
         targets += [(t, "definition") for t in REF_DEF_RE.findall(body)]
         for target, form in targets:
@@ -651,7 +714,19 @@ def main():
                         help="run discovery, declarations and the static checks only. The verdict "
                              "line is labelled STATIC ONLY and a coverage gap is reported, so this "
                              "mode cannot be recorded as a release verdict")
+    parser.add_argument("--limits", action="store_true",
+                        help="print the limits this gate states about its own verdict and exit 0 "
+                             "without gating anything. This is what a CI definition invokes instead "
+                             "of copying the limits into a comment that will drift")
     args = parser.parse_args()
+
+    if args.limits:
+        print("km-release-gate states {} limits about its own verdict. A green gate means the "
+              "mechanical".format(len(LIMITS)))
+        print("checks ran. It does not mean the following are covered.")
+        print("")
+        print_limits(indent="  ")
+        return 0
 
     here = Path(__file__).resolve()
     root = Path(args.root).resolve() if args.root else here.parent.parent
@@ -748,8 +823,8 @@ def main():
             for f in failures:
                 print("  - {}".format(f))
             print("  coverage: {}".format(coverage))
-            print("  limits: no organisation leakage scan; no second actor; and a check that fails")
-            print("          internally and returns success is not seen. See the passing text.")
+            print("  {} limits apply to this verdict too; run --limits to read them.".format(
+                len(LIMITS)))
             return 1
 
         # A run that executed no check must not be recordable as a release verdict. The label is
@@ -759,21 +834,8 @@ def main():
             else "PASS release-gate"
         print("")
         print("{}: {}".format(label, coverage))
-        print("  limits, because a pass here is read as more than it is:")
-        print("    1. This gate does not run an organisation leakage scan and cannot. The denylist is")
-        print("       generated from an organisation's own entity names and is kept outside this")
-        print("       repository by design. The instrument's canaries prove the instrument; the")
-        print("       deployment's own fail-closed pre-push hook is the only thing that scans a push.")
-        print("    2. No runner supplies a second actor. The gate requires the unrepaired-tree")
-        print("       declaration and cannot verify that an adversarial pass by someone other than")
-        print("       the author took place, nor that any declaration it read is true.")
-        print("    3. This gate reads a check's exit status and cannot see inside it. A check that")
-        print("       fails internally and returns success passes here. Canaries are what reach")
-        print("       inside a check; this reaches only its verdict.")
-        print("    4. Discovery reads the working tree but honours the ignore rules, so a")
-        print("       check-shaped file under an ignored path is not discovered. An ignored file is")
-        print("       not one this repository ships; the cost is that a path added to .gitignore")
-        print("       leaves the gate without any edit to the gate or to the check.")
+        print("  {} limits, because a pass here is read as more than it is:".format(len(LIMITS)))
+        print_limits()
         return 0
 
     except Refusal as exc:

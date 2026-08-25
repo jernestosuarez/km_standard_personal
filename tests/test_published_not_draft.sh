@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: v1.52 | re-stated for the anchoring repair, and case 11 is its evidence: over the tree at 1444b15 with the v1.50 row's opener flipped to its published stamp, the unrepaired check reported "49 published, 2 unpublished" and exited 0, exempting three real stale markings that name v1.50; the repaired check exits 1 and names all three, and still leaves the same tree's genuine v1.50 markings alone when the opener is left as it stands. The v1.42 run stands unchanged in case 10: against 40f3829 the check names 15 real stale markings across five files, with the count asserted rather than a bare non-zero exit.
+# km-unrepaired-tree: v1.55 | re-stated for the quotation-anchoring repair. Cases 8b are its evidence, and they were run against the unrepaired check before it was touched: both reported the fixture STANDARD.md exempted by a token it merely quoted, once mid-sentence and once inside a fence, at exit 0 with the stale marking unseen. On the real repository at 13dec55 the same sentence at line 13 of STANDARD.md exempted the home of record, reporting "122 file(s) scanned, 5 exempt" against a true 123 and 4, 3 markings instead of 9, exit 0. The v1.52 declaration this replaces still holds: re-stated for the anchoring repair, and case 11 is its evidence: over the tree at 1444b15 with the v1.50 row's opener flipped to its published stamp, the unrepaired check reported "49 published, 2 unpublished" and exited 0, exempting three real stale markings that name v1.50; the repaired check exits 1 and names all three, and still leaves the same tree's genuine v1.50 markings alone when the opener is left as it stands. The v1.42 run stands unchanged in case 10: against 40f3829 the check names 15 real stale markings across five files, with the count asserted rather than a bare non-zero exit.
 # Canaries for the published-not-draft check (scripts/validate_published_not_draft.py), added in
 # v1.42.
 #
@@ -288,6 +288,65 @@ else
   echo "FAIL: an exempt file was not named with its reason on the passing run (exit"
   echo "      $exnamed_status)"
   printf '%s\n' "$exnamed_out"
+  fail=1
+fi
+
+# ── 8b. AN EXEMPTION IS DECLARED, NEVER QUOTED (v1.55) ───────────────────────────────────────────
+# v1.52 anchored this read to the file's first EXEMPT_SCAN_LINES lines. That is better than an
+# unanchored search and it was not enough: STANDARD.md's first lines are its version lead, and a
+# version lead is exactly the prose that quotes tokens. Measured on the real repository at 13dec55,
+# one sentence inserted at line 13 of STANDARD.md, reading that a document opts out by writing the
+# token, exempted the HOME OF RECORD from its own check, which reported "122 file(s) scanned, 5
+# exempt" against a true 123 and 4, printed "exempt: STANDARD.md", saw 3 markings instead of 9, and
+# exited 0. Each fixture below carries a real stale marking, so a check that honours the quotation
+# passes and a check that does not fails and names the marking.
+
+make_root "$work/exquoteprose" "$STALE_MARKING" "$DRAFT_ROW"
+write_shipped "$work/exquoteprose" "(v9.2, drafted and unpublished)"
+sed -i.bak '3i\
+A file opts out by writing `published-not-draft-exempt: <reason>` near its top.
+' "$work/exquoteprose/STANDARD.md" && rm -f "$work/exquoteprose/STANDARD.md.bak"
+quoteprose_out=$(run_check "$work/exquoteprose"); quoteprose_status=$?
+if [ "$quoteprose_status" -eq 1 ] \
+   && printf '%s' "$quoteprose_out" | grep -q "STANDARD.md"; then
+  echo "PASS: a MID-SENTENCE quotation of the token does not exempt the file that quotes it"
+else
+  echo "FAIL: a quoted token exempted the file that quotes it (exit $quoteprose_status)"
+  printf '%s\n' "$quoteprose_out"
+  fail=1
+fi
+
+make_root "$work/exquotefence" "$STALE_MARKING" "$DRAFT_ROW"
+write_shipped "$work/exquotefence" "(v9.2, drafted and unpublished)"
+sed -i.bak '3i\
+```text\
+published-not-draft-exempt: only an example of the syntax\
+```
+' "$work/exquotefence/STANDARD.md" && rm -f "$work/exquotefence/STANDARD.md.bak"
+quotefence_out=$(run_check "$work/exquotefence"); quotefence_status=$?
+if [ "$quotefence_status" -eq 1 ] \
+   && printf '%s' "$quotefence_out" | grep -q "STANDARD.md"; then
+  echo "PASS: a FENCED quotation of the token does not exempt the file that quotes it"
+else
+  echo "FAIL: a fenced token exempted the file that quotes it (exit $quotefence_status)"
+  printf '%s\n' "$quotefence_out"
+  fail=1
+fi
+
+# And the other direction, so the anchor is not simply an exemption nobody can ever declare: a real
+# declaration at the start of a line, in the same file, still exempts it.
+make_root "$work/exquotereal" "$STALE_MARKING" "$DRAFT_ROW"
+write_shipped "$work/exquotereal" "(v9.2, drafted and unpublished)"
+sed -i.bak '3i\
+published-not-draft-exempt: a genuine declaration at the start of a line
+' "$work/exquotereal/STANDARD.md" && rm -f "$work/exquotereal/STANDARD.md.bak"
+quotereal_out=$(run_check "$work/exquotereal"); quotereal_status=$?
+if [ "$quotereal_status" -eq 0 ] \
+   && printf '%s' "$quotereal_out" | grep -q "exempt: STANDARD.md (a genuine declaration"; then
+  echo "PASS: a real declaration at the start of a line is still honoured, and named with its reason"
+else
+  echo "FAIL: the anchor rejected a real declaration too (exit $quotereal_status)"
+  printf '%s\n' "$quotereal_out"
   fail=1
 fi
 

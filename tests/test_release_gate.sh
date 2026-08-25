@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: v1.46 | run against deliberately broken trees before the gate was trusted: a suite made to fail, a suite whose interpreter is absent, an emptied discovery set, a stripped declaration, a broken relative link, unparseable JSON, a shell syntax error and a Python syntax error. Every one of those trees was gated and every one produced FAIL or REFUSED, never PASS.
+# km-unrepaired-tree: v1.55 | re-stated for the exemption-anchoring and limits-mechanism repair. The seven assertions added here (13c, 13d, 13e, 20, 20b, 20c, 20d) were run against the unrepaired gate and the unrepaired workflow at 13dec55 before either was touched: 13c and 13d each reported "expected exit 1, got 0", the quoted token having exempted a document carrying a genuinely broken link; 20 reported "--limits printed 0 of 0 defined limits (exit 2)", the flag not existing; 20b and 20c failed with it. Two passed there, and only one of them legitimately: 13e, because a real declaration at the start of a line is honoured by both readers, and 20d, which passed for the wrong reason until its assertion was scoped to the comment block above runs-on. The v1.46 declaration this replaces still holds: run against deliberately broken trees before the gate was trusted: a suite made to fail, a suite whose interpreter is absent, an emptied discovery set, a stripped declaration, a broken relative link, unparseable JSON, a shell syntax error and a Python syntax error. Every one of those trees was gated and every one produced FAIL or REFUSED, never PASS.
 #
 # Canaries for the release gate (tools/km-release-gate.py), added in v1.46.
 #
@@ -314,6 +314,28 @@ printf '# Fixture readme\n\nkm-gate-link-exempt:\n\n[gone](docs/absent.md)\n' > 
 KM_GATE_BASE="$base" expect "13b. a link exemption with no reason refuses" "$c" 2 \
   "declares km-gate-link-exempt with no reason"
 
+# 13c-13e (v1.55). An exemption is DECLARED, never QUOTED. Until v1.55 the gate searched the raw
+# markdown for the token before stripping fenced blocks and with no anchor at all, so a document
+# that merely showed the syntax removed itself from the scan. Measured on the real repository at
+# 13dec55: README.md with a broken link and a fenced example reported 0 link failures and
+# "153 of 154 markdown files scanned, 1 exempt"; without the fenced example the same tree reported
+# the broken link and 25 more resolved links. Each case below carries a genuinely broken link, so a
+# gate that honours the quotation passes and a gate that does not fails and names the link.
+printf '# Fixture readme\n\nA document opts out like this:\n\n```text\nkm-gate-link-exempt: only an example of the syntax\n```\n\n[gone](docs/absent.md)\n' \
+  > "$c/README.md"
+KM_GATE_BASE="$base" expect "13c. a FENCED quotation of the token does not exempt the document" "$c" 1 \
+  "link target 'docs/absent.md' resolves to nothing"
+
+printf '# Fixture readme\n\nA file opts out by writing `km-gate-link-exempt: <reason>` near its top.\n\n[gone](docs/absent.md)\n' \
+  > "$c/README.md"
+KM_GATE_BASE="$base" expect "13d. a MID-SENTENCE quotation of the token does not exempt the document" "$c" 1 \
+  "link target 'docs/absent.md' resolves to nothing"
+
+printf '# Fixture readme\n\n<!-- km-gate-link-exempt: declared at the start of a line, in a comment -->\n\n[gone](docs/absent.md)\n' \
+  > "$c/README.md"
+KM_GATE_BASE="$base" expect "13e. a real declaration at the start of a line is still honoured" "$c" 0 \
+  "declared at the start of a line, in a comment"
+
 # ================================================================================================
 # 14. The whole-tree pass once more, after every case above has broken something, so a fixture
 #     that leaked state into the clean tree cannot hide.
@@ -473,6 +495,59 @@ if grep -Fq "IT CANNOT RUN THE ORGANISATION LEAKAGE SCAN" "$GATE" &&
   note "PASS: 15. the gate states all four of its limits in its own header"
 else
   note "FAIL: 15. the gate does not state all four of its limits in its own header"
+  fail=1
+fi
+
+# ================================================================================================
+# 20. THE LIMITS ARE DEFINED ONCE AND PRINTED, NOT COPIED. (v1.55.)
+#     .github/workflows/release-gate.yml carried a hand copy of the limits, documented TWO of the
+#     four, and had already drifted when an external reviewer read it. The copy is gone; the
+#     workflow runs --limits instead. These cases pin the mechanism so the pointer cannot rot back
+#     into a copy.
+# ================================================================================================
+WORKFLOW="$ROOT/.github/workflows/release-gate.yml"
+limits_out=$(python3 "$GATE" --limits 2>&1); limits_status=$?
+defined=$(grep -c '^    ("' "$GATE")
+printed=$(printf '%s\n' "$limits_out" | grep -cE '^  [0-9]+\. ')
+if [ "$limits_status" -eq 0 ] && [ "$defined" -gt 0 ] && [ "$printed" -eq "$defined" ]; then
+  note "PASS: 20. --limits prints every limit the gate defines ($printed of $defined), exit 0"
+else
+  note "FAIL: 20. --limits printed $printed of $defined defined limits (exit $limits_status)"
+  printf '%s\n' "$limits_out" | sed 's/^/       /'
+  fail=1
+fi
+
+if printf '%s\n' "$limits_out" | grep -Fq "states $defined limits"; then
+  note "PASS: 20b. --limits states the count it is about to print, from the same definition"
+else
+  note "FAIL: 20b. --limits did not state the number of limits it defines"
+  fail=1
+fi
+
+if [ -f "$WORKFLOW" ]; then
+  if grep -Fq -- "km-release-gate.py --limits" "$WORKFLOW"; then
+    note "PASS: 20c. the CI workflow obtains the limits from the gate rather than copying them"
+  else
+    note "FAIL: 20c. the CI workflow does not invoke --limits, so any limits it states are a copy"
+    fail=1
+  fi
+  # Scoped to the comment block immediately above `runs-on:`, because the same file legitimately
+  # pins actions/checkout by commit SHA and that IS a pin. A version-labelled runner image is not.
+  runner_comment=$(awk '/^[[:space:]]*#/ { buf = buf $0 "\n"; next }
+                        /runs-on:/ { printf "%s", buf; exit }
+                        { buf = "" }' "$WORKFLOW")
+  if printf '%s' "$runner_comment" | grep -qi 'pinned'; then
+    note "FAIL: 20d. the CI workflow calls a version-labelled runner image a pin"
+    printf '%s\n' "$runner_comment" | sed 's/^/       /'
+    fail=1
+  elif printf '%s' "$runner_comment" | grep -qi 'redeploy'; then
+    note "PASS: 20d. the CI workflow says the platform redeploys the image behind the label"
+  else
+    note "FAIL: 20d. the CI workflow says nothing true about what its runner label selects"
+    fail=1
+  fi
+else
+  note "FAIL: 20. the CI workflow is absent, so 20c and 20d proved nothing"
   fail=1
 fi
 

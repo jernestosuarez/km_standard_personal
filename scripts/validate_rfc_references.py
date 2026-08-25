@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# km-unrepaired-tree: v1.45 | run against published main at c3e4ffe before the RFC landed, where it fails and names all nine real dangling references; proved in both directions by tests/test_rfc_reference_integrity.sh.
+# km-unrepaired-tree: v1.55 | re-stated for the quotation-anchoring repair. Run against the tree at 13dec55 with one sentence inserted at line 13 of STANDARD.md reading that a document opts out by writing `rfc-reference-exempt: <reason>` near its top, the unrepaired check exempted the home of record: "171 RFC reference(s) found across 130 file(s) scanned" against a true 257 across 131, "5 of them written as a path" against a true 15, "exempt: STANDARD.md", exit 0. The repaired check scans it, honours a real declaration written at the start of a line, and reports the clean tree with the same counts it reported before. Cases 8b of tests/test_rfc_reference_integrity.sh hold both directions. The v1.45 declaration this replaces still holds and is restated in full below.
+# km-unrepaired-tree-prior: v1.45 | run against published main at c3e4ffe before the RFC landed, where it fails and names all nine real dangling references; proved in both directions by tests/test_rfc_reference_integrity.sh.
 """Fail when text in the governed surface names an RFC that does not exist in `rfcs/`.
 
 rfc-reference-exempt: this instrument's own docstring names identifiers to define what it matches.
@@ -63,7 +64,7 @@ IDENTIFIER = re.compile(r"(?<![A-Za-z0-9_-])RFC-(\d+)(?![0-9])")
 PATH_REF = re.compile(r"(?<![A-Za-z0-9._/-])rfcs/(RFC-\d+[A-Za-z0-9._-]*)")
 # The identifier an RFC file's own name declares.
 FILENAME_ID = re.compile(r"^(RFC-\d+)")
-EXEMPT = re.compile(r"rfc-reference-exempt:\s*(.*)$")
+EXEMPT = re.compile(r"^[ \t]*(?:#+|//+|<!--|\*|-)?[ \t]*rfc-reference-exempt:[ \t]*(.*)$")
 
 SCAN_ROOTS = (
     "STANDARD.md",
@@ -124,12 +125,35 @@ def existing_rfcs(root):
     return found
 
 
+
+def _fence_line(line):
+    stripped = line.lstrip()
+    return stripped.startswith("```") or stripped.startswith("~~~")
+
+# A declaration is a LINE, never a mention. The token is honoured only at the start of its own line,
+# after optional whitespace and at most one comment marker, and never inside a fenced code block.
+# Both conditions are needed and neither is sufficient. v1.52 anchored this read to the file's first
+# EXEMPT_SCAN_LINES lines, which is better than an unanchored search and is not enough on its own:
+# STANDARD.md's first lines are its version lead, and a version lead is exactly the prose that
+# quotes tokens. Measured on the tree at 13dec55, one sentence inserted at line 13 of STANDARD.md
+# exempted the home of record from this check, which then exited 0. Fence-stripping alone would not
+# have caught that sentence, and line-anchoring alone would not catch a fenced example written at
+# column zero, which is how examples are normally written. (v1.55.)
 def exemption(lines):
     """Return the declared exemption reason, or None. An empty reason is refused by the caller."""
+    fenced = False
     for line in lines[:EXEMPT_SCAN_LINES]:
-        match = EXEMPT.search(line)
+        if _fence_line(line):
+            fenced = not fenced
+            continue
+        if fenced:
+            continue
+        match = EXEMPT.match(line)
         if match:
-            return match.group(1).strip().rstrip("'\"`")
+            reason = match.group(1).strip()
+            if reason.endswith("-->"):
+                reason = reason[:-3].strip()
+            return reason.rstrip("'\"`")
     return None
 
 

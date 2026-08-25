@@ -13,24 +13,18 @@
 # figure. timeout-minutes is set well above either, so a slow runner is not read as a failing tree,
 # and a run that hits the timeout is a signal in itself.
 #
-# WHAT A GREEN RUN HERE DOES NOT MEAN. Both limits are stated in STANDARD.md and in the runner's own
-# header, and they are repeated here because a badge is read where the standard is not.
+# WHAT A GREEN RUN HERE DOES NOT MEAN. This file used to carry its own copy of the gate's limits.
+# The copy described TWO of them; the gate printed FOUR, and had done since the fourth was added.
+# An external reviewer found the drift on 2026-08-25. A copy of a list that lives somewhere else
+# will drift again, so there is no copy here any more: the first step of this job runs
+# `python3 tools/km-release-gate.py --limits`, which prints the gate's limits into the log from the
+# single definition the gate itself prints from. Adding a limit is an edit to that definition and to
+# nothing else. tests/test_release_gate.sh case 20 asserts that the flag prints every limit defined
+# and that this workflow invokes it, so the pointer cannot rot back into a copy.
 #
-#   1. THIS JOB DOES NOT RUN AN ORGANISATION LEAKAGE SCAN, AND CANNOT. That scan needs a denylist
-#      generated from a real organisation's own entity names, and that denylist lives outside this
-#      repository BY DESIGN: carrying it here would itself be the leakage the guard exists to
-#      prevent. The gate runs the leakage instrument's canaries and so proves the INSTRUMENT works.
-#      It can never prove that a given push is clean. The fail-closed pre-push hook on a
-#      deployment's own clone is the only thing that scans an actual push, and it is local and
-#      untracked. This is a stated limit, not a defect awaiting a fix.
-#
-#   2. THIS JOB DOES NOT SUPPLY A SECOND ACTOR. The minimum viable independence is an adversarial
-#      pass, by someone other than the change's author, against the specific class being repaired.
-#      No runner verifies that it happened. What the gate requires instead is the declaration: every
-#      check carries a machine-read `km-unrepaired-tree:` line recording what it found when it was
-#      run against the tree it was written to catch, and a missing, empty or unre-stated declaration
-#      fails the gate. A green run means the mechanical checks ran. It does not mean anyone other
-#      than the author looked.
+# The short of it, for a reader who will not open the log: a green run means the mechanical checks
+# ran. It does not mean the push is free of organisation leakage, and it does not mean anyone other
+# than the author looked.
 
 name: release-gate
 
@@ -43,8 +37,11 @@ permissions:
 
 jobs:
   gate:
-    # Pinned rather than ubuntu-latest: the gate's verdict should change when this repository
-    # changes, not when the hosted image does.
+    # NOT A PIN, and the word matters. GitHub redeploys its version-labelled runner images on a
+    # weekly cadence, so the image behind `ubuntu-24.04` changes underneath this label and the
+    # environment is mutable. What the label does buy is smaller and true: the job does not move to
+    # a new Ubuntu major release without an edit here, which `ubuntu-latest` would do on its own.
+    # A genuine pin is what the checkout step below has, a commit SHA.
     runs-on: ubuntu-24.04
     timeout-minutes: 45
 
@@ -64,6 +61,9 @@ jobs:
           else
             echo "KM_GATE_BASE=${{ github.event.before }}" >> "$GITHUB_ENV"
           fi
+
+      - name: State what a green run here does not mean
+        run: python3 tools/km-release-gate.py --limits
 
       - name: Run the release gate
         run: python3 tools/km-release-gate.py

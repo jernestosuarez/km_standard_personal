@@ -1,11 +1,15 @@
 #!/bin/bash
-# km-unrepaired-tree: unrecorded | added in v1.27, before this declaration was required; the file records no run against an unrepaired frontmatter check and one is not reconstructed here.
+# km-unrepaired-tree: v1.55 | re-stated for the block-integrity repair. Run against the tree at 13dec55 with the closing '---' deleted from all three shipped copies of skills/km-brief/SKILL.md, the unrepaired check prints "PASS: every shipped skill file carries a conforming name/description frontmatter" and "ALL SKILL FRONTMATTER CHECKS PASSED", exit 0, because awk runs to end of file when no terminator exists and reads the whole body as the block. Four further malformations were probed on the same tree and all four passed it at exit 0 with 0 violation lines: a '...' terminator, a duplicated name key, a duplicated description key, and an extra key. The fifth, an empty block, was already caught at exit 1 with 6 violation lines. A sixth case was found while repairing rather than by probing, and it is the one that matters: requiring merely that SOME closing '---' exists is not enough, because every shipped skill file carries '---' horizontal rules in its prose, so deleting the real terminator moves the delimiter down the document and the block swallows 16 lines of body while both keys stay present and unique. Measured on the repaired check with only the terminator rule in place: exit 0. The repaired check therefore also requires every line inside the block to read as a mapping entry, a continuation, a comment or a blank, and it then fails all five with a named violation each and passes the clean tree unchanged. The v1.27 declaration this replaces was 'unrecorded'; that debt is discharged for the delimiter and duplicate-key rules only.
 # Fixtures for skill-file frontmatter (v1.27), STANDARD.md §"Skill files declare their trigger".
 #
 # Every skill file this standard ships must carry YAML frontmatter with exactly the two fields a
 # runtime reads before invocation: `name` (the directory slug, which is also the invocation) and
 # `description` (when to use it, in trigger terms). Four things must hold, and each can fail:
-#   1. Every shipped skill file has frontmatter with both fields.
+#   1. Every shipped skill file has frontmatter with both fields, in a block that is OPENED and
+#      CLOSED by `---` on its own line, with each field declared exactly once. A reader that stops
+#      at end of file cannot tell a block from a document: every key in the body becomes a key in
+#      the block, and a reader that takes the first match of a key discards a contradicting value
+#      that a differently written reader would have used. Both were false passes until v1.55.
 #   2. `name` equals the skill's own directory name, so the listing and the invocation agree.
 #   3. `description` survives a plain-scalar parse: no colon-followed-by-space in the value.
 #      A quoted scalar is one naive frontmatter reader away from showing its own quote marks.
@@ -13,6 +17,11 @@
 # The same slug shipped in several trees (root distribution copy, .claude mirror, .agents mirror)
 # must carry byte-identical frontmatter, or the copies drift the moment one is edited.
 # Each check is then proved against a synthetic violation, so a check that cannot fail is caught.
+# ONE GAP IS REGISTERED RATHER THAN CLOSED. This check does not require the block to carry ONLY the
+# two fields; an extra key passes. `allowed-tools` and its kin are real fields in real runtimes, so
+# refusing them is a policy decision about what this standard's skill files may carry, not a defect
+# in how this check reads its input, and settling it inside a repair to the reader would settle it
+# silently. It is written here so the next maintainer finds the question. (Registered v1.55.)
 # All fixture content is synthetic; no real person, organization or initiative is named.
 set -u
 
@@ -27,14 +36,46 @@ die()  { echo "FAIL: $1"; fail=1; }
 # --- the checker, as a function, so the canaries can run it against a synthetic tree ---
 # Usage: check_tree <root>  → prints one line per violation, exit 1 if any
 check_tree() {
-  local root="$1" bad=0 f slug fm name desc words
+  local root="$1" bad=0 f slug fm name desc words close key n_key fmline
   while IFS= read -r f; do
     [ -z "$f" ] && continue
     slug="$(basename "$(dirname "$f")")"
     if [ "$(head -1 "$f")" != '---' ]; then
       echo "  ! NO FRONTMATTER: ${f#$root/}"; bad=1; continue
     fi
-    fm="$(awk 'NR>1 && /^---$/{exit} NR>1' "$f")"
+    # The block must be CLOSED. Without this the extraction below runs to end of file and reads the
+    # whole document as frontmatter, which is how an unterminated block passed as conforming.
+    close="$(awk 'NR>1 && /^---$/{print NR; exit}' "$f")"
+    if [ -z "$close" ]; then
+      echo "  ! UNTERMINATED FRONTMATTER: no closing '---' on its own line: ${f#$root/}"; bad=1; continue
+    fi
+    fm="$(sed -n "2,$((close - 1))p" "$f")"
+    # Every line in the block must be something YAML would read as a mapping entry, a continuation,
+    # a comment or a blank. Finding *a* closing `---` is not enough on its own: every shipped skill
+    # file carries `---` horizontal rules in its prose, so deleting the real terminator merely moves
+    # the closing delimiter down the document and the block swallows the body. The keys are still
+    # there, still unique, and the block still "closes". This rule is what makes the swallowed prose
+    # visible.
+    while IFS= read -r fmline; do
+      case "$fmline" in
+        "" | "#"*) continue ;;
+        " "* | "\t"* | "- "*) continue ;;
+      esac
+      case "$fmline" in
+        *": "* | *":") ;;
+        *) echo "  ! FRONTMATTER LINE IS NOT A MAPPING ENTRY: '${fmline:0:60}': ${f#$root/}"; bad=1; continue ;;
+      esac
+      printf '%s' "$fmline" | grep -q '^[A-Za-z_][A-Za-z0-9_.-]*:' || {
+        echo "  ! FRONTMATTER LINE IS NOT A MAPPING ENTRY: '${fmline:0:60}': ${f#$root/}"; bad=1; }
+    done <<FMEOF
+$fm
+FMEOF
+    for key in name description; do
+      n_key="$(printf '%s\n' "$fm" | grep -c "^$key:")"
+      if [ "$n_key" -gt 1 ]; then
+        echo "  ! DUPLICATE '$key:' declared $n_key times in the block: ${f#$root/}"; bad=1
+      fi
+    done
     name="$(printf '%s\n' "$fm" | sed -n 's/^name: *//p' | head -1)"
     desc="$(printf '%s\n' "$fm" | sed -n 's/^description: *//p' | head -1)"
     if [ -z "$name" ]; then echo "  ! NO name: ${f#$root/}"; bad=1; fi
@@ -99,6 +140,15 @@ canary "missing description"      bash -c 'sed -i.bak "/^description:/d" "$0" &&
 canary "name not the slug"        bash -c 'sed -i.bak "s/^name: .*/name: km-other/" "$0" && rm -f "$0.bak"' "$f"
 canary "unparseable plain scalar" bash -c 'sed -i.bak "s/^description: /description: Trigger: /" "$0" && rm -f "$0.bak"' "$f"
 canary "over the word budget"     bash -c 'sed -i.bak "s/^description: .*/& and then it continues well past any reasonable residency budget with filler words added purely to push this sentence over the enforced ceiling of forty words in total, twice over if need be/" "$0" && rm -f "$0.bak"' "$f"
+canary "unterminated block"       bash -c 'sed -i.bak "4d" "$0" && rm -f "$0.bak"' "$f"
+# The same mutation on a fixture whose BODY carries a `---` rule, which every shipped skill file
+# does. The block then finds a closing delimiter further down and swallows the prose between.
+canary "terminator deleted, body rule swallowed" bash -c 'sed -i.bak "4d" "$0" && printf "You have been invoked as /km-thing, and this prose is now inside the block.\n\n---\n\nmore body\n" >> "$0" && rm -f "$0.bak"' "$f"
+canary "closed with '...' not ---" bash -c 'sed -i.bak "4s/^---$/.../" "$0" && rm -f "$0.bak"' "$f"
+canary "duplicate name key"       bash -c 'sed -i.bak "2a\\
+name: km-other" "$0" && rm -f "$0.bak"' "$f"
+canary "duplicate description key" bash -c 'sed -i.bak "3a\\
+description: A second and contradictory description that a first-match reader silently discards here." "$0" && rm -f "$0.bak"' "$f"
 
 echo
 if [ "$fail" -eq 0 ]; then echo "ALL SKILL FRONTMATTER CHECKS PASSED"; else echo "SKILL FRONTMATTER CHECKS FAILED"; fi

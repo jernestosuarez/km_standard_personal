@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: v1.45 | run against published main at c3e4ffe before the RFC landed, where it names all nine real dangling references at their exact lines and reports only RFC-005, so the failure is selective.
+# km-unrepaired-tree: v1.55 | re-stated for the quotation-anchoring repair. Cases 8b are its evidence, run against the unrepaired check first: both quotation fixtures, whose STANDARD.md carries a dangling RFC-999 and a quoted token, passed at exit 0 with STANDARD.md exempted by a token it merely mentioned. On the real repository at 13dec55 the same sentence at line 13 of STANDARD.md exempted the home of record, reporting 171 references across 130 files against a true 257 across 131, and 5 path references against a true 15, at exit 0. The v1.45 declaration this replaces still holds: run against published main at c3e4ffe before the RFC landed, where it names all nine real dangling references at their exact lines and reports only RFC-005, so the failure is selective.
 # Canaries for the RFC reference-integrity check (scripts/validate_rfc_references.py), added in
 # v1.45.
 #
@@ -301,6 +301,58 @@ if printf '%s' "$silent_out" | grep -q "no RFC reference was found"; then
 else
   echo "FAIL: the boundary case did not refuse for the stated reason"
   printf '%s\n' "$silent_out"
+  fail=1
+fi
+
+# ── 8b. AN EXEMPTION IS DECLARED, NEVER QUOTED (v1.55) ───────────────────────────────────────────
+# This reader shares its shape with scripts/validate_published_not_draft.py, and shared its defect:
+# the token was matched anywhere in the file's first EXEMPT_SCAN_LINES lines, raw. Measured on the
+# real repository at 13dec55, one sentence inserted at line 13 of STANDARD.md exempted the home of
+# record, and the run reported "171 RFC reference(s) found across 130 file(s)" against a true 257
+# across 131, with 5 of them written as a path against a true 15, at exit 0. Each fixture below
+# carries a genuinely dangling reference in STANDARD.md and nowhere else, so a check that honours
+# the quotation passes and a check that does not fails and names the reference.
+
+make_root "$work/rfcquoteprose" "A section citing RFC-999, which does not exist." ""
+sed -i.bak '3i\
+A file opts out by writing `rfc-reference-exempt: <reason>` near its top.
+' "$work/rfcquoteprose/STANDARD.md" && rm -f "$work/rfcquoteprose/STANDARD.md.bak"
+rfcprose_out=$(run_check "$work/rfcquoteprose"); rfcprose_status=$?
+if [ "$rfcprose_status" -eq 1 ] && printf '%s' "$rfcprose_out" | grep -q "RFC-999"; then
+  echo "PASS: a MID-SENTENCE quotation of the token does not exempt the file that quotes it"
+else
+  echo "FAIL: a quoted token exempted the file that quotes it (exit $rfcprose_status)"
+  printf '%s\n' "$rfcprose_out"
+  fail=1
+fi
+
+make_root "$work/rfcquotefence" "A section citing RFC-999, which does not exist." ""
+sed -i.bak '3i\
+```text\
+rfc-reference-exempt: only an example of the syntax\
+```
+' "$work/rfcquotefence/STANDARD.md" && rm -f "$work/rfcquotefence/STANDARD.md.bak"
+rfcfence_out=$(run_check "$work/rfcquotefence"); rfcfence_status=$?
+if [ "$rfcfence_status" -eq 1 ] && printf '%s' "$rfcfence_out" | grep -q "RFC-999"; then
+  echo "PASS: a FENCED quotation of the token does not exempt the file that quotes it"
+else
+  echo "FAIL: a fenced token exempted the file that quotes it (exit $rfcfence_status)"
+  printf '%s\n' "$rfcfence_out"
+  fail=1
+fi
+
+# The other direction, so the anchor is not an exemption nobody can ever declare.
+make_root "$work/rfcquotereal" "A section citing RFC-999, which does not exist." ""
+sed -i.bak '3i\
+rfc-reference-exempt: a genuine declaration at the start of a line
+' "$work/rfcquotereal/STANDARD.md" && rm -f "$work/rfcquotereal/STANDARD.md.bak"
+rfcreal_out=$(run_check "$work/rfcquotereal"); rfcreal_status=$?
+if [ "$rfcreal_status" -eq 0 ] \
+   && printf '%s' "$rfcreal_out" | grep -q "exempt: STANDARD.md (a genuine declaration"; then
+  echo "PASS: a real declaration at the start of a line is still honoured, and named with its reason"
+else
+  echo "FAIL: the anchor rejected a real declaration too (exit $rfcreal_status)"
+  printf '%s\n' "$rfcreal_out"
   fail=1
 fi
 
