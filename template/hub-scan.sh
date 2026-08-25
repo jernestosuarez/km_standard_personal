@@ -283,6 +283,22 @@ currency_extra_docs=$(find "$HUB/working-docs" -name '*.md' -type f 2>/dev/null 
 # Read one frontmatter field. Frontmatter only — the body is not the graph.
 # Strips inline YAML comments and surrounding quotes/whitespace, so a documented field
 # (`last-reviewed: 2026-07-14  # last confirmed true`) still parses as a value.
+# REGISTERED GAP, NOT CLOSED HERE (recorded in v1.58, drafted and unpublished; this note binds
+# nothing until that version's owner push). This reader prints the FIRST MATCHING LINE and stops, so
+# it returns the first physical line of a value, never the folded logical value. YAML folds a plain
+# scalar across more-indented continuation lines, so a manifest declaring
+#
+#   routing-keywords: alpha, beta,
+#     gamma, delta, epsilon
+#
+# yields "alpha, beta," here while a YAML parser yields all five. The per-token validation the
+# routing-keywords gate below performs (v1.44) is then applied to a fragment: it reports two usable
+# keywords and a stray empty entry, the hub scans green, and three keywords are invisible to every
+# surface that routes on them. The same class sits in the decision surface's own reader of this
+# field. It is registered rather than repaired inside v1.58 because this helper serves every field
+# the scan reads and is inherited by every hub, so it needs its own canaries and its own
+# unrepaired-tree runs rather than a change riding inside a repair to a different instrument.
+# STANDARD.md states it under "A check that reads a compound value validates its parts".
 fm_field() {
   awk -v k="$2" '
     /^---$/ { n++; if (n==2) exit; next }

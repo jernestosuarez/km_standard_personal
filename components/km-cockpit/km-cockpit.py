@@ -153,6 +153,14 @@ def load_hubs():
                 dep_raw = dep.read_text(encoding="utf-8", errors="replace")
             except OSError:
                 dep_raw = ""
+            # REGISTERED GAP, NOT CLOSED HERE (recorded in v1.58, drafted and unpublished; this
+            # note binds nothing until that version's owner push). `[^"\n]*` cannot cross a
+            # newline and `$` under re.M ends at the physical line, so this reads the first line of
+            # routing-keywords and never the folded YAML value. A manifest declaring five keywords
+            # across two lines routes on two here. The hub scan's own reader of this field carries
+            # the same class; both are registered together in STANDARD.md under "A check that reads
+            # a compound value validates its parts", and repairing them belongs in a change scoped
+            # to those readers rather than inside a repair to an unrelated instrument.
             m = re.search(r'^routing-keywords:\s*"?([^"\n]*)"?\s*$', dep_raw, re.M)
             kws = [k.strip().lower() for k in (m.group(1) if m else "").split(",") if k.strip()]
             if re.search(r'^initiation-interview:\s*"?\S', dep_raw, re.M):

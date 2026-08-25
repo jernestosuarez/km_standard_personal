@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # km-release-gate: the one command that runs the whole gate and returns one verdict.
 #
-# km-unrepaired-tree: v1.56 | re-stated because this version edits this file. The edit is to the header block alone, correcting a claim that the CI workflow carries a copy of the limits when v1.55 deleted that copy, and removing the prose count of them; no arm of the gate changes, so there is no new unrepaired-tree run to record for the gate itself and none is invented. The v1.55 declaration this re-states still holds in full: re-stated for the exemption-anchoring repair, and run against the unrepaired tree first: with README.md given a broken relative link and a fenced text block quoting km-gate-link-exempt, check_links reported 0 failures, "153 of 154 markdown files scanned, 1 exempt" and 88 links resolved; the same tree without the fenced example reported 1 failure naming the broken link and 113 links resolved. A quotation removed a document from the scan and 25 links from the count at exit 0. The repaired reader reports the failure in both shapes and still honours a real declaration at the start of a line. The v1.54 declaration this replaces still holds: re-stated for the discovery-scope repair, and run against the unrepaired tree first: with an untracked tests/test_zz_probe.sh holding a line bash -n rejects, this gate reported "33 check(s) discovered" and "PASS release-gate", exit 0, the same count and the same verdict as the clean tree, having neither run nor named the check. Earlier, under v1.46, it was run against deliberately broken trees (a suite made to fail, a suite made unexecutable, an emptied discovery set, a stripped declaration) and refused or failed in each; see tests/test_release_gate.sh.
+# km-unrepaired-tree: v1.58 | re-stated for the tree-stability repair and the limits-definition repair. Run against the unrepaired gate at 510cf03 before either repair was written, through the four fixtures added as cases 21a-21d of tests/test_release_gate.sh. A fixture whose discovered suite edits another discovered check mid-run: PASS release-gate, exit 0. A fixture whose suite creates a new check-shaped file mid-run: PASS release-gate, exit 0, over a check the gate had never discovered, never held to the declaration rule and never executed. A fixture whose suite moves HEAD with no file content differing: PASS release-gate, exit 0. All three are the reviewer's observed case in miniature, where this gate began on a clean branch, the branch changed at 14:16, tests/test_restricted_lint.sh was modified at ~14:18, and the gate returned PASS after ~900s still reporting zero changed declarations. The repaired gate refuses each of the three at exit 2 naming what moved, and a fixture changed OUTSIDE the discovery set still passes, which is limit 5 and is pinned as a gap by case 21e. On the limits, the unrepaired file typed 'the same four limits' in prose 185 lines below its own claim that the count is not restated in prose anywhere, argued four numbered limits a second time in the header in file order 1, 3, 2, 4, and pointed twice at GATE_LIMITS, which nothing defined. The v1.56 declaration this replaces still holds: re-stated because this version edits this file. The edit is to the header block alone, correcting a claim that the CI workflow carries a copy of the limits when v1.55 deleted that copy, and removing the prose count of them; no arm of the gate changes, so there is no new unrepaired-tree run to record for the gate itself and none is invented. The v1.55 declaration this re-states still holds in full: re-stated for the exemption-anchoring repair, and run against the unrepaired tree first: with README.md given a broken relative link and a fenced text block quoting km-gate-link-exempt, check_links reported 0 failures, "153 of 154 markdown files scanned, 1 exempt" and 88 links resolved; the same tree without the fenced example reported 1 failure naming the broken link and 113 links resolved. A quotation removed a document from the scan and 25 links from the count at exit 0. The repaired reader reports the failure in both shapes and still honours a real declaration at the start of a line. The v1.54 declaration this replaces still holds: re-stated for the discovery-scope repair, and run against the unrepaired tree first: with an untracked tests/test_zz_probe.sh holding a line bash -n rejects, this gate reported "33 check(s) discovered" and "PASS release-gate", exit 0, the same count and the same verdict as the clean tree, having neither run nor named the check. Earlier, under v1.46, it was run against deliberately broken trees (a suite made to fail, a suite made unexecutable, an emptied discovery set, a stripped declaration) and refused or failed in each; see tests/test_release_gate.sh.
 #
 # Standard: STANDARD.md §"Publishing a version" step 5, and §"Standard Maintainer" under
 # "A gate runs before publication, and it declares what it cannot do".
@@ -14,57 +14,33 @@
 #                     unrepaired-tree declaration failed
 #       2  REFUSED  the gate could not evaluate: no repository, an empty discovery set, an
 #                     unreadable or undecodable file, a discovered check that could not be executed,
-#                     or an exemption the gate could not honour
+#                     an exemption the gate could not honour, or a tree that changed while the gate
+#                     ran (v1.58), which makes the verdict one about no tree that exists
 #
 # Neither 1 nor 2 is a pass. The distinction says whether the tree is bad or the gate was blind, and
 # a gate that reported "blind" as "clean" would be the absence-shaped pass this repository has
 # already been bitten by three times.
 #
 # ------------------------------------------------------------------------------------------------
-# WHAT THIS GATE CANNOT DO. The limits are argued here and held as data in GATE_LIMITS below, which
-# is the one definition every surface prints from; the CI workflow carried a copy until v1.55 and now
-# runs `--limits` instead, so this block no longer claims a copy that is not there (corrected in
-# v1.56). The first two are here because a green line from this command is read as "safe to publish"
-# and neither of them is covered by it. The third was found by running this gate against a
-# deliberately broken tree, and it is recorded in the same place rather than in a report nobody
-# re-reads. The fourth is the residual scope of the v1.54 discovery repair, written down as a gap
-# rather than left to be found. The ordinals below are the argument's order and the count of them is
-# not restated in prose anywhere: read GATE_LIMITS, or run `--limits`.
+# WHAT THIS GATE CANNOT DO. Read LIMITS below, or run `--limits`. That structure is the ONLY place
+# the limits are defined, and it carries each limit's full argument beside the words every surface
+# prints, so there is nothing here to keep in step with it (reduced to one definition in v1.58,
+# drafted and unpublished; this material binds nothing until this version's owner push).
 #
-# 1. IT CANNOT RUN THE ORGANISATION LEAKAGE SCAN. That scan needs a denylist generated from a real
-#    organisation's own entity names, and that denylist lives outside this repository BY DESIGN:
-#    carrying it here would itself be the leakage the guard exists to prevent. So this gate runs the
-#    leakage instrument's canaries and proves the INSTRUMENT works. It can never prove that a given
-#    push is clean. The fail-closed pre-push hook on a deployment's own clone is the only thing that
-#    scans an actual push, and it is local and untracked. This is a stated limit of the gate, not a
-#    defect awaiting a fix.
+# Until v1.58 the same set was maintained in three places: the LIMITS tuple; a numbered prose block
+# HERE that argued each limit again; and four hardcoded `grep -Fq` assertions in
+# tests/test_release_gate.sh that pinned this block's exact wording. The tuple's own comment said
+# "Adding a fifth limit is an edit to this tuple and to nothing else", which was FALSE ON THE DAY IT
+# WAS WRITTEN at v1.55 -- both other places already stood on that tree -- so it is corrected here
+# under the v1.47 rule rather than dated under v1.56's. Two smaller symptoms of the same separate
+# maintenance came with it: this block pointed twice at `GATE_LIMITS`, a name nothing defined, and
+# claimed the count "is not restated in prose anywhere" while the tuple's comment 185 lines below
+# said "the same four limits". The block's own entries had drifted into file order 1, 3, 2, 4.
 #
-# 3. IT READS A CHECK'S EXIT STATUS AND CANNOT SEE INSIDE IT. This was found by running the gate
-#    against a deliberately broken tree rather than reasoned about: a real suite was given a command
-#    that does not exist, and the gate PASSED, because the suite is not run under `set -e`, swallowed
-#    the 127, and exited 0 on its own accounting. The gate reported exactly what the check reported.
-#    Nothing here reaches a check that fails internally and returns success, and no runner that
-#    treats a check as a black box can. That is what the canary rule the standard already carries is
-#    for, and it is why this limit is stated beside the other two rather than filed as a defect. The
-#    refusal on 127 below catches only the case where the PROCESS itself ends on the missing command.
-#
-# 2. IT CANNOT SUPPLY A SECOND ACTOR. The minimum viable independence is an adversarial pass, by
-#    someone other than the change's author, against the specific class being repaired. No runner
-#    verifies that it happened, and this one does not pretend to. What it CAN do is require the
-#    declaration: every check under the discovery scope carries a machine-read
-#    `km-unrepaired-tree:` line recording what happened when it was run against the tree it was
-#    written to catch, and a missing or malformed line fails the gate. That converts an unverifiable
-#    process property into a checkable one, which is the move this standard already makes for
-#    exemptions, where an exemption with no stated reason is refused. The gate checks that a
-#    declaration was MADE. It cannot check that it is TRUE.
-#
-# 4. IT DOES NOT SEE AN IGNORED FILE. Discovery honours the repository's ignore rules, so a
-#    check-shaped file under an ignored path is not discovered. That line is drawn on purpose: an
-#    ignored file is not a file the repository ships, and a gate that ran a vendored dependency's
-#    own `tests/` directory would be unusable. The cost is real and is stated rather than hidden: a
-#    path added to `.gitignore` leaves the gate, by an edit to a file that is neither the gate nor
-#    the check. Case 19j of tests/test_release_gate.sh pins this as a gap and not as a control, so a
-#    later change that closes it fails there loudly instead of quietly redefining the scope.
+# The repair reduces the count of maintained definitions rather than describing the drift, and the
+# proof is this version's own work: v1.58 adds a fifth limit, and adding it was an edit to LIMITS
+# and to nothing else. Cases 15a, 15b and 15c of tests/test_release_gate.sh keep it at one, and all
+# three derive -- none of them names a limit.
 #
 # ------------------------------------------------------------------------------------------------
 # DISCOVERY, AND WHY IT IS NOT A LIST, AND WHICH TREE IT READS.
@@ -186,6 +162,8 @@
 # Proven in both directions by tests/test_release_gate.sh.
 
 import argparse
+import collections
+import hashlib
 import json
 import os
 import re
@@ -213,38 +191,114 @@ NON_RELATIVE_RE = re.compile(r"^(https?:|mailto:|ftp:|tel:|data:|#)", re.I)
 
 
 # ------------------------------------------------------------------------------------------------
-# THE LIMITS, DEFINED ONCE. (v1.55.)
+# THE LIMITS, AND THIS IS THE ONLY PLACE THEY ARE DEFINED. (v1.55; reduced to one definition in
+# v1.58, drafted and unpublished -- this material binds nothing until this version's owner push.)
 #
-# These are the same four limits the header block above argues for. They live here as data because
-# they are printed in three places: the passing verdict, the failing verdict's one-line summary, and
-# `--limits`, which exists so that .github/workflows/release-gate.yml can show them in the CI log
-# instead of carrying a hand copy. It carried one, it documented TWO of the four, and it had already
-# drifted by the time an external reviewer read it. Adding a fifth limit is an edit to this tuple and
-# to nothing else.
+# Each entry carries its own STATEMENT, the SUMMARY lines every surface prints beside it, and the
+# full ARGUMENT for it. The argument used to live in a numbered prose block in the header, which
+# made this "definition" one of three; it is here now so that a limit and the reasoning for it
+# cannot drift apart, and so that adding one is genuinely an edit to this structure alone.
+#
+# `statement` and `summary` are printed in three places -- the passing verdict, the failing
+# verdict's one-line summary, and `--limits`, which exists so .github/workflows/release-gate.yml
+# can show them in the CI log instead of carrying a hand copy. It carried one, it documented two of
+# them, and it had already drifted when an external reviewer read it. `argument` is not printed:
+# a CI log wants the statement, and a maintainer wants the reasoning, and the reasoning is here
+# where the statement is rather than in a second file that would rot.
+#
+# NO SURFACE STATES A COUNT OF THESE IN PROSE. Every count is len(LIMITS). Case 15a of
+# tests/test_release_gate.sh holds this file to that, because the sentence claiming it and the
+# sentence breaking it used to sit 185 lines apart in this same file.
+Limit = collections.namedtuple("Limit", "statement summary argument")
+
 LIMITS = (
-    ("This gate does not run an organisation leakage scan and cannot.",
-     "The denylist is generated from an organisation's own entity names and is kept outside",
-     "this repository by design. The instrument's canaries prove the instrument; the",
-     "deployment's own fail-closed pre-push hook is the only thing that scans a push."),
-    ("No runner supplies a second actor.",
-     "The gate requires the unrepaired-tree declaration and cannot verify that an adversarial",
-     "pass by someone other than the author took place, nor that any declaration it read is",
-     "true."),
-    ("This gate reads a check's exit status and cannot see inside it.",
-     "A check that fails internally and returns success passes here. Canaries are what reach",
-     "inside a check; this reaches only its verdict."),
-    ("Discovery reads the working tree but honours the ignore rules.",
-     "A check-shaped file under an ignored path is not discovered. An ignored file is not one",
-     "this repository ships; the cost is that a path added to .gitignore leaves the gate",
-     "without any edit to the gate or to the check."),
+    Limit(
+        "This gate does not run an organisation leakage scan and cannot.",
+        ("The denylist is generated from an organisation's own entity names and is kept outside",
+         "this repository by design. The instrument's canaries prove the instrument; the",
+         "deployment's own fail-closed pre-push hook is the only thing that scans a push."),
+        """That scan needs a denylist generated from a real organisation's own entity names, and
+        that denylist lives outside this repository BY DESIGN: carrying it here would itself be the
+        leakage the guard exists to prevent. So this gate runs the leakage instrument's canaries
+        and proves the INSTRUMENT works. It can never prove that a given push is clean. The
+        fail-closed pre-push hook on a deployment's own clone is the only thing that scans an
+        actual push, and it is local and untracked. This is a stated limit of the gate, not a
+        defect awaiting a fix.""",
+    ),
+    Limit(
+        "No runner supplies a second actor.",
+        ("The gate requires the unrepaired-tree declaration and cannot verify that an adversarial",
+         "pass by someone other than the author took place, nor that any declaration it read is",
+         "true."),
+        """The minimum viable independence is an adversarial pass, by someone other than the
+        change's author, against the specific class being repaired. No runner verifies that it
+        happened, and this one does not pretend to. What it CAN do is require the declaration:
+        every check under the discovery scope carries a machine-read `km-unrepaired-tree:` line
+        recording what happened when it was run against the tree it was written to catch, and a
+        missing or malformed line fails the gate. That converts an unverifiable process property
+        into a checkable one, which is the move this standard already makes for exemptions, where
+        an exemption with no stated reason is refused. The gate checks that a declaration was MADE.
+        It cannot check that it is TRUE.""",
+    ),
+    Limit(
+        "This gate reads a check's exit status and cannot see inside it.",
+        ("A check that fails internally and returns success passes here. Canaries are what reach",
+         "inside a check; this reaches only its verdict."),
+        """Found by running this gate against a deliberately broken tree rather than reasoned
+        about: a real suite was given a command that does not exist, and the gate PASSED, because
+        the suite is not run under `set -e`, swallowed the 127, and exited 0 on its own accounting.
+        The gate reported exactly what the check reported. Nothing here reaches a check that fails
+        internally and returns success, and no runner that treats a check as a black box can. That
+        is what the canary rule the standard already carries is for, and it is why this is a stated
+        limit rather than a defect on a list. The refusal on 127 below catches only the case where
+        the PROCESS itself ends on the missing command.""",
+    ),
+    Limit(
+        "Discovery reads the working tree but honours the ignore rules.",
+        ("A check-shaped file under an ignored path is not discovered. An ignored file is not one",
+         "this repository ships; the cost is that a path added to .gitignore leaves the gate",
+         "without any edit to the gate or to the check."),
+        """That line is drawn on purpose: an ignored file is not a file the repository ships, and a
+        gate that ran a vendored dependency's own `tests/` directory would be unusable. The cost is
+        real and is stated rather than hidden: a path added to `.gitignore` leaves the gate, by an
+        edit to a file that is neither the gate nor the check. Case 19j of
+        tests/test_release_gate.sh pins this as a gap and not as a control, so a later change that
+        closes it fails there loudly instead of quietly redefining the scope. This is the residual
+        scope of the v1.54 discovery repair, written down rather than left to be found.""",
+    ),
+    Limit(
+        "A stable fingerprint is not a stable tree.",
+        ("The gate hashes what discovery reads, plus HEAD, before and after the run and refuses on",
+         "any difference. A file that changes and changes back inside the window is identical at",
+         "both ends and invisible; anything outside the discovery set is not fingerprinted at all,",
+         "so a PASS names the checks it judged and never the whole tree."),
+        """Added in v1.58 (drafted and unpublished; binds nothing until this version's owner push),
+        and it is the residual of the tree-stability repair rather than a defect awaiting a fix.
+        The run takes about twenty minutes on this repository, which is a wide window for a
+        maintainer editing alongside it, and until v1.58 nothing established that the tree at the
+        verdict was the tree that was discovered: an external reviewer watched this gate begin on a
+        clean branch, saw the branch change and a discovered check be edited underneath it, and saw
+        it return PASS after ~900s still reporting zero changed declarations. What the fingerprint
+        now buys is a REFUSAL naming what moved. What it does not buy is stated here, in two parts.
+        A before/after comparison cannot see a change that is undone inside the window, because
+        both ends are identical by construction and no evidence of the middle survives; catching
+        that needs a watcher rather than a pair of reads, which is a different instrument with a
+        different cost. And the fingerprint covers exactly the set discovery covers, so STANDARD.md,
+        the templates, the components and every other file the suites read can change mid-run and
+        this gate will still pass. Widening it was considered and refused: the suites and the tools
+        legitimately write inside the tree, and a fingerprint over everything would turn the gate
+        into one that refuses every run, which is the failure mode that gets a gate switched off.
+        Case 21e of tests/test_release_gate.sh pins the narrow scope as a gap and not as a
+        control.""",
+    ),
 )
 
 
 def print_limits(indent="    "):
     """Print every limit in LIMITS, numbered. The only renderer; there is no second copy."""
     for i, limit in enumerate(LIMITS, 1):
-        print("{}{}. {}".format(indent, i, limit[0]))
-        for line in limit[1:]:
+        print("{}{}. {}".format(indent, i, limit.statement))
+        for line in limit.summary:
             print("{}   {}".format(indent, line))
 
 
@@ -357,12 +411,90 @@ class Check(object):
         return self.instrument_canary is None
 
 
-def discover(root):
+def check_patterns():
+    """The pathspecs that define the discovery scope. Factored out because the fingerprint below
+    must cover exactly the set discovery covers, and two copies of a pathspec list would be the
+    hand-maintained memory this repository keeps repairing."""
     patterns = []
     for d in CHECK_DIRS:
         for suffix in CHECK_SUFFIXES:
             patterns.append("{}/*{}".format(d, suffix))
             patterns.append("*/{}/*{}".format(d, suffix))
+    return patterns
+
+
+def git_head(root):
+    """HEAD, or a stable sentinel on an unborn branch. Never refuses: an unborn branch is a real
+    state, and what matters here is that the two reads are comparable, not that a commit exists."""
+    proc = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"], capture_output=True)
+    if proc.returncode != 0:
+        return "<unborn>"
+    return proc.stdout.decode("utf-8", "replace").strip()
+
+
+def fingerprint(root):
+    """What the gate read, in a form it can hold against itself when the run ends. (v1.58.)
+
+    THE TREE AT THE VERDICT MUST BE THE TREE THAT WAS DISCOVERED, AND UNTIL v1.58 NOTHING SAID SO.
+    Discovery and the declaration phase run first, the suites run after, and the whole pass takes
+    about twenty minutes on this repository. An external reviewer watched this gate start on a clean
+    branch, watched the branch change and a discovered check be edited underneath it, and watched it
+    return PASS after ~900s still reporting zero changed declarations. The maintainer's own drafting
+    agent was the thing editing the tree; the defect is that the gate cannot TELL, not that anyone
+    misbehaved. Twenty minutes is a wide window for a maintainer working alongside a run, and a gate
+    whose PASS cannot name the tree it judged certifies nothing.
+
+    THE OBVIOUS REPAIR IS THE WRONG ONE. Running against an immutable snapshot would mean
+    snapshotting tracked content, and since v1.54 this gate reads the WORKING tree -- tracked union
+    untracked-not-ignored -- precisely because a check authored in the change being gated is
+    untracked at the moment the gate runs. A snapshot of tracked content would silently undo v1.54
+    and reopen the defect that version closed, which is the worst available outcome here.
+
+    So: fingerprint what the gate actually reads, before and after, and REFUSE on any difference.
+    The set is exactly the set discovery reads, by the same pathspecs, tracked and untracked
+    alike, hashed by content so an edit that leaves the size alone is still seen. HEAD rides with it
+    so a branch change is caught even when every file happens to match, which is the reviewer's own
+    case and the half no content hash alone can reach.
+
+    On drift the verdict is a REFUSAL naming what moved. Not a PASS, and not a silent re-run: a
+    re-run would hide that the tree is moving under the maintainer, and that is the thing worth
+    knowing. The residual is limit 5 and is not hidden here: a file that changes and changes back
+    inside the window is byte-identical at both ends, and anything outside the discovery set is not
+    fingerprinted at all.
+    """
+    patterns = check_patterns()
+    rels = sorted(set(git_tracked(root, patterns)) | set(git_untracked(root, patterns)))
+    digests = {}
+    for rel in rels:
+        try:
+            digests[rel] = hashlib.sha256((root / rel).read_bytes()).hexdigest()
+        except OSError as exc:
+            refuse(
+                "{} is in the discovery scope and could not be read to fingerprint the tree ({}); "
+                "a tree the gate cannot describe is not one it can return a verdict "
+                "about".format(rel, exc)
+            )
+    return {"head": git_head(root), "files": digests}
+
+
+def fingerprint_drift(before, after):
+    """Everything that moved between the two reads, named. An empty list means the tree held."""
+    drift = []
+    if before["head"] != after["head"]:
+        drift.append("HEAD moved from {} to {}".format(before["head"][:12], after["head"][:12]))
+    old, new = before["files"], after["files"]
+    for rel in sorted(set(old) - set(new)):
+        drift.append("{} disappeared".format(rel))
+    for rel in sorted(set(new) - set(old)):
+        drift.append("{} appeared".format(rel))
+    for rel in sorted(set(new) & set(old)):
+        if old[rel] != new[rel]:
+            drift.append("{} changed content".format(rel))
+    return drift
+
+
+def discover(root):
+    patterns = check_patterns()
     tracked = git_tracked(root, patterns)
     untracked = [r for r in git_untracked(root, patterns) if r not in set(tracked)]
     rels = sorted(set(tracked) | set(untracked))
@@ -745,6 +877,10 @@ def main():
         except ValueError:
             self_rel = None
 
+        # Taken BEFORE discovery, so a file that appears between the fingerprint and the walk is
+        # drift rather than something the gate quietly absorbed.
+        before = fingerprint(root)
+
         checks = discover(root)
         runners = [c for c in checks if c.runs]
         instruments = [c for c in checks if not c.runs]
@@ -792,6 +928,18 @@ def main():
         for rel, reason in link_exempt:
             print("  skip  {} (link scan)".format(rel))
             print("        {}".format(reason))
+
+        # The tree at the verdict must be the tree that was discovered. Compared here, before
+        # either verdict branch, because a FAIL over a tree nobody has is no more useful than a
+        # PASS over one: both describe a state that was never whole. See fingerprint() above.
+        drift = fingerprint_drift(before, fingerprint(root))
+        if drift:
+            refuse(
+                "the tree changed while the gate ran, so this verdict would be about no tree that "
+                "exists: {}. Re-run the gate on a tree nobody is editing. It refuses rather than "
+                "passing, and rather than re-running itself, because a tree moving underneath a "
+                "twenty-minute pass is the thing worth knowing.".format("; ".join(drift))
+            )
 
         coverage = (
             "{} check(s) discovered under {}, {} run and {} skipped as instruments covered by "

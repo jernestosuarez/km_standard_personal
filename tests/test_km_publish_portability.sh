@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: v1.51 | case 10 is the unrepaired-tree run: tools/km-publish.sh is extracted from published main at 44622d5 and driven with `ls` shimmed to return nothing, which is what a host with no Apple Silicon Homebrew prefix presents, while a usable python3.12 stands first on PATH; it exits 1 with "ERROR: no Homebrew python3. One-off setup:  brew install python@3.12 pango gdk-pixbuf libffi" and never looks at PATH. Case 11 is the second unrepaired run: template/hub-scan.sh extracted from the same commit, over a fixture hub carrying tools/.venv/, prints "! UNCOMMITTED OR UNTRACKED MONITORED FILES: ?? tools/.venv/" in its [ INTEGRITY ] block. Case 11d is the third: the same unrepaired scan, over the same fixture hub with a LICENSE.md placed inside tools/.venv/ (which is what the pinned renderer's environment actually carries under site-packages), indexes 23 note names against the repaired scan's 22, so the vendored licence was a name a hub wiki-link could have resolved against. All three are paired here with the repaired tree on the same input, which is what makes any of them evidence.
+# km-unrepaired-tree: v1.58 | re-stated for the pin's single-definition repair. Case 7c was run against the unrepaired tool at 510cf03 before the repair was written and reported 'FAIL: 7c. the pin claims one place and the tool holds 2 version literal(s); derived agreement: 1', exiting 1. The two literals were WEASYPRINT_PIN="weasyprint==69.0" and WEASYPRINT_VERSION="69.0", standing under a comment reading 'THE PIN. One name, one place ... editing this line is sufficient to change what renders'. It was not sufficient: WEASYPRINT_VERSION is what venv_ready compares the installed renderer against and what the environment path is built from, so a bumped pin would install one version and verify against another. That fails closed, which is why the existing case 7 passed over it and nothing had caught it. The 'derived agreement: 1' in the red result is the tell that the two literals happened to agree TODAY, which is exactly what a hand-maintained second copy looks like until the day it is edited. With the bare version derived from the pin the case reports 'PASS: 7c. the renderer version is one literal and the version derives from the pin' and the suite exits 0 with 23 assertions. Found by the sweep v1.58 ran for the class 'a comment claims a single definition where several are maintained'. The v1.51 declaration this replaces still holds: case 10 is the unrepaired-tree run: tools/km-publish.sh is extracted from published main at 44622d5 and driven with `ls` shimmed to return nothing, which is what a host with no Apple Silicon Homebrew prefix presents, while a usable python3.12 stands first on PATH; it exits 1 with "ERROR: no Homebrew python3. One-off setup:  brew install python@3.12 pango gdk-pixbuf libffi" and never looks at PATH. Case 11 is the second unrepaired run: template/hub-scan.sh extracted from the same commit, over a fixture hub carrying tools/.venv/, prints "! UNCOMMITTED OR UNTRACKED MONITORED FILES: ?? tools/.venv/" in its [ INTEGRITY ] block. Case 11d is the third: the same unrepaired scan, over the same fixture hub with a LICENSE.md placed inside tools/.venv/ (which is what the pinned renderer's environment actually carries under site-packages), indexes 23 note names against the repaired scan's 22, so the vendored licence was a name a hub wiki-link could have resolved against. All three are paired here with the repaired tree on the same input, which is what makes any of them evidence.
 # Canaries for the publisher's portability repair in tools/km-publish.sh, template/hub-scan.sh and
 # the two ignore files (v1.51). Audit finding F-10.
 #
@@ -194,6 +194,31 @@ if grep -vE '^[[:space:]]*#' "$TOOL" | grep -qE 'pip[^#]*install[^#]*[[:space:]]
   die "7b. an unpinned 'pip install weasyprint' is still present in the tool"
 else
   pass "7b. no unpinned install of the renderer remains in the tool"
+fi
+
+# --- 7c. the pin is ONE literal, because the comment beside it says so (added in v1.58, drafted
+#         and unpublished; this case binds nothing until this version's owner push) --------------
+# Found by the sweep v1.58 ran for the class "a comment claims a single definition where several
+# are maintained". The comment above the pin reads "THE PIN. One name, one place ... editing this
+# line is sufficient to change what renders", and two lines carried the version: WEASYPRINT_PIN
+# held the requirement string and WEASYPRINT_VERSION held the bare number, the second being what
+# venv_ready compares the installed renderer against and what the environment path is built from.
+# Editing the pin alone was NOT sufficient: it would install one version and verify against
+# another. That fails closed, which is why it had gone unnoticed, and it makes the comment false.
+# The repair derives the second from the first.
+#
+# The assertion is derived twice over: it counts the version literals rather than naming one, and
+# it evaluates the two assignments and requires them to agree, so neither a third literal nor a
+# broken derivation passes.
+version_literals=$(grep -cE '^WEASYPRINT_[A-Z]+=.*[0-9]+\.[0-9]+' "$TOOL")
+pin_agrees=0
+( eval "$(grep -E '^WEASYPRINT_PIN=' "$TOOL")"
+  eval "$(grep -E '^WEASYPRINT_VERSION=' "$TOOL")"
+  [ -n "${WEASYPRINT_PIN:-}" ] && [ "${WEASYPRINT_VERSION:-}" = "${WEASYPRINT_PIN#*==}" ] ) && pin_agrees=1
+if [ "$version_literals" -eq 1 ] && [ "$pin_agrees" -eq 1 ]; then
+  pass "7c. the renderer version is one literal and the version derives from the pin"
+else
+  die "7c. the pin claims one place and the tool holds $version_literals version literal(s); derived agreement: $pin_agrees"
 fi
 
 # --- 8. the environment is outside the tree by default, and relocatable -------------------------

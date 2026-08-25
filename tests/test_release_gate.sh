@@ -501,12 +501,26 @@ note "       path added to .gitignore leaves the gate without any edit to the ga
 #     three assertions below are what keeps it at one. Each is DERIVED: none of them names a limit.
 # ================================================================================================
 
+# A CLAIM IS READ WHERE A CLAIM IS MADE, AND A QUOTATION IS NEVER A CLAIM. 15a and 15c below read
+# the gate's own prose for statements it maintains by hand, and a repair to that class necessarily
+# QUOTES the wording it removed -- the version row, the header's own record of what was wrong, the
+# `km-unrepaired-tree` declaration. An unanchored search reads those quotations as the defect and
+# reports a file that has just been repaired, which is the class STANDARD.md states under "A status
+# is read where a status is declared, and quoted everywhere else" (v1.52) and again under "A
+# directive token is read where a directive is declared" (v1.55). Written unanchored first, both
+# cases did exactly that, on this change's own repair.
+#
+# Two anchors, and both are rules rather than conveniences. Text inside double quotes or backticks
+# is a quotation and is blanked. The `km-unrepaired-tree` line is a DATED RECORD of what a past
+# tree did, which this standard's own rule forbids rewriting to agree with the present, so it is
+# blanked too -- in place, so the line numbers a failure reports stay true.
+gate_claims() { sed 's/^# km-unrepaired-tree:.*$//' "$1" | sed 's/"[^"]*"/""/g; s/`[^`]*`/``/g'; }
+
 # 15a. No surface states a count of the limits in prose. The gate's own header has claimed since
-#      v1.55 that "the count of them is not restated in prose anywhere", and 185 lines below it the
-#      tuple's comment said "the same four limits". A number typed beside the set it counts is the
-#      artifact class STANDARD.md records as the one that rots, and this file carried the claim and
-#      the counter-example at once.
-prose_counts=$(grep -nEi '(one|two|three|four|five|six|seven|eight|nine|ten|[0-9]+)[ -]+limits?\b' "$GATE" || true)
+#      v1.55 that the count is not restated in prose anywhere, and 185 lines below it the tuple's
+#      comment stated it. A number typed beside the set it counts is the artifact class STANDARD.md
+#      records as the one that rots, and this file carried the claim and the counter-example at once.
+prose_counts=$(gate_claims "$GATE" | grep -nEi '(one|two|three|four|five|six|seven|eight|nine|ten|[0-9]+)[ -]+limits?\b' || true)
 if [ -z "$prose_counts" ]; then
   note "PASS: 15a. the gate states no count of its own limits in prose; every surface derives it"
 else
@@ -531,15 +545,42 @@ fi
 #      pointed twice at `GATE_LIMITS` while the definition was named `LIMITS`, so the one sentence
 #      telling a reader where the single definition lives named nothing at all. This is the same
 #      class as a reference whose target is not in the tree (STANDARD.md, v1.45), one scope down.
-undefined_consts=$(awk 'NR==1{next} /^[[:space:]]*(#|$)/{print; next} {exit}' "$GATE" \
-  | grep -oE '\b[A-Z][A-Z0-9]*(_[A-Z0-9]+)+\b' | sort -u | while read -r n; do
-      grep -qE "^${n}[[:space:]]*=" "$GATE" || echo "$n"
-    done)
+undefined_in() { # <gate-file> -> the constant names its header claims and its body never defines
+  gate_claims "$1" | awk 'NR==1{next} /^[[:space:]]*(#|$)/{print; next} {exit}' \
+    | grep -oE '\b[A-Z][A-Z0-9]*(_[A-Z0-9]+)+\b' | sort -u | while read -r n; do
+        grep -qE "^${n}[[:space:]]*=" "$1" || echo "$n"
+      done
+}
+undefined_consts=$(undefined_in "$GATE")
 if [ -z "$undefined_consts" ]; then
   note "PASS: 15c. every constant the gate's header names is defined in the gate"
 else
   note "FAIL: 15c. the gate's header names a constant the gate does not define"
   printf '%s\n' "$undefined_consts" | sed 's/^/       /'
+  fail=1
+fi
+
+# 15d/15e. THE ANCHORING ABOVE IS A NARROWING, AND A NARROWING PROVES NOTHING BY GOING GREEN.
+#      "A rule narrowed until the tree goes green passes, and so does a rule that has stopped
+#      matching entirely" -- STANDARD.md, v1.52 -- and the only case that separates the two is a
+#      record genuinely in one state while quoting the other. So both anchored greps are run
+#      against a copy of the gate carrying the v1.55 wording as a LIVE claim rather than as a
+#      quotation, and both must fire on it. Without these, 15a and 15c could have been anchored
+#      into silence by this very change and nothing would have said so.
+probe="$work/gate_probe.py"
+awk 'NR==2{print; print "# These are the same four limits the header block above argues for."
+           print "# Read GATE_LIMITS below, which is the one definition every surface prints from."
+           next} {print}' "$GATE" > "$probe"
+if [ -n "$(gate_claims "$probe" | grep -Ei '(one|two|three|four|five|six|seven|eight|nine|ten|[0-9]+)[ -]+limits?\b' || true)" ]; then
+  note "PASS: 15d. the anchored count check still fires on an unquoted prose count"
+else
+  note "FAIL: 15d. the anchored count check has been narrowed into silence"
+  fail=1
+fi
+if [ -n "$(undefined_in "$probe")" ]; then
+  note "PASS: 15e. the anchored constant check still fires on an unquoted undefined constant"
+else
+  note "FAIL: 15e. the anchored constant check has been narrowed into silence"
   fail=1
 fi
 
@@ -552,7 +593,11 @@ fi
 # ================================================================================================
 WORKFLOW="$ROOT/.github/workflows/release-gate.yml"
 limits_out=$(python3 "$GATE" --limits 2>&1); limits_status=$?
-defined=$(grep -c '^    ("' "$GATE")
+# Counted from the definition's own opening marker. v1.58 gave each limit a `Limit(` constructor so
+# that its statement, the lines every surface prints, and its full argument sit together; this is
+# the one place the canaries touch that shape, and it is a count of the definition rather than a
+# copy of it.
+defined=$(grep -c '^    Limit($' "$GATE")
 printed=$(printf '%s\n' "$limits_out" | grep -cE '^  [0-9]+\. ')
 if [ "$limits_status" -eq 0 ] && [ "$defined" -gt 0 ] && [ "$printed" -eq "$defined" ]; then
   note "PASS: 20. --limits prints every limit the gate defines ($printed of $defined), exit 0"

@@ -14,6 +14,13 @@
 #   3. `description` survives a plain-scalar parse: no colon-followed-by-space in the value.
 #      A quoted scalar is one naive frontmatter reader away from showing its own quote marks.
 #   4. `description` stays inside the residency budget (roughly 15-30 words; 10-40 enforced).
+#      Rules 2, 3 and 4 are applied to the LOGICAL value, folded across every continuation line,
+#      never to the value's first physical line (repaired in v1.58, drafted and unpublished; this
+#      material binds nothing until this version's owner push). A plain YAML scalar folds each
+#      more-indented line that follows it into one value, so a first line inside the budget can
+#      carry a folded value far outside it, and until v1.58 that passed. The block is therefore
+#      walked with state: a continuation is folded into the key it continues, and an indented line
+#      that no key precedes is a violation rather than something to skip.
 # The same slug shipped in several trees (root distribution copy, .claude mirror, .agents mirror)
 # must carry byte-identical frontmatter, or the copies drift the moment one is edited.
 # Each check is then proved against a synthetic violation, so a check that cannot fail is caught.
@@ -36,7 +43,7 @@ die()  { echo "FAIL: $1"; fail=1; }
 # --- the checker, as a function, so the canaries can run it against a synthetic tree ---
 # Usage: check_tree <root>  → prints one line per violation, exit 1 if any
 check_tree() {
-  local root="$1" bad=0 f slug fm name desc words close key n_key fmline
+  local root="$1" bad=0 f slug fm name desc words close key val cont cur_key n_name n_desc fmline
   while IFS= read -r f; do
     [ -z "$f" ] && continue
     slug="$(basename "$(dirname "$f")")"
@@ -56,28 +63,76 @@ check_tree() {
     # the closing delimiter down the document and the block swallows the body. The keys are still
     # there, still unique, and the block still "closes". This rule is what makes the swallowed prose
     # visible.
+    #
+    # THE VALUE READ IS THE LOGICAL VALUE, NOT ITS FIRST PHYSICAL LINE (repaired in v1.58, drafted
+    # and unpublished; this material binds nothing until this version's owner push).
+    #
+    # A plain YAML scalar folds every more-indented line that follows it into ONE value. Until
+    # v1.58 this loop skipped every indented line as a continuation unconditionally -- with no
+    # state, no record of WHICH key it continued, and no requirement that any key precede it -- and
+    # the budget below was then measured against `sed -n 's/^description: *//p' | head -1`, the
+    # first physical line alone. Measured on 510cf03: a description whose first line is 13 words
+    # and whose folded value is 97 words was accepted at exit 0 with no violation line, and Ruby's
+    # YAML parser on the same host read the 97. The runtime holds a value this check never saw.
+    #
+    # So the block is walked with state. A line that opens a key sets the current key; an indented
+    # line or a sequence entry is folded into that key's value, and is a VIOLATION when no key
+    # precedes it, because a line that continues nothing is not a continuation. `name` and
+    # `description` are then judged on their folded values.
+    #
+    # NO YAML PARSER IS TAKEN AS A DEPENDENCY, deliberately. PyYAML is absent on the host this was
+    # written on; Ruby's is present, and neither is guaranteed in the environment a deployment runs
+    # this in. This repository has already published one version (v1.51) about a shipped tool that
+    # assumed its author's toolchain, so the folding is done here in the shell the check already
+    # requires. The cost is stated: this models the plain-scalar folding the standard's own skill
+    # files use, not the whole of YAML.
+    #
+    # The tab arm was ALSO inert and that was found while repairing, not by probing: it was written
+    # `"\t"*` inside double quotes, which is a literal backslash-t, so no tab-indented line ever
+    # matched it. `[[:space:]]*` is the character class the shell actually honours, and this is the
+    # v1.29 rule -- a matching construct is verified against the tool that will run it -- met in
+    # this repository's own suite.
+    cur_key=""; name=""; desc=""; n_name=0; n_desc=0
     while IFS= read -r fmline; do
       case "$fmline" in
-        "" | "#"*) continue ;;
-        " "* | "\t"* | "- "*) continue ;;
+        "") continue ;;
+        "#"*) continue ;;
+        [[:space:]]* | "- "*)
+          if [ -z "$cur_key" ]; then
+            echo "  ! FRONTMATTER CONTINUATION LINE CONTINUES NO KEY: '${fmline:0:60}': ${f#$root/}"; bad=1; continue
+          fi
+          # Builtin matching, no subprocess. This loop runs once per block line per check_tree call
+          # and check_tree is called about thirty times by the canaries below, so a `printf | sed`
+          # pair here cost real time: 196s against the original check's 82s, measured back to back
+          # on the same cold tree, on synced storage where a fork is expensive. Warm, which is the
+          # only comparable pair, this form runs 1.6s against the original's 1.5s. The gate that
+          # runs this suite has a runtime budget of its own.
+          [[ "$fmline" =~ ^[[:space:]]*(-[[:space:]]+)?(.*)$ ]] && cont="${BASH_REMATCH[2]}" || cont="$fmline"
+          case "$cur_key" in
+            name)        name="$name $cont" ;;
+            description) desc="$desc $cont" ;;
+          esac
+          continue ;;
       esac
-      case "$fmline" in
-        *": "* | *":") ;;
-        *) echo "  ! FRONTMATTER LINE IS NOT A MAPPING ENTRY: '${fmline:0:60}': ${f#$root/}"; bad=1; continue ;;
+      if [[ "$fmline" =~ ^([A-Za-z_][A-Za-z0-9_.-]*):([[:space:]].*)?$ ]]; then
+        key="${BASH_REMATCH[1]}"; val="${BASH_REMATCH[2]}"
+        [[ "$val" =~ ^[[:space:]]*(.*)$ ]] && val="${BASH_REMATCH[1]}"
+      else
+        echo "  ! FRONTMATTER LINE IS NOT A MAPPING ENTRY: '${fmline:0:60}': ${f#$root/}"; bad=1; cur_key=""; continue
+      fi
+      cur_key="$key"
+      case "$key" in
+        name)        n_name=$((n_name + 1)); [ "$n_name" -eq 1 ] && name="$val" ;;
+        description) n_desc=$((n_desc + 1)); [ "$n_desc" -eq 1 ] && desc="$val" ;;
       esac
-      printf '%s' "$fmline" | grep -q '^[A-Za-z_][A-Za-z0-9_.-]*:' || {
-        echo "  ! FRONTMATTER LINE IS NOT A MAPPING ENTRY: '${fmline:0:60}': ${f#$root/}"; bad=1; }
     done <<FMEOF
 $fm
 FMEOF
-    for key in name description; do
-      n_key="$(printf '%s\n' "$fm" | grep -c "^$key:")"
-      if [ "$n_key" -gt 1 ]; then
-        echo "  ! DUPLICATE '$key:' declared $n_key times in the block: ${f#$root/}"; bad=1
-      fi
-    done
-    name="$(printf '%s\n' "$fm" | sed -n 's/^name: *//p' | head -1)"
-    desc="$(printf '%s\n' "$fm" | sed -n 's/^description: *//p' | head -1)"
+    [ "$n_name" -gt 1 ] && { echo "  ! DUPLICATE 'name:' declared $n_name times in the block: ${f#$root/}"; bad=1; }
+    [ "$n_desc" -gt 1 ] && { echo "  ! DUPLICATE 'description:' declared $n_desc times in the block: ${f#$root/}"; bad=1; }
+    # A folded value opens with the separator space; trim it so an empty value still reads as empty.
+    [[ "$name" =~ ^[[:space:]]*(.*[^[:space:]])?[[:space:]]*$ ]] && name="${BASH_REMATCH[1]}"
+    [[ "$desc" =~ ^[[:space:]]*(.*[^[:space:]])?[[:space:]]*$ ]] && desc="${BASH_REMATCH[1]}"
     if [ -z "$name" ]; then echo "  ! NO name: ${f#$root/}"; bad=1; fi
     if [ -z "$desc" ]; then echo "  ! NO description: ${f#$root/}"; bad=1; continue; fi
     if [ -n "$name" ] && [ "$name" != "$slug" ]; then
