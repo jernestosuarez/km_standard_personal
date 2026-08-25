@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: v1.58 | re-stated for the tree-stability repair and the limits-definition repair. The seven new assertions were run against the unrepaired gate at 510cf03 before either repair was written, and all seven were red. 21a and 21c: a fixture whose discovered suite edits another discovered check, and one whose suite creates a new check-shaped file, each reported 'expected exit 2, got 0' -- the gate returned PASS over a tree it had not read, and in the second case over a check it had never discovered, never held to the declaration rule and never executed. 21b, the same class asserted on its own fixture, reported 'expected exit 2, got 1'. 21d: a fixture whose suite moves HEAD with no file content differing reported 'expected exit 2, got 0', which is the half no content hash alone can see and is the reviewer's own observed case. 15a reported the gate typing 'the same four limits' in prose 185 lines below its own claim that the count 'is not restated in prose anywhere'; 15b reported four numbered limit headings in the header block, standing in file order 1, 3, 2, 4; 15c reported GATE_LIMITS, named twice by the header as the home of the single definition and defined nowhere, the definition being LIMITS. Two of the nine new assertions passed on the unrepaired tree and both legitimately, because their job is to pin a boundary rather than to detect a defect: 21e, which requires that a change OUTSIDE the discovery set is not caught, and 21f, which requires a stable tree to pass twice with the same verdict. The v1.55 declaration this replaces still holds: re-stated for the exemption-anchoring and limits-mechanism repair. The seven assertions added here (13c, 13d, 13e, 20, 20b, 20c, 20d) were run against the unrepaired gate and the unrepaired workflow at 13dec55 before either was touched: 13c and 13d each reported "expected exit 1, got 0", the quoted token having exempted a document carrying a genuinely broken link; 20 reported "--limits printed 0 of 0 defined limits (exit 2)", the flag not existing; 20b and 20c failed with it. Two passed there, and only one of them legitimately: 13e, because a real declaration at the start of a line is honoured by both readers, and 20d, which passed for the wrong reason until its assertion was scoped to the comment block above runs-on. The v1.46 declaration this replaces still holds: run against deliberately broken trees before the gate was trusted: a suite made to fail, a suite whose interpreter is absent, an emptied discovery set, a stripped declaration, a broken relative link, unparseable JSON, a shell syntax error and a Python syntax error. Every one of those trees was gated and every one produced FAIL or REFUSED, never PASS.
+# km-unrepaired-tree: v1.59 | re-stated for the fingerprint-scope repair and the branch-identity repair. The nine new or rewritten assertions were run against the unrepaired gate at be6e4bf (published v1.58) before either repair was written, and seven were red. 21d and 21d1: a fixture whose discovered suite switches to a NEW BRANCH AT THE SAME COMMIT reported 'expected exit 2, got 0', because git rev-parse HEAD returns one value for two branches standing at one commit, so the branch switch this case's own title has promised since v1.58 was invisible; the fixture that stood here before moved HEAD with an empty commit, which is commit movement and a different thing. 21e, 21g, 21g2 and 21g3, one per input class the gate reads and does not discover -- a tracked markdown file the link phase had resolved, a tracked JSON file the parse phase had read, and a shell and a Python file outside tests/ and scripts/ that the syntax phases had read -- each reported 'expected exit 2, got 0': every one changed after its own phase had run and the gate still returned PASS over the result. 21e is the reviewer's own README.md demonstration, inverted from the assertion of a gap that v1.58 shipped into a control over it. 21j reported the four literal pathspec lists standing in the phases, which is the mechanism by which the covered set could be narrower than the phases at all. Four assertions passed on the unrepaired tree and all four legitimately, because their job is to pin a boundary rather than to detect a defect: 21d2, which requires commit movement to keep being caught; 21d3, which requires a detached HEAD not to refuse; 21h, which requires a file in NO input class not to be caught; and 21f, a stable tree passing twice with the same verdict. The v1.58 declaration this replaces still holds in full: re-stated for the tree-stability repair and the limits-definition repair. The seven new assertions were run against the unrepaired gate at 510cf03 before either repair was written, and all seven were red. 21a and 21c: a fixture whose discovered suite edits another discovered check, and one whose suite creates a new check-shaped file, each reported 'expected exit 2, got 0' -- the gate returned PASS over a tree it had not read, and in the second case over a check it had never discovered, never held to the declaration rule and never executed. 21b, the same class asserted on its own fixture, reported 'expected exit 2, got 1'. 21d: a fixture whose suite moves HEAD with no file content differing reported 'expected exit 2, got 0', which is the half no content hash alone can see and is the reviewer's own observed case. 15a reported the gate typing 'the same four limits' in prose 185 lines below its own claim that the count 'is not restated in prose anywhere'; 15b reported four numbered limit headings in the header block, standing in file order 1, 3, 2, 4; 15c reported GATE_LIMITS, named twice by the header as the home of the single definition and defined nowhere, the definition being LIMITS. Two of the nine new assertions passed on the unrepaired tree and both legitimately, because their job is to pin a boundary rather than to detect a defect: 21e, which requires that a change OUTSIDE the discovery set is not caught, and 21f, which requires a stable tree to pass twice with the same verdict. The v1.55 declaration this replaces still holds: re-stated for the exemption-anchoring and limits-mechanism repair. The seven assertions added here (13c, 13d, 13e, 20, 20b, 20c, 20d) were run against the unrepaired gate and the unrepaired workflow at 13dec55 before either was touched: 13c and 13d each reported "expected exit 1, got 0", the quoted token having exempted a document carrying a genuinely broken link; 20 reported "--limits printed 0 of 0 defined limits (exit 2)", the flag not existing; 20b and 20c failed with it. Two passed there, and only one of them legitimately: 13e, because a real declaration at the start of a line is honoured by both readers, and 20d, which passed for the wrong reason until its assertion was scoped to the comment block above runs-on. The v1.46 declaration this replaces still holds: run against deliberately broken trees before the gate was trusted: a suite made to fail, a suite whose interpreter is absent, an emptied discovery set, a stripped declaration, a broken relative link, unparseable JSON, a shell syntax error and a Python syntax error. Every one of those trees was gated and every one produced FAIL or REFUSED, never PASS.
 #
 # Canaries for the release gate (tools/km-release-gate.py), added in v1.46.
 #
@@ -80,6 +80,14 @@ mkfixture() {
   printf '# Fixture Standard (v9.9)\n\nSee [the readme](README.md).\n' > "$d/STANDARD.md"
   printf '# Fixture readme\n\nSee [the standard](STANDARD.md).\n' > "$d/README.md"
   printf '{"fixture": true}\n' > "$d/data.json"
+  # Two files in NO check directory, one per remaining input class, so the fingerprint cases below
+  # can disturb a shell file and a Python file the gate reads without disturbing a discovered check.
+  # (Added in v1.59.)
+  mkdir -p "$d/tools"
+  printf '#!/bin/bash\necho "fixture helper"\n' > "$d/tools/helper.sh"
+  printf 'print("fixture helper")\n' > "$d/tools/helper.py"
+  # A file in no input class at all, so the residual can be pinned as a gap rather than described.
+  printf 'fixture notes\n' > "$d/notes.txt"
   git -C "$d" init -q 2>/dev/null
   git -C "$d" config user.email fixture@example.invalid
   git -C "$d" config user.name Fixture
@@ -694,24 +702,97 @@ base=$(mkdrift "$c" 'printf "#!/bin/bash\nexit 0\n" > tests/test_zz_late.sh')
 KM_GATE_BASE="$base" expect "21c. a check appearing mid-run is refused, not silently uncovered" "$c" 2 \
   "tests/test_zz_late.sh"
 
-# 21d. HEAD MOVES AND NO CONTENT DIFFERS. This is the half a content hash alone cannot see, and it
-#      is the reviewer's own case: the branch changed at 14:16. The fingerprint carries HEAD for
-#      exactly this reason.
+# 21d. THE CHECKED-OUT BRANCH CHANGES AND THE COMMIT DOES NOT. (Rewritten in v1.59; binds nothing
+#      until that version's owner push.) This case's title has promised since v1.58 that a branch
+#      change is caught, and its fixture proved something else: it moved HEAD with an EMPTY COMMIT,
+#      which is commit movement and is caught by `git rev-parse HEAD` alone. Two branches standing
+#      at the same commit return the same value from that command, so a same-commit branch switch
+#      -- which is exactly what the reviewer observed at 14:16 -- was invisible, and the gate's own
+#      docstring said otherwise. The fixture below switches branch WITHOUT moving the commit, which
+#      is the thing the title claims.
+c="$work/drift_branch"
+base=$(mkdrift "$c" 'git checkout -q -b km-side-branch')
+KM_GATE_BASE="$base" expect "21d. a same-commit branch switch mid-run is refused" "$c" 2 \
+  "km-side-branch"
+KM_GATE_BASE="$base" expect "21d1. the refusal names the ref, not only the commit" "$c" 2 \
+  "the checked-out ref changed"
+
+# 21d2. COMMIT MOVEMENT, still. Widening the identity must not cost the half that already worked,
+#       so the empty-commit fixture 21d used to carry is kept here on its own name.
 c="$work/drift_head"
 base=$(mkdrift "$c" 'git commit -q --allow-empty -m "moved underneath the gate"')
-KM_GATE_BASE="$base" expect "21d. HEAD moving mid-run is refused even when no file differs" "$c" 2 \
+KM_GATE_BASE="$base" expect "21d2. HEAD moving mid-run is refused even when no file differs" "$c" 2 \
   "HEAD moved"
 
-# 21e. THE RESIDUAL, PINNED AS A GAP AND NOT AS A CONTROL. The fingerprint covers the set discovery
-#      covers and nothing else, so a file outside that set can change mid-run and the gate will
-#      still pass. That is limit 5, stated in the gate's own output. A later change that widens the
-#      fingerprint fails here loudly instead of quietly redefining what a PASS covers.
-c="$work/drift_outside"
-base=$(mkdrift "$c" 'printf "\nedited while the gate was running\n" >> README.md')
-KM_GATE_BASE="$base" expect "21e. a change outside the discovery set is NOT caught (KNOWN GAP)" "$c" 0 \
+# 21d3. THE OTHER DIRECTION, AND IT IS NOT OPTIONAL. Recording the symbolic ref must not make a
+#       detached HEAD refuse on every run: a detached HEAD is a real and stable state, and a gate
+#       that refused it would be unusable in exactly the CI checkouts that run it.
+c="$work/detached"; base=$(mkfixture "$c")
+git -C "$c" checkout -q --detach
+KM_GATE_BASE="$base" expect "21d3. a detached HEAD is a stable state, not a refusal" "$c" 0 \
   "PASS release-gate:"
-note "     ^ this is the acknowledged residual, not a control. The fingerprint covers what discovery"
-note "       covers; a file outside it, and a file that changes and changes back, are not seen."
+
+# ================================================================================================
+# 21e-21h. THE FINGERPRINT COVERS WHAT THE GATE READS, NOT WHAT DISCOVERY FINDS. (Added in v1.59;
+#      binds nothing until that version's owner push.)
+#
+#      Until v1.59 the fingerprint hashed exactly the set discovery reads -- `*.sh` and `*.py` under
+#      tests/ and scripts/ -- and 21e ASSERTED that as a known gap. But the gate reads far more than
+#      the checks it discovers: it resolves relative links across every tracked markdown file,
+#      parses every tracked JSON and JSON-LD file, and syntax-checks every tracked shell and Python
+#      file wherever it lives. None of those were fingerprinted, so a broken link, an unparseable
+#      JSON file or a syntax error introduced AFTER its phase had run survived into the final
+#      working tree with a PASS over it. The control's scope was narrower than the thing it
+#      certified, which is the class this repository keeps finding.
+#
+#      The four cases below are one per input class the gate reads, and 21e is the reviewer's own
+#      demonstration inverted from an assertion of the gap into a control over it.
+# ================================================================================================
+c="$work/drift_markdown"
+base=$(mkdrift "$c" 'printf "\nedited while the gate was running\n" >> README.md')
+KM_GATE_BASE="$base" expect "21e. a markdown file the link phase read, changed mid-run, is refused" \
+  "$c" 2 "README.md"
+c="$work/drift_json"
+base=$(mkdrift "$c" 'printf "{\"fixture\": false}\n" > data.json')
+KM_GATE_BASE="$base" expect "21g. a JSON file the parse phase read, changed mid-run, is refused" \
+  "$c" 2 "data.json"
+c="$work/drift_shell"
+base=$(mkdrift "$c" 'printf "\n# edited while the gate was running\n" >> tools/helper.sh')
+KM_GATE_BASE="$base" expect "21g2. a shell file outside the check dirs, changed mid-run, is refused" \
+  "$c" 2 "tools/helper.sh"
+c="$work/drift_python"
+base=$(mkdrift "$c" 'printf "\n# edited while the gate was running\n" >> tools/helper.py')
+KM_GATE_BASE="$base" expect "21g3. a Python file outside the check dirs, changed mid-run, is refused" \
+  "$c" 2 "tools/helper.py"
+
+# 21h. THE RESIDUAL, PINNED AS A GAP AND NOT AS A CONTROL, AND NARROWER THAN IT WAS. The fingerprint
+#      covers what THIS GATE reads. A file in no input class -- a `.txt`, a `.yml`, a licence, a
+#      template asset -- is read by the discovered checks and not by the gate, and can still change
+#      mid-run without being seen. So can a file that changes and changes back inside the window.
+#      A later change that widens the fingerprint again fails here loudly instead of quietly
+#      redefining what a PASS covers.
+c="$work/drift_outside"
+base=$(mkdrift "$c" 'printf "edited while the gate was running\n" >> notes.txt')
+KM_GATE_BASE="$base" expect "21h. a file in no input class is NOT caught (KNOWN GAP)" "$c" 0 \
+  "PASS release-gate:"
+note "     ^ this is the acknowledged residual, not a control. The fingerprint covers what the GATE"
+note "       reads; what only a discovered check reads, and a file that changes and changes back,"
+note "       are not seen."
+
+# 21j. THE COVERED SET IS DERIVED FROM THE PHASES, NOT HAND-LISTED BESIDE THEM. Four behavioural
+#      cases above prove four classes are covered today. They cannot prove that a phase added
+#      tomorrow is covered, and a list of globs maintained beside the phases is the hand-maintained
+#      memory this repository keeps repairing -- it is how the narrow fingerprint arose in the first
+#      place. So no phase may name its own pathspec literal: every one takes it from the single
+#      input-class structure the fingerprint iterates.
+literal_specs=$(grep -nE 'git_(tracked|untracked)\(root, \[' "$GATE" || true)
+if [ -z "$literal_specs" ]; then
+  note "PASS: 21j. every phase takes its pathspecs from the structure the fingerprint iterates"
+else
+  note "FAIL: 21j. a phase names a pathspec literal, so the fingerprint cannot be derived from it"
+  printf '%s\n' "$literal_specs" | sed 's/^/       /'
+  fail=1
+fi
 
 # 21f. The stable tree must still pass, and the fingerprint must not make it flaky. Case 1 already
 #      requires PASS on a whole tree; this runs the same fixture twice and requires the same verdict

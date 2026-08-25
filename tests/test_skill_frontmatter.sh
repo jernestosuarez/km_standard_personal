@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: v1.58 | re-stated for the folded-value repair. Run against the unrepaired tree at 510cf03 before any repair was written. A fixture whose description first line is 13 words and whose following indented lines are folded into the same plain scalar by any real YAML parser was accepted: check_tree returned exit 0 with zero violation lines, having measured 13 words against the 10-40 residency budget, while Ruby's YAML parser on the same host read the effective value as 97 words. A second fixture, an indented line placed before any key in the block so that it continues nothing at all, was also accepted at exit 0. Two new canaries were added for those and both reported 'canary NOT caught' on the unrepaired tree; the suite exited 1 with the other ten canaries still passing. The cause is two lines of the continuation arm: every indented line was skipped unconditionally, with no state, no record of which key it continued and no requirement that any key precede it, and the budget was then measured against the first physical line alone. A third case was found while repairing rather than by probing: the arm's tab pattern was written "\t"* inside double quotes, which is a literal backslash-t and matched no tab-indented line on this host, so that half of the arm had been inert since it was written. The positive-direction canary added with them, a legitimate two-line description inside the budget, passes on the unrepaired tree and on the repaired one, because its job is to pin the shape the reader must keep accepting rather than to detect the defect. The v1.55 declaration this replaces still holds in full: re-stated for the block-integrity repair. Run against the tree at 13dec55 with the closing '---' deleted from all three shipped copies of skills/km-brief/SKILL.md, the unrepaired check prints "PASS: every shipped skill file carries a conforming name/description frontmatter" and "ALL SKILL FRONTMATTER CHECKS PASSED", exit 0, because awk runs to end of file when no terminator exists and reads the whole body as the block. Four further malformations were probed on the same tree and all four passed it at exit 0 with 0 violation lines: a '...' terminator, a duplicated name key, a duplicated description key, and an extra key. The fifth, an empty block, was already caught at exit 1 with 6 violation lines. A sixth case was found while repairing rather than by probing, and it is the one that matters: requiring merely that SOME closing '---' exists is not enough, because every shipped skill file carries '---' horizontal rules in its prose, so deleting the real terminator moves the delimiter down the document and the block swallows 16 lines of body while both keys stay present and unique. Measured on the repaired check with only the terminator rule in place: exit 0. The repaired check therefore also requires every line inside the block to read as a mapping entry, a continuation, a comment or a blank, and it then fails all five with a named violation each and passes the clean tree unchanged. The v1.27 declaration this replaces was 'unrecorded'; that debt is discharged for the delimiter and duplicate-key rules only.
+# km-unrepaired-tree: v1.59 | re-stated for the top-level-sequence repair. Run against the unrepaired tree at be6e4bf (published v1.58) before any repair was written. A fixture carrying a valid name, a valid 15-word description and two top-level '- item' lines was accepted by check_tree at exit 0 with no violation line, while Ruby's YAML parser on the same host answered 'did not find expected key while parsing a block mapping at line 2 column 1' for the same block: the check accepted a document no runtime can load. The canary added for it reported 'canary NOT caught' on the unrepaired tree and the suite exited 1 with the other twelve canaries still passing. The cause is one arm the v1.58 repair carried forward from the original pattern without re-deriving it, the leading-marker arm, which accepts a sequence entry at ANY indentation as a continuation of the preceding key; YAML makes it a continuation only when it is more-indented than the key it continues. The positive-direction canary added beside it, a sequence indented under its own key, passes on the unrepaired tree and on the repaired one, because its job is to pin the shape the reader must keep accepting rather than to detect the defect. The v1.58 declaration this replaces still holds in full: re-stated for the folded-value repair. Run against the unrepaired tree at 510cf03 before any repair was written. A fixture whose description first line is 13 words and whose following indented lines are folded into the same plain scalar by any real YAML parser was accepted: check_tree returned exit 0 with zero violation lines, having measured 13 words against the 10-40 residency budget, while Ruby's YAML parser on the same host read the effective value as 97 words. A second fixture, an indented line placed before any key in the block so that it continues nothing at all, was also accepted at exit 0. Two new canaries were added for those and both reported 'canary NOT caught' on the unrepaired tree; the suite exited 1 with the other ten canaries still passing. The cause is two lines of the continuation arm: every indented line was skipped unconditionally, with no state, no record of which key it continued and no requirement that any key precede it, and the budget was then measured against the first physical line alone. A third case was found while repairing rather than by probing: the arm's tab pattern was written "\t"* inside double quotes, which is a literal backslash-t and matched no tab-indented line on this host, so that half of the arm had been inert since it was written. The positive-direction canary added with them, a legitimate two-line description inside the budget, passes on the unrepaired tree and on the repaired one, because its job is to pin the shape the reader must keep accepting rather than to detect the defect. The v1.55 declaration this replaces still holds in full: re-stated for the block-integrity repair. Run against the tree at 13dec55 with the closing '---' deleted from all three shipped copies of skills/km-brief/SKILL.md, the unrepaired check prints "PASS: every shipped skill file carries a conforming name/description frontmatter" and "ALL SKILL FRONTMATTER CHECKS PASSED", exit 0, because awk runs to end of file when no terminator exists and reads the whole body as the block. Four further malformations were probed on the same tree and all four passed it at exit 0 with 0 violation lines: a '...' terminator, a duplicated name key, a duplicated description key, and an extra key. The fifth, an empty block, was already caught at exit 1 with 6 violation lines. A sixth case was found while repairing rather than by probing, and it is the one that matters: requiring merely that SOME closing '---' exists is not enough, because every shipped skill file carries '---' horizontal rules in its prose, so deleting the real terminator moves the delimiter down the document and the block swallows 16 lines of body while both keys stay present and unique. Measured on the repaired check with only the terminator rule in place: exit 0. The repaired check therefore also requires every line inside the block to read as a mapping entry, a continuation, a comment or a blank, and it then fails all five with a named violation each and passes the clean tree unchanged. The v1.27 declaration this replaces was 'unrecorded'; that debt is discharged for the delimiter and duplicate-key rules only.
 # Fixtures for skill-file frontmatter (v1.27), STANDARD.md §"Skill files declare their trigger".
 #
 # Every skill file this standard ships must carry YAML frontmatter with exactly the two fields a
@@ -281,6 +281,55 @@ FIX
 canary "folded continuation carries the value over the budget" write_folded_over_budget "$f"
 canary "indented line continues no key"                        write_orphan_continuation "$f"
 clean_canary "a two-line description inside the budget"        write_folded_within_budget "$f"
+
+# --- 5. a sequence entry continues a key only when it is MORE-INDENTED than that key (v1.59) ---
+# THIS SECTION BELONGS TO v1.59 (DRAFT) AND BINDS NOTHING UNTIL THAT VERSION'S OWNER PUSH.
+#
+# The v1.58 repair above walked the block with state, but it carried one arm of the original
+# continuation pattern forward without re-deriving it: "- "*, which accepts a sequence entry at ANY
+# indentation as a continuation of the preceding key. YAML does not. A sequence is the value of the
+# key above it only when it is more-indented than that key; a "- " at the indentation of the mapping
+# itself is a block sequence entry where a mapping key is required, and a parser rejects the
+# document outright.
+#
+# Measured on the unrepaired tree: a block carrying a valid name, a valid 15-word description and
+# two top-level "- item" lines was accepted by this suite at exit 0 with no violation line, while
+# Ruby's YAML parser on the same host answered
+#   did not find expected key while parsing a block mapping at line 2 column 1
+# So the reader accepted a block no runtime can load. That is the folded-value defect above with
+# the sign reversed: there the check read less of the value than the parser does, here it reads a
+# document the parser will not read at all.
+#
+# The continuation arm therefore compares indentation against the key it would continue instead of
+# matching a leading marker, and the positive direction ships beside it: a sequence indented under
+# its own key is ordinary YAML and must keep passing.
+write_top_level_sequence() { # a "- " at the indentation of the mapping: not a continuation
+  cat > "$1" <<'FIX'
+---
+name: km-thing
+description: Use when a synthetic fixture needs a conforming description that names its trigger plainly here.
+- item one at the top level of the mapping block
+- item two at the top level of the mapping block
+---
+
+# body
+FIX
+}
+write_indented_sequence() { # the positive direction: a sequence that IS more-indented than its key
+  cat > "$1" <<'FIX'
+---
+name: km-thing
+description: Use when a synthetic fixture needs a conforming description that names its trigger and its own invocation, /km-thing, plainly.
+tags:
+  - alpha
+  - beta
+---
+
+# body
+FIX
+}
+canary "sequence entry at the top level of a mapping block"     write_top_level_sequence "$f"
+clean_canary "a sequence indented under the key it belongs to"  write_indented_sequence "$f"
 
 echo
 if [ "$fail" -eq 0 ]; then echo "ALL SKILL FRONTMATTER CHECKS PASSED"; else echo "SKILL FRONTMATTER CHECKS FAILED"; fi
