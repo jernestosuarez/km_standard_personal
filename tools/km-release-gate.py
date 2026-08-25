@@ -81,8 +81,7 @@
 #
 # ------------------------------------------------------------------------------------------------
 # WHAT THE GATE READS IS WIDER THAN WHAT IT DISCOVERS, AND THE FINGERPRINT FOLLOWS THE READING.
-# (v1.59 draft; this section and the widening it describes bind nothing until that version's owner
-# push.)
+# (v1.59.)
 #
 # Discovery answers "what will be RUN". It is one input class among several. The gate also resolves
 # relative links across every tracked markdown file, parses every tracked JSON and JSON-LD file, and
@@ -452,8 +451,7 @@ def check_patterns():
     return patterns
 
 
-# THE INPUT CLASSES, AND WHY EVERY PHASE TAKES ITS PATHSPECS FROM HERE. (v1.59 draft; this
-# structure and the rules below bind nothing until that version's owner push.)
+# THE INPUT CLASSES, AND WHY EVERY PHASE TAKES ITS PATHSPECS FROM HERE. (v1.59.)
 #
 # Every phase of this gate reads one of these classes and no phase names a pathspec of its own.
 # fingerprint() iterates this structure, so the covered set is DERIVED from the phases that consume
@@ -479,7 +477,7 @@ INPUT_CLASSES = collections.OrderedDict((
 
 
 def git_identity(root):
-    """WHAT IS CHECKED OUT: the commit AND the ref standing at it. (v1.59 draft.)
+    """WHAT IS CHECKED OUT: the commit AND the ref standing at it. (v1.59.)
 
     Never refuses. An unborn branch and a detached HEAD are real, stable states, and what matters
     here is that the two reads are comparable, not that either resolves.
@@ -511,7 +509,7 @@ def git_identity(root):
 
 def fingerprint(root):
     """What the gate read, in a form it can hold against itself when the run ends. (v1.58; scope
-    widened from the discovery set to every input class in v1.59 draft.)
+    widened from the discovery set to every input class in v1.59.)
 
     THE TREE AT THE VERDICT MUST BE THE TREE THAT WAS READ, AND UNTIL v1.58 NOTHING SAID SO.
     Discovery and the declaration phase run first, the suites run after, and the whole pass takes

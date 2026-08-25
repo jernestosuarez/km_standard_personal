@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.58"/>
+  <img src="assets/badges/version.svg" alt="standard v1.59"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 3 adopted, 1 partial, 3 open"/>
   <img src="assets/badges/license.svg" alt="license: Apache-2.0"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,30 +28,32 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.58** (2026-08-25, three findings from an external reviewer's second pass, each
-reproduced as a failing case and committed red before any repair was written; **the release gate
-could PASS over a tree that changed while it ran**, because discovery runs first and the suites run
-after and nothing in between established that the tree at the verdict was the tree that was
-discovered, which the reviewer watched happen live when the gate began on a clean branch, the branch
-changed underneath it, a discovered check was edited, and the gate returned PASS after ~900s still
-reporting zero changed declarations — and the thing editing the tree was this maintainer's own
-drafting agent, so the defect is that the gate cannot tell and not that anyone misbehaved; the repair
-is deliberately **not** a snapshot, since the gate has read the working tree since v1.54 so that a
-check authored in the change being gated is visible, so it fingerprints what it actually reads plus
-`HEAD`, before and after, and **refuses** on any difference, naming what moved, with the residual
-pinned as a gap rather than implied closed; **the frontmatter check measured the first physical line
-of a value that spans lines**, every indented line being skipped as a continuation unconditionally
-and the residency budget then measured against the first line alone, so a description whose first
-line is 13 words and whose folded YAML value is 97 passed at exit 0, and the block is now walked with
-state, **taking no YAML library as a dependency**, because a parser on the maintainer's machine is
-not one in the shipped environment; **and "the limits, defined once" was false when it was written**,
-the gate's limit set being maintained in three places while a comment beside the data claimed adding
-one was an edit to the data and to nothing else, so it is corrected under the v1.47 rule and the
-repair reduces the count of definitions to one rather than describing the drift, this version's own
-fifth limit being the proof that adding one is an edit to a single structure; **both sweeps returned
-instances and both are recorded**, one repaired and one registered with its reason; nothing a
-deployment installs changes and no hub turns red; v1.57 is the preceding published version and v1.23
-remains an unpublished draft awaiting its own push). The full
+**Current version: v1.59** (2026-08-26, three findings from an external reviewer's third pass, each
+reproduced as a failing case and committed red before any repair was written; **the release gate's
+stability fingerprint covered its discovery candidates and not its inputs**, hashing exactly the
+`*.sh` and `*.py` files under `tests/` and `scripts/` while the gate itself resolved 112 relative
+links across 172 markdown files, parsed 5 JSON and JSON-LD files and syntax-checked 31 shell and 11
+Python files, none of them fingerprinted, so a broken link, an unparseable JSON file or a syntax
+error introduced after its own phase had run survived into the final working tree with a PASS over
+it, and v1.58's own case shipped asserting that as a known gap; **the specification was the narrow
+part, not the implementation**, since the brief that produced v1.58 asked for a fingerprint covering
+the set discovery covers and that is exactly what was built and honestly registered as a residual,
+so the repair fingerprints every input class the gate reads, derived by iterating one
+`INPUT_CLASSES` structure that every phase also takes its pathspecs from, and the case that asserted
+the gap is inverted into a control over it, with the narrower residual pinned by a case of its own;
+**a same-commit branch switch went undetected while the docstring promised otherwise**, because the
+identity read was `git rev-parse HEAD` alone and two branches standing at one commit return the same
+value, so identity is now the commit **and** the ref standing at it, and narrowing the claim instead
+was refused with its reason; **the frontmatter check accepted YAML no parser will load**, taking a
+sequence entry as a continuation of the preceding key at any indentation, so a block carrying two
+top-level `- item` lines passed at exit 0 while a YAML parser on the same host rejected the document
+outright, and a continuation is now decided by comparing indentation against the key it would
+continue, still **taking no YAML library as a dependency**; **both sweeps returned instances and
+both are recorded**, one claim corrected to the set actually read and two scopes registered with
+their reasons rather than widened inside a repair; the reviewer's two reproduction scripts were
+digest-verified and are carried byte for byte as this version's canaries; nothing a deployment
+installs changes and no hub turns red; v1.58 is the preceding published version and v1.23 remains an
+unpublished draft awaiting its own push). The full
 ledger of released versions, and the rule that a published version number is never reused, is in
 [`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.

@@ -702,14 +702,13 @@ base=$(mkdrift "$c" 'printf "#!/bin/bash\nexit 0\n" > tests/test_zz_late.sh')
 KM_GATE_BASE="$base" expect "21c. a check appearing mid-run is refused, not silently uncovered" "$c" 2 \
   "tests/test_zz_late.sh"
 
-# 21d. THE CHECKED-OUT BRANCH CHANGES AND THE COMMIT DOES NOT. (Rewritten in v1.59; binds nothing
-#      until that version's owner push.) This case's title has promised since v1.58 that a branch
-#      change is caught, and its fixture proved something else: it moved HEAD with an EMPTY COMMIT,
-#      which is commit movement and is caught by `git rev-parse HEAD` alone. Two branches standing
-#      at the same commit return the same value from that command, so a same-commit branch switch
-#      -- which is exactly what the reviewer observed at 14:16 -- was invisible, and the gate's own
-#      docstring said otherwise. The fixture below switches branch WITHOUT moving the commit, which
-#      is the thing the title claims.
+# 21d. THE CHECKED-OUT BRANCH CHANGES AND THE COMMIT DOES NOT. (Rewritten in v1.59.) This case's
+#      title has promised since v1.58 that a branch change is caught, and its fixture proved
+#      something else: it moved HEAD with an EMPTY COMMIT, which is commit movement and is caught by
+#      `git rev-parse HEAD` alone. Two branches standing at the same commit return the same value
+#      from that command, so a same-commit branch switch -- which is exactly what the reviewer
+#      observed at 14:16 -- was invisible, and the gate's own docstring said otherwise. The fixture
+#      below switches branch WITHOUT moving the commit, which is the thing the title claims.
 #
 #      THE MUTATOR IS THE REVIEWER'S OWN, BYTE FOR BYTE: `git branch km-other` then
 #      `git switch -q km-other`, lifted from their reproduce-same-commit-branch-switch.sh rather
@@ -747,8 +746,7 @@ KM_GATE_BASE="$base" expect "21d3. a detached HEAD is a stable state, not a refu
   "PASS release-gate:"
 
 # ================================================================================================
-# 21e-21h. THE FINGERPRINT COVERS WHAT THE GATE READS, NOT WHAT DISCOVERY FINDS. (Added in v1.59;
-#      binds nothing until that version's owner push.)
+# 21e-21h. THE FINGERPRINT COVERS WHAT THE GATE READS, NOT WHAT DISCOVERY FINDS. (Added in v1.59.)
 #
 #      Until v1.59 the fingerprint hashed exactly the set discovery reads -- `*.sh` and `*.py` under
 #      tests/ and scripts/ -- and 21e ASSERTED that as a known gap. But the gate reads far more than

@@ -20,10 +20,10 @@
 #      carry a folded value far outside it, and until v1.58 that passed. The block is therefore
 #      walked with state: a continuation is folded into the key it continues, and an indented line
 #      that no key precedes is a violation rather than something to skip.
-#   5. A line CONTINUES a key only when it is more-indented than that key (repaired in v1.59 draft;
-#      binds nothing until that version's owner push). Until then a `- ` at any indentation was
-#      taken as a continuation, so a top-level sequence entry -- which makes a block mapping
-#      unparseable outright -- was accepted. See the block comment inside check_tree.
+#   5. A line CONTINUES a key only when it is more-indented than that key (repaired in v1.59).
+#      Until then a `- ` at any indentation was taken as a continuation, so a top-level sequence
+#      entry -- which makes a block mapping unparseable outright -- was accepted. See the block
+#      comment inside check_tree.
 # The same slug shipped in several trees (root distribution copy, .claude mirror, .agents mirror)
 # must carry byte-identical frontmatter, or the copies drift the moment one is edited.
 # Each check is then proved against a synthetic violation, so a check that cannot fail is caught.
@@ -43,8 +43,7 @@ fail=0
 pass() { echo "PASS: $1"; }
 die()  { echo "FAIL: $1"; fail=1; }
 
-# WHAT THIS READER GUARANTEES, AND WHAT IT DOES NOT. (Stated in v1.59 draft; binds nothing until
-# that version's owner push.)
+# WHAT THIS READER GUARANTEES, AND WHAT IT DOES NOT. (Stated in v1.59.)
 #
 # This check takes NO YAML library as a dependency, deliberately and permanently: v1.51 exists
 # because a shipped tool assumed its author's toolchain, and neither PyYAML nor Ruby's Psych is
@@ -72,8 +71,7 @@ die()  { echo "FAIL: $1"; fail=1; }
 # legitimate skill file needs. Bounding the claim would not have made that acceptable; both were
 # done.
 
-# THE SET THIS CHECK READS, NAMED ONCE, AND THE CLAIM IT MAY THEREFORE MAKE. (v1.59 draft; binds
-# nothing until that version's owner push.)
+# THE SET THIS CHECK READS, NAMED ONCE, AND THE CLAIM IT MAY THEREFORE MAKE. (v1.59.)
 #
 # Found by the sweep v1.59 ran for the class "a control's scope is narrower than the thing it
 # certifies". Until v1.59 the passing line read "every shipped skill file carries a conforming
@@ -146,8 +144,7 @@ check_tree() {
     # v1.29 rule -- a matching construct is verified against the tool that will run it -- met in
     # this repository's own suite.
     #
-    # A CONTINUATION IS DECIDED BY INDENTATION, NEVER BY A LEADING MARKER (repaired in v1.59 draft;
-    # binds nothing until that version's owner push).
+    # A CONTINUATION IS DECIDED BY INDENTATION, NEVER BY A LEADING MARKER (repaired in v1.59).
     #
     # The v1.58 repair above added the state, and carried one arm of the original pattern forward
     # without re-deriving it: `"- "*`, which accepted a sequence entry at ANY indentation as a
@@ -368,7 +365,7 @@ canary "indented line continues no key"                        write_orphan_cont
 clean_canary "a two-line description inside the budget"        write_folded_within_budget "$f"
 
 # --- 5. a sequence entry continues a key only when it is MORE-INDENTED than that key (v1.59) ---
-# THIS SECTION BELONGS TO v1.59 (DRAFT) AND BINDS NOTHING UNTIL THAT VERSION'S OWNER PUSH.
+# THIS SECTION BELONGS TO v1.59.
 #
 # The v1.58 repair above walked the block with state, but it carried one arm of the original
 # continuation pattern forward without re-deriving it: "- "*, which accepts a sequence entry at ANY
