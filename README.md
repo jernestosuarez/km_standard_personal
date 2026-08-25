@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.54"/>
+  <img src="assets/badges/version.svg" alt="standard v1.55"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 3 adopted, 1 partial, 3 open"/>
   <img src="assets/badges/license.svg" alt="license: Apache-2.0"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,27 +28,34 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.54** (2026-08-25, the release gate discovers the tree it is being asked to
-judge, closing the single release blocker returned by the first external review of this repository;
-`tools/km-release-gate.py` listed its checks with `git ls-files`, which reads the **index**, while
-the maintainer contract orders the gate to run **before** explicit staging, so a check authored in
-the change being gated was untracked at precisely the moment the gate ran and a listing of the index
-could not see it; **measured on the tree at `eb57f0f`** rather than argued, where a clean tree
-reported `33 check(s) discovered` and `PASS release-gate` at exit 0 and an untracked
-`tests/test_zz_probe.sh` holding a line `bash -n` rejects produced the same count and the same PASS,
-the file neither run nor named; **the gap was known and left open rather than newly found**, hit by
-the v1.48 drafting agent on 2026-08-24, worked around by staging first and reported as a limitation,
-then reproduced independently by the reviewer; **the gate's own canaries could never have caught it**,
-because every fixture that introduces a new check stages it with `git add` before gating it, which is
-the workaround written into the fixtures of the suite that exists to break this gate; **discovery now
-reads the working tree**, tracked and untracked together, runs both, syntax-checks a discovered check
-before executing it, holds an untracked check to the added-check declaration rule because it is one,
-and names and counts the untracked checks on the coverage line; **the trade is stated rather than
-absorbed** — the verdict is now about the working tree, so a scratch file shaped like a check and
-sitting where checks live is discovered, required to declare and run, which is the cheaper of the two
-errors against a green gate over a check nobody ran; one residual gap is asserted rather than closed,
-that discovery still honours the ignore rules, and it is pinned by a case as a gap and not as a
-control; nothing a deployment installs changes and no hub turns red; v1.53 is the preceding
+**Current version: v1.55** (2026-08-25, four defects from the external review, and two of them are
+one defect seen twice; the source is the same first independent pass over this repository that
+produced v1.54, whose release blocker landed there and whose four remaining P2 findings land here,
+each reproduced on the tree at `13dec55` before it was repaired because three of the same reviewer's
+earlier findings had not survived verification; **the skill-frontmatter check accepted an
+unterminated block**, confirming the opening delimiter and then extracting with an `awk` expression
+that runs to end of file, so with the closing delimiter deleted from all three shipped copies of one
+skill the suite still printed that every shipped skill file conforms, at exit 0, and four further
+malformations passed too; **a fifth was found while repairing and matters more**, because every
+shipped skill file carries horizontal rules in its prose, so requiring merely that *a* terminator
+exists moves the delimiter down the document and the block swallows the body with both keys present
+and unique; **a quoted exemption token disabled link checking for a whole document**, the gate
+searching raw markdown before fenced blocks were stripped and with no anchor, so a fenced example of
+the syntax removed `README.md` from the scan, took 25 links with it and hid a broken link at exit 0;
+**that is the class v1.52 repaired in one instrument and left standing in another**, which is the
+more useful finding than either instance, and the sweep it demands found the v1.52 anchor itself
+reachable, one ordinary sentence in the first 60 lines of `STANDARD.md` exempting the **home of
+record** from its own publication check and from the RFC reference check, both at exit 0; **the
+installer's replacement behaviour was asserted and never verified**, an installer altered to print
+its success lines and exit 0 without copying anything leaving the agent package suite passing; **and
+the CI workflow overstated pinning and understated limits**, calling a version-labelled runner image
+a pin when the platform redeploys the image behind the label, and documenting two of the gate's
+limits while the gate printed four; **the two generalisations are the point** — a directive token is
+a property of every reader in a repository, so all five machine-read tokens were enumerated and all
+three raw readers repaired under one anchoring rule, and a test whose subject changes a tree asserts
+the change, the sweep of all 23 shell suites finding the class in exactly one file because it is the
+only suite whose subject is a mutating tool; nothing a deployment installs changes and no hub turns
+red; v1.54 is the preceding
 published version and v1.23 remains an
 unpublished draft awaiting its own push). The full
 ledger of released versions, and the rule that a published version number is never reused, is in
