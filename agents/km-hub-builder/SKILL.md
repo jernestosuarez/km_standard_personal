@@ -196,7 +196,7 @@ make the gate notice it. That workaround was used once, when the gate discovered
 and an untracked check was invisible to it, and the workaround is what hid the gap for a version:
 the gate reported the same count and the same PASS with the new check present as without it. If a
 future gate is ever narrowed back to the index, this instruction is wrong and must move with it.
-(Added in v1.54, drafted and unpublished.)
+(Added in v1.54.)
 
 If a repository is stored in synchronized storage and a read or Git operation fails transiently,
 retry as directed by the profile before concluding that a file or repository is absent. Never run

@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.53"/>
+  <img src="assets/badges/version.svg" alt="standard v1.54"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 3 adopted, 1 partial, 3 open"/>
   <img src="assets/badges/license.svg" alt="license: Apache-2.0"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,27 +28,27 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.53** (2026-08-24, the repository declares a licence, and it is Apache-2.0,
-closing the decision audit finding F-07 opened and v1.49 made honest; v1.49 withdrew an advertised
-grant that no file in the tree supported and recorded that the choice belonged to the deployment
-owner alone, and he has now made it — asked what licence to adopt he accepted the recommendation of
-**Apache-2.0**, and asked directly he confirmed that he is the author and the copyright holder;
-**the deciding property is the express patent grant of Section 3**, which a specification other
-organizations implement needs and which MIT and CC0 do not give, with institutional legal review
-treating Apache-2.0 as routine and permissive licensing of the run-set leaving a later commercial
-policy on the evolve-set open exactly as the v1.39 editions boundary reserves; **one licence covers
-the whole repository** rather than splitting specification from code, because 147 markdown files and
-41 code files interleave them and any split would put the boundary through files rather than between
-them; `LICENSE` carries the complete unmodified Apache License 2.0, verified against the published
-SHA-256 of the canonical text before the Appendix copyright field was filled, and `NOTICE` carries
-the attribution notice its Section 4(d) refers to; **the claim that no attribution is required is
-withdrawn as false**, since Section 4 makes preserving the copyright notice, the licence and the
-`NOTICE` attribution a condition of the grant, and that sentence had stood on this page since the
-repository's first commit; **and what the standard asserts is unchanged by one word** — the
-repository now carries a licence and the standard still asserts none on any deployment, which are
-separate facts about separate objects; no delta spec and no check ride this version, both refused
-with their reasons recorded, because declaring a licence for one repository imposes no rule on any
-deployment and nothing in this tree can keep a licence claim honest; v1.52 is the preceding
+**Current version: v1.54** (2026-08-25, the release gate discovers the tree it is being asked to
+judge, closing the single release blocker returned by the first external review of this repository;
+`tools/km-release-gate.py` listed its checks with `git ls-files`, which reads the **index**, while
+the maintainer contract orders the gate to run **before** explicit staging, so a check authored in
+the change being gated was untracked at precisely the moment the gate ran and a listing of the index
+could not see it; **measured on the tree at `eb57f0f`** rather than argued, where a clean tree
+reported `33 check(s) discovered` and `PASS release-gate` at exit 0 and an untracked
+`tests/test_zz_probe.sh` holding a line `bash -n` rejects produced the same count and the same PASS,
+the file neither run nor named; **the gap was known and left open rather than newly found**, hit by
+the v1.48 drafting agent on 2026-08-24, worked around by staging first and reported as a limitation,
+then reproduced independently by the reviewer; **the gate's own canaries could never have caught it**,
+because every fixture that introduces a new check stages it with `git add` before gating it, which is
+the workaround written into the fixtures of the suite that exists to break this gate; **discovery now
+reads the working tree**, tracked and untracked together, runs both, syntax-checks a discovered check
+before executing it, holds an untracked check to the added-check declaration rule because it is one,
+and names and counts the untracked checks on the coverage line; **the trade is stated rather than
+absorbed** — the verdict is now about the working tree, so a scratch file shaped like a check and
+sitting where checks live is discovered, required to declare and run, which is the cheaper of the two
+errors against a green gate over a check nobody ran; one residual gap is asserted rather than closed,
+that discovery still honours the ignore rules, and it is pinned by a case as a gap and not as a
+control; nothing a deployment installs changes and no hub turns red; v1.53 is the preceding
 published version and v1.23 remains an
 unpublished draft awaiting its own push). The full
 ledger of released versions, and the rule that a published version number is never reused, is in
