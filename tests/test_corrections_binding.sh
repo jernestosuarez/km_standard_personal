@@ -29,6 +29,17 @@ printf '# seed handover\n' > "$hub/HANDOVER.md"
 printf 'lifecycle: active\nrule: alpha\n'   > "$corr/a.md"
 printf 'lifecycle: retired\nrule: beta\n'   > "$corr/b.md"
 printf 'lifecycle: active\nrule: gamma\n'   > "$corr/c.md"
+# v1.57 fixtures. `lifecycle:` records whether a DOCUMENT is current; it does not make a note a
+# binding rule. `rule:` is what does — STANDARD.md §"`rule:` is the whole point", and the v1.19
+# section already specified the count as the active notes "whose rule: is in force". A scaffold
+# document in the registry carries `lifecycle: active` and no `rule:`, and before v1.57 the count
+# read it as a rule that binds, drifting by one more with every scaffold file ever added.
+printf 'type: reference\nlifecycle: active\n' > "$corr/README.md"
+# A generated folder index carries `lifecycle: active` by construction (v1.15), so it is the
+# second scaffold shape the count must not read as a rule.
+printf 'type: index\nlifecycle: active\n'     > "$corr/index.md"
+# A note carrying a rule that is no longer current is not counted either: both halves must hold.
+printf 'lifecycle: superseded\nrule: delta\n' > "$corr/d.md"
 
 out=$(bash "$hub/hub-scan.sh" 2>&1)
 
@@ -38,10 +49,23 @@ else
   die "estate layout did NOT print the [ CORRECTIONS ] block"
 fi
 
-if printf '%s\n' "$out" | grep -qF '(2 active)'; then
-  pass "active count is 2 (retired note excluded)"
+# The count is of RULES IN FORCE, and the printed line has to say what the predicate judges.
+# Two notes qualify here: a.md and c.md. Excluded, each for its own reason and each of them a
+# distinct arm of the predicate: README.md and index.md are scaffold carrying no `rule:`, b.md is
+# retired, d.md is superseded. Before v1.57 the count was 4: it read the two scaffold files as rules that bind.
+if printf '%s\n' "$out" | grep -qF '(2 active rule(s))'; then
+  pass "active-rule count is 2 (scaffold, retired and superseded notes excluded)"
 else
-  die "active count wrong (expected '(2 active)'); got: $(printf '%s\n' "$out" | grep -F 'active' | head -1)"
+  die "active-rule count wrong (expected '(2 active rule(s))'); got: $(printf '%s\n' "$out" | grep -F 'active' | head -1)"
+fi
+
+# The printed claim must not outrun the predicate. A line saying every lifecycle: active note's
+# rule: is in force describes a predicate this block does not run, and a check whose printed claim
+# outruns what it counts is the class this repository has spent twelve versions repairing.
+if printf '%s\n' "$out" | grep -qF 'not scaffold, carry a rule:, and are lifecycle: active'; then
+  pass "the printed line states the predicate actually counted"
+else
+  die "the printed line does not state the predicate actually counted; got: $(printf '%s\n' "$out" | grep -F 'in force' | head -1)"
 fi
 
 # Ordering: [ CORRECTIONS ] must appear after [ HANDOVER ] and before [ INBOX ].

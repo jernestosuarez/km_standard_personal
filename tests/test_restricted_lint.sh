@@ -108,6 +108,76 @@ timestamp: 2026-08-16
 The synthetic ledger extract routes nine hundred units through the fixture account.
 EOF
 
+# --- v1.57 fixtures: the numbered curated document ---------------------------------------------
+# A NUMBERED CURATED DOCUMENT is a root-level `0[0-9]_*.md` or `10_*.md` — the hub structure
+# STANDARD.md fixes under "Hub Directory Structure" and lists in its monitored-files glob. Its NAME
+# is the hub's public structure, not a disclosive record identifier, so a frontmatter
+# `sensitivity: restricted` marker on one restricts its CONTENT and leaves its name nameable —
+# existence crosses; contents don't (v1.22, crossing law 3). Before v1.57 the marker blocked the
+# NAME, so a directive restricting such a document could not name the document it was restricting.
+cat > "$hub/03_risks-decisions.md" <<'EOF'
+---
+type: decisions
+title: Risks and decisions (synthetic fixture)
+description: Synthetic numbered curated document carrying a frontmatter restricted marker.
+tags: [fixture]
+resource: ./
+sensitivity: restricted
+lifecycle: active
+timestamp: 2026-08-24
+---
+
+# 03 - Risks and Decisions
+
+The synthetic commercial claim overstates the fixture pipeline by a factor of three.
+EOF
+
+# A numbered name in a SUBDIRECTORY is not hub structure. The narrowing must not reach it: this
+# note's NAME stays blocked, which is the no-bypass side of the v1.57 change.
+cat > "$hub/working-docs/03_engagement-note.md" <<'EOF'
+---
+type: concept
+title: Engagement note (synthetic fixture)
+description: Synthetic numbered-looking note in a subdirectory, restricted in frontmatter.
+tags: [fixture]
+resource: ./
+sensitivity: restricted
+lifecycle: active
+timestamp: 2026-08-24
+---
+
+The synthetic engagement note holds a fixture identity that must not be named outside its bound.
+EOF
+
+# A numbered curated document restricted only in ONE BODY SECTION. The body-marker path is
+# unchanged by v1.57 and this fixture is what proves it was examined rather than assumed: a body
+# marker already emits section text only and never the name, so the name was already nameable.
+cat > "$hub/05_partnerships-pipeline.md" <<'EOF'
+---
+type: partnerships
+title: Partnerships pipeline (synthetic fixture)
+description: Synthetic numbered curated document with one body-marked restricted section.
+tags: [fixture]
+resource: ./
+lifecycle: active
+timestamp: 2026-08-24
+---
+
+# 05 - Partnerships Pipeline
+
+Open pipeline narrative that anyone on the team may cite in a proposal.
+
+## Reserved position
+
+sensitivity: restricted
+
+The synthetic reserve position holds a fixture floor of four hundred units.
+
+## Open again
+
+Ordinary pipeline text resumes after the restricted span.
+EOF
+
 cat > "$hub/shareable/overview.md" <<'EOF'
 ---
 type: brief
@@ -198,6 +268,93 @@ else
   fail=1
 fi
 rm "$hub/changes/2026-08-14_XX_fallback_proposal.md"
+
+# 1d. NARROWING (v1.57), name side and the defect this version repairs: a NUMBERED CURATED
+#     DOCUMENT restricted in frontmatter stays NAMEABLE on an outbound surface. The live case is a
+#     directive that restricts a document's content: it cannot restrict what it may not name, and
+#     before v1.57 the scan errored on the directive at every session start.
+cat > "$hub/changes/2026-08-24_XX_restrict-claim_directive.md" <<'EOF'
+# Change Proposal - restrict a claim in a numbered curated document
+
+Restrict the adverse commercial claim in 03_risks-decisions.md. A directive that restricts a
+document's content has to be able to name the document it is restricting.
+EOF
+out=$(bash "$hub/hub-scan.sh" 2>&1)
+if printf '%s' "$out" | grep -q "RESTRICTED IDENTIFIER '03_risks-decisions'"; then
+  echo "FAIL: a numbered curated document's NAME on a surface was flagged (v1.57 narrowing regressed)"
+  printf '%s\n' "$out"
+  fail=1
+else
+  echo "PASS: a frontmatter-restricted numbered curated document stays nameable"
+fi
+rm "$hub/changes/2026-08-24_XX_restrict-claim_directive.md"
+
+# 1e. NARROWING (v1.57), text side: the narrowing frees the NAME and must not free the CONTENT.
+#     A verbatim body line of the same document in change-notice free text is an error, exactly as
+#     it is for a note classed restricted in frontmatter.
+cat > "$hub/changes/2026-08-24_XX_quote-claim_proposal.md" <<'EOF'
+# Change Proposal - quoting a numbered curated document's restricted body
+
+The synthetic commercial claim overstates the fixture pipeline by a factor of three.
+EOF
+out=$(bash "$hub/hub-scan.sh" 2>&1); status=$?
+if [ "$status" -eq 1 ] && printf '%s' "$out" | grep -q "RESTRICTED SECTION TEXT (from '03_risks-decisions')"; then
+  echo "PASS: a frontmatter-restricted numbered curated document's body text is blocked"
+else
+  echo "FAIL: body text of a frontmatter-restricted numbered curated document travelled (exit $status)"
+  printf '%s\n' "$out"
+  fail=1
+fi
+rm "$hub/changes/2026-08-24_XX_quote-claim_proposal.md"
+
+# 1f. NO BYPASS (v1.57): a numbered NAME in a SUBDIRECTORY is not hub structure, so the narrowing
+#     must not reach it and the note's name stays blocked. This case passes on the unrepaired tree
+#     too, which is the point of it: it pins the boundary the narrowing must not cross.
+cat > "$hub/changes/2026-08-24_XX_subdir-name_proposal.md" <<'EOF'
+# Change Proposal - naming a numbered-looking note held in a subdirectory
+
+Update 03_engagement-note before the next review.
+EOF
+out=$(bash "$hub/hub-scan.sh" 2>&1); status=$?
+if [ "$status" -eq 1 ] && printf '%s' "$out" | grep -q "RESTRICTED IDENTIFIER '03_engagement-note'"; then
+  echo "PASS: a numbered name in a subdirectory is still blocked (narrowing is root-scoped)"
+else
+  echo "FAIL: the v1.57 narrowing leaked to a subdirectory note (exit $status)"
+  printf '%s\n' "$out"
+  fail=1
+fi
+rm "$hub/changes/2026-08-24_XX_subdir-name_proposal.md"
+
+# 1g. THE BODY-MARKER PATH IS UNCHANGED (v1.57), asserted rather than assumed: a numbered curated
+#     document restricted only in one body section is nameable already, because a body marker emits
+#     section text and never the name (v1.21). Both sides are asserted in one pass.
+cat > "$hub/changes/2026-08-24_XX_bodymark_proposal.md" <<'EOF'
+# Change Proposal - naming a body-marked numbered curated document
+
+Amend the open pipeline narrative in 05_partnerships-pipeline.md.
+EOF
+out=$(bash "$hub/hub-scan.sh" 2>&1)
+if printf '%s' "$out" | grep -q "RESTRICTED IDENTIFIER '05_partnerships-pipeline'"; then
+  echo "FAIL: a body-marked numbered curated document's name was flagged"
+  printf '%s\n' "$out"
+  fail=1
+else
+  echo "PASS: a body-marked numbered curated document stays nameable (v1.21 path unchanged)"
+fi
+cat > "$hub/changes/2026-08-24_XX_bodymark_proposal.md" <<'EOF'
+# Change Proposal - quoting a body-marked section
+
+The synthetic reserve position holds a fixture floor of four hundred units.
+EOF
+out=$(bash "$hub/hub-scan.sh" 2>&1); status=$?
+if [ "$status" -eq 1 ] && printf '%s' "$out" | grep -q "RESTRICTED SECTION TEXT (from '05_partnerships-pipeline')"; then
+  echo "PASS: a body-marked section's text is still blocked on a surface (v1.21 path unchanged)"
+else
+  echo "FAIL: a body-marked section's text travelled (exit $status)"
+  printf '%s\n' "$out"
+  fail=1
+fi
+rm "$hub/changes/2026-08-24_XX_bodymark_proposal.md"
 
 # 2. NEGATIVE: the restricted marker itself in change-notice free text must fail the scan.
 cat > "$hub/changes/2026-08-03_XX_leak_proposal.md" <<'EOF'
