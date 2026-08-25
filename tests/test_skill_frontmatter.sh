@@ -87,6 +87,23 @@ die()  { echo "FAIL: $1"; fail=1; }
 # not a defect in how this check reads its input. Settling it inside a repair to the reader would
 # settle it silently, which is the treatment the extra-key question already has above. It is
 # written here so the next maintainer finds the question.
+# THE TAB MATCHER IS PROBED AGAINST THE LIVE SHELL BEFORE IT IS TRUSTED.
+# (v1.60 draft; binds nothing until that version's own owner push.)
+#
+# This is the v1.29 rule -- verify a matching construct against the tool that will actually run it
+# -- applied to the construct that made v1.60 necessary. From v1.27 to v1.58 the tab arm here was
+# written "\t"* inside double quotes, which is a LITERAL BACKSLASH-T: it matched nothing for as
+# long as it stood, and an inert matcher and a clean tree are the same colour. So the matcher is
+# run against a string it MUST match and a string it MUST NOT, and this suite REFUSES rather than
+# returning a verdict it cannot support. A refusal here is a defect in the construct, never a
+# statement about any skill file.
+TAB=$'\t'
+if [ "${#TAB}" -ne 1 ] || [[ "x${TAB}y" != *"$TAB"* ]] || [[ "xy" == *"$TAB"* ]]; then
+  echo "REFUSED: the tab matcher this check depends on is inert in this shell (bash ${BASH_VERSION:-unknown});" >&2
+  echo "         an inert matcher and a clean tree look identical, so no verdict is returned." >&2
+  exit 2
+fi
+
 skill_scan_roots() { # <root>: sets SKILL_ROOTS to the directories this check reads. One definition.
   SKILL_ROOTS=("$1/skills" "$1/template/.claude/skills" "$1/template/.agents/skills")
 }
@@ -95,7 +112,7 @@ skill_scan_roots() { # <root>: sets SKILL_ROOTS to the directories this check re
 # Usage: check_tree <root>  → prints one line per violation, exit 1 if any
 check_tree() {
   skill_scan_roots "$1"
-  local root="$1" bad=0 f slug fm name desc words close key val cont cur_key cur_indent n_name n_desc fmline ind_str rest ind is_seq
+  local root="$1" bad=0 f slug fm name desc words close key val cont cur_key cur_indent n_name n_desc fmline ind_str seq_lead rest ind is_seq
   while IFS= read -r f; do
     [ -z "$f" ] && continue
     slug="$(basename "$(dirname "$f")")"
@@ -166,21 +183,44 @@ check_tree() {
         "") continue ;;
         "#"*) continue ;;
       esac
-      # The line's own indentation, and whether it opens a sequence entry. A continuation is decided
-      # by COMPARING these against the key it would continue, never by matching a leading marker.
-      [[ "$fmline" =~ ^([[:space:]]*)(.*)$ ]] && { ind_str="${BASH_REMATCH[1]}"; rest="${BASH_REMATCH[2]}"; } \
-                                              || { ind_str=""; rest="$fmline"; }
+      # THE INDENTATION REGION of the line: its leading whitespace, plus -- on a sequence entry --
+      # the `-` indicator and the whitespace after it. [[:space:]] is used to CAPTURE the region,
+      # deliberately, so that a tab inside it is SEEN here and rejected below rather than never
+      # matched and silently mis-measured. `rest` is what follows that region: the continuation arm
+      # takes its value straight from it, so nothing downstream re-derives the region a second time.
+      [[ "$fmline" =~ ^([[:space:]]*)((-[[:space:]]+|-$)?)(.*)$ ]] \
+        && { ind_str="${BASH_REMATCH[1]}"; seq_lead="${BASH_REMATCH[2]}"; rest="${BASH_REMATCH[4]}"; } \
+        || { ind_str=""; seq_lead=""; rest="$fmline"; }
+      # INDENTATION IS SPACES, AND A TAB IN IT IS A REJECTION NAMING THE TAB.
+      # (v1.60 draft; binds nothing until that version's own owner push.)
+      # YAML forbids tabs in indentation. Until v1.60 this reader read `[[:space:]]` AS the
+      # indentation -- a class that contains the tab -- so a tab-indented continuation was folded
+      # into the preceding key and the block was accepted, while Psych answered "found a tab
+      # character that violate indentation while scanning a plain scalar". That is a false pass by
+      # this standard's own words: reading LESS of a valid document than a parser does is an
+      # approximation and is legitimate once named; accepting a document a parser REFUSES is not.
+      # The rejection also makes the v1.59 comparison below sound, which it was not: with tabs
+      # excluded from the region, `${#ind_str}` is a true column count rather than a measurement
+      # that scores a tab as one column and compares it against spaces.
+      # This is STRICTER than libyaml in one named place: libyaml accepts `  <TAB>text`, where the
+      # indentation is already satisfied by a space and the tab is separation. Rejecting it is a
+      # house rule this standard draws on purpose, and the error it can make is a false FAIL on a
+      # document mixing spaces and tabs in one indent, never a false pass. A tab that is NOT in the
+      # indentation region -- after the key's colon, or inside a value -- is untouched, and two
+      # clean_canary cases below require exactly that.
+      if [[ "$ind_str$seq_lead" == *"$TAB"* ]]; then
+        echo "  ! TAB IN THE INDENTATION OF A FRONTMATTER LINE; YAML FORBIDS IT AND INDENTATION HERE IS SPACES: '${fmline:0:60}': ${f#$root/}"; bad=1; cur_key=""; continue
+      fi
       ind=${#ind_str}
       is_seq=0
-      case "$rest" in "-" | "- "*) is_seq=1 ;; esac
+      [ -n "$seq_lead" ] && is_seq=1
       if [ "$ind" -gt "$cur_indent" ] && [ -n "$cur_key" ]; then
-        # Builtin matching, no subprocess. This loop runs once per block line per check_tree call
-        # and check_tree is called about thirty times by the canaries below, so a `printf | sed`
-        # pair here cost real time: 196s against the original check's 82s, measured back to back
-        # on the same cold tree, on synced storage where a fork is expensive. Warm, which is the
-        # only comparable pair, this form runs 1.6s against the original's 1.5s. The gate that
-        # runs this suite has a runtime budget of its own.
-        [[ "$fmline" =~ ^[[:space:]]*(-[[:space:]]+)?(.*)$ ]] && cont="${BASH_REMATCH[2]}" || cont="$fmline"
+        # `rest` already IS the line with its indentation region removed, computed once above.
+        # Taking `rest` here is a v1.60 draft change; binds nothing until that version's own owner push.
+        # Until v1.60 this arm re-derived the region with a second `[[:space:]]`-based match, which
+        # is one more place for the same wrong assumption to live and one more place to keep in
+        # step; taking the value the single derivation produced removes both.
+        cont="$rest"
         case "$cur_key" in
           name)        name="$name $cont" ;;
           description) desc="$desc $cont" ;;
@@ -416,8 +456,8 @@ FIX
 canary "sequence entry at the top level of a mapping block"     write_top_level_sequence "$f"
 clean_canary "a sequence indented under the key it belongs to"  write_indented_sequence "$f"
 
-# --- 6. INDENTATION IS SPACES; A TAB IN IT IS A REJECTION NAMING THE TAB (v1.60) ---
-# THIS SECTION BELONGS TO v1.60.
+# --- 6. INDENTATION IS SPACES; A TAB IN IT IS A REJECTION NAMING THE TAB (v1.60 draft) ---
+# THIS SECTION BELONGS TO v1.60 (DRAFT) AND BINDS NOTHING UNTIL THAT VERSION'S OWNER PUSH.
 #
 # YAML FORBIDS TABS IN INDENTATION, and until v1.60 this reader treated `[[:space:]]` -- a class
 # that CONTAINS the tab -- as indentation. A tab-indented continuation was folded into the
@@ -501,6 +541,21 @@ canary "tab inside a sequence entry's indentation"         write_tab_before_seq_
 canary "sequence entry indented with a tab"                write_tab_indented_sequence "$f"
 clean_canary "a tab after the key's colon is separation"   write_tab_after_key_colon "$f"
 clean_canary "a tab inside the value is not indentation"   write_tab_inside_value "$f"
+# AND THE PROBE AT THE TOP OF THIS FILE IS ITSELF PROVED IN BOTH DIRECTIONS. (v1.60 draft; binds nothing until that version's own owner push.) It refuses when the
+# tab matcher is inert; these two lines show that the inert form and the live form are genuinely
+# distinguishable in this shell, so the probe is separating two states rather than agreeing with
+# whatever it is given. The first is the exact construct that stood in this file from v1.27 to
+# v1.58 and matched nothing the whole time.
+if [[ "x${TAB}y" == *"\t"* ]]; then
+  die 'the literal backslash-t form MATCHED a real tab; the probe above cannot tell inert from live'
+else
+  pass 'the literal backslash-t form is inert against a real tab, as it was from v1.27 to v1.58'
+fi
+if [[ "x${TAB}y" == *"$TAB"* ]]; then
+  pass 'the live tab matcher this reader uses does match a real tab'
+else
+  die 'the live tab matcher did not match a real tab'
+fi
 
 echo
 if [ "$fail" -eq 0 ]; then echo "ALL SKILL FRONTMATTER CHECKS PASSED"; else echo "SKILL FRONTMATTER CHECKS FAILED"; fi

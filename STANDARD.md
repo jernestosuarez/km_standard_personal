@@ -1,153 +1,121 @@
 ---
 type: brief
-title: Knowledge Management Standard: Hub Framework (v1.59)
+title: Knowledge Management Standard: Hub Framework (v1.60 draft)
 description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, an optional Agent Tier for named, discoverable agent instances, an optional record-boundary layer for governed use of systems of record, and an editions boundary that names where consuming the standard ends and evolving it begins.
 tags: [standard, knowledge-management, governance, okf, agents]
 resource: template/
 timestamp: 2026-08-26
 ---
 
-# Knowledge Management Standard: Hub Framework (v1.59)
+# Knowledge Management Standard: Hub Framework (v1.60 draft)
 
-**Published v1.59** (2026-08-26, owner push: three findings from an external reviewer's
-**third** pass, each reproduced as a failing case on this branch, off `main` at `be6e4bf` (published
-v1.58), and committed red in `998b859` before any repair was written. **The gate's stability
-fingerprint covered its discovery candidates and not its inputs.** It hashed exactly the set
-discovery reads — `*.sh` and `*.py` under `tests/` and `scripts/` — while the gate itself resolved
-112 relative links across 172 markdown files, parsed 5 JSON and JSON-LD files and syntax-checked 31
-shell and 11 Python files, none of them fingerprinted. A broken link, an unparseable JSON file or a
-syntax error introduced *after* its own phase had run therefore survived into the final working tree
-with a PASS over it, and v1.58's own case 21e shipped **asserting** that as a known gap and
-demonstrating it with `README.md`. **The specification was the narrow part, not the implementation.**
-The brief that produced v1.58 asked for a fingerprint covering the same set discovery covers, the
-drafter built exactly that and registered the residual honestly, and the instruction was wrong: a
-gate's inputs are wider than its discovery candidates. The repair fingerprints every input class the
-gate reads, tracked ∪ untracked-not-ignored, **derived** by iterating one `INPUT_CLASSES` structure
-that every phase also takes its pathspecs from, so a phase added later that reads a new class cannot
-fall outside it silently — a case requires that no phase names a pathspec literal at all. Case 21e is
-**inverted from an assertion of the gap into a control over it**, and the residual that remains is
-narrower and is pinned by a new case: a file in *no* input class, one that only a discovered check
-opens, is still not seen, and neither is a file that changes and changes back. Ignored artifacts stay
-excluded, because the suites write inside the tree and a fingerprint over everything is a gate that
-refuses itself. **A same-commit branch switch was undetected while the docstring promised
-otherwise.** The identity read was `git rev-parse HEAD` alone, and two branches standing at one
-commit return the same value; the docstring claimed "a branch change is caught even when every file
-happens to match", which was true only of commit movement. Case 21d's own title promised the same
-thing while its fixture moved `HEAD` with an **empty commit**, which is commit movement and a
-different act. The identity now records the **commit and the ref standing at it**. Narrowing the
-claim was the other honest repair available and was refused with its reason: a branch switch is a
-real change in what is being gated even when the commit matches, and it is the promise a reader
-relies on. A detached `HEAD` reports a stable sentinel and refuses nothing, which a case requires in
-the other direction. **The frontmatter reader accepted YAML no parser will load.** A sequence entry
-was taken as a continuation of the preceding key at *any* indentation, so a block carrying a valid
-`name`, a valid 15-word `description` and two top-level `- item` lines passed at exit 0 while Ruby's
-YAML parser on the same host answered *did not find expected key while parsing a block mapping at
-line 2 column 1*. The arm predates v1.58 and **the v1.58 repair carried it forward without examining
-it**, which is the finding worth more than the instance: that repair fixed a line rather than
-re-deriving what the line was for. A continuation is now decided by comparing a line's indentation
-against the key it would continue, still **taking no YAML library as a dependency**, and the
-positive direction ships beside it — a sequence indented under its own key must keep passing.
-**Both sweeps returned instances and both are recorded.** The scope sweep found the same class in
-this version's own second file: `tests/test_skill_frontmatter.sh` printed *every shipped skill file
-carries a conforming frontmatter* while reading three directories, and the repository ships a fourth
-`SKILL.md` under `agents/`. The **claim** is corrected to state the set actually read and the
-**scope** is registered rather than widened, with the reason measured: that contract's description is
-42 words, so admitting it would redden the tree, and whether an agent contract is held to a residency
-budget written for runtime skill files is a policy question, not a defect in how the check reads its
-input. The same sweep found one documentation instance left standing and registered:
-`scripts/validate_published_not_draft.py` names `rfcs/`, `outputs/` and `work/` in its *what is out of
-scope* prose and silently skips `openspec/`, `.github/`, `assets/` and `leakage/` as well, which are
-outside `SCAN_ROOTS`. The inherited-arm sweep read every repair v1.58 made and found **one** further
-instance, which is Finding 1 itself: `check_patterns()` was factored out of discovery and handed to a
-new consumer with its scope carried over rather than re-derived. Nothing else in that change carried
-an untested arm.
+**Drafted v1.60 — awaiting owner push. Nothing this version adds binds until that push.** Two
+findings from an external reviewer's **fourth** pass, off `main` at `73f89e8` (published v1.59), each
+reproduced as a failing case and committed red in `1294b5d` before either repair was written. Both
+arrived as runnable scripts with stated SHA-256 digests; both digests verified, both run here
+unmodified on detached clones at the tag, both reproduced on the first attempt, in a reference
+environment identical on both sides — macOS 26.5.2 arm64, bash 3.2.57, git 2.50.1, python 3.9.6, ruby
+2.6.10p210 with Psych 3.1.0 and libyaml 0.2.1.
 
-**The reviewer's own reproductions were run here, unmodified, and are what the canaries carry.** Both
-scripts were supplied as runnable files with stated SHA-256 digests, both digests verified, and the
-reference environment turned out to be identical on both sides — macOS 26.5.2 arm64, bash 3.2.57,
-git 2.50.1, python 3.9.6, ruby 2.6.10p210 with Psych 3.1.0 and libyaml 0.2.1 — so they ran against a
-`be6e4bf` snapshot with nothing changed and reproduced on the first attempt: `exit=0`,
-`branch=km-other` for the branch switch, and `checker_exit=0` against `ruby_yaml_exit=1` for the
-frontmatter block. Against the repaired tree the same two scripts return `REFUSED` at exit 2 naming
-the ref, and `checker_exit=1` naming the reviewer's own line. **Each canary carries their fixture
-byte for byte rather than a fixture written from their description**, because a canary derived from a
-report tests the reading of the report. Every measurement this row states was made in that
-environment, and it is recorded because a parser's behaviour is only evidence when the parser is
-named. **Two claims are corrected without a defect behind them, and are marked as such:** the
-frontmatter reader now names the plain-scalar YAML subset it models and states that a file it accepts
-is conforming to *this standard's* contract and is not thereby certified as valid YAML, so the next
-reviewer is not testing an approximation against the whole of YAML. Bounding that claim was weighed
-as an alternative to tightening the reader and was rejected as a substitute: a block mapping followed
-by a root sequence is not a scalar-resolution nicety but a structurally invalid document, no skill
-file needs one, and accepting what a parser refuses is a false pass rather than an approximation. Both
-were done. **What independent review has and has not covered is recorded so the record does not
-overstate it.** The reviewer re-ran the earlier repairs against the immutable v1.58 tag — link
-exemptions, the installer, the MCP quarantine across its derived entry points, the README inventory,
-publication status, RFC references, and the frontmatter check's own v1.58 canaries — plus the full
-gate at 280s and a licence reconstruction matching the published Apache-2.0 digest, and none had
-regressed. Not comprehensively examined: every file in the hub scaffold, the cockpit beyond the v1.58
-diff, MCP semantics beyond quarantine and count, every skill's procedural body, and every historical
-ledger claim outside v1.58).
+**A control enforced a spelling where it certified a guarantee.** Case 21j of the gate's own suite is
+the control that is supposed to guarantee that *every verdict phase takes its pathspecs from the
+structure the fingerprint iterates*, so that a phase reading a new file class cannot fall outside the
+fingerprint. It enforced that by grepping the gate's source for the literal `git_tracked(root, [`. A
+phase written any other way walked straight past it, and the reviewer wrote one: a real `.txt`-reading
+verdict phase using `git_tracked(root, ("*.txt",))`, a tuple instead of a list. The suite then printed
+`PASS: 21j. every phase takes its pathspecs from the structure the fingerprint iterates` at
+`suite_exit=0` while the guarantee was false, and case 21h — the pin on what lies *outside* the
+covered set — accepted `notes.txt` mutating mid-run at a moment when `notes.txt` **was** a gate input,
+so the gap pin was certifying the wrong thing too. **This is this repository's own published doctrine
+met in its own suite**: v1.29/v1.30 state that a check proved in both directions fires on the class it
+models, never that it models the right class. Case 21j was proved in both directions and still modelled
+a call's spelling. **The repair removes the need for static analysis rather than lengthening the
+pattern.** A stricter grep — more spellings, a regex over call forms — is the same defect with more
+characters, and the next reader writes a helper or a variable. Every phase now obtains its files
+through accessors that **record what they hand out**, and the closing fingerprint covers what the run
+**actually read**: `git_tracked`, `git_untracked` and `read_text` register each pathspec they
+enumerate and each path they open, so a phase added tomorrow is inside the covered set by
+construction, with no list to keep in step. 21j becomes a **real added phase** — the reviewer's own,
+tuple and all, injected into a copy of the gate — that must be covered with no edit to the case, and
+21j2 requires the same added phase over a stable tree to keep passing. 21h keeps its gap on the
+unmodified gate, and the two together now state the boundary exactly: what was read is covered, what
+was not is not. **What remains enforced by nothing is stated rather than implied closed:** a phase
+that obtained a file *without* going through any of the three accessors would be outside the ledger,
+and no check detects that. It is narrower than the v1.59 residual, which any unrecognised spelling
+escaped, and it is not zero; a process-wide audit hook was weighed as the way to close it and refused,
+because it would record the gate's own source, every temporary file the suites write and every path
+git touches, which is a gate that refuses itself.
 
-The preceding published version is **v1.58** (2026-08-25, owner push: three findings from an external reviewer's second
-pass, each reproduced as a failing case on this branch, off `main` at `510cf03` (published v1.57), and
-committed red before any repair was written. **The release gate could PASS over a tree that changed
-while it ran.** Discovery runs first, the suites run after, and the pass takes about twenty minutes;
-nothing established that the tree at the verdict was the tree that was discovered. The reviewer watched
-it happen — the gate began on clean `main`, the branch changed, a discovered check was edited, and the
-gate returned PASS after ~900s still reporting zero changed declarations — and **the thing editing the
-tree was this maintainer's own drafting agent**, which is why the defect is that the gate cannot tell
-and not that anyone misbehaved. The repair is deliberately **not** a snapshot: the gate has read the
-working tree since v1.54 so that a check authored in the change being gated is visible, and
-snapshotting tracked content would silently undo that. It fingerprints what it actually reads, plus
-`HEAD`, before and after, and **refuses** on any difference, naming what moved. The residual is stated
-and pinned as a gap rather than implied closed: a file that changes and changes back inside the window
-is identical at both ends, and anything outside the discovery set is not covered. **The frontmatter
-check measured the first physical line of a value that spans lines.** Every indented line was skipped
-as a continuation unconditionally — no state, no record of which key it continued, no requirement that
-any key precede it — and the residency budget was then measured against the first line alone: a
-description whose first line is 13 words and whose folded YAML value is 97 passed at exit 0. The block
-is now walked with state, **taking no YAML library as a dependency**, because a parser on the
-maintainer's machine is not one in the shipped environment. **And "the limits, defined once" was
-false when it was written.** The gate's limit set was maintained in three places — the data, a numbered
-prose block arguing each one again, and hardcoded assertions pinning that block's wording — while a
-comment beside the data claimed adding one was an edit to the data and to nothing else. It is corrected
-under the v1.47 rule, not dated under v1.56's, because it was false at v1.55 and not overtaken since.
-The repair reduces the count of definitions to one rather than describing the drift, **and this
-version's own fifth limit is the proof**: adding it was an edit to one structure. **Both sweeps
-returned instances and both are recorded**, one repaired and one registered with its reason: the
-folded-value class was found again in the two shipped readers of `routing-keywords`, where the
-per-token repair of v1.44 is handed a value already truncated to its first line, and the
-single-definition class was found in the renderer's version pin, which claimed one place and held two).
+**Indentation was read with a character class that permits what the format forbids.** The frontmatter
+reader treated `[[:space:]]` as indentation. That class contains the **tab**, and YAML forbids tabs in
+indentation. A tab-indented continuation was therefore folded into the preceding key and the block
+accepted, at `checker_exit=0` with all canaries green, while Psych on the same host answered `found a
+tab character that violate indentation while scanning a plain scalar at line 3 column 14`. **This is
+inside the declared contract by v1.59's own words**: the paragraph v1.59 itself added classifies
+accepting a parser-rejected document as a false pass, so the version that drew the line is the version
+that crossed it. **How it got there is the sharper lesson.** v1.58 found the original tab arm written
+`"\t"*` inside double quotes — a literal backslash-t, **inert since the day it was written** — and
+repaired it by substituting a class the shell honours, which made the arm live for the first time and
+wrong in the same motion. Making a dead arm live without asking whether it *should* match is how an
+inert arm became a false pass, and it is the neighbouring failure to v1.59's, one level deeper: there
+a repair fixed a line instead of re-deriving what the line was for; here the line had never done
+anything at all. **The repair derives the rule from the parser rather than from the shell.**
+Indentation is spaces; a tab anywhere in a line's indentation region — its leading whitespace, plus
+the `-` indicator and the whitespace after it on a sequence entry — is a rejection naming the tab.
+Eleven boundary shapes were probed against Psych one at a time and the answers are recorded beside the
+rule, the accepted ones as well as the rejected. **The reader is stricter than libyaml in one named
+place and the divergence is declared rather than discovered:** libyaml accepts `  <TAB>text`, where a
+space has already satisfied the indentation and the tab is separation, and this reader refuses it —
+a house rule whose error can fall only as a false failure, never as a false pass. Two clean canaries
+require the shapes that must keep passing: a tab after a key's colon, and a tab inside a value. **The
+rejection also makes the v1.59 sequence-indentation comparison sound, which it was not:** with tabs
+excluded from the region, `${#ind_str}` is a true column count rather than a measurement that scored a
+tab as one column and compared it against spaces. **And the matcher is now probed against the live
+shell before it is trusted**, this repository's v1.29 rule applied to the construct that made this
+version necessary: the suite runs the tab matcher against a string it must match and a string it must
+not, and **refuses** rather than returning a verdict it cannot support, because an inert matcher and a
+clean tree are the same colour. Two canaries prove the probe separates the two states, one of them
+asserting that the literal backslash-t form is genuinely inert against a real tab.
 
-The version before that is **v1.57** (2026-08-25, owner push: two defects in the session-start scan every hub
-inherits, both found in operation by a deployment and both harvested rather than invented here. Each
-was reproduced as a failing case on this branch, off `main` at `2005772` (published v1.56), and
-committed red before either repair was written. **The restricted check blocked a numbered curated
-document's own name.** A root-level `0[0-9]_*.md` carrying a frontmatter `sensitivity: restricted`
-marker had its NAME blocked on every outbound surface, so a directive restricting that document's
-content could not name the document it was restricting: the hub's scan failed at every session start
-and buried its real integrity errors underneath. A numbered document's name is the hub's public
-structure, not a disclosive record identifier, so the marker now restricts the CONTENT and leaves the
-name nameable — which is the treatment `accessClass: restricted|record` has had since v1.22 under the
-crossing law the comment beside it already cited, *existence crosses; contents don't*. This is v1.21's
-own reasoning reaching a case it should always have covered, not a new rule, and the narrowing is
-**root-scoped**: a numbered name in a subdirectory is an ordinary note and stays blocked, because
-narrowing a security check is how a false positive becomes a false negative. The body-marker path was
-examined and is deliberately unchanged: a body marker already emits section text and never the name.
-**The corrections counter read `lifecycle:` as if it meant `binds`.** `lifecycle:` records whether a
-DOCUMENT is current; `rule:` is what makes a note a binding rule, and the v1.19 section that
-introduced the block already specified the count as the active notes *whose `rule:` is in force*, so
-the implementation never matched its own published specification. The registry's own `README.md` — a
-reference document, current, carrying no rule — was counted as a rule that binds, and every scaffold
-document ever added reproduced it. Measured against a live registry of 90: the current predicate
-returns **90**, the repaired predicate **89**, and `README.md` is the sole difference; three
-independent instruments in that deployment already agreed on 89. The predicate now has three arms —
-not scaffold, carries a `rule:`, is `lifecycle: active` — and the printed line states them, because a
-check whose printed claim outruns its predicate is the class this repository has spent twelve versions
-repairing. **Both sweeps returned exactly one instance each, the two repaired**, and both findings of
-none are recorded rather than left silent. Nothing in this version is redeployed anywhere: the
-canonical narrowing is the whole of it, and installing it into a hub is that hub's own act).
+**Both sweeps returned instances and both are recorded.** *A control enforces a spelling where it
+claims to enforce a property* was swept across every check in this repository that greps source text
+to certify a code property, and returned **three** further instances, all registered rather than
+repaired and all with their error direction stated: case 20c certifies *the CI workflow obtains the
+limits from the gate rather than copying them* by confirming that the string
+`km-release-gate.py --limits` appears, which is the sharpest of the three because a workflow could
+invoke the flag and carry a copy as well; case 15b certifies *the header argues no numbered limit of
+its own* by matching `^# [0-9]+\. [A-Z]`, which a differently formatted enumeration escapes; and case
+15c certifies *every constant the header names is defined* by requiring `^NAME=`, which a constant
+assigned in a tuple or inside a scope would read as undefined. Case 20's source-text count of `Limit(`
+was examined and found to err only toward a **false failure**, which is recorded as the reason it is
+left alone. *A character-class assumption imported from shell into a format that forbids it* was swept
+across every whitespace-class construct in every shipped shell and Python file, and returned **one**
+further instance, inside the same reader and repaired here: the continuation arm re-derived the
+indentation region a second time with its own `[[:space:]]` match, and now takes the value the single
+derivation already produced. Every other `[[:space:]]` in the repository was checked against Psych and
+sits in **separation-space** position — after a key's colon, around a value — where a tab is legal, so
+those are correct as written. **One bounded observation is registered rather than repaired:** a
+*space*-indented `# comment` inside a frontmatter block is a comment to Psych and is folded into the
+preceding value by this reader, which can move a description's word count in either direction. No
+shipped file does it, modelling it correctly requires modelling what Psych does to a continuation that
+follows a comment, and doing that inside a repair to tab handling would be a repair riding inside a
+repair.
+
+The preceding published version is **v1.59** (2026-08-26, owner push: three findings from an external
+reviewer's third pass. The gate's stability fingerprint covered its discovery candidates and not its
+inputs, and is widened to every input class it reads; a same-commit branch switch was undetected while
+the docstring promised otherwise, and the identity becomes a commit **and** a ref; and the frontmatter
+reader folded a top-level `- ` into the preceding key, accepting a document no runtime can load, so a
+continuation is now decided by indentation against the key it would continue. The reader also names
+the plain-scalar subset it models and stops calling the result validity in YAML).
+
+The version before that is **v1.58** (2026-08-25, owner push: three findings from an external
+reviewer's second pass. The release gate could return PASS over a tree that changed while it ran, so
+it now fingerprints what it reads before and after the pass and refuses on any difference; its limits
+were defined in one place, argued again in a numbered prose block and pinned in a third, and are
+reduced to one structure that every surface prints from; and the frontmatter reader measured a
+residency budget against the first physical line of a value that a parser folds across several, so it
+walks the block with state and judges the folded value).
 
 **v1.23** (stations, compartments, and the resolution plane) **remains drafted
 and unpublished**: its sections are marked with their version and bind nothing until its own push.
@@ -2801,6 +2769,37 @@ narrow the sentence, because the promise a reader relies on is the one worth kee
 detached states at one commit remain indistinguishable, which is the change-and-change-back residual
 in another form and is stated with it.
 
+*A control that enforces a spelling enforces no property, and the repair is to remove the need for
+the check rather than to lengthen its pattern (drafted in v1.60; binds nothing until this version's
+own owner push).* This standard already says that proving a check in both directions proves it fires
+on the class it models, never that it models the right class. The clearest instance of that yet is
+this repository's own suite, one version later. v1.59 derived a gate's covered set from a single
+structure and held every phase to it with a **case that grepped the gate's source text** for
+`git_tracked(root, [`. The case was proved in both directions. It was also, exactly, a check on how a
+call is *spelled*: an external reviewer added a real verdict phase reading a new file class with a
+tuple instead of a list, walked past the pattern in one line, and the case certified the guarantee
+while the guarantee was false. The **paired** case that pinned what lay outside the covered set then
+accepted that class mutating mid-run — at which point the class **was** covered, so the gap pin was
+certifying the wrong thing too. **A control that reads source text to certify a property of running
+code is an approximation of that property, and it must be described as one.**
+
+The reflex repair is a better pattern: more spellings, a regex over call forms. Refuse it. The next
+reader writes a helper, a variable, a comprehension, and the check is green again over a false
+claim; a longer pattern is the same defect with more characters. **Make the property a runtime fact
+instead.** Where every consumer must obtain something through an accessor, have the accessor
+**record what it handed out**, and derive the guarantee from the recording. The set then covers what
+was actually used rather than what a list predicted would be used, a consumer added later is inside
+it by construction, and the case that proved the guarantee becomes a **real new consumer** that must
+be covered with no edit to the case. A guarantee that cannot be violated needs no check, and that is
+the outcome to aim at before any pattern is written.
+
+Two obligations come with it, and both are the honesty rather than the mechanism. **State exactly
+what remains enforced by pattern-matching**, because a narrower residual is not an absent one: here
+it is a consumer that bypasses every accessor, which no check detects, and it is written into the
+gate's own limits rather than into a commit message. And **do not present a narrowed grep as a
+guarantee**; where the structural repair is not available in the version that finds the defect, say
+so, implement the best available control, and name the property it approximates.
+
 *And a limit is worth adding only if adding one is cheap, which is the second half of this version.*
 The set of limits a gate states is exactly the kind of set this standard says must have one home:
 before v1.58 this repository's gate held its limits as data, argued them again in a numbered prose
@@ -4382,6 +4381,36 @@ substitute for a repair in one direction: reading **less** of a valid document t
 an approximation, and **accepting a document a parser refuses** is a false pass. Where the second is
 found, tighten it and bound the claim; doing only the second leaves the check certifying documents no
 runtime can load.
+
+*A character class borrowed from the host language is not the format's, and a reader that models a
+format must probe the boundary against a parser rather than assume it (drafted in v1.60; binds
+nothing until this version's own owner push).* A dependency-free reader is written in some other
+language, and that language's conveniences carry its own definitions with them. `[[:space:]]` is the
+shell's idea of whitespace and it **contains the tab**; YAML forbids tabs in indentation. A reader
+that treats `[[:space:]]` as indentation therefore accepts, silently and by construction, documents
+the parser refuses — which is the false pass this standard names one paragraph above, arrived at not
+by neglect but by reaching for the obvious class in the language the check happens to be written in.
+The obligation is narrow and mechanical: **for every construct where the format is stricter than the
+host, probe the actual boundary against the reference parser, one case at a time, and record the
+answers beside the rule.** Record the shapes the parser **accepts** as well as the ones it rejects,
+because a rule tightened past the parser is a false failure and is discovered by the deployment
+rather than by the author. Where the reader's rule is deliberately **stricter** than the format,
+declare the divergence, name what it refuses that the parser would take, and say which way the error
+can fall — a stricter rule can produce a false failure and never a false pass, and that asymmetry is
+the argument for allowing it.
+
+*A dead arm made live is a new rule, and it must be re-derived rather than repaired (drafted in
+v1.60; binds nothing until this version's own owner push).* The defect above did not arrive by
+omission. The tab arm existed for eight versions written `"\t"*` inside double quotes — a literal
+backslash-t, matching nothing, **inert since the day it was written**. A later version found the
+inertness and repaired it by substituting a class the shell honours, which made the arm live for the
+first time and, in the same motion, made it wrong. **Discovering that a matcher never fired is
+discovering that its rule was never tested, so the rule is unproven, not merely unenforced.** Making
+it live is authoring it. Derive what the arm should match from the thing being modelled, prove the
+new rule in both directions, and only then connect it — repairing the *spelling* of a matcher and
+keeping its *intent* on trust is how an inert arm becomes a false pass. This is the same failure a
+neighbouring version records one level up, where a repair fixed a line instead of re-deriving what
+the line was for; here it is the sharper form, because the line had never done anything at all.
  **Stated
 limit:** the test covers the skills this standard ships. A skill written locally in a deployed hub is
 bound by the same rule and reached by no automated check, so it is verified at review. Half of that
@@ -5028,6 +5057,7 @@ v1.42).
 | v1.57 | 2026-08-25 | Drafted and published 2026-08-25 (owner push). Two defects in `template/hub-scan.sh`, the session-start scan every hub inherits, both found in operation by a reference deployment and both **harvested** rather than invented here: the designs were written by the tier that found them, which then refused its own ledger items because the only artifact that could close them is the canonical scan, which that tier may not edit. Each was reproduced as a failing case on this branch, off `main` at `2005772` (published v1.56), and **committed red before either repair was written**, because a case that passes against the unrepaired tree proves nothing about the repair that follows. **Defect 1, the `[ RESTRICTED ]` check blocked a numbered curated document's own NAME.** In the pass-1 frontmatter branch a `sensitivity: restricted` marker emitted an `I` record, blocking the note's name on every outbound surface. For a root-level `0[0-9]_*.md` or `10_*.md` that is wrong: the name is the hub's public structure, not a disclosive record identifier. *Measured on the unrepaired tree:* a `changes/` directive restricting the content of `03_risks-decisions.md` produced `! RESTRICTED IDENTIFIER '03_risks-decisions' on outbound surface: changes/2026-08-24_XX_restrict-claim_directive.md`, exit 1, so **the directive could not name the document it was restricting** and the hub's scan failed at every session start with its real integrity errors buried underneath; and the same tree raised **no** finding at all over a verbatim quotation of that document's body, exiting 0, which is the other half of the same defect. The marker on such a document now sets the classification arm instead: content blocked verbatim, name nameable — the treatment `accessClass: restricted|record` has had since v1.22, under the crossing law the comment beside it already cited. **This is v1.21's reasoning reaching a case it should always have covered**, not a new rule: v1.21 narrowed the body-marker path because a check that blocks the governed route to changing a file protects nothing, and this is the same shape found a second time. **The narrowing is root-scoped, which is the load-bearing half**: a numbered name in a subdirectory is an ordinary note and stays blocked, because narrowing a security check is how a false positive becomes a false negative, and the case that asserts it passes on the unrepaired tree too — its job is to pin the boundary, not to detect the defect. **The body-marker path is unchanged and was examined rather than left unexamined:** a body marker already emits section text and never a name, so a numbered curated document marked in the body was already nameable, and narrowing there would only widen what is blocked; both its directions are asserted in the same suite. **The trade is stated:** before this, a frontmatter marker on such a document blocked its name and none of its text; after it, the text is blocked and the name is not, so a proposal quoting a verbatim line is now an error where it was not. **Defect 2, the `[ CORRECTIONS ]` counter read `lifecycle:` as if it meant `binds`.** `lifecycle:` records whether a DOCUMENT is current; `rule:` is what makes a note a binding rule, and **the v1.19 section that introduced the block already specified the count as the active notes *whose `rule:` is in force*, so the implementation never matched its own published specification.** The registry's own `README.md` — a reference document, current, carrying no rule — was counted as a rule that binds, and every scaffold document ever added reproduced it. *Measured against a live registry:* the shipped predicate returned **90**, the corrected predicate **89**, `README.md` was the sole difference, and three independent instruments in that deployment already agreed on 89; on the synthetic fixture the block printed `(4 active)` over two real rules, a README and a generated index. The predicate now has three arms, all of which must hold — not scaffold, carries a `rule:`, is `lifecycle: active` — with scaffold taken from this standard's own set (`README.md`, `TEMPLATE.md`, `hub-manifest.md`) plus a generated `index.md`, which carries `lifecycle: active` by construction since v1.15. It is written as a loop and not a pipeline, because hub and estate paths contain spaces and an `xargs` formulation returns 0 on such a path without saying so. **The printed line was rewritten to state that predicate**, since a check whose printed claim outruns what it counts is the defect one layer up from the count. **What was deliberately not done:** the `lifecycle: active` line was not removed from the registry's `README.md`, because that edits the data until a broken counter accidentally agrees and the next scaffold file reproduces the defect; and no `DIGEST*.md` name pattern was written into the check, though the handed-over design proposed one — the standard defines no such artifact, a name list beside a check is the hand-maintained memory of one directory this standard already records as the class that rots, and the four digests present in the measured deployment carry no `^rule:` line, so the arm would have been inert. **That is registered as the stated limit rather than closed:** a derived digest rendering `rule:` and `lifecycle: active` at column zero would be counted, and the repair for it belongs in the generator or in naming the artifact under the scaffold set. **Both sweeps returned exactly one instance each, and both findings of none are recorded rather than left silent.** *Defect 1's class — a check treats a structural name as a disclosive identifier* — was swept across every instrument that matches a name against a boundary: `[ RESTRICTED ]` is the only one in the repository that decides whether a NAME may cross, and `build-indexes.sh` (indexes only entity folders, which hold no numbered documents), the quarantined MCP surface (`Path(path).stem` is an identifier, not a disclosure gate), the cockpit (`path.stem` titles a proposal) and the leakage instrument (an organization name is disclosive wherever it sits, by design) do not carry it. *Defect 2's class — a check reads `lifecycle:` as if it meant `binds`* — was swept across every use of the field in shipped code: `is_current`, `[ CURRENCY ]`, `build-indexes.sh`'s row filter and the MCP surface's projection gate all read it as currency, which is what it means; `validate_organization_profile.py` validates the enum; and `validate_rfc_lifecycle.py` names a disposition derived from the ledger rather than the field. **One near-neighbour is registered rather than repaired:** the cockpit renders a hub's registry membership in a column it also calls `lifecycle`, which is a naming collision over a different property and not a false predicate. **Scope, stated because the ledger item it answers named two acts and only one is here:** this version is the canonical narrowing alone. Re-deploying the repaired scan across divergent installed copies is writing into hubs, which is each hub's own act under its own governance, and no hub is edited or dispatched by this version. |
 | v1.58 | 2026-08-25 | Drafted and published 2026-08-25 (owner push). Three findings from an external reviewer's second pass over this repository. Each was reproduced as a failing case on this branch, off `main` at `510cf03` (published v1.57), and **committed red before any repair was written** (`fbf8002`), because a case that passes against the unrepaired tree proves nothing about the repair that follows. **Finding 1 [P1], `tools/km-release-gate.py` could return PASS over a tree that changed while it ran.** Discovery and the declaration checks run first, the suites run after, and nothing established that the tree at the verdict was the tree that was discovered; the file was grepped for `fingerprint|snapshot|tree_id|rev-parse HEAD|stable` and returned **zero hits**, because no such machinery existed. The reviewer observed it live: the gate began on clean `main`, the branch changed at 14:16, `tests/test_restricted_lint.sh` was modified at ~14:18, and the gate returned PASS after ~900s still reporting zero changed declarations. **The cause was this maintainer's own v1.57 drafting agent**, mutating the tree while the reviewer's gate ran — the reflog shows `14:16 checkout` and `14:29 commit: v1.57 (canaries)` — and the reviewer could not have known that. It does not weaken the finding, it is how the finding was discovered, and **the defect is that the gate cannot tell, not that anyone misbehaved**: a ~20-minute run is a wide window for a maintainer editing alongside it, and a gate whose PASS cannot name the tree it judged certifies nothing. **The repair is deliberately not a snapshot.** Since v1.54 the gate reads the working tree, tracked ∪ untracked-not-ignored, so that a check authored in the change being gated is visible; a snapshot of tracked content would silently undo v1.54 and reopen the exact defect that version closed. It fingerprints **what it actually reads** — the same set discovery reads, by the same pathspecs, by content, with `HEAD` alongside so a branch change is caught even when every file matches — before and after, and **REFUSES** (exit 2) on any difference, naming what moved. Not a PASS, and not a silent re-run. *Measured, four fixtures, on the unrepaired gate at `510cf03`:* a suite editing another discovered check → PASS, exit 0; a suite creating a new check-shaped file → PASS, exit 0, over a check never discovered, never held to the declaration rule and never executed; a suite moving `HEAD` with no content differing → PASS, exit 0. The repaired gate refuses all three at exit 2 naming what moved. **The residual is stated rather than implied closed, and pinned as a gap:** a file that changes and changes back inside the window is byte-identical at both ends and invisible to any before/after comparison, and anything outside the discovery set is not fingerprinted at all — case 21e requires a change outside that set to still pass, so a later widening fails loudly. Widening to the whole tree was considered and refused: the checks and tools legitimately write inside the tree, and a fingerprint over everything converges on a gate that refuses every run. **This became BOTH a refusal condition and a fifth stated limit, and the reasoning is recorded because the question was asked:** drift is detectable, and a detectable condition is answered by the verdict category the gate already has for *could not evaluate*; but what a PASS now means is narrower than a reader assumes, and every sentence of the form *a green line does not mean this* belongs with the limits. **Finding 2 [P2], `tests/test_skill_frontmatter.sh` retained a false pass.** The continuation arm skipped **every** indented line unconditionally — no state, no knowledge of which key it continued, no check that any key preceded it — and the 10-40 word budget was then measured against `sed -n 's/^description: *//p' | head -1`, the first physical line alone. *Reproduced:* a fixture whose `description:` first line is **13 words** followed by indented continuation lines was accepted at exit 0 with zero violation lines, while Ruby's YAML parser on the same host read the effective value as **97 words**. A second fixture, an indented line placed before any key so that it continues nothing at all, was also accepted. The block is now walked with state: a continuation is folded into the key it continues, and an indented line no key precedes is a violation. **No YAML library is taken as a dependency**, deliberately — PyYAML is absent on the authoring host, Ruby's is present, and neither is guaranteed in a deployment's environment; this repository has already published v1.51 about a tool that assumed its author's toolchain, so the folding is done in the shell the check already requires, and the limit is stated: it models the plain-scalar folding these files use, not the whole of YAML. **A third defect was found while repairing rather than by probing:** the arm's tab pattern was written `"\t"*` inside double quotes, which is a literal backslash-t, so no tab-indented line had ever matched it — the v1.29 rule about verifying a matching construct against the tool that runs it, met in this repository's own suite. **The positive direction ships with it:** a legitimate two-line description inside the budget must still be accepted, and is, on both trees. **Finding 3 [P3], "the limits, defined once" was overstated.** The comment beside the gate's limit tuple ended *"Adding a fifth limit is an edit to this tuple and to nothing else"*, and the same set was maintained in **three** places: the tuple; a numbered prose block in the header arguing each limit again; and four hardcoded `grep -Fq` assertions in `tests/test_release_gate.sh` case 15 pinning that block's wording. **Verified against v1.55's own tree (`aeec51a`) rather than taken on the reviewer's word**: the sentence, the four numbered header entries and the four assertions all stood there together, so the claim was **false on the day it was written** and is corrected under the v1.47 rule, not dated under v1.56's. Two further symptoms of the same separate maintenance were found here: the header pointed twice at `GATE_LIMITS`, a name nothing defined (the tuple is `LIMITS`), and it claimed the count *"is not restated in prose anywhere"* while the tuple's comment 185 lines below said *"the same four limits"* — the file carried the claim and its counter-example at once. The header's entries had also drifted into file order 1, 3, 2, 4. **The repair reduces the count of maintained definitions rather than describing the drift**, which is the route this standard prefers where it is available: each limit now carries its own argument beside the words every surface prints, the header's prose block is gone, and case 15 is replaced by three **derived** assertions that name no limit — no prose count of the limits, no numbered enumeration beside the definition, and every constant the header names actually defined. **The proof is this version's own work: adding the fifth limit was an edit to `LIMITS` and to nothing else**, and it also made true, with no edit, the identical claim `.github/workflows/release-gate.yml` had been carrying since v1.55. **The anchoring those checks needed is itself proved in both directions.** Written unanchored, cases 15a and 15c reported this change's own repair as the defect, because a repair to this class necessarily *quotes* the wording it removed — the v1.52/v1.55 class, met on the checks written to close it. They now blank quoted spans and the `km-unrepaired-tree` line, which is a dated record this standard forbids rewriting; and because *"a rule narrowed until the tree goes green"* is indistinguishable from one that has stopped matching, cases **15d and 15e** run both anchored greps against a copy of the gate carrying the v1.55 wording as a live claim and require both to fire. **Both sweeps returned instances, and both findings are recorded rather than left silent.** *Finding 2's class — a check reads the first physical line of a value whose logical value spans lines* — was swept across every shipped check, tool and surface. `.km-tier`'s `tier` and `scope:` reads were examined and excluded: the standard defines that marker as line-oriented, not YAML, so those values are single-valued by construction. The frontmatter openers (`head -1` for `---`) are physical-line tests by definition. But the class was found **twice more, on `routing-keywords`, the very field v1.44 was written about**: `fm_field()` in `template/hub-scan.sh` does `print; exit` on the first matching line, and the cockpit's reader uses `[^"\n]*` with `re.M`, which cannot cross a newline. *Measured on a manifest declaring five keywords folded across two lines:* YAML reads all five, `fm_field` reads `alpha, beta,` — two keywords plus a stray empty entry, which the v1.44 gate then correctly splits per token — and the cockpit reads two. **The per-token repair was right and was handed a truncated value.** It is **registered, not repaired here**, in both readers and in this document, because `fm_field` serves every field the scan reads and is inherited by every hub: that is a change with its own blast radius, its own canaries and its own unrepaired-tree runs, and settling it inside a repair to an unrelated instrument is the move this standard already refuses. *Finding 3's class — a comment claims a single definition where several are maintained* — was swept across every such claim in shipped code. `scripts/publication_status.py` was verified genuinely single (both validators import it). One real instance was found and **repaired**: `tools/km-publish.sh` said *"THE PIN. One name, one place ... editing this line is sufficient to change what renders"* above **two** literals, `WEASYPRINT_PIN="weasyprint==69.0"` and `WEASYPRINT_VERSION="69.0"`, the second being what `venv_ready` verifies against and what the environment path is built from; editing the pin alone would install one version and verify against another. It fails closed, which is why nothing caught it. The bare version now derives from the pin, and new case 7c counts the version literals and requires the derivation to hold — red at *"2 version literal(s)"* on the unrepaired tool. **Nothing is redeployed anywhere by this version**, and no hub is edited or dispatched. |
 | v1.59 | 2026-08-26 | Drafted and published 2026-08-26 (owner push). Three findings from an external reviewer's **third** pass over this repository. Each was verified here, each was reproduced as a failing case on this branch, off `main` at `be6e4bf` (published v1.58), and all were **committed red before any repair was written** (`998b859`). Two of the three arrived as runnable reproduction scripts with stated SHA-256 digests; both digests verified, both scripts run here **unmodified** against a `be6e4bf` snapshot, and both reproduced on the first attempt. The reference environment is identical on both sides — macOS 26.5.2 arm64, bash 3.2.57, git 2.50.1, python 3.9.6, ruby 2.6.10p210 with Psych 3.1.0 and libyaml 0.2.1 — and every parser measurement below names the parser that made it. **Finding 1 [P1], the gate's stability fingerprint covered its discovery candidates and not its inputs.** `fingerprint()` hashed exactly the set discovery reads, `*.sh` and `*.py` under `tests/` and `scripts/`, and its docstring said so; the gate itself resolved **112 relative links across 172 markdown files**, parsed **5** JSON/JSON-LD files and syntax-checked **31** shell and **11** Python files, none of them fingerprinted. A broken link, an unparseable JSON file or a syntax error introduced *after* its own phase had run therefore survived into the final working tree with a PASS over it, and **v1.58's own case 21e shipped asserting that as a KNOWN GAP**, demonstrating it with `README.md`. **The specification was the narrow part, not the implementation:** the brief that produced v1.58 asked for a fingerprint covering the same set discovery covers, the drafter built exactly that and registered the residual honestly, and the instruction was wrong — a gate's inputs are wider than its discovery candidates. *Measured on the unrepaired gate, four ways:* a tracked markdown file the link phase had resolved, a tracked JSON file the parse phase had read, and a shell and a Python file outside the check directories that the syntax phases had read, each edited mid-run → PASS, exit 0. The repair introduces `INPUT_CLASSES`, one structure holding every pathspec any phase reads; **every phase draws from it and none names a literal**, and `fingerprint()` iterates it, tracked ∪ untracked-not-ignored, content-hashed, so the covered set is **derived from the phases that consume it** rather than listed beside them and a phase added later cannot fall outside it silently. Case **21j** asserts that mechanism; **21e is inverted from an assertion of the gap into a control over it**; 21g/21g2/21g3 hold one input class each. v1.54's working-tree semantics are untouched and ignored artifacts stay excluded, because the suites write inside the tree and a fingerprint over everything is a gate that refuses itself. **The residual is narrower and is still pinned as a gap, by new case 21h:** a file in *no* input class — one only a discovered check opens — is not fingerprinted, and neither is a file that changes and changes back. **Finding 2 [P2], a same-commit branch switch was undetected while the claim said otherwise.** `git_head()` ran `git rev-parse HEAD` and nothing else, and two branches at one commit return the same value; the `fingerprint()` docstring claimed *"HEAD rides with it so a branch change is caught even when every file happens to match"*, which was **false as written** — it caught commit movement. Case 21d's own title promised a branch change while its fixture moved `HEAD` with an **empty commit**. *Reproduced with the reviewer's own script, unmodified:* `git branch km-other`, `git switch -q km-other`, commit unchanged, result `exit=0`, `branch=km-other`, `REPRODUCED`. **The defect is the contradiction, not the coverage**, and two coherent repairs existed: record the reference, or narrow the claim, the case title and the version record together. **Recording the reference was chosen and argued**: a branch is what the maintainer is about to commit to, so switching branch mid-run changes what the verdict is about even when every byte holds still, and the promise a reader relies on is the one worth keeping. `git_identity()` now records the commit **and** the symbolic reference; a detached `HEAD` reports a stable sentinel and refuses nothing, which **case 21d3 requires in the other direction**, and case 21d2 keeps commit movement. Against the repaired gate the reviewer's script returns `REFUSED … the checked-out ref changed from refs/heads/main to refs/heads/km-other` at exit 2. **Finding 3 [P2], the frontmatter approximation accepted invalid YAML.** The continuation arm was `[[:space:]]* | "- "*`, so a **top-level** `- …` line was folded into the preceding key; YAML makes a sequence a key's value only when it is more-indented than that key, and a block mapping followed by a root sequence is structurally invalid. *Reproduced with the reviewer's own script, unmodified:* a valid `name`, a conforming description and one root-level `- top-level sequence content makes this YAML document invalid` gave `checker_exit=0` against `ruby_yaml_exit=1` with `Psych::SyntaxError: did not find expected key while parsing a block mapping at line 2 column 1`. **The arm predates v1.58 and the v1.58 repair carried it forward without examining it**, which is the finding worth more than the instance: that repair fixed a line rather than re-deriving what the line was for. A continuation is now decided by comparing a line's indentation with the key it would continue, **still taking no YAML library as a dependency** (v1.51 exists because a tool assumed its author's toolchain), the reviewer's fixture is carried byte for byte, and the positive direction ships beside it — a sequence indented under its own key must keep passing, and does, on both trees. **A third option was weighed and adopted as an addition rather than a substitute:** the reviewer noted that a dependency-free reader could describe the subset it accepts instead of calling the result conforming YAML. The reader now **names the subset it models** — `---` delimiters, column-zero keys, plain scalars folded across more-indented continuations, whole-line comments, blanks — and names what falls outside it, and its passing line states that a file it accepts conforms to *this standard's* contract as modelled and is **not thereby certified as valid YAML**. Bounding the claim was not accepted as a replacement for the tightening, on the distinction now written into the standard: reading *less* of a valid document than a parser does is an approximation and is legitimate once named; **accepting a document a parser refuses is a false pass**. **Both sweeps returned instances and both are recorded.** *The scope class — a control's scope is narrower than the thing it certifies* — was found in this version's own second file: `tests/test_skill_frontmatter.sh` printed *every shipped skill file carries a conforming frontmatter* while reading three directories of a repository that ships a fourth `SKILL.md`, under `agents/`. The **claim** is corrected to state the count and the roots actually read; the **scope** is registered rather than widened, with the measurement behind the decision — that contract's `description` is **42 words**, so admitting it would redden the tree, and whether an agent contract is bound by a residency budget written for runtime skill files is a policy question rather than a defect in how the check reads its input. The same sweep found one documentation instance left standing and **registered**: `scripts/validate_published_not_draft.py` names `rfcs/`, `outputs/` and `work/` in its *what is out of scope* prose while `SCAN_ROOTS` silently excludes `openspec/`, `.github/`, `assets/` and `leakage/` as well. *The inherited-arm class — an arm carried through a repair without being re-derived* — was swept across every repair v1.58 made and returned **one** further instance, which is finding 1 itself: `check_patterns()` was factored out of discovery and handed to a new consumer with discovery's scope carried over rather than re-derived. The other v1.58 repairs carried no untested arm. **What independent review has and has not covered is recorded so the record does not overstate it:** the reviewer re-ran the earlier repairs against the immutable v1.58 tag — link exemptions, the installer, the MCP quarantine across its derived entry points, the README inventory, publication status, RFC references, and the frontmatter check's own v1.58 canaries — plus the full gate at 280s and a licence reconstruction matching the published Apache-2.0 digest, and **none had regressed**. Not comprehensively examined: every file in the hub scaffold, the cockpit beyond the v1.58 diff, MCP semantics beyond quarantine and count, every skill's procedural body, and every historical ledger claim outside v1.58. **Nothing is redeployed anywhere by this version**, and no hub is edited or dispatched. |
+| v1.60 | 2026-08-26 | **DRAFT — awaiting owner push. Nothing this version adds binds until that push.** Two findings from an external reviewer's **fourth** pass over this repository, off `main` at `73f89e8` (published v1.59). Each was verified here by reading the code rather than the report, each was reproduced as a failing case on this branch, and both were **committed red before either repair was written** (`1294b5d`). Both arrived as runnable reproduction scripts with stated SHA-256 digests; both digests verified (`2610ce37…`, `526b32d2…`), both scripts run here **unmodified** on detached clones at the tag, and both reproduced on the first attempt. The reference environment is identical on both sides — macOS 26.5.2 arm64, bash 3.2.57, git 2.50.1, python 3.9.6, ruby 2.6.10p210 with Psych 3.1.0 and libyaml 0.2.1 — and every parser measurement below names the parser that made it. **Finding 1 [P2], case 21j enforced a syntax and not the guarantee it certified.** Case 21j of `tests/test_release_gate.sh` is the control for *every verdict phase takes its pathspecs from `INPUT_CLASSES`*, so that a phase reading a new file class cannot fall outside the stability fingerprint. It enforced that by grepping `tools/km-release-gate.py` for the literal `git_tracked(root, [`. *Reproduced with the reviewer's own script, unmodified:* a real `.txt`-reading verdict phase written `git_tracked(root, ("*.txt",))` — a **tuple** instead of a list — walked straight past the pattern, and the suite printed `PASS: 21j. every phase takes its pathspecs from the structure the fingerprint iterates` at `suite_exit=0` while the guarantee was false. Case **21h**, the pin on what lies *outside* the covered set, then accepted `notes.txt` mutating mid-run at a moment when `notes.txt` **was** a gate input, so the gap pin was certifying the wrong thing as well. **This is this repository's own published doctrine met in its own suite:** v1.29/v1.30 state that a check proved in both directions fires on the class it models, never that it models the right class. Case 21j was proved in both directions and still modelled a call's spelling. **The repair removes the need for static analysis rather than lengthening the pattern**, and the alternative was weighed and refused in `design.md`: a stricter grep — more spellings, a regex over call forms — is the same defect with more characters, and the next reader writes a helper or a variable. `git_tracked`, `git_untracked` and `read_text` now **record what they hand out**, in a `Reads` ledger of every pathspec enumerated and every path opened, digested at first observation; the closing fingerprint re-enumerates those pathspecs and re-hashes those paths, so **the covered set is what the run actually read** rather than what a table predicted it would read. `INPUT_CLASSES` remains as the **opening baseline**, so a file is pinned from t=0 rather than from the moment its phase reaches it, and it is no longer the guarantee. A phase added tomorrow is covered **by construction**. Case 21j becomes a **real added phase** — the reviewer's own, tuple and all, injected into a copy of the real gate with its anchors asserted — which must be covered with **no edit to the case**; **21j2** requires the same added phase over a stable tree to keep passing; and **21h keeps its gap on the unmodified gate**, the pair now stating the boundary exactly. **The residual is stated rather than implied closed:** a phase that obtained a file without going through any of the three accessors would be outside the ledger and no check detects it — narrower than the v1.59 residual, which any unrecognised spelling escaped, and not zero. A process-wide audit hook was weighed as the structural close and **refused for a mechanical reason**: it would record the gate's own source, every temporary file the suites write and every path git touches, which is a gate that refuses itself. **Finding 2 [P2], `[[:space:]]` was read as indentation, and that class contains the tab.** YAML forbids tabs in indentation. `tests/test_skill_frontmatter.sh` captured a line's indentation with `[[:space:]]*`, so a tab-indented continuation was folded into the preceding key and the block accepted. *Reproduced with the reviewer's own script, unmodified:* `PASS: 23 skill file(s) …`, `ALL SKILL FRONTMATTER CHECKS PASSED`, `checker_exit=0` against `ruby_yaml_exit=1` with `Psych::SyntaxError: found a tab character that violate indentation while scanning a plain scalar at line 3 column 14`. **This is inside the declared contract by v1.59's own words**: the paragraph v1.59 added classifies accepting a parser-rejected document as a false pass, so the version that drew the line is the version that crossed it. **How it got there is the sharper lesson and is written into the standard as its own rule.** v1.58 found the original tab arm written `"\t"*` inside double quotes — a literal backslash-t, **inert since the day it was written** — and repaired it by substituting a class the shell honours, which made the arm live for the first time and wrong in the same motion. **Discovering that a matcher never fired is discovering that its rule was never tested**, so making it live is authoring it, not repairing it. **The repair derives the rule from the parser rather than from the shell:** indentation is spaces, and a tab anywhere in a line's indentation region — its leading whitespace, plus the `-` indicator and the whitespace after it on a sequence entry — is a rejection **naming the tab**. Eleven boundary shapes were probed against Psych one at a time and recorded beside the rule, the **accepted** ones as well as the rejected. **The reader is stricter than libyaml in one named place and the divergence is declared rather than discovered:** libyaml accepts `  <TAB>text`, where a space has already satisfied the indentation and the tab is separation; this reader refuses it, a house rule whose error can fall only as a false failure and never as a false pass. Six canaries were red on the unrepaired tree and two clean canaries pin the shapes that must keep passing — a tab after a key's colon, and a tab inside a value. A seventh case, the tab-indented **comment**, passed on the unrepaired tree **for the wrong reason** — the comment was folded into `name` and tripped the slug rule — which is recorded rather than counted as detection: nothing on the unrepaired tree detected a tab at all. **The rejection also makes the v1.59 sequence-indentation comparison sound, which it was not:** with tabs excluded from the region, `${#ind_str}` is a true column count rather than a measurement that scored a tab as one column and compared it against spaces. **And the matcher is now probed against the live shell before it is trusted** — this repository's v1.29 rule applied to the construct that made this version necessary. The suite runs the tab matcher against a string it must match and a string it must not, and **REFUSES** rather than returning a verdict it cannot support, because an inert matcher and a clean tree are the same colour; two canaries prove the probe separates the states, one of them asserting that the literal backslash-t form is genuinely inert against a real tab. **Both sweeps returned instances and both are recorded.** *A control enforces a spelling where it claims to enforce a property* was swept across every check that greps source text to certify a code property and returned **three** further instances, all **registered rather than repaired**, each with its error direction stated: case **20c** certifies *the CI workflow obtains the limits from the gate rather than copying them* by confirming the string `km-release-gate.py --limits` appears — the sharpest of the three, because a workflow could invoke the flag **and** carry a copy; case **15b** certifies *the header argues no numbered limit of its own* by matching `^# [0-9]+\. [A-Z]`, which a differently formatted enumeration escapes; case **15c** certifies *every constant the header names is defined* by requiring `^NAME=`, which a constant assigned in a tuple or inside a scope would read as undefined. Case **20**'s source-text count of `Limit(` was examined and **left alone with its reason recorded**: any miscount produces a false **failure**, never a false pass. Cases 15a and 20d grep **prose** to certify a claim about prose and are not this class. *A character-class assumption imported from shell into a format that forbids it* was swept across every whitespace-class construct in every shipped shell and Python file and returned **one** further instance, inside the same reader and **repaired here**: the continuation arm re-derived the indentation region a second time with its own `[[:space:]]` match, and now takes the value the single derivation already produced. Every other `[[:space:]]` in the repository was checked against Psych and sits in **separation-space** position — after a key's colon, around a value — where a tab is legal; the other frontmatter readers (`template/hub-scan.sh`, `template/build-indexes.sh`, `template/mcp/server.py`, `components/km-cockpit/km-cockpit.py`) model no indentation at all and already declare that limit. **One bounded observation is registered, not repaired:** a *space*-indented `# comment` inside a block is a comment to Psych and is folded into the preceding value by this reader, which can move a description's word count in either direction. No shipped file does it, and modelling it correctly requires modelling what Psych does to a continuation that follows a comment — a repair riding inside a repair to tab handling. **The prior repairs were re-verified on this branch and none had regressed:** the v1.58 branch-switch fixture (`37426e96…`) and the v1.59 root-sequence fixture (`cf6fcbc3…`) were both re-run and both still fire. **Nothing is redeployed anywhere by this version**, and no hub is edited or dispatched. |
 
 
 ### Publishing a version (added in v1.42)

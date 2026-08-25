@@ -777,10 +777,19 @@ base=$(mkdrift "$c" 'printf "\n# edited while the gate was running\n" >> tools/h
 KM_GATE_BASE="$base" expect "21g3. a Python file outside the check dirs, changed mid-run, is refused" \
   "$c" 2 "tools/helper.py"
 
-# 21h. THE RESIDUAL, PINNED AS A GAP AND NOT AS A CONTROL, AND NARROWER THAN IT WAS. The fingerprint
-#      covers what THIS GATE reads. A file in no input class -- a `.txt`, a `.yml`, a licence, a
-#      template asset -- is read by the discovered checks and not by the gate, and can still change
-#      mid-run without being seen. So can a file that changes and changes back inside the window.
+# 21h. THE RESIDUAL, PINNED AS A GAP AND NOT AS A CONTROL, AND RE-DRAWN IN v1.60 (DRAFT; binds nothing until that version's own owner push).
+#      The fingerprint
+#      covers what THIS RUN READ. A file NO phase of the gate reads -- a `.txt`, a `.yml`, a
+#      licence, a template asset -- is opened by the discovered checks and not by the gate, and can
+#      still change mid-run without being seen. So can a file that changes and changes back.
+#
+#      READ THIS CASE WITH 21j BELOW; SEPARATELY EITHER ONE MISLEADS. Under v1.59 this case passed
+#      while a real `.txt`-reading phase stood in the gate, so `notes.txt` WAS an input to it and
+#      the pin was certifying the wrong thing. The pair now says the true thing exactly: 21h
+#      requires that a class the UNMODIFIED gate never reads is not covered, and 21j requires that
+#      the same class IS covered the moment a phase actually reads it. The boundary is what was
+#      read, and both sides of it are held.
+#
 #      A later change that widens the fingerprint again fails here loudly instead of quietly
 #      redefining what a PASS covers.
 c="$work/drift_outside"
@@ -792,7 +801,8 @@ note "       reads; what only a discovered check reads, and a file that changes 
 note "       are not seen."
 
 # ================================================================================================
-# 21j/21j2. THE COVERED SET IS A RUNTIME FACT, NOT A SOURCE-TEXT CLAIM. (Rewritten in v1.60.)
+# 21j/21j2. THE COVERED SET IS A RUNTIME FACT, NOT A SOURCE-TEXT CLAIM.
+#      (Rewritten in v1.60 draft; binds nothing until that version's own owner push.)
 #
 #      Four behavioural cases above prove four classes are covered today. They cannot prove that a
 #      phase added TOMORROW is covered, and that is what this pair is for.
