@@ -1,9 +1,16 @@
 # The release gate. One command, one verdict.
 #
-# This job runs tools/km-release-gate.py, which discovers every tracked check in any tests/ or
-# scripts/ directory, at the root or nested, runs them, and adds a shell syntax check, a JSON and JSON-LD parse
+# This job runs tools/km-release-gate.py, which discovers every check in any tests/ or scripts/
+# directory, at the root or nested, runs them, and adds a shell syntax check, a JSON and JSON-LD parse
 # check, a Python syntax check and a relative-link check over the tracked tree. Its exit status is
 # this job's status: 0 pass, 1 fail, 2 refused. A refusal is not a pass.
+#
+# Discovery reads the WORKING TREE, tracked and untracked together, and honours the ignore rules.
+# This comment said "tracked" until v1.56, describing the behaviour v1.54 replaced: the gate is run
+# before staging, so a check authored in the change being gated is untracked at the moment it runs,
+# and a description that says otherwise tells a reader the gate is blind where it is not. The gate
+# states the number of untracked discovered checks on its own coverage line, which is the figure to
+# read rather than this sentence.
 #
 # EXPECTED DURATION: measured at 8 to 11 minutes on the maintainer's machine across four full runs,
 # and the gate prints its own total and its three slowest checks on every run so this comment can be

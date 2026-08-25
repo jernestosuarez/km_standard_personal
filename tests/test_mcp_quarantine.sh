@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: v1.40 | case 5 is the unrepaired-tree run: the same assertions against an UNQUARANTINED copy of the surface are required to FAIL there, so a pass in cases 2 to 4 is evidence of a refusal rather than of an empty tree.
+# km-unrepaired-tree: v1.56 | re-stated for the entry-point count repair, and case 7 was run against the unrepaired tree first, which is main at aeec51a: the suite reported "all 11 entry points refused" while template/mcp/server.py declares 7 by decorator, so case 7 FAILED there naming 11 against 7. Eleven was the size of the driver's own call list, get_entity being driven five times with five identifiers. The negative direction was driven separately by appending an eighth decorated entry point the driver does not call, on which case 7 fails naming probe_entry as declared and unreported. The v1.40 declaration this replaces still holds: case 5 is the unrepaired-tree run for the quarantine itself, the same assertions against an UNQUARANTINED copy of the surface being required to FAIL there, so a pass in cases 2 to 4 is evidence of a refusal rather than of an empty tree.
 # Fixtures for the v1.40 quarantine of the optional MCP query surface (template/mcp/).
 #
 # WHAT THIS PROVES, AND WHAT IT DOES NOT.
@@ -19,7 +19,10 @@
 #   - case 1 fails closed if the fixture hub committed nothing to withhold;
 #   - case 5 runs the same assertions against an UNQUARANTINED copy of the surface and requires
 #     them to FAIL there, which is what makes a pass in cases 2 to 4 evidence of a refusal rather
-#     than evidence of an empty tree.
+#     than evidence of an empty tree;
+#   - case 7 (v1.56) holds the entry-point figure this suite REPORTS against the set the surface
+#     declares by decorator, so a summary line that counted something other than entry points is
+#     caught rather than copied onward, which is what happened to the v1.40 version row.
 #
 # The `mcp` package is not a test dependency: a stub providing the FastMCP decorators is placed on
 # PYTHONPATH, so the surface's own logic is exercised without a network install.
@@ -217,18 +220,22 @@ spec = importlib.util.spec_from_file_location("hubmcp_under_test", server_path)
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 
+# Each key is "<entry point>#<case>", and the part before the "#" is the NAME OF THE FUNCTION the
+# surface decorates. That is what lets the assertions below report a count of entry points rather
+# than a count of calls, and what lets case 7 hold the reported set against the surface's own
+# decorators. get_entity is driven five times, so eleven calls cover seven entry points.
 out = {}
-out["list_entities"] = module.list_entities()
-out["get_entity:active"] = module.get_entity("adopt-format")
-out["get_entity:retired"] = module.get_entity("retired-choice")
-out["get_entity:superseded"] = module.get_entity("superseded-risk")
-out["get_entity:sensitive"] = module.get_entity("sensitive-contact")
-out["get_entity:classed"] = module.get_entity("classed-claim")
-out["query_facts"] = module.query_facts("body vendor schedule contact claim note format")
-out["hub_scope"] = module.hub_scope()
-out["hub://about"] = module.about()
-out["hub://glossary"] = module.glossary()
-out["hub://index"] = module.folder_index("decisions")
+out["list_entities#all"] = module.list_entities()
+out["get_entity#active"] = module.get_entity("adopt-format")
+out["get_entity#retired"] = module.get_entity("retired-choice")
+out["get_entity#superseded"] = module.get_entity("superseded-risk")
+out["get_entity#sensitive"] = module.get_entity("sensitive-contact")
+out["get_entity#classed"] = module.get_entity("classed-claim")
+out["query_facts#keywords"] = module.query_facts("body vendor schedule contact claim note format")
+out["hub_scope#all"] = module.hub_scope()
+out["about#resource"] = module.about()
+out["glossary#resource"] = module.glossary()
+out["folder_index#decisions"] = module.folder_index("decisions")
 print(json.dumps(out))
 EOF
 
@@ -256,7 +263,16 @@ if problems:
     for p in problems:
         print(p)
     sys.exit(1)
-print("all %d entry points refused, stating the quarantine and its reason" % len(results))
+# Both numbers are derived, and they are different numbers. len(results) is how many times the
+# driver called; the entry points are the distinct names behind those calls, get_entity being driven
+# five times with five identifiers. Until v1.56 this line reported the first number under the second
+# number's name, and the v1.40 version row carried that into the published ledger. Case 7 holds the
+# entry-point figure against the surface's own decorators.
+entry_points = sorted(set(entry.split("#", 1)[0] for entry in results))
+print(
+    "all %d invocation(s) across %d entry point(s) refused, stating the quarantine and its "
+    "reason: %s" % (len(results), len(entry_points), " ".join(entry_points))
+)
 sys.exit(0)
 EOF
 
@@ -422,6 +438,43 @@ if grep -qiE '^[^#]*\b(accessClass|sensitivity|clearance)\b.*(<=|ceiling|allow|d
 else
   echo "PASS: access clearance and projection manifest remain unimplemented, stated as the"
   echo "      acknowledged gap the quarantine closes and not as a control this change proves"
+fi
+
+# ── 7. The number this suite reports as entry points is the number the surface has (v1.56) ───────
+# The driver calls eleven times and the surface has seven entry points, because get_entity is driven
+# five times with five different identifiers. Until v1.56 the summary line above called all eleven
+# "entry points", and the v1.40 version row copied that number into the published ledger. A count a
+# check reports is a claim like any other, and this one was derived from nothing: it was the size of
+# the driver's own call list.
+#
+# So the count is now held against the surface. The set of entry points is DERIVED from server.py by
+# its own decorators and is never listed here, so adding a tool or a resource changes this case's
+# answer with no edit to it. The claim is read back out of the line the suite prints, because that
+# line is what a reader, and a version row, actually see.
+
+summary=$(printf '%s' "$quarantined_json" | python3 "$work/assert.py" 2>/dev/null | tail -1)
+declared_names=$(awk '/^@mcp\.(tool|resource)/{want=1;next} want&&/^def /{sub(/^def /,"");sub(/\(.*/,"");print;want=0}' \
+                 "$SERVER" | sort -u)
+declared=$(printf '%s\n' "$declared_names" | grep -c .)
+claimed=$(printf '%s' "$summary" | sed -n 's/.*[^0-9]\([0-9][0-9]*\) entry point.*/\1/p' | head -1)
+claimed_names=$(printf '%s' "$summary" | sed -n 's/.*reason: //p' | tr ' ' '\n' | grep . | sort -u)
+if [ "$declared" -eq 0 ]; then
+  echo "FAIL: 7. no @mcp.tool or @mcp.resource entry point was found in the surface, so the set"
+  echo "      could not be derived and this case is void rather than clean"
+  fail=1
+elif [ -z "$claimed" ] || [ -z "$claimed_names" ]; then
+  echo "FAIL: 7. the suite's own summary line states no entry-point count or names none, so what"
+  echo "      it reports cannot be held against the surface"
+  fail=1
+elif [ "$claimed" -eq "$declared" ] && [ "$claimed_names" = "$declared_names" ]; then
+  echo "PASS: 7. the suite reports $claimed entry point(s) and names exactly the $declared the"
+  echo "      surface declares by decorator, so the count is derived on both sides"
+else
+  echo "FAIL: 7. the suite reports $claimed entry point(s) while the surface declares $declared"
+  echo "      (@mcp.tool and @mcp.resource); a count of invocations is not a count of entry points."
+  echo "      reported: $(printf '%s' "$claimed_names" | tr '\n' ' ')"
+  echo "      declared: $(printf '%s' "$declared_names" | tr '\n' ' ')"
+  fail=1
 fi
 
 if [ "$fail" -eq 0 ]; then

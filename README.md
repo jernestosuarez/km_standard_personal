@@ -71,8 +71,8 @@ tied to any specific company, industry, or AI vendor.
 | Path | What it is |
 |---|---|
 | [`STANDARD.md`](STANDARD.md) | The full standard — architecture, governance rules, frontmatter spec, ontology layer, checklists. Read this first. |
-| [`template/`](template/) | A ready-to-copy reference hub: stub docs, `context.jsonld`, `km-deployment.md`, entity-note folders (`decisions/`, `risks/`, `stakeholders/`, `milestones/`, `partners/`, `corrections/`, plus the optional `relationships/`, `claims/`, and `sources/systems/`), governance files, and the per-hub agent skills (`km-intake`, `km-propose`, `km-gather`, `km-start`, `km-handover`, `km-brief`) already wired up for Claude Code and AGENTS.md-compatible tools. |
-| [`rfcs/`](rfcs/README.md) | Design RFCs, seven of them, each a dated design record that is never rewritten to agree with what happened afterwards. **Start at [`rfcs/README.md`](rfcs/README.md), the index**, which records for every proposal its status, the published version that implemented it, where a design was implemented in narrowed form, and how the RFC badge above is generated from that table rather than counted by hand. |
+| [`template/`](template/) | A ready-to-copy reference hub: stub docs, `context.jsonld`, `km-deployment.md`, entity-note folders (`decisions/`, `risks/`, `stakeholders/`, `milestones/`, `partners/`, `corrections/`, plus the optional `relationships/`, `claims/`, and `sources/systems/`), governance files, and the per-hub agent skills (`km-intake`, `km-propose`, `km-gather`, `km-start`, `km-handover`, `km-brief`, `km-publish`) already wired up for Claude Code and AGENTS.md-compatible tools. Both enumerations in this row are compared against the template itself by `tests/test_readme_inventory.sh`, so neither is a hand-kept memory of a directory. |
+| [`rfcs/`](rfcs/README.md) | Design RFCs, each a dated design record that is never rewritten to agree with what happened afterwards. **Start at [`rfcs/README.md`](rfcs/README.md), the index**, which records for every proposal its status, the published version that implemented it, where a design was implemented in narrowed form, and how the RFC badge above is generated from that table rather than counted by hand. |
 | [`contracts/organization-profile.schema.json`](contracts/organization-profile.schema.json) | Portable JSON contract for an approved Enterprise Knowledge Layer organization profile. |
 | [`scripts/validate_organization_profile.py`](scripts/validate_organization_profile.py) | Dependency-free validator for profile shape, compatibility, safe paths, and module eligibility. |
 | [`skills/km-init/`](skills/km-init/SKILL.md) | Workspace-level skill: runs the purpose interview and either stands up a brand-new hub from `template/` or adopts a directory that already exists, writing only what it lacks. |
@@ -135,10 +135,13 @@ What an adopter may rely on, in the licence's own terms rather than this page's:
 - **One licence over the whole repository.** The specification prose and the code are not split,
   because the tree interleaves them: templates, skills, and scaffolds are both at once.
 
-What the licence asks in return: **keep the copyright notice, the licence text, and the `NOTICE`
-attribution, and mark the files you changed** (§4). Attribution is a condition of the grant. This
-page previously said that no attribution was required; that is false under Apache-2.0, and it is
-withdrawn here.
+What the licence asks in return, and it asks it **when you redistribute** the work or a derivative of
+it, in source or object form: **keep the copyright, patent, trademark and attribution notices, hand
+on a copy of the licence, mark the files you changed, and carry the `NOTICE` attribution** (§4).
+Those conditions attach to distribution. Using this repository inside your own organization, or
+modifying it and not passing it on, triggers none of them. This page previously said that no
+attribution was required at all; that is false under Apache-2.0 once anything is redistributed, and
+it is withdrawn here. `LICENSE` §4 states the conditions in full and governs.
 
 **The repository now carries a licence. The standard still asserts none.** Those are separate facts
 about separate objects. Licensing this repository puts no licence, price, or commercial term on any

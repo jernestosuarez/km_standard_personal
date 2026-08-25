@@ -174,13 +174,21 @@ check the change adds names the version being drafted; a check the change edits 
 re-stated by that edit. Do not write a declaration for a run that did not happen, and do not read the
 gate's green as covering it: the gate can see that a declaration was made, never that it is true.
 
-Read the gate's two stated limits into every report you write. A green gate does not mean a push is
-free of organization leakage, because the denylist that scan needs is generated from an
-organization's own entity names and is kept outside a publishable canonical repository by design, so
-the gate proves the instrument through its canaries and only a deployment's own local pre-push hook
-scans an actual push. And a green gate does not mean anyone other than you looked. The minimum viable
-independence is an adversarial pass by someone who did not author the change, against the specific
-class being repaired, and no runner supplies it. State both as limits rather than as work deferred.
+Read the gate's stated limits into every report you write, and take them **from the gate** rather
+than from this file (corrected in v1.56, drafted and unpublished; this instruction binds nothing
+until its own owner push). The gate holds them in one definition, prints them with its passing
+verdict, and prints them alone on request, so the current set is one command away and no other file
+needs a copy that will drift. This sentence carried such a copy: it said *two* from the version that
+introduced the gate onward, while the gate had printed three since that same version and four since
+the discovery repair, and a version row that obeyed this instruction published the wrong number.
+Count nothing here. Two of the limits bear on this contract most directly and are stated as
+substance rather than as an enumeration: a green gate does not mean a push is free of organization
+leakage, because the denylist that scan needs is generated from an organization's own entity names
+and is kept outside a publishable canonical repository by design, so the gate proves the instrument
+through its canaries and only a deployment's own local pre-push hook scans an actual push; and a
+green gate does not mean anyone other than you looked, the minimum viable independence being an
+adversarial pass by someone who did not author the change, against the specific class being
+repaired, which no runner supplies. State the gate's limits as limits rather than as work deferred.
 
 ## Verify and commit
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # km-release-gate: the one command that runs the whole gate and returns one verdict.
 #
-# km-unrepaired-tree: v1.55 | re-stated for the exemption-anchoring repair, and run against the unrepaired tree first: with README.md given a broken relative link and a fenced text block quoting km-gate-link-exempt, check_links reported 0 failures, "153 of 154 markdown files scanned, 1 exempt" and 88 links resolved; the same tree without the fenced example reported 1 failure naming the broken link and 113 links resolved. A quotation removed a document from the scan and 25 links from the count at exit 0. The repaired reader reports the failure in both shapes and still honours a real declaration at the start of a line. The v1.54 declaration this replaces still holds: re-stated for the discovery-scope repair, and run against the unrepaired tree first: with an untracked tests/test_zz_probe.sh holding a line bash -n rejects, this gate reported "33 check(s) discovered" and "PASS release-gate", exit 0, the same count and the same verdict as the clean tree, having neither run nor named the check. Earlier, under v1.46, it was run against deliberately broken trees (a suite made to fail, a suite made unexecutable, an emptied discovery set, a stripped declaration) and refused or failed in each; see tests/test_release_gate.sh.
+# km-unrepaired-tree: v1.56 | re-stated because this version edits this file. The edit is to the header block alone, correcting a claim that the CI workflow carries a copy of the limits when v1.55 deleted that copy, and removing the prose count of them; no arm of the gate changes, so there is no new unrepaired-tree run to record for the gate itself and none is invented. The v1.55 declaration this re-states still holds in full: re-stated for the exemption-anchoring repair, and run against the unrepaired tree first: with README.md given a broken relative link and a fenced text block quoting km-gate-link-exempt, check_links reported 0 failures, "153 of 154 markdown files scanned, 1 exempt" and 88 links resolved; the same tree without the fenced example reported 1 failure naming the broken link and 113 links resolved. A quotation removed a document from the scan and 25 links from the count at exit 0. The repaired reader reports the failure in both shapes and still honours a real declaration at the start of a line. The v1.54 declaration this replaces still holds: re-stated for the discovery-scope repair, and run against the unrepaired tree first: with an untracked tests/test_zz_probe.sh holding a line bash -n rejects, this gate reported "33 check(s) discovered" and "PASS release-gate", exit 0, the same count and the same verdict as the clean tree, having neither run nor named the check. Earlier, under v1.46, it was run against deliberately broken trees (a suite made to fail, a suite made unexecutable, an emptied discovery set, a stripped declaration) and refused or failed in each; see tests/test_release_gate.sh.
 #
 # Standard: STANDARD.md §"Publishing a version" step 5, and §"Standard Maintainer" under
 # "A gate runs before publication, and it declares what it cannot do".
@@ -21,11 +21,15 @@
 # already been bitten by three times.
 #
 # ------------------------------------------------------------------------------------------------
-# WHAT THIS GATE CANNOT DO. The first two limits are stated here, in the standard, and in the CI
-# workflow, because a green line from this command is read as "safe to publish" and neither of them
-# is covered by it. The third was found by running this gate against a deliberately broken tree, and
-# it is recorded in the same place rather than in a report nobody re-reads. The fourth is the
-# residual scope of the v1.54 discovery repair, written down as a gap rather than left to be found.
+# WHAT THIS GATE CANNOT DO. The limits are argued here and held as data in GATE_LIMITS below, which
+# is the one definition every surface prints from; the CI workflow carried a copy until v1.55 and now
+# runs `--limits` instead, so this block no longer claims a copy that is not there (corrected in
+# v1.56). The first two are here because a green line from this command is read as "safe to publish"
+# and neither of them is covered by it. The third was found by running this gate against a
+# deliberately broken tree, and it is recorded in the same place rather than in a report nobody
+# re-reads. The fourth is the residual scope of the v1.54 discovery repair, written down as a gap
+# rather than left to be found. The ordinals below are the argument's order and the count of them is
+# not restated in prose anywhere: read GATE_LIMITS, or run `--limits`.
 #
 # 1. IT CANNOT RUN THE ORGANISATION LEAKAGE SCAN. That scan needs a denylist generated from a real
 #    organisation's own entity names, and that denylist lives outside this repository BY DESIGN:
