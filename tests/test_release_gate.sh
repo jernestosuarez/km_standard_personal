@@ -486,8 +486,7 @@ note "       path added to .gitignore leaves the gate without any edit to the ga
 
 # ================================================================================================
 # 15. THE LIMITS ARE DEFINED IN ONE PLACE, AND THE FILE MAKES NO CLAIM ABOUT THEM IT MAINTAINS BY
-#     HAND. (Rewritten in v1.58, drafted and unpublished; these cases bind nothing until this
-#     version's owner push.)
+#     HAND. (Rewritten in v1.58.)
 #
 #     Until v1.58 this case named four limits by their exact header wording in four hardcoded
 #     `grep -Fq` calls. That made the case itself the third maintained definition of the set: the
@@ -642,8 +641,7 @@ else
 fi
 
 # ================================================================================================
-# 21. THE VERDICT IS ABOUT THE TREE THE GATE DISCOVERED. (Added in v1.58, drafted and unpublished;
-#     these cases bind nothing until this version's owner push.)
+# 21. THE VERDICT IS ABOUT THE TREE THE GATE DISCOVERED. (Added in v1.58.)
 #
 #     Discovery and the declaration phase run first; the suites run after; the run takes about
 #     twenty minutes on the real repository. Nothing established that the tree at the verdict was

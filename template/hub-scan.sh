@@ -283,10 +283,9 @@ currency_extra_docs=$(find "$HUB/working-docs" -name '*.md' -type f 2>/dev/null 
 # Read one frontmatter field. Frontmatter only — the body is not the graph.
 # Strips inline YAML comments and surrounding quotes/whitespace, so a documented field
 # (`last-reviewed: 2026-07-14  # last confirmed true`) still parses as a value.
-# REGISTERED GAP, NOT CLOSED HERE (recorded in v1.58, drafted and unpublished; this note binds
-# nothing until that version's owner push). This reader prints the FIRST MATCHING LINE and stops, so
-# it returns the first physical line of a value, never the folded logical value. YAML folds a plain
-# scalar across more-indented continuation lines, so a manifest declaring
+# REGISTERED GAP, NOT CLOSED HERE (recorded in v1.58). This reader prints the FIRST MATCHING LINE
+# and stops, so it returns the first physical line of a value, never the folded logical value. YAML
+# folds a plain scalar across more-indented continuation lines, so a manifest declaring
 #
 #   routing-keywords: alpha, beta,
 #     gamma, delta, epsilon

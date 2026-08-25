@@ -196,8 +196,7 @@ else
   pass "7b. no unpinned install of the renderer remains in the tool"
 fi
 
-# --- 7c. the pin is ONE literal, because the comment beside it says so (added in v1.58, drafted
-#         and unpublished; this case binds nothing until this version's owner push) --------------
+# --- 7c. the pin is ONE literal, because the comment beside it says so (added in v1.58) --------
 # Found by the sweep v1.58 ran for the class "a comment claims a single definition where several
 # are maintained". The comment above the pin reads "THE PIN. One name, one place ... editing this
 # line is sufficient to change what renders", and two lines carried the version: WEASYPRINT_PIN

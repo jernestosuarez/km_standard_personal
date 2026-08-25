@@ -24,8 +24,7 @@
 # ------------------------------------------------------------------------------------------------
 # WHAT THIS GATE CANNOT DO. Read LIMITS below, or run `--limits`. That structure is the ONLY place
 # the limits are defined, and it carries each limit's full argument beside the words every surface
-# prints, so there is nothing here to keep in step with it (reduced to one definition in v1.58,
-# drafted and unpublished; this material binds nothing until this version's owner push).
+# prints, so there is nothing here to keep in step with it (reduced to one definition in v1.58).
 #
 # Until v1.58 the same set was maintained in three places: the LIMITS tuple; a numbered prose block
 # HERE that argued each limit again; and four hardcoded `grep -Fq` assertions in
@@ -192,7 +191,7 @@ NON_RELATIVE_RE = re.compile(r"^(https?:|mailto:|ftp:|tel:|data:|#)", re.I)
 
 # ------------------------------------------------------------------------------------------------
 # THE LIMITS, AND THIS IS THE ONLY PLACE THEY ARE DEFINED. (v1.55; reduced to one definition in
-# v1.58, drafted and unpublished -- this material binds nothing until this version's owner push.)
+# v1.58.)
 #
 # Each entry carries its own STATEMENT, the SUMMARY lines every surface prints beside it, and the
 # full ARGUMENT for it. The argument used to live in a numbered prose block in the header, which
@@ -272,8 +271,8 @@ LIMITS = (
          "any difference. A file that changes and changes back inside the window is identical at",
          "both ends and invisible; anything outside the discovery set is not fingerprinted at all,",
          "so a PASS names the checks it judged and never the whole tree."),
-        """Added in v1.58 (drafted and unpublished; binds nothing until this version's owner push),
-        and it is the residual of the tree-stability repair rather than a defect awaiting a fix.
+        """Added in v1.58, and it is the residual of the tree-stability repair rather than a
+        defect awaiting a fix.
         The run takes about twenty minutes on this repository, which is a wide window for a
         maintainer editing alongside it, and until v1.58 nothing established that the tree at the
         verdict was the tree that was discovered: an external reviewer watched this gate begin on a

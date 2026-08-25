@@ -250,9 +250,9 @@ run_guards() {
 # renders, and an environment left over from before the pin cannot survive as a silent third
 # version.
 #
-# The bare version is DERIVED from the pin and never typed a second time (v1.58, drafted and
-# unpublished; this material binds nothing until this version's owner push). Until v1.58 both lines
-# carried the number, so "editing this line is sufficient" was false: a bumped pin would install one
+# The bare version is DERIVED from the pin and never typed a second time (v1.58). Until v1.58 both
+# lines carried the number, so "editing this line is sufficient" was false: a bumped pin would
+# install one
 # version while venv_ready verified against the other and the environment path named the other
 # again. It failed closed, which is why nothing caught it, and a comment claiming one definition
 # beside two is the class v1.58 swept this repository for. Case 7c of

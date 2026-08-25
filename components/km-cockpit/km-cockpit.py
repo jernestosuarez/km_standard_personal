@@ -153,8 +153,7 @@ def load_hubs():
                 dep_raw = dep.read_text(encoding="utf-8", errors="replace")
             except OSError:
                 dep_raw = ""
-            # REGISTERED GAP, NOT CLOSED HERE (recorded in v1.58, drafted and unpublished; this
-            # note binds nothing until that version's owner push). `[^"\n]*` cannot cross a
+            # REGISTERED GAP, NOT CLOSED HERE (recorded in v1.58). `[^"\n]*` cannot cross a
             # newline and `$` under re.M ends at the physical line, so this reads the first line of
             # routing-keywords and never the folded YAML value. A manifest declaring five keywords
             # across two lines routes on two here. The hub scan's own reader of this field carries

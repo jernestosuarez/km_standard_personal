@@ -15,8 +15,7 @@
 #      A quoted scalar is one naive frontmatter reader away from showing its own quote marks.
 #   4. `description` stays inside the residency budget (roughly 15-30 words; 10-40 enforced).
 #      Rules 2, 3 and 4 are applied to the LOGICAL value, folded across every continuation line,
-#      never to the value's first physical line (repaired in v1.58, drafted and unpublished; this
-#      material binds nothing until this version's owner push). A plain YAML scalar folds each
+#      never to the value's first physical line (repaired in v1.58). A plain YAML scalar folds each
 #      more-indented line that follows it into one value, so a first line inside the budget can
 #      carry a folded value far outside it, and until v1.58 that passed. The block is therefore
 #      walked with state: a continuation is folded into the key it continues, and an indented line
@@ -64,8 +63,7 @@ check_tree() {
     # there, still unique, and the block still "closes". This rule is what makes the swallowed prose
     # visible.
     #
-    # THE VALUE READ IS THE LOGICAL VALUE, NOT ITS FIRST PHYSICAL LINE (repaired in v1.58, drafted
-    # and unpublished; this material binds nothing until this version's owner push).
+    # THE VALUE READ IS THE LOGICAL VALUE, NOT ITS FIRST PHYSICAL LINE (repaired in v1.58).
     #
     # A plain YAML scalar folds every more-indented line that follows it into ONE value. Until
     # v1.58 this loop skipped every indented line as a continuation unconditionally -- with no
@@ -190,9 +188,9 @@ FIX
   if [ -n "$(check_tree "$work/canary")" ]; then pass "canary caught: $label"; else die "canary NOT caught: $label"; fi
 }
 
-# The other direction, and it is not optional here (added in v1.58, drafted and unpublished; this
-# material binds nothing until its own owner push). The continuation rule below tightens how the
-# block is read, and a reader tightened until it rejects legitimate input is the same defect wearing
+# The other direction, and it is not optional here (added in v1.58). The continuation rule below
+# tightens how the block is read, and a reader tightened until it rejects legitimate input is the
+# same defect wearing
 # the opposite sign: a check that fires on everything proves as little as one that fires on nothing.
 # `clean_canary` asserts that a mutation is NOT reported, so the tightening ships beside the shape it
 # must keep accepting.
@@ -230,8 +228,8 @@ name: km-other" "$0" && rm -f "$0.bak"' "$f"
 canary "duplicate description key" bash -c 'sed -i.bak "3a\\
 description: A second and contradictory description that a first-match reader silently discards here." "$0" && rm -f "$0.bak"' "$f"
 
-# --- 4. the value a check reads is the LOGICAL value, never its first physical line (v1.58 draft) ---
-# Added in v1.58, drafted and unpublished; these cases bind nothing until this version's owner push.
+# --- 4. the value a check reads is the LOGICAL value, never its first physical line (v1.58) ---
+# Added in v1.58.
 #
 # A plain YAML scalar folds every more-indented line that follows it into one value. The reader this
 # suite drives skipped every indented line as a continuation unconditionally -- no state, no record
