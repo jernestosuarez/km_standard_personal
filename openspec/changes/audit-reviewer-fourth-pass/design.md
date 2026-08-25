@@ -29,7 +29,7 @@ a failure of the doctrine; it is the doctrine working exactly one pass too late,
 the person who can see the gap is never the person who wrote it.
 
 **Where else is it true.** The sweep for this class was run across every check in this repository that
-greps source text to certify a property of code, and returned three more, all registered here with
+greps source text to certify a property of code, and returned four more, all registered here with
 their error directions rather than repaired inside a change to something else:
 
 | Case | Claims | Enforces | Error direction |
@@ -38,7 +38,10 @@ their error directions rather than repaired inside a change to something else:
 | 15b | the header **argues no numbered limit of its own** | no line matches `^# [0-9]+\. [A-Z]` | **false pass**: any other enumeration style |
 | 15c | every constant the header names **is defined** | a line matches `^NAME=` | **false failure**: tuple assignment, or a definition inside a scope |
 | 20 | `--limits` prints every limit the gate defines | `grep -c '^    Limit($'` | **false failure** only: a miscount breaks the equality, never satisfies it |
+| 12/12b (portability) | the `.gitignore` **covers a virtual environment** | the exact line `^\.venv/$` appears | **false failure** mostly: `.venv`, `/.venv/` or `**/.venv/` all cover it and all fail here; a later `!.venv/` would pass while not covering it |
 
+Cases 12/12b are the cheapest to close and are named here for that reason: `git check-ignore` answers
+the actual property in one call, so the pattern is a proxy for something the tool will simply say.
 20c is the sharpest and is the one to close next, because a control that certifies *absence of a copy*
 by confirming *presence of an invocation* is not an approximation of its claim at all — it is a
 different claim. Cases 15a and 20d grep **prose** to certify a claim about prose; the pattern is the
@@ -50,8 +53,10 @@ one of these controls exists because a property of the code is not observable at
 inferred from the text. The general repair is to **make the property observable**. That is what v1.60
 does for 21j: the covered set stops being something you can read off the source and becomes something
 the run reports about itself. The same move is available to 20c (have the gate emit its limits with a
-provenance marker the workflow must echo, so a hand copy is detectable rather than merely improbable)
-and to 20 (import the gate and read `len(LIMITS)` instead of counting a text pattern). It is *not*
+provenance marker the workflow must echo, so a hand copy is detectable rather than merely improbable),
+to 20 (import the gate and read `len(LIMITS)` instead of counting a text pattern), and to 12/12b (ask
+`git check-ignore` whether the path is ignored instead of asking whether one spelling of a rule is
+present). It is *not*
 available to 15b and 15c, which are genuinely claims about a document's shape; those should stop
 saying *the header argues no numbered limit* and start saying *no line in the header matches this
 enumeration form*, which is the accurate claim and is worth less — which is the point. **When a

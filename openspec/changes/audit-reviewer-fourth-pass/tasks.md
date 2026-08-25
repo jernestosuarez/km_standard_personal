@@ -40,9 +40,14 @@ Branch `v1.60-input-derivation-and-tab-indentation`, off `main` at `73f89e8` (pu
 
 ## 4. Sweeps
 
-- [x] 4.1 *A control enforces a spelling where it claims to enforce a property*: **three** further
-      instances (20c, 15b, 15c), registered with their error directions. Case 20 examined and left
-      alone; 15a and 20d are prose-about-prose and not this class.
+- [x] 4.1 *A control enforces a spelling where it claims to enforce a property*: **four** further
+      instances (20c, 15b, 15c, and 12/12b of test_km_publish_portability.sh), registered with their
+      error directions. Case 20 examined and left alone because it can only err toward a false
+      failure; 15a and 20d grep prose to certify a claim about prose and are not this class. The
+      sweep covered every `grep` in every discovered check whose target is a source file under the
+      repository root, and every Python validator: the validators read source files to certify claims
+      about their **text** (draft markings, dates, reference targets), where the text is the thing
+      certified rather than a proxy for code behaviour, so they are outside the class.
 - [x] 4.2 *A character-class assumption imported from shell into a format that forbids it*: **one**
       further instance, in the same reader, repaired here. Every other `[[:space:]]` in the
       repository checked against Psych and found to sit in separation-space position.

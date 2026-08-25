@@ -86,15 +86,19 @@ accepts, and the answer is to indent with spaces.
   `compound-value-validation`
 - Affected code: `tools/km-release-gate.py`, `tests/test_release_gate.sh`,
   `tests/test_skill_frontmatter.sh`, `STANDARD.md`
-- **Registered, not repaired (spelling-for-property sweep).** Three further instances, each with its
+- **Registered, not repaired (spelling-for-property sweep).** Four further instances, each with its
   error direction stated: case **20c** certifies *the CI workflow obtains the limits from the gate
   rather than copying them* by confirming the string `km-release-gate.py --limits` appears, which a
   workflow could satisfy while also carrying a copy; case **15b** certifies *the header argues no
   numbered limit of its own* by matching `^# [0-9]+\. [A-Z]`; case **15c** certifies *every constant
-  the header names is defined* by requiring `^NAME=`. Case **20**'s source-text count of `Limit(` was
-  examined and left alone because any miscount produces a false failure, never a false pass.
-  Repairing all four structurally is a change to four unrelated controls riding inside a repair to a
-  fifth.
+  the header names is defined* by requiring `^NAME=`; and cases **12/12b** of
+  `tests/test_km_publish_portability.sh` certify *the `.gitignore` covers a virtual environment* by
+  requiring the exact line `^\.venv/$`, where `.venv`, `/.venv/` and `**/.venv/` all cover it and all
+  fail here, and `git check-ignore` would answer the actual property in one call. Case **20**'s
+  source-text count of `Limit(` was examined and left alone because any miscount produces a false
+  failure, never a false pass.
+  Repairing all five structurally is a change to five unrelated controls riding inside a repair to a
+  sixth.
 - **Registered, not repaired (frontmatter reader).** A *space*-indented `# comment` inside a block is
   a comment to Psych and is folded into the preceding value by this reader, which can move a
   description's word count in either direction. No shipped file does it, and modelling it correctly
