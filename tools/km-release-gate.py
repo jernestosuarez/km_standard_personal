@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # km-release-gate: the one command that runs the whole gate and returns one verdict.
 #
-# km-unrepaired-tree: v1.58 | re-stated for the tree-stability repair and the limits-definition repair. Run against the unrepaired gate at 510cf03 before either repair was written, through the four fixtures added as cases 21a-21d of tests/test_release_gate.sh. A fixture whose discovered suite edits another discovered check mid-run: PASS release-gate, exit 0. A fixture whose suite creates a new check-shaped file mid-run: PASS release-gate, exit 0, over a check the gate had never discovered, never held to the declaration rule and never executed. A fixture whose suite moves HEAD with no file content differing: PASS release-gate, exit 0. All three are the reviewer's observed case in miniature, where this gate began on a clean branch, the branch changed at 14:16, tests/test_restricted_lint.sh was modified at ~14:18, and the gate returned PASS after ~900s still reporting zero changed declarations. The repaired gate refuses each of the three at exit 2 naming what moved, and a fixture changed OUTSIDE the discovery set still passes, which is limit 5 and is pinned as a gap by case 21e. On the limits, the unrepaired file typed 'the same four limits' in prose 185 lines below its own claim that the count is not restated in prose anywhere, argued four numbered limits a second time in the header in file order 1, 3, 2, 4, and pointed twice at GATE_LIMITS, which nothing defined. The v1.56 declaration this replaces still holds: re-stated because this version edits this file. The edit is to the header block alone, correcting a claim that the CI workflow carries a copy of the limits when v1.55 deleted that copy, and removing the prose count of them; no arm of the gate changes, so there is no new unrepaired-tree run to record for the gate itself and none is invented. The v1.55 declaration this re-states still holds in full: re-stated for the exemption-anchoring repair, and run against the unrepaired tree first: with README.md given a broken relative link and a fenced text block quoting km-gate-link-exempt, check_links reported 0 failures, "153 of 154 markdown files scanned, 1 exempt" and 88 links resolved; the same tree without the fenced example reported 1 failure naming the broken link and 113 links resolved. A quotation removed a document from the scan and 25 links from the count at exit 0. The repaired reader reports the failure in both shapes and still honours a real declaration at the start of a line. The v1.54 declaration this replaces still holds: re-stated for the discovery-scope repair, and run against the unrepaired tree first: with an untracked tests/test_zz_probe.sh holding a line bash -n rejects, this gate reported "33 check(s) discovered" and "PASS release-gate", exit 0, the same count and the same verdict as the clean tree, having neither run nor named the check. Earlier, under v1.46, it was run against deliberately broken trees (a suite made to fail, a suite made unexecutable, an emptied discovery set, a stripped declaration) and refused or failed in each; see tests/test_release_gate.sh.
+# km-unrepaired-tree: v1.59 | re-stated for the fingerprint-scope repair and the branch-identity repair. Run against the unrepaired gate at be6e4bf (published v1.58) before either repair was written, through the assertions added and rewritten as cases 21d-21j of tests/test_release_gate.sh. A fixture whose discovered suite switches to a new branch AT THE SAME COMMIT: PASS release-gate, exit 0, because git rev-parse HEAD returns one value for two branches standing at one commit, so the branch change this file's own fingerprint docstring claimed to catch was invisible and what it caught was commit movement. That case is the external reviewer's own script reproduce-same-commit-branch-switch.sh run here unmodified against a be6e4bf snapshot, on an environment identical to theirs (macOS 26.5.2 arm64, bash 3.2.57, git 2.50.1, python 3.9.6): it printed exit=0, branch=km-other, and REPRODUCED. The repaired gate answers the same script with REFUSED at exit 2 naming the checked-out ref changed from refs/heads/main to refs/heads/km-other. A fixture whose suite edits a tracked markdown file the link phase had already resolved: PASS, exit 0. The same for a tracked JSON file the parse phase had read, for a shell file and for a Python file outside tests/ and scripts/ that the syntax phases had read: PASS, exit 0 in every case, over a tree in which the thing checked no longer looks the way it looked when it was checked. On the tree at be6e4bf the uncovered set was 172 markdown files, 5 JSON and JSON-LD files, 31 shell and 11 Python files; the fingerprint covered the 33 discovered checks alone. The repaired gate refuses each at exit 2 naming what moved, a detached HEAD still passes, and a file in NO input class still passes, which is limit 5 and is pinned as a gap by case 21h. The v1.58 declaration this replaces still holds in full: re-stated for the tree-stability repair and the limits-definition repair. Run against the unrepaired gate at 510cf03 before either repair was written, through the four fixtures added as cases 21a-21d of tests/test_release_gate.sh. A fixture whose discovered suite edits another discovered check mid-run: PASS release-gate, exit 0. A fixture whose suite creates a new check-shaped file mid-run: PASS release-gate, exit 0, over a check the gate had never discovered, never held to the declaration rule and never executed. A fixture whose suite moves HEAD with no file content differing: PASS release-gate, exit 0. All three are the reviewer's observed case in miniature, where this gate began on a clean branch, the branch changed at 14:16, tests/test_restricted_lint.sh was modified at ~14:18, and the gate returned PASS after ~900s still reporting zero changed declarations. The repaired gate refuses each of the three at exit 2 naming what moved, and a fixture changed OUTSIDE the discovery set still passes, which is limit 5 and is pinned as a gap by case 21e. On the limits, the unrepaired file typed 'the same four limits' in prose 185 lines below its own claim that the count is not restated in prose anywhere, argued four numbered limits a second time in the header in file order 1, 3, 2, 4, and pointed twice at GATE_LIMITS, which nothing defined. The v1.56 declaration this replaces still holds: re-stated because this version edits this file. The edit is to the header block alone, correcting a claim that the CI workflow carries a copy of the limits when v1.55 deleted that copy, and removing the prose count of them; no arm of the gate changes, so there is no new unrepaired-tree run to record for the gate itself and none is invented. The v1.55 declaration this re-states still holds in full: re-stated for the exemption-anchoring repair, and run against the unrepaired tree first: with README.md given a broken relative link and a fenced text block quoting km-gate-link-exempt, check_links reported 0 failures, "153 of 154 markdown files scanned, 1 exempt" and 88 links resolved; the same tree without the fenced example reported 1 failure naming the broken link and 113 links resolved. A quotation removed a document from the scan and 25 links from the count at exit 0. The repaired reader reports the failure in both shapes and still honours a real declaration at the start of a line. The v1.54 declaration this replaces still holds: re-stated for the discovery-scope repair, and run against the unrepaired tree first: with an untracked tests/test_zz_probe.sh holding a line bash -n rejects, this gate reported "33 check(s) discovered" and "PASS release-gate", exit 0, the same count and the same verdict as the clean tree, having neither run nor named the check. Earlier, under v1.46, it was run against deliberately broken trees (a suite made to fail, a suite made unexecutable, an emptied discovery set, a stripped declaration) and refused or failed in each; see tests/test_release_gate.sh.
 #
 # Standard: STANDARD.md §"Publishing a version" step 5, and §"Standard Maintainer" under
 # "A gate runs before publication, and it declares what it cannot do".
@@ -78,6 +78,31 @@
 # The JSON parse and relative-link phases stay index-scoped, so a half-written markdown file in the
 # working tree does not redden the gate, and that narrower scope is a choice rather than an
 # oversight.
+#
+# ------------------------------------------------------------------------------------------------
+# WHAT THE GATE READS IS WIDER THAN WHAT IT DISCOVERS, AND THE FINGERPRINT FOLLOWS THE READING.
+# (v1.59 draft; this section and the widening it describes bind nothing until that version's owner
+# push.)
+#
+# Discovery answers "what will be RUN". It is one input class among several. The gate also resolves
+# relative links across every tracked markdown file, parses every tracked JSON and JSON-LD file, and
+# syntax-checks every tracked shell and Python file wherever in the tree it sits. INPUT_CLASSES
+# below holds all of them in one structure; every phase takes its pathspecs from it and none names a
+# literal, so the stability fingerprint is DERIVED from the phases that consume the tree rather than
+# hand-listed beside them.
+#
+# From v1.58 to v1.59 the fingerprint hashed the discovery class alone, so a broken link, an
+# unparseable JSON file or a syntax error introduced after its own phase had run survived into the
+# final working tree with a PASS over it. That was a narrow SPECIFICATION rather than an
+# implementation that drifted from it, and case 21e of tests/test_release_gate.sh shipped asserting
+# the gap; it is a control now.
+#
+# The fingerprint over each class is tracked union untracked-not-ignored, which is deliberately
+# WIDER than the index-scoped phases above read. An untracked markdown file is still not scanned;
+# it is merely hashed, so it costs nothing until it MOVES mid-run, and hashing it is what keeps a
+# check-shaped file appearing mid-run from being invisible. The ignore rules are honoured on both
+# sides, because the suites and the tools legitimately write inside the tree and a fingerprint over
+# their artifacts would make this gate refuse itself.
 #
 # Nothing discovered is ever silently dropped. A discovered check that cannot self-run because it
 # takes required arguments declares itself:
@@ -267,28 +292,35 @@ LIMITS = (
     ),
     Limit(
         "A stable fingerprint is not a stable tree.",
-        ("The gate hashes what discovery reads, plus HEAD, before and after the run and refuses on",
-         "any difference. A file that changes and changes back inside the window is identical at",
-         "both ends and invisible; anything outside the discovery set is not fingerprinted at all,",
-         "so a PASS names the checks it judged and never the whole tree."),
-        """Added in v1.58, and it is the residual of the tree-stability repair rather than a
-        defect awaiting a fix.
+        ("The gate hashes every file it reads, plus the commit and the ref standing at it, before",
+         "and after the run and refuses on any difference. A file that changes and changes back",
+         "inside the window is identical at both ends and invisible; a file in no input class --",
+         "one only a discovered check reads -- is not fingerprinted, so a PASS names the inputs it",
+         "judged and never the whole tree."),
+        """Added in v1.58, widened in v1.59, and it is the residual of the tree-stability repair
+        rather than a defect awaiting a fix.
         The run takes about twenty minutes on this repository, which is a wide window for a
         maintainer editing alongside it, and until v1.58 nothing established that the tree at the
-        verdict was the tree that was discovered: an external reviewer watched this gate begin on a
-        clean branch, saw the branch change and a discovered check be edited underneath it, and saw
-        it return PASS after ~900s still reporting zero changed declarations. What the fingerprint
-        now buys is a REFUSAL naming what moved. What it does not buy is stated here, in two parts.
+        verdict was the tree that was read: an external reviewer watched this gate begin on a clean
+        branch, saw the branch change and a discovered check be edited underneath it, and saw it
+        return PASS after ~900s still reporting zero changed declarations. What the fingerprint
+        buys is a REFUSAL naming what moved. What it does not buy is stated here, in three parts.
         A before/after comparison cannot see a change that is undone inside the window, because
         both ends are identical by construction and no evidence of the middle survives; catching
         that needs a watcher rather than a pair of reads, which is a different instrument with a
-        different cost. And the fingerprint covers exactly the set discovery covers, so STANDARD.md,
-        the templates, the components and every other file the suites read can change mid-run and
-        this gate will still pass. Widening it was considered and refused: the suites and the tools
-        legitimately write inside the tree, and a fingerprint over everything would turn the gate
-        into one that refuses every run, which is the failure mode that gets a gate switched off.
-        Case 21e of tests/test_release_gate.sh pins the narrow scope as a gap and not as a
-        control.""",
+        different cost. Two different detached-HEAD states at one commit are indistinguishable for
+        the same reason. And the fingerprint covers what THIS GATE reads, class by class, which
+        from v1.59 is every input class above rather than the discovery set alone: a file in no
+        input class -- a `.yml` workflow, a `.txt`, a licence, a template asset that only a
+        discovered check opens -- can still change mid-run unseen. Widening it to the whole tree
+        was considered and refused for a mechanical reason rather than a stylistic one: the suites
+        and the tools legitimately write inside the tree, so a fingerprint over everything, ignored
+        artifacts included, would turn this into a gate that refuses every run, which is the
+        failure mode that gets a gate switched off. The ignore rules are therefore honoured on both
+        sides. Case 21h of tests/test_release_gate.sh pins what remains outside as a gap and not as
+        a control; cases 21e, 21g, 21g2 and 21g3 hold one input class each, and 21j requires every
+        phase to take its pathspecs from INPUT_CLASSES so the covered set stays derived from the
+        phases rather than listed beside them.""",
     ),
 )
 
@@ -411,9 +443,7 @@ class Check(object):
 
 
 def check_patterns():
-    """The pathspecs that define the discovery scope. Factored out because the fingerprint below
-    must cover exactly the set discovery covers, and two copies of a pathspec list would be the
-    hand-maintained memory this repository keeps repairing."""
+    """The pathspecs that define the DISCOVERY scope: what the gate will run as a check."""
     patterns = []
     for d in CHECK_DIRS:
         for suffix in CHECK_SUFFIXES:
@@ -422,19 +452,68 @@ def check_patterns():
     return patterns
 
 
-def git_head(root):
-    """HEAD, or a stable sentinel on an unborn branch. Never refuses: an unborn branch is a real
-    state, and what matters here is that the two reads are comparable, not that a commit exists."""
+# THE INPUT CLASSES, AND WHY EVERY PHASE TAKES ITS PATHSPECS FROM HERE. (v1.59 draft; this
+# structure and the rules below bind nothing until that version's owner push.)
+#
+# Every phase of this gate reads one of these classes and no phase names a pathspec of its own.
+# fingerprint() iterates this structure, so the covered set is DERIVED from the phases that consume
+# it rather than hand-listed beside them, and a phase added later that reads a new class cannot fall
+# outside the fingerprint without an edit here that a reader can see.
+#
+# Until v1.59 the fingerprint hashed the discovery class alone, and each phase carried its own
+# literal. The gate reads far more than the checks it discovers -- it resolved 112 relative links
+# across 172 markdown files, parsed 5 JSON and JSON-LD files and syntax-checked 31 shell and 11
+# Python files on the tree at be6e4bf -- so a broken link, an unparseable JSON file or a syntax
+# error introduced AFTER its phase had run survived into the final working tree with a PASS over it.
+# The specification was the narrow part, not the implementation: the v1.58 brief asked for a
+# fingerprint covering the set discovery covers, and that is what was built and honestly registered
+# as a residual. A control whose scope is narrower than the thing it certifies is the class this
+# repository keeps finding, and here it was written into the instruction.
+INPUT_CLASSES = collections.OrderedDict((
+    ("checks", check_patterns()),
+    ("shell", ["*.sh"]),
+    ("python", ["*.py"]),
+    ("json", ["*.json", "*.jsonld"]),
+    ("markdown", ["*.md"]),
+))
+
+
+def git_identity(root):
+    """WHAT IS CHECKED OUT: the commit AND the ref standing at it. (v1.59 draft.)
+
+    Never refuses. An unborn branch and a detached HEAD are real, stable states, and what matters
+    here is that the two reads are comparable, not that either resolves.
+
+    Until v1.59 this read `git rev-parse HEAD` alone and the fingerprint's docstring claimed that
+    "a branch change is caught even when every file happens to match". That claim was false as
+    written: two branches standing at the same commit return the same value, so a same-commit branch
+    switch -- the reviewer's own observed case -- was invisible, and what the read actually caught
+    was commit movement. Narrowing the claim to commit movement was the other honest repair
+    available and it was refused: switching branch IS a change in what is being gated even when the
+    commit matches, because the branch is what the maintainer is about to commit to and what a
+    reader of the verdict takes the verdict to be about. The promise the docstring made is the one
+    worth keeping, so the identity is widened to keep it rather than the sentence narrowed to
+    survive.
+
+    A detached HEAD reports the same sentinel on both reads and therefore refuses nothing, which
+    case 21d3 of tests/test_release_gate.sh requires in the other direction. Its residual is stated
+    rather than implied closed: two DIFFERENT detached states at one commit are indistinguishable
+    here, as are two branches switched to and back inside the window, which is the change-and-change-
+    back residual in limit 5 wearing a different hat.
+    """
     proc = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"], capture_output=True)
-    if proc.returncode != 0:
-        return "<unborn>"
-    return proc.stdout.decode("utf-8", "replace").strip()
+    commit = proc.stdout.decode("utf-8", "replace").strip() if proc.returncode == 0 else "<unborn>"
+    proc = subprocess.run(["git", "-C", str(root), "symbolic-ref", "-q", "HEAD"],
+                          capture_output=True)
+    ref = proc.stdout.decode("utf-8", "replace").strip() if proc.returncode == 0 else "<detached>"
+    return {"commit": commit, "ref": ref or "<detached>"}
 
 
 def fingerprint(root):
-    """What the gate read, in a form it can hold against itself when the run ends. (v1.58.)
+    """What the gate read, in a form it can hold against itself when the run ends. (v1.58; scope
+    widened from the discovery set to every input class in v1.59 draft.)
 
-    THE TREE AT THE VERDICT MUST BE THE TREE THAT WAS DISCOVERED, AND UNTIL v1.58 NOTHING SAID SO.
+    THE TREE AT THE VERDICT MUST BE THE TREE THAT WAS READ, AND UNTIL v1.58 NOTHING SAID SO.
     Discovery and the declaration phase run first, the suites run after, and the whole pass takes
     about twenty minutes on this repository. An external reviewer watched this gate start on a clean
     branch, watched the branch change and a discovered check be edited underneath it, and watched it
@@ -450,37 +529,53 @@ def fingerprint(root):
     and reopen the defect that version closed, which is the worst available outcome here.
 
     So: fingerprint what the gate actually reads, before and after, and REFUSE on any difference.
-    The set is exactly the set discovery reads, by the same pathspecs, tracked and untracked
-    alike, hashed by content so an edit that leaves the size alone is still seen. HEAD rides with it
-    so a branch change is caught even when every file happens to match, which is the reviewer's own
-    case and the half no content hash alone can reach.
+    The set is every INPUT_CLASS above -- what discovery finds, plus every file the syntax, parse
+    and link phases read -- tracked union untracked-not-ignored, hashed by content so an edit that
+    leaves the size alone is still seen. It is derived by iterating INPUT_CLASSES rather than
+    listed here, so a phase that reads a new class tomorrow is covered by the edit that adds it.
+    The ignore rules stay honoured on both sides: the suites and the tools legitimately write inside
+    the tree, and a fingerprint over ignored artifacts would make the gate refuse itself.
+
+    Until v1.59 the set was the DISCOVERY set alone, which is narrower than what the gate reads, and
+    v1.58's own case 21e demonstrated the residual with README.md rather than closing it. That case
+    is now a control.
+
+    What is checked out rides with the content, as commit AND ref, so a branch change is caught even
+    when every file happens to match. See git_identity above: from v1.58 to v1.59 that promise was
+    made by this docstring and kept only for commit movement.
 
     On drift the verdict is a REFUSAL naming what moved. Not a PASS, and not a silent re-run: a
     re-run would hide that the tree is moving under the maintainer, and that is the thing worth
     knowing. The residual is limit 5 and is not hidden here: a file that changes and changes back
-    inside the window is byte-identical at both ends, and anything outside the discovery set is not
-    fingerprinted at all.
+    inside the window is byte-identical at both ends, and a file in no input class -- a `.yml`, a
+    `.txt`, a licence, a template asset that only a discovered CHECK reads -- is not fingerprinted.
     """
-    patterns = check_patterns()
-    rels = sorted(set(git_tracked(root, patterns)) | set(git_untracked(root, patterns)))
+    rels = set()
+    for patterns in INPUT_CLASSES.values():
+        rels |= set(git_tracked(root, patterns))
+        rels |= set(git_untracked(root, patterns))
     digests = {}
-    for rel in rels:
+    for rel in sorted(rels):
         try:
             digests[rel] = hashlib.sha256((root / rel).read_bytes()).hexdigest()
         except OSError as exc:
             refuse(
-                "{} is in the discovery scope and could not be read to fingerprint the tree ({}); "
+                "{} is an input to this gate and could not be read to fingerprint the tree ({}); "
                 "a tree the gate cannot describe is not one it can return a verdict "
                 "about".format(rel, exc)
             )
-    return {"head": git_head(root), "files": digests}
+    return {"identity": git_identity(root), "files": digests}
 
 
 def fingerprint_drift(before, after):
     """Everything that moved between the two reads, named. An empty list means the tree held."""
     drift = []
-    if before["head"] != after["head"]:
-        drift.append("HEAD moved from {} to {}".format(before["head"][:12], after["head"][:12]))
+    old_id, new_id = before["identity"], after["identity"]
+    if old_id["commit"] != new_id["commit"]:
+        drift.append("HEAD moved from {} to {}".format(old_id["commit"][:12], new_id["commit"][:12]))
+    if old_id["ref"] != new_id["ref"]:
+        drift.append("the checked-out ref changed from {} to {}".format(old_id["ref"],
+                                                                        new_id["ref"]))
     old, new = before["files"], after["files"]
     for rel in sorted(set(old) - set(new)):
         drift.append("{} disappeared".format(rel))
@@ -493,7 +588,7 @@ def fingerprint_drift(before, after):
 
 
 def discover(root):
-    patterns = check_patterns()
+    patterns = INPUT_CLASSES["checks"]
     tracked = git_tracked(root, patterns)
     untracked = [r for r in git_untracked(root, patterns) if r not in set(tracked)]
     rels = sorted(set(tracked) | set(untracked))
@@ -701,7 +796,8 @@ def check_shell_syntax(root, extra=()):
     tried to run it, and a syntax error deserves to be named as a syntax error before anything is
     executed.
     """
-    rels = sorted(set(git_tracked(root, ["*.sh"])) | set(r for r in extra if r.endswith(".sh")))
+    rels = sorted(set(git_tracked(root, INPUT_CLASSES["shell"]))
+                  | set(r for r in extra if r.endswith(".sh")))
     if not rels:
         refuse("no shell file was found; the shell syntax check scanned nothing")
     failures = []
@@ -719,7 +815,8 @@ def check_shell_syntax(root, extra=()):
 
 def check_python_syntax(root, extra=()):
     """Tracked Python files, plus any discovered check that is one. See check_shell_syntax."""
-    rels = sorted(set(git_tracked(root, ["*.py"])) | set(r for r in extra if r.endswith(".py")))
+    rels = sorted(set(git_tracked(root, INPUT_CLASSES["python"]))
+                  | set(r for r in extra if r.endswith(".py")))
     if not rels:
         refuse("no Python file was found; the Python syntax check scanned nothing")
     failures = []
@@ -734,7 +831,7 @@ def check_python_syntax(root, extra=()):
 
 
 def check_json(root):
-    rels = git_tracked(root, ["*.json", "*.jsonld"])
+    rels = git_tracked(root, INPUT_CLASSES["json"])
     if not rels:
         refuse("no tracked JSON or JSON-LD file was found; the parse check scanned nothing")
     failures = []
@@ -761,7 +858,7 @@ def strip_fenced(text):
 
 
 def check_links(root):
-    rels = git_tracked(root, ["*.md"])
+    rels = git_tracked(root, INPUT_CLASSES["markdown"])
     if not rels:
         refuse("no tracked markdown file was found; the relative-link check scanned nothing")
     failures = []
