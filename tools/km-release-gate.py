@@ -87,8 +87,7 @@
 # relative links across every tracked markdown file, parses every tracked JSON and JSON-LD file, and
 # syntax-checks every tracked shell and Python file wherever in the tree it sits. INPUT_CLASSES
 # below holds the classes known at the start of a run, and it is the OPENING baseline rather than
-# the guarantee: from v1.60 (DRAFT; binds nothing until that version's own owner push) the accessors record what they hand
-# out, so the closing fingerprint
+# the guarantee: from v1.60 the accessors record what they hand out, so the closing fingerprint
 # covers what the run ACTUALLY READ. A phase added later is covered because it cannot obtain a file
 # without the ledger seeing it -- not because a list beside it was kept in step, and not because a
 # grep over this file's source text said so. See the Reads class.
@@ -315,7 +314,7 @@ LIMITS = (
         both ends are identical by construction and no evidence of the middle survives; catching
         that needs a watcher rather than a pair of reads, which is a different instrument with a
         different cost. Two different detached-HEAD states at one commit are indistinguishable for
-        the same reason. And the fingerprint covers what THIS RUN READ, which from v1.60 (draft; binds nothing until that version's own owner push) is a
+        the same reason. And the fingerprint covers what THIS RUN READ, which from v1.60 is a
         runtime fact rather than a list: the accessors record every pathspec they enumerate and
         every path they open, so a phase added later is inside the covered set by construction. A
         file NO phase of this gate reads -- a `.yml` workflow, a `.txt`, a licence, a template
@@ -358,7 +357,7 @@ def refuse(message):
 
 
 class Reads(object):
-    """WHAT THIS RUN ACTUALLY READ, RECORDED AS IT HAPPENED. (v1.60 draft; binds nothing until that version's own owner push.)
+    """WHAT THIS RUN ACTUALLY READ, RECORDED AS IT HAPPENED. (v1.60.)
 
     THE GUARANTEE THIS REPLACES WAS A GREP. From v1.59 the covered set was DERIVED from
     INPUT_CLASSES, and the thing that held every phase to it was case 21j of
@@ -444,8 +443,7 @@ def git_tracked(root, patterns):
     """Tracked paths under root matching the given pathspecs, NUL-separated so a filename carrying
     a space is not split into two names that both fail to exist.
 
-    RECORDS WHAT IT HANDS OUT (v1.60 draft; binds nothing until that version's own owner push). This is the accessor
-    every phase uses, and the recording is
+    RECORDS WHAT IT HANDS OUT (v1.60). This is the accessor every phase uses, and the recording is
     the whole guarantee that the fingerprint covers the phases: see Reads above.
     """
     rels = _git_ls(root, patterns, others=False)
@@ -472,7 +470,7 @@ def git_untracked(root, patterns):
 
 
 def read_text(root, rel):
-    """Read a path, and RECORD that it was read (v1.60 draft; binds nothing until that version's own owner push).
+    """Read a path, and RECORD that it was read (v1.60).
 
     The enumerating accessors above cover every path a phase obtains through a pathspec. This
     covers the other route: a phase that reads a path it derived some other way is still inside the
@@ -552,8 +550,7 @@ def check_patterns():
 #
 # Every phase of this gate reads one of these classes today, and this structure is what the OPENING
 # fingerprint enumerates, so a file is baselined from t=0 rather than from the moment its phase
-# happens to reach it. It is NOT the guarantee. From v1.60 (DRAFT; binds nothing until that version's own owner push)
-# the guarantee is the READS ledger: the
+# happens to reach it. It is NOT the guarantee. From v1.60 the guarantee is the READS ledger: the
 # accessors record every pathspec they enumerate and every path they open, and the closing
 # fingerprint covers that. A phase that reads a class this table does not name is covered anyway --
 # see case 21j of tests/test_release_gate.sh, which is a real added phase rather than a grep.
@@ -636,7 +633,7 @@ def fingerprint(root, extra_specs=(), extra_rels=()):
     both sides: the suites and the tools legitimately write inside the tree, and a fingerprint over
     ignored artifacts would make the gate refuse itself.
 
-    THE CLOSING READ IS WIDER THAN THE OPENING ONE, AND THAT IS THE v1.60 REPAIR (DRAFT; binds nothing until that version's own owner push). It takes
+    THE CLOSING READ IS WIDER THAN THE OPENING ONE, AND THAT IS THE v1.60 REPAIR. It takes
     `extra_specs` and `extra_rels` from the READS ledger -- every pathspec the run actually
     enumerated and every path it actually read -- so the covered set is a RUNTIME FACT rather than
     a claim about this file's source text. From v1.59 the set was derived from INPUT_CLASSES and a
@@ -1145,8 +1142,7 @@ def main():
         # The tree at the verdict must be the tree that was discovered. Compared here, before
         # either verdict branch, because a FAIL over a tree nobody has is no more useful than a
         # PASS over one: both describe a state that was never whole. See fingerprint() above.
-        # THE COVERED SET IS WHAT THIS RUN READ. (v1.60 draft; binds nothing until that version's own owner push.) The closing
-        # read re-enumerates every
+        # THE COVERED SET IS WHAT THIS RUN READ. (v1.60.) The closing read re-enumerates every
         # pathspec the run asked for and re-hashes every path it opened, so an input class no list
         # names is still compared; the before side is the opening baseline extended by the ledger's
         # earliest observation of anything the baseline did not hold, and the baseline wins on

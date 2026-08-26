@@ -87,8 +87,7 @@ die()  { echo "FAIL: $1"; fail=1; }
 # not a defect in how this check reads its input. Settling it inside a repair to the reader would
 # settle it silently, which is the treatment the extra-key question already has above. It is
 # written here so the next maintainer finds the question.
-# THE TAB MATCHER IS PROBED AGAINST THE LIVE SHELL BEFORE IT IS TRUSTED.
-# (v1.60 draft; binds nothing until that version's own owner push.)
+# THE TAB MATCHER IS PROBED AGAINST THE LIVE SHELL BEFORE IT IS TRUSTED. (v1.60.)
 #
 # This is the v1.29 rule -- verify a matching construct against the tool that will actually run it
 # -- applied to the construct that made v1.60 necessary. From v1.27 to v1.58 the tab arm here was
@@ -191,8 +190,7 @@ check_tree() {
       [[ "$fmline" =~ ^([[:space:]]*)((-[[:space:]]+|-$)?)(.*)$ ]] \
         && { ind_str="${BASH_REMATCH[1]}"; seq_lead="${BASH_REMATCH[2]}"; rest="${BASH_REMATCH[4]}"; } \
         || { ind_str=""; seq_lead=""; rest="$fmline"; }
-      # INDENTATION IS SPACES, AND A TAB IN IT IS A REJECTION NAMING THE TAB.
-      # (v1.60 draft; binds nothing until that version's own owner push.)
+      # INDENTATION IS SPACES, AND A TAB IN IT IS A REJECTION NAMING THE TAB. (v1.60.)
       # YAML forbids tabs in indentation. Until v1.60 this reader read `[[:space:]]` AS the
       # indentation -- a class that contains the tab -- so a tab-indented continuation was folded
       # into the preceding key and the block was accepted, while Psych answered "found a tab
@@ -216,7 +214,7 @@ check_tree() {
       [ -n "$seq_lead" ] && is_seq=1
       if [ "$ind" -gt "$cur_indent" ] && [ -n "$cur_key" ]; then
         # `rest` already IS the line with its indentation region removed, computed once above.
-        # Taking `rest` here is a v1.60 draft change; binds nothing until that version's own owner push.
+        # Taking `rest` here is a v1.60 change.
         # Until v1.60 this arm re-derived the region with a second `[[:space:]]`-based match, which
         # is one more place for the same wrong assumption to live and one more place to keep in
         # step; taking the value the single derivation produced removes both.
@@ -456,8 +454,8 @@ FIX
 canary "sequence entry at the top level of a mapping block"     write_top_level_sequence "$f"
 clean_canary "a sequence indented under the key it belongs to"  write_indented_sequence "$f"
 
-# --- 6. INDENTATION IS SPACES; A TAB IN IT IS A REJECTION NAMING THE TAB (v1.60 draft) ---
-# THIS SECTION BELONGS TO v1.60 (DRAFT) AND BINDS NOTHING UNTIL THAT VERSION'S OWNER PUSH.
+# --- 6. INDENTATION IS SPACES; A TAB IN IT IS A REJECTION NAMING THE TAB (v1.60) ---
+# THIS SECTION BELONGS TO v1.60.
 #
 # YAML FORBIDS TABS IN INDENTATION, and until v1.60 this reader treated `[[:space:]]` -- a class
 # that CONTAINS the tab -- as indentation. A tab-indented continuation was folded into the
@@ -541,11 +539,11 @@ canary "tab inside a sequence entry's indentation"         write_tab_before_seq_
 canary "sequence entry indented with a tab"                write_tab_indented_sequence "$f"
 clean_canary "a tab after the key's colon is separation"   write_tab_after_key_colon "$f"
 clean_canary "a tab inside the value is not indentation"   write_tab_inside_value "$f"
-# AND THE PROBE AT THE TOP OF THIS FILE IS ITSELF PROVED IN BOTH DIRECTIONS. (v1.60 draft; binds nothing until that version's own owner push.) It refuses when the
-# tab matcher is inert; these two lines show that the inert form and the live form are genuinely
-# distinguishable in this shell, so the probe is separating two states rather than agreeing with
-# whatever it is given. The first is the exact construct that stood in this file from v1.27 to
-# v1.58 and matched nothing the whole time.
+# AND THE PROBE AT THE TOP OF THIS FILE IS ITSELF PROVED IN BOTH DIRECTIONS. (v1.60.) It refuses
+# when the tab matcher is inert; these two lines show that the inert form and the live form are
+# genuinely distinguishable in this shell, so the probe is separating two states rather than
+# agreeing with whatever it is given. The first is the exact construct that stood in this file
+# from v1.27 to v1.58 and matched nothing the whole time.
 if [[ "x${TAB}y" == *"\t"* ]]; then
   die 'the literal backslash-t form MATCHED a real tab; the probe above cannot tell inert from live'
 else

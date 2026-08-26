@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.59"/>
+  <img src="assets/badges/version.svg" alt="standard v1.60"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 3 adopted, 1 partial, 3 open"/>
   <img src="assets/badges/license.svg" alt="license: Apache-2.0"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,32 +28,30 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.59** (2026-08-26, three findings from an external reviewer's third pass, each
-reproduced as a failing case and committed red before any repair was written; **the release gate's
-stability fingerprint covered its discovery candidates and not its inputs**, hashing exactly the
-`*.sh` and `*.py` files under `tests/` and `scripts/` while the gate itself resolved 112 relative
-links across 172 markdown files, parsed 5 JSON and JSON-LD files and syntax-checked 31 shell and 11
-Python files, none of them fingerprinted, so a broken link, an unparseable JSON file or a syntax
-error introduced after its own phase had run survived into the final working tree with a PASS over
-it, and v1.58's own case shipped asserting that as a known gap; **the specification was the narrow
-part, not the implementation**, since the brief that produced v1.58 asked for a fingerprint covering
-the set discovery covers and that is exactly what was built and honestly registered as a residual,
-so the repair fingerprints every input class the gate reads, derived by iterating one
-`INPUT_CLASSES` structure that every phase also takes its pathspecs from, and the case that asserted
-the gap is inverted into a control over it, with the narrower residual pinned by a case of its own;
-**a same-commit branch switch went undetected while the docstring promised otherwise**, because the
-identity read was `git rev-parse HEAD` alone and two branches standing at one commit return the same
-value, so identity is now the commit **and** the ref standing at it, and narrowing the claim instead
-was refused with its reason; **the frontmatter check accepted YAML no parser will load**, taking a
-sequence entry as a continuation of the preceding key at any indentation, so a block carrying two
-top-level `- item` lines passed at exit 0 while a YAML parser on the same host rejected the document
-outright, and a continuation is now decided by comparing indentation against the key it would
-continue, still **taking no YAML library as a dependency**; **both sweeps returned instances and
-both are recorded**, one claim corrected to the set actually read and two scopes registered with
-their reasons rather than widened inside a repair; the reviewer's two reproduction scripts were
-digest-verified and are carried byte for byte as this version's canaries; nothing a deployment
-installs changes and no hub turns red; v1.58 is the preceding published version and v1.23 remains an
-unpublished draft awaiting its own push). The full
+**Current version: v1.60** (2026-08-26, two findings from an external reviewer's fourth pass, each
+reproduced as a failing case and committed red before either repair was written; **a control
+enforced a spelling where it certified a guarantee**, case 21j of the gate's own suite certifying
+that every verdict phase takes its pathspecs from the structure the fingerprint iterates by grepping
+the gate's source for the literal `git_tracked(root, [`, so a real `.txt`-reading verdict phase
+written with a tuple rather than a list walked straight past it and the suite printed PASS at exit 0
+while the guarantee was false, and case 21h, the pin on what lies outside the covered set, then
+accepted a file mutating mid-run at a moment when that file **was** a gate input; **the repair
+removes the need for the static analysis rather than lengthening the pattern**, a stricter grep being
+the same defect with more characters, so `git_tracked`, `git_untracked` and `read_text` now record
+what they hand out and the closing fingerprint covers what the run actually read, which puts a phase
+added tomorrow inside the covered set by construction, with 21j rewritten into the reviewer's own
+added phase that must be covered with no edit to the case and the narrower residual stated rather
+than implied closed; **indentation was read with a character class that permits what the format
+forbids**, `[[:space:]]` containing the tab where YAML forbids tabs in indentation, so a tab-indented
+continuation was folded into the preceding key at exit 0 while a YAML parser on the same host
+rejected the document outright, and indentation is now spaces with a tab anywhere in a line's
+indentation region a rejection naming the tab, still **taking no YAML library as a dependency**;
+**a dead arm made live is a new rule and must be re-derived rather than repaired**, the arm in
+question having been written as a literal backslash-t and inert since the day it was written, so
+making it live authored it rather than repaired it; **both sweeps returned instances and both are
+recorded**, one repaired and four registered with the direction their error can fall; nothing a
+deployment installs changes and no hub turns red; v1.59 is the preceding published version and v1.23
+remains an unpublished draft awaiting its own push). The full
 ledger of released versions, and the rule that a published version number is never reused, is in
 [`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.

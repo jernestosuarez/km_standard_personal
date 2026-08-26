@@ -777,8 +777,7 @@ base=$(mkdrift "$c" 'printf "\n# edited while the gate was running\n" >> tools/h
 KM_GATE_BASE="$base" expect "21g3. a Python file outside the check dirs, changed mid-run, is refused" \
   "$c" 2 "tools/helper.py"
 
-# 21h. THE RESIDUAL, PINNED AS A GAP AND NOT AS A CONTROL, AND RE-DRAWN IN v1.60 (DRAFT; binds nothing until that version's own owner push).
-#      The fingerprint
+# 21h. THE RESIDUAL, PINNED AS A GAP AND NOT AS A CONTROL, AND RE-DRAWN IN v1.60. The fingerprint
 #      covers what THIS RUN READ. A file NO phase of the gate reads -- a `.txt`, a `.yml`, a
 #      licence, a template asset -- is opened by the discovered checks and not by the gate, and can
 #      still change mid-run without being seen. So can a file that changes and changes back.
@@ -802,7 +801,7 @@ note "       are not seen."
 
 # ================================================================================================
 # 21j/21j2. THE COVERED SET IS A RUNTIME FACT, NOT A SOURCE-TEXT CLAIM.
-#      (Rewritten in v1.60 draft; binds nothing until that version's own owner push.)
+#      (Rewritten in v1.60.)
 #
 #      Four behavioural cases above prove four classes are covered today. They cannot prove that a
 #      phase added TOMORROW is covered, and that is what this pair is for.
