@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: v1.60 | re-stated for the phase-derivation repair. Case 21j was rewritten from a grep over the gate's source text into a behavioural pair, and the rewritten 21j was run against the unrepaired gate at 73f89e8 (published v1.59) before the repair was written. It was RED: 'expected exit 2, got 0'. Its fixture is the external reviewer's own, lifted from reproduce-phase-derivation-false-pass.sh (sha256 2610ce370cf3869d02cd9a7cca33663d01cdf13f07e23ecf8753f7dac3be88ed) rather than written from a description of it: a real verdict phase, check_text, that reads tracked *.txt files through a TUPLE pathspec, git_tracked(root, ("*.txt",)). That script itself was run here unmodified against a detached clone at 73f89e8, on an environment identical to theirs (macOS 26.5.2 arm64, bash 3.2.57, git 2.50.1, python 3.9.6), and printed 'PASS: 21h. a file in no input class is NOT caught (KNOWN GAP)', 'PASS: 21j. every phase takes its pathspecs from the structure the fingerprint iterates', 'suite_exit=0' and REPRODUCED. The v1.59 form of 21j grepped for git_(tracked|untracked)\(root, \[ and required no match, so it certified a SPELLING where its own title claimed a PROPERTY, and a tuple walked past it; 21h then accepted notes.txt mutating mid-run while notes.txt WAS a gate input, so the gap pin was certifying the wrong thing too. One of the two new assertions passed on the unrepaired gate and legitimately, because its job is to pin a boundary rather than to detect a defect: 21j2, which requires the same added phase over a stable tree to keep passing. Against the repaired gate 21j exits 2 naming notes.txt, 21j2 still passes, 21h still passes on the UNMODIFIED gate, and the reviewer's script prints NOT REPRODUCED.  The v1.59 declaration this replaces still holds: v1.59 | re-stated for the fingerprint-scope repair and the branch-identity repair. The nine new or rewritten assertions were run against the unrepaired gate at be6e4bf (published v1.58) before either repair was written, and seven were red. 21d and 21d1: a fixture whose discovered suite switches to a NEW BRANCH AT THE SAME COMMIT reported 'expected exit 2, got 0', its mutator being the external reviewer's own two commands, git branch km-other then git switch -q km-other, lifted from their reproduce-same-commit-branch-switch.sh (sha256 37426e967fbd0c56893568c096eab6762651cbe8fae80f5329d3d39900a06ccc) rather than written from a description of it. That script itself was run here unmodified against a be6e4bf snapshot, on an environment identical to theirs (macOS 26.5.2 arm64, bash 3.2.57, git 2.50.1, python 3.9.6), and printed 'exit=0 / branch=km-other / REPRODUCED: v1.58 passed after switching branch identity at the same commit'; against the repaired gate the same script prints 'REFUSED release-gate: ... the checked-out ref changed from refs/heads/main to refs/heads/km-other' at exit 2. because git rev-parse HEAD returns one value for two branches standing at one commit, so the branch switch this case's own title has promised since v1.58 was invisible; the fixture that stood here before moved HEAD with an empty commit, which is commit movement and a different thing. 21e, 21g, 21g2 and 21g3, one per input class the gate reads and does not discover -- a tracked markdown file the link phase had resolved, a tracked JSON file the parse phase had read, and a shell and a Python file outside tests/ and scripts/ that the syntax phases had read -- each reported 'expected exit 2, got 0': every one changed after its own phase had run and the gate still returned PASS over the result. 21e is the reviewer's own README.md demonstration, inverted from the assertion of a gap that v1.58 shipped into a control over it. 21j reported the four literal pathspec lists standing in the phases, which is the mechanism by which the covered set could be narrower than the phases at all. Four assertions passed on the unrepaired tree and all four legitimately, because their job is to pin a boundary rather than to detect a defect: 21d2, which requires commit movement to keep being caught; 21d3, which requires a detached HEAD not to refuse; 21h, which requires a file in NO input class not to be caught; and 21f, a stable tree passing twice with the same verdict. The v1.58 declaration this replaces still holds in full: re-stated for the tree-stability repair and the limits-definition repair. The seven new assertions were run against the unrepaired gate at 510cf03 before either repair was written, and all seven were red. 21a and 21c: a fixture whose discovered suite edits another discovered check, and one whose suite creates a new check-shaped file, each reported 'expected exit 2, got 0' -- the gate returned PASS over a tree it had not read, and in the second case over a check it had never discovered, never held to the declaration rule and never executed. 21b, the same class asserted on its own fixture, reported 'expected exit 2, got 1'. 21d: a fixture whose suite moves HEAD with no file content differing reported 'expected exit 2, got 0', which is the half no content hash alone can see and is the reviewer's own observed case. 15a reported the gate typing 'the same four limits' in prose 185 lines below its own claim that the count 'is not restated in prose anywhere'; 15b reported four numbered limit headings in the header block, standing in file order 1, 3, 2, 4; 15c reported GATE_LIMITS, named twice by the header as the home of the single definition and defined nowhere, the definition being LIMITS. Two of the nine new assertions passed on the unrepaired tree and both legitimately, because their job is to pin a boundary rather than to detect a defect: 21e, which requires that a change OUTSIDE the discovery set is not caught, and 21f, which requires a stable tree to pass twice with the same verdict. The v1.55 declaration this replaces still holds: re-stated for the exemption-anchoring and limits-mechanism repair. The seven assertions added here (13c, 13d, 13e, 20, 20b, 20c, 20d) were run against the unrepaired gate and the unrepaired workflow at 13dec55 before either was touched: 13c and 13d each reported "expected exit 1, got 0", the quoted token having exempted a document carrying a genuinely broken link; 20 reported "--limits printed 0 of 0 defined limits (exit 2)", the flag not existing; 20b and 20c failed with it. Two passed there, and only one of them legitimately: 13e, because a real declaration at the start of a line is honoured by both readers, and 20d, which passed for the wrong reason until its assertion was scoped to the comment block above runs-on. The v1.46 declaration this replaces still holds: run against deliberately broken trees before the gate was trusted: a suite made to fail, a suite whose interpreter is absent, an emptied discovery set, a stripped declaration, a broken relative link, unparseable JSON, a shell syntax error and a Python syntax error. Every one of those trees was gated and every one produced FAIL or REFUSED, never PASS.
+# km-unrepaired-tree: v1.61 | re-stated for three repairs that edit this file: the observation-ledger cases, the CI limit-copy case, and the cited-digest cases. CASES 21k, 21k2, 21k3 (the ledger). Run against the unrepaired gate at 164ecfb (published v1.60) before any repair was written. 21k RED, 'expected exit 2, got 0': its fixture links README.md to notes.txt and its mutator is the reviewer's own, rm notes.txt, byte for byte from reproduce-link-target-disappears.sh (sha256 a242059f37520507c793afd32e7bb99750332ff5efab38cbcc88741671b35f97, pins 164ecfb36fd7a644365ee9dff41a540130e15e82 by refusing at exit 2 on any other HEAD rather than by re-cloning, so it can test the v1.60 tree and no other). 21k2 RED, 'expected exit 2, got 1', the reverse: a target absent when the link phase asks and created afterwards. 21k3 passed on the unrepaired gate and legitimately, pinning the shape a probe on every relative link must keep accepting. Repaired: 21k names 'notes.txt existed when this run asked and is now absent', 21k2 names 'late.txt did not exist when this run asked and now does', 21k3 passes. 21h STILL PASSES and that is the boundary this pair draws: its notes.txt is linked from nothing, so no phase asks about it; 21k's notes.txt is linked from README.md, so the link phase asks. Same name, same class, opposite verdicts, and the difference is exactly whether the run asked. CASES 20c, 20c2, 20c3 (the limit copy). v1.60's own sweep found that 20c certified an ABSENCE by measuring a PRESENCE and called it the sharpest instance of its class, then registered it. The reviewer's script (reproduce-ci-limit-copy-false-pass.sh, sha256 fa35fad9e335b93e51e44d96e10256ededf44a97427f5bd2c76029886f174c00, pins 164ecfb36fd7a644365ee9dff41a540130e15e82 internally and re-clones it whatever source root it is handed, so it can test the v1.60 tree and no other) was run here UNMODIFIED against that tree and printed 'PASS: 20c. the CI workflow obtains the limits from the gate rather than copying them', 'release-gate canaries passed', suite_exit=0 and REPRODUCED, over a workflow carrying five verbatim limit statements. 20c is narrowed here to the pointer it actually measures; 20c2 measures the absence against the gate's own --limits output; 20c3 is the negative direction and carries the reviewer's injection byte for byte. 20c2 passed on the unrepaired workflow and could not have done otherwise, because the defect was in the CASE and not in the workflow, so 20c3 is what shows the detector works: it fires on the injected copy and 20c2 stays silent on the real file. The repair was verified against the reviewer's fixture by a DE-PINNED variant of their script -- modified in exactly one line, the pinned checkout replaced by a checkout of the source root's own HEAD plus its working-tree diff -- which reported suite_exit=1 and 'NOT REPRODUCED: the release-gate canaries rejected the duplicated limits'. That variant is a modified script and is declared as one. CASES 22, 22b, 22c, 22d, 22e (the cited digest). 22 RED, 'expected exit 1, got 0', and 22d RED for the same reason on a 65-character digest, which is the shape v1.59 actually published. 22b and 22c passed on the unrepaired gate and both legitimately, pinning 'pins <rev>' and 'unpinned' as the two shapes the rule must accept. 22e is the prose direction and it was written because the rule FAILED IT when first run against this repository: the gate's own declaration contains the phrase 'by sha256 and says nothing', and the first form of the rule read 'a' out of 'and' and reported a digest of length 1. That false FAIL is the case's red run, recorded rather than repaired away quietly, and the 16-character floor that answers it is held by 22e so it is a rule rather than a pattern lengthened until the tree went green. All five pass repaired. AND THE RULE: A VERIFICATION DECLARATION IS A RECORD OF WHAT WAS RUN, AND A SCRIPT THAT PINS A REVISION CANNOT TESTIFY ABOUT ANY OTHER REVISION. This file's own v1.60 declaration broke it and is corrected below rather than merely inherited. The v1.60 declaration this replaces still holds except where corrected: v1.60 | re-stated for the phase-derivation repair. Case 21j was rewritten from a grep over the gate's source text into a behavioural pair, and the rewritten 21j was run against the unrepaired gate at 73f89e8 (published v1.59) before the repair was written. It was RED: 'expected exit 2, got 0'. Its fixture is the external reviewer's own, lifted from reproduce-phase-derivation-false-pass.sh (sha256 2610ce370cf3869d02cd9a7cca33663d01cdf13f07e23ecf8753f7dac3be88ed, pins 73f89e80774f7401eebb106572c14824a9e60d15 internally and re-clones it whatever source root it is handed, so it tested the v1.59 tree on every run it ever made) rather than written from a description of it: a real verdict phase, check_text, that reads tracked *.txt files through a TUPLE pathspec, git_tracked(root, ("*.txt",)). That script itself was run here unmodified against a detached clone at 73f89e8, on an environment identical to theirs (macOS 26.5.2 arm64, bash 3.2.57, git 2.50.1, python 3.9.6), and printed 'PASS: 21h. a file in no input class is NOT caught (KNOWN GAP)', 'PASS: 21j. every phase takes its pathspecs from the structure the fingerprint iterates', 'suite_exit=0' and REPRODUCED. The v1.59 form of 21j grepped for git_(tracked|untracked)\(root, \[ and required no match, so it certified a SPELLING where its own title claimed a PROPERTY, and a tuple walked past it; 21h then accepted notes.txt mutating mid-run while notes.txt WAS a gate input, so the gap pin was certifying the wrong thing too. One of the two new assertions passed on the unrepaired gate and legitimately, because its job is to pin a boundary rather than to detect a defect: 21j2, which requires the same added phase over a stable tree to keep passing. Against the repaired gate 21j exits 2 naming notes.txt, 21j2 still passes, and 21h still passes on the UNMODIFIED gate. THE NEXT CLAUSE OF THIS SENTENCE WAS FALSE WHEN v1.60 PUBLISHED IT AND IS STRUCK IN v1.61 (a DRAFT that binds nothing until that version's own owner push): it read 'and the reviewer's script prints NOT REPRODUCED'. That script pins 73f89e8 and re-clones it, so it tested v1.59 on every run; re-measured on 2026-08-26 against the published v1.60 tree it printed 'PASS: 21j. every phase takes its pathspecs from the structure the fingerprint iterates', 'suite_exit=0' and REPRODUCED.  The v1.59 declaration this replaces still holds: v1.59 | re-stated for the fingerprint-scope repair and the branch-identity repair. The nine new or rewritten assertions were run against the unrepaired gate at be6e4bf (published v1.58) before either repair was written, and seven were red. 21d and 21d1: a fixture whose discovered suite switches to a NEW BRANCH AT THE SAME COMMIT reported 'expected exit 2, got 0', its mutator being the external reviewer's own two commands, git branch km-other then git switch -q km-other, lifted from their reproduce-same-commit-branch-switch.sh (sha256 37426e967fbd0c56893568c096eab6762651cbe8fae80f5329d3d39900a06ccc, pins no revision but reads the gate from the fixed path /private/tmp/km-v158-builder-recheck/repo, so it tested whatever tree stood at that path) rather than written from a description of it. That script itself was run here unmodified against a be6e4bf snapshot, on an environment identical to theirs (macOS 26.5.2 arm64, bash 3.2.57, git 2.50.1, python 3.9.6), and printed 'exit=0 / branch=km-other / REPRODUCED: v1.58 passed after switching branch identity at the same commit'; against the repaired gate the same script prints 'REFUSED release-gate: ... the checked-out ref changed from refs/heads/main to refs/heads/km-other' at exit 2. RE-VERIFIED IN v1.61 (a draft that binds nothing until that version's own owner push) rather than inherited: this script is PATH-pinned, not revision-pinned, and the path it read the gate from no longer exists, so it was re-run with THAT ONE LINE re-pointed at this working tree and nothing else changed, printing exactly that refusal at exit=2 with branch=km-other. A path-pinned script can testify about whichever tree stands at that path; a revision-pinned one re-clones its commit and can testify about nothing else. because git rev-parse HEAD returns one value for two branches standing at one commit, so the branch switch this case's own title has promised since v1.58 was invisible; the fixture that stood here before moved HEAD with an empty commit, which is commit movement and a different thing. 21e, 21g, 21g2 and 21g3, one per input class the gate reads and does not discover -- a tracked markdown file the link phase had resolved, a tracked JSON file the parse phase had read, and a shell and a Python file outside tests/ and scripts/ that the syntax phases had read -- each reported 'expected exit 2, got 0': every one changed after its own phase had run and the gate still returned PASS over the result. 21e is the reviewer's own README.md demonstration, inverted from the assertion of a gap that v1.58 shipped into a control over it. 21j reported the four literal pathspec lists standing in the phases, which is the mechanism by which the covered set could be narrower than the phases at all. Four assertions passed on the unrepaired tree and all four legitimately, because their job is to pin a boundary rather than to detect a defect: 21d2, which requires commit movement to keep being caught; 21d3, which requires a detached HEAD not to refuse; 21h, which requires a file in NO input class not to be caught; and 21f, a stable tree passing twice with the same verdict. The v1.58 declaration this replaces still holds in full: re-stated for the tree-stability repair and the limits-definition repair. The seven new assertions were run against the unrepaired gate at 510cf03 before either repair was written, and all seven were red. 21a and 21c: a fixture whose discovered suite edits another discovered check, and one whose suite creates a new check-shaped file, each reported 'expected exit 2, got 0' -- the gate returned PASS over a tree it had not read, and in the second case over a check it had never discovered, never held to the declaration rule and never executed. 21b, the same class asserted on its own fixture, reported 'expected exit 2, got 1'. 21d: a fixture whose suite moves HEAD with no file content differing reported 'expected exit 2, got 0', which is the half no content hash alone can see and is the reviewer's own observed case. 15a reported the gate typing 'the same four limits' in prose 185 lines below its own claim that the count 'is not restated in prose anywhere'; 15b reported four numbered limit headings in the header block, standing in file order 1, 3, 2, 4; 15c reported GATE_LIMITS, named twice by the header as the home of the single definition and defined nowhere, the definition being LIMITS. Two of the nine new assertions passed on the unrepaired tree and both legitimately, because their job is to pin a boundary rather than to detect a defect: 21e, which requires that a change OUTSIDE the discovery set is not caught, and 21f, which requires a stable tree to pass twice with the same verdict. The v1.55 declaration this replaces still holds: re-stated for the exemption-anchoring and limits-mechanism repair. The seven assertions added here (13c, 13d, 13e, 20, 20b, 20c, 20d) were run against the unrepaired gate and the unrepaired workflow at 13dec55 before either was touched: 13c and 13d each reported "expected exit 1, got 0", the quoted token having exempted a document carrying a genuinely broken link; 20 reported "--limits printed 0 of 0 defined limits (exit 2)", the flag not existing; 20b and 20c failed with it. Two passed there, and only one of them legitimately: 13e, because a real declaration at the start of a line is honoured by both readers, and 20d, which passed for the wrong reason until its assertion was scoped to the comment block above runs-on. The v1.46 declaration this replaces still holds: run against deliberately broken trees before the gate was trusted: a suite made to fail, a suite whose interpreter is absent, an emptied discovery set, a stripped declaration, a broken relative link, unparseable JSON, a shell syntax error and a Python syntax error. Every one of those trees was gated and every one produced FAIL or REFUSED, never PASS.
 #
 # Canaries for the release gate (tools/km-release-gate.py), added in v1.46.
 #
@@ -621,11 +621,117 @@ else
   fail=1
 fi
 
+# THE CLAIM IS ABSENCE OF A COPY, SO THE MEASUREMENT MUST BE ABSENCE OF A COPY.
+# (v1.61 draft; binds nothing until that version's own owner push.)
+#
+# Until v1.61 case 20c certified "the CI workflow obtains the limits from the gate rather than
+# copying them" by confirming that the string `km-release-gate.py --limits` appears in the file. An
+# invocation is not an absence: a workflow that invokes the flag AND carries a complete hand copy
+# below it satisfied that test, and an external reviewer demonstrated exactly that by inserting five
+# verbatim limit statements under the comment block and watching 20c pass. v1.60's own sweep found
+# this and called it the sharpest instance of "a control enforces a spelling where it claims to
+# enforce a property", then registered it rather than repairing it. Disclosure is not closure.
+#
+# So the claim is split in two, and each half is measured by what it says.
+#   20c  asserts the POINTER: the workflow invokes --limits. That is a presence, a grep answers it
+#        honestly, and the title now says only that.
+#   20c2 asserts the ABSENCE: no line of the gate's own limit definition -- neither a `statement`
+#        nor a `summary` line -- is restated verbatim anywhere in the workflow. The comparison is
+#        against the gate's LIMITS, taken from the gate itself, so it cannot go stale when a limit
+#        is added, reworded or removed. There is no pattern here to lengthen.
+#
+# WHAT THIS MEASURES AND WHAT IT DOES NOT, stated rather than left to be found. A verbatim copy is
+# caught. A PARAPHRASE is not, and the workflow legitimately carries one: "a green run means the
+# mechanical checks ran. It does not mean the push is free of organisation leakage, and it does not
+# mean anyone other than the author looked." That sentence is a summary written for a reader who
+# will not open the log, and it is not a restatement of the definition. The property enforced here
+# is that the DEFINITION's own words appear once, in the definition. Its error direction is a false
+# PASS on a paraphrase that drifts, never a false FAIL, and the pointer 20c holds is what keeps the
+# authoritative text one command away from the log.
+workflow_limit_copies() { # <workflow-file>: prints each line of the gate's limit definition that
+                          # the workflow restates verbatim. Empty output means no copy.
+  python3 - "$GATE" "$1" <<'COPYCHECK'
+import subprocess, sys
+gate, workflow = sys.argv[1], sys.argv[2]
+# The limit text is taken from the GATE'S OWN --limits output rather than by parsing its source:
+# that is the surface CI reads, so what is compared here is what a copier would have copied.
+out = subprocess.run([sys.executable, gate, "--limits"], capture_output=True)
+if out.returncode != 0:
+    print("REFUSED: the gate would not print its limits, so no comparison was made")
+    sys.exit(2)
+lines = []
+for raw in out.stdout.decode("utf-8", "replace").split("\n"):
+    text = raw.strip()
+    # Drop the numbering the renderer adds, keeping the statement and summary text itself. A
+    # fragment shorter than 30 characters is not evidence of a copy.
+    head = text.split(". ", 1)
+    if len(head) == 2 and head[0].isdigit():
+        text = head[1]
+    if len(text) >= 30:
+        lines.append(text)
+if not lines:
+    print("REFUSED: --limits printed no comparable text")
+    sys.exit(2)
+body = open(workflow).read()
+for text in lines:
+    if text in body:
+        print(text)
+COPYCHECK
+}
+
 if [ -f "$WORKFLOW" ]; then
   if grep -Fq -- "km-release-gate.py --limits" "$WORKFLOW"; then
-    note "PASS: 20c. the CI workflow obtains the limits from the gate rather than copying them"
+    note "PASS: 20c. the CI workflow invokes --limits, so the log carries the gate's own limit text"
   else
-    note "FAIL: 20c. the CI workflow does not invoke --limits, so any limits it states are a copy"
+    note "FAIL: 20c. the CI workflow does not invoke --limits, so the log carries no limit text"
+    fail=1
+  fi
+
+  copies=$(workflow_limit_copies "$WORKFLOW"); copies_status=$?
+  if [ "$copies_status" -ne 0 ]; then
+    note "FAIL: 20c2. the copy comparison could not be made, so it proved nothing"
+    printf '%s\n' "$copies" | sed 's/^/       /'
+    fail=1
+  elif [ -z "$copies" ]; then
+    note "PASS: 20c2. the CI workflow restates no line of the gate's limit definition verbatim"
+  else
+    note "FAIL: 20c2. the CI workflow carries a hand copy of the gate's limits; these lines of the"
+    note "       definition are restated in it verbatim:"
+    printf '%s\n' "$copies" | sed 's/^/       /'
+    fail=1
+  fi
+
+  # THE OTHER DIRECTION, AND IT IS THE ONE THAT MATTERS HERE. 20c2 reports by ABSENCE, so on its own
+  # it passes whether it works or not. The injection below is the external reviewer's own, byte for
+  # byte from reproduce-ci-limit-copy-false-pass.sh: five verbatim limit statements appended to the
+  # comment block above `name:`. The detector must find them.
+  copy_fixture="$work/workflow_with_copy.yml"
+  python3 - "$WORKFLOW" "$copy_fixture" <<'INJECT'
+from pathlib import Path
+import sys
+text = Path(sys.argv[1]).read_text()
+marker = "# than the author looked.\n"
+assert marker in text, "20c3 anchor (the closing line of the comment block) is not in the workflow"
+copy = """#
+# COPIED LIMITS (deliberately stale-prone duplicate):
+# 1. This gate does not run an organisation leakage scan and cannot.
+# 2. No runner supplies a second actor.
+# 3. This gate reads a check's exit status and cannot see inside it.
+# 4. Discovery reads the working tree but honours the ignore rules.
+# 5. A stable fingerprint is not a stable tree.
+"""
+Path(sys.argv[2]).write_text(text.replace(marker, marker + copy, 1))
+INJECT
+  if [ -f "$copy_fixture" ]; then
+    injected=$(workflow_limit_copies "$copy_fixture")
+    if [ -n "$injected" ]; then
+      note "PASS: 20c3. the copy detector fires on a workflow carrying a verbatim hand copy"
+    else
+      note "FAIL: 20c3. a workflow carrying five verbatim limit statements was reported as clean"
+      fail=1
+    fi
+  else
+    note "FAIL: 20c3. the copy fixture could not be built; its anchor in the workflow has moved"
     fail=1
   fi
   # Scoped to the comment block immediately above `runs-on:`, because the same file legitimately
@@ -860,6 +966,171 @@ else
   note "FAIL: 21j. the probe gate could not be built; its anchors in the gate have moved"
   fail=1
 fi
+
+# ================================================================================================
+# 21k-21k3. A QUESTION ASKED OF THE TREE IS A READ, EVEN WHEN NOTHING IS OPENED.
+#           (Added in v1.61 draft; binds nothing until that version's own owner push.)
+#
+#      The ledger recorded CONTENT: what git_tracked and git_untracked enumerated, and what
+#      read_text opened. The link phase opens nothing. It asks `does this path exist?`, uses the
+#      answer in the verdict, and until v1.61 recorded nothing, so a discovered check could delete a
+#      link target after the link phase had run and the gate returned PASS over a final tree
+#      carrying a broken link. An external reviewer demonstrated it with a `.txt` target, which made
+#      it look like the acknowledged residual of limit 5. It is not: the residual is material only a
+#      DISCOVERED CHECK reads. Here the GATE read the target -- its existence -- and put the answer
+#      in its own verdict.
+#
+#      So the ledger records ANSWERS, not only bytes, and `path_exists` is the accessor that asks.
+#      The property the closing comparison now holds is one sentence: every answer this run took
+#      from the tree is taken again at the verdict and must be the same answer. Both directions of
+#      an existence answer can change, so both are cases here.
+#
+#      21h IS THE BOUNDARY AND IT STILL HOLDS. Its `notes.txt` is linked from nothing, so no phase
+#      ever asks about it and it stays outside. The `notes.txt` below IS linked from README.md, so
+#      the link phase asks. Same file name, same class, opposite verdicts, and the difference is
+#      exactly whether the run asked.
+# ================================================================================================
+
+# mklinkdrift <dir> <readme-link-target> <mutator-body>: mkdrift, with README.md carrying one
+# relative link to the named target, so the link phase asks about that path before the suites run.
+mklinkdrift() {
+  local d="$1" target="$2" body="$3"
+  mkfixture "$d" >/dev/null
+  printf '# Fixture readme\n\nSee [the standard](STANDARD.md).\nSee [the target](%s).\n' "$target" \
+    > "$d/README.md"
+  { printf '#!/bin/bash\n%s\n' "$DECL"; printf '%s\n' "$body"; printf 'exit 0\n'; } \
+    > "$d/tests/test_zz_mutator.sh"
+  git -C "$d" add -A >/dev/null
+  git -C "$d" commit -qm "mutator" >/dev/null
+  git -C "$d" rev-parse HEAD
+}
+
+# 21k. THE REVIEWER'S OWN CASE, and the mutator is theirs byte for byte: `rm notes.txt`, lifted from
+#      reproduce-link-target-disappears.sh rather than written from a description of it.
+c="$work/drift_link_gone"
+base=$(mklinkdrift "$c" 'notes.txt' 'rm notes.txt')
+KM_GATE_BASE="$base" \
+  expect "21k. a link target the link phase resolved, deleted mid-run, is refused" "$c" 2 \
+  "notes.txt"
+
+# 21k2. THE REVERSE, which is the half a deletion-shaped repair would miss. The link phase asks
+#       about a target that is ABSENT, records that answer and fails the tree for it; the mutator
+#       then creates the file. The recorded answer no longer holds, so the verdict is a REFUSAL and
+#       not the FAIL it was about to be -- a FAIL over a tree that no longer exists is no more
+#       useful than a PASS over one, which is why the drift comparison runs before either branch.
+c="$work/drift_link_appeared"
+base=$(mklinkdrift "$c" 'late.txt' 'printf "created while the gate was running\n" > late.txt')
+KM_GATE_BASE="$base" \
+  expect "21k2. a link target that was absent when asked and then appears is refused" "$c" 2 \
+  "late.txt"
+
+# 21k3. The other direction, and it is not optional: a probe recorded on every relative link in the
+#       repository must not make a tree that holds still refuse. This fixture asks the same question
+#       and nothing answers it differently.
+c="$work/stable_link"; base=$(mkfixture "$c")
+printf '# Fixture readme\n\nSee [the standard](STANDARD.md).\nSee [the target](notes.txt).\n' \
+  > "$c/README.md"
+git -C "$c" add -A >/dev/null; git -C "$c" commit -qm "link" >/dev/null
+base=$(git -C "$c" rev-parse HEAD)
+KM_GATE_BASE="$base" expect "21k3. a link target that holds still does not refuse" "$c" 0 \
+  "PASS release-gate:"
+
+# ================================================================================================
+# 22. A DECLARATION THAT CITES A SCRIPT BY DIGEST STATES WHAT THAT SCRIPT PINS.
+#     (Added in v1.61 draft; binds nothing until that version's own owner push.)
+#
+#      v1.60 published this sentence in the header of tests/test_skill_frontmatter.sh: "the
+#      reviewer's script prints NOT REPRODUCED with checker_exit=1". It was false when it was
+#      written. That script sets EXPECTED_SHA=73f89e8 and re-clones that commit whatever source root
+#      it is handed, so it tests v1.59 on every run and prints REPRODUCED on every run. The same
+#      false claim was published in this file's own v1.60 declaration. Both were known: the drafting
+#      report said in plain words that the script "cannot show the repair, because it hard-pins
+#      73f89e8 internally", and the true sentence stayed in the working report while the false one
+#      went into the artifact.
+#
+#      A VERIFICATION DECLARATION IS A RECORD OF WHAT WAS RUN, AND A SCRIPT THAT PINS A REVISION
+#      CANNOT TESTIFY ABOUT ANY OTHER REVISION. No check can read a declaration and know whether its
+#      prose is true -- that is limit 2, and it is not being repealed here. What a check CAN do is
+#      require the fact that makes the prose checkable BY A READER: when a declaration cites a
+#      script by `sha256 <digest>`, the citation must be followed by what that script pins. This is
+#      the move this repository already makes for exemptions, where a `km-gate-link-exempt` token
+#      with no stated reason is refused rather than honoured.
+#
+#      The syntax is `sha256 <64 hex>, pins <what>` or `sha256 <64 hex>, unpinned`. A digest that is
+#      not 64 hex characters fails here too, which is how the malformed 65-character digest v1.59
+#      published for reproduce-invalid-yaml-sequence.sh was found.
+# ================================================================================================
+c="$work/decl_digest_bare"; base=$(mkfixture "$c")
+cat > "$c/tests/test_beta.sh" <<'BARE'
+#!/bin/bash
+# km-unrepaired-tree: v9.9 | run using their script (reproduce-thing.sh, sha256 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef) and it printed REPRODUCED.
+exit 0
+BARE
+git -C "$c" add -A >/dev/null; git -C "$c" commit -qm "bare digest" >/dev/null
+base=$(git -C "$c" rev-parse HEAD)
+KM_GATE_BASE="$base" \
+  expect "22. a declaration citing a digest without saying what it pins fails the gate" "$c" 1 \
+  "does not say what that script pins"
+
+# 22b. THE OTHER DIRECTION. A declaration that states the pin must pass, or the rule is a rule
+#      against citing evidence at all.
+c="$work/decl_digest_pinned"; base=$(mkfixture "$c")
+cat > "$c/tests/test_beta.sh" <<'PINNED'
+#!/bin/bash
+# km-unrepaired-tree: v9.9 | run using their script (reproduce-thing.sh, sha256 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef, pins the fixture commit and therefore tested only that tree) and it printed REPRODUCED.
+exit 0
+PINNED
+git -C "$c" add -A >/dev/null; git -C "$c" commit -qm "pinned digest" >/dev/null
+base=$(git -C "$c" rev-parse HEAD)
+KM_GATE_BASE="$base" \
+  expect "22b. a declaration that states what its cited script pins passes" "$c" 0 \
+  "PASS release-gate:"
+
+# 22c. AND `unpinned` IS THE OTHER TRUE ANSWER. A script that takes the tree it is handed can
+#      testify about the tree it was handed, and saying so must not be harder than saying nothing.
+c="$work/decl_digest_unpinned"; base=$(mkfixture "$c")
+cat > "$c/tests/test_beta.sh" <<'UNPINNED'
+#!/bin/bash
+# km-unrepaired-tree: v9.9 | run using their script (reproduce-thing.sh, sha256 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef, unpinned: it gates the root it is given) and it printed REPRODUCED.
+exit 0
+UNPINNED
+git -C "$c" add -A >/dev/null; git -C "$c" commit -qm "unpinned digest" >/dev/null
+base=$(git -C "$c" rev-parse HEAD)
+KM_GATE_BASE="$base" \
+  expect "22c. a declaration that says its cited script is unpinned passes" "$c" 0 \
+  "PASS release-gate:"
+
+# 22d. A MALFORMED DIGEST IS NOT A CITATION. 65 hex characters is what v1.59 published; it names no
+#      file, and the rule must not accept it merely because the prose after it reads well.
+c="$work/decl_digest_malformed"; base=$(mkfixture "$c")
+cat > "$c/tests/test_beta.sh" <<'MALFORMED'
+#!/bin/bash
+# km-unrepaired-tree: v9.9 | run using their script (reproduce-thing.sh, sha256 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdefa, pins the fixture commit) and it printed REPRODUCED.
+exit 0
+MALFORMED
+git -C "$c" add -A >/dev/null; git -C "$c" commit -qm "malformed digest" >/dev/null
+base=$(git -C "$c" rev-parse HEAD)
+KM_GATE_BASE="$base" \
+  expect "22d. a declaration citing a digest that is not 64 hex characters fails the gate" "$c" 1 \
+  "is not a 64-character sha256"
+
+# 22e. AND PROSE IS NOT A CITATION. Found by running the rule against this repository rather than
+#      by reasoning about it: the gate's own declaration says "cites a script by sha256 and says
+#      nothing about what it pins", and the first form of the rule read `a` out of "and" and
+#      reported a digest of length 1. A declaration is prose that contains the word, so the word
+#      cannot be the trigger. Without this case the 16-character floor is a patch applied until the
+#      tree went green, which is the thing this repository publishes a rule against.
+c="$work/decl_digest_prose"; base=$(mkfixture "$c")
+cat > "$c/tests/test_beta.sh" <<'PROSE'
+#!/bin/bash
+# km-unrepaired-tree: v9.9 | no script was used. This check cites nothing by sha256 and says nothing about any pin, because there is nothing to cite; the run was made by hand against the fixture tree.
+exit 0
+PROSE
+git -C "$c" add -A >/dev/null; git -C "$c" commit -qm "prose" >/dev/null
+base=$(git -C "$c" rev-parse HEAD)
+KM_GATE_BASE="$base" \
+  expect "22e. prose mentioning sha256 without a digest is not read as a citation" "$c" 0 \
+  "PASS release-gate:"
 
 # 21f. The stable tree must still pass, and the fingerprint must not make it flaky. Case 1 already
 #      requires PASS on a whole tree; this runs the same fixture twice and requires the same verdict

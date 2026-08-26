@@ -26,8 +26,12 @@
 # will drift again, so there is no copy here any more: the first step of this job runs
 # `python3 tools/km-release-gate.py --limits`, which prints the gate's limits into the log from the
 # single definition the gate itself prints from. Adding a limit is an edit to that definition and to
-# nothing else. tests/test_release_gate.sh case 20 asserts that the flag prints every limit defined
-# and that this workflow invokes it, so the pointer cannot rot back into a copy.
+# nothing else. tests/test_release_gate.sh case 20 asserts that the flag prints every limit defined,
+# case 20c that this workflow invokes it, and case 20c2 -- added in v1.61, a draft that binds nothing
+# until that version's own owner push -- that no line of the
+# gate's limit definition is restated verbatim anywhere in this file. Until v1.61 only the
+# invocation was checked, and a workflow that invoked the flag AND carried a complete hand copy
+# below it passed: an invocation is a presence, and the claim being made here is an absence.
 #
 # The short of it, for a reader who will not open the log: a green run means the mechanical checks
 # ran. It does not mean the push is free of organisation leakage, and it does not mean anyone other

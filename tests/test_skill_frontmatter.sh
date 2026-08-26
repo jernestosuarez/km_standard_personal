@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: v1.60 | re-stated for the tab-indentation repair. Run against the unrepaired tree at 73f89e8 (published v1.59) before any repair was written, using the external reviewer's OWN reproduction script (reproduce-tab-indentation-false-pass.sh, sha256 526b32d2b21b019ab85540aecc9d504b79b7f5557b89ebd781fad88c5d543832) unmodified on a detached clone at that commit, because their environment and this one are identical: macOS 26.5.2 arm64, bash 3.2.57, ruby 2.6.10p210 with Psych 3.1.0 and libyaml 0.2.1, python 3.9.6, git 2.50.1. Their fixture puts a TAB-indented continuation line under description: in all three shipped copies of skills/km-brief/SKILL.md. On the unrepaired tree it printed 'PASS: 23 skill file(s) ...', 'ALL SKILL FRONTMATTER CHECKS PASSED', checker_exit=0 and ruby_yaml_exit=1 with Psych::SyntaxError 'found a tab character that violate indentation while scanning a plain scalar at line 3 column 14', printing REPRODUCED: the v1.59 checker passed tab-indented frontmatter that Ruby YAML rejects. Nine cases were added here and run against the unrepaired tree; SIX were red, reporting 'canary NOT caught': tab-indented continuation (the reviewer's content byte for byte), tab then space as a continuation's indentation, a line whose entire content is one tab, a tab between a sequence indicator and its value, a tab inside a sequence entry's indentation, and a sequence entry indented with a tab. THREE passed on the unrepaired tree and only two of them legitimately, which is recorded rather than counted as detection: the two clean_canary cases -- a tab after the key's colon, and a tab inside the value -- pin shapes libyaml ACCEPTS and that this reader must keep accepting, and they passed for their own reason; the tab-indented COMMENT case passed for the WRONG reason, the tab-indented comment being folded into name and tripping the slug rule with the message "name 'km-thing # a comment indented with a tab' is not the directory slug", so on the unrepaired tree nothing detected a tab at all. On the repaired tree all six fire naming the tab, the comment case fires as a tab rather than as a slug mismatch, both clean cases still pass, and the reviewer's script prints NOT REPRODUCED with checker_exit=1. The cause is the arm '[[:space:]]' being read as indentation: that class contains the tab, so a tab-indented line was folded as a continuation, and '${#ind_str}' then measured a tab as one column in the v1.59 sequence-indentation comparison. It got there by a repair rather than by an omission -- v1.58 found the original arm written "\t"* inside double quotes, a literal backslash-t that had been INERT since it was written, and made it LIVE without asking whether it should match.  The v1.59 declaration this replaces still holds: v1.59 | re-stated for the top-level-sequence repair, the coverage-claim correction and the subset boundary. Run against the unrepaired tree at be6e4bf (published v1.58) before any repair was written, using the external reviewer's OWN reproduction script (reproduce-invalid-yaml-sequence.sh, sha256 cf6fcbc3d0a7af6d347589c0019ff190c3788949a6ab9c8644b81bffb4b407bbf) unmodified, because their environment and this one are identical: macOS 26.5.2 arm64, bash 3.2.57, ruby 2.6.10p210 with Psych 3.1.0 and libyaml 0.2.1, python 3.9.6, git 2.50.1. Their fixture is a valid name, a conforming description, and one root-level line reading '- top-level sequence content makes this YAML document invalid'. On the unrepaired tree it reported checker_exit=0 and ruby_yaml_exit=1 with Psych::SyntaxError 'did not find expected key while parsing a block mapping at line 2 column 1', printing REPRODUCED: the v1.58 checker passed a frontmatter block rejected by Ruby YAML. The canary added here carries that fixture byte for byte and reported 'canary NOT caught' on the unrepaired tree, the suite exiting 1 with the other twelve canaries still passing. On the repaired tree the same script reports checker_exit=1 naming '! SEQUENCE ENTRY IS NOT MORE-INDENTED THAN ANY KEY, SO IT CONTINUES NOTHING' on the reviewer's own line. The cause is one arm the v1.58 repair carried forward from the original pattern without re-deriving it, the leading-marker arm, which accepted a sequence entry at ANY indentation as a continuation of the preceding key; YAML makes it a continuation only when it is more-indented than the key it continues. The positive-direction canary added beside it, a sequence indented under its own key, passes on the unrepaired tree and on the repaired one, because its job is to pin the shape the reader must keep accepting rather than to detect the defect. Two further changes here are claim corrections and carry no unrepaired-tree run, because there is no defect in what the check DOES to run against: the passing line claimed 'every shipped skill file' while reading three directories of a repository that ships a fourth SKILL.md under agents/, and it now states the count and the roots actually read; and the reader now names the plain-scalar subset it models, so a green line is not read as a claim of valid YAML. The v1.58 declaration this replaces still holds in full: re-stated for the folded-value repair. Run against the unrepaired tree at 510cf03 before any repair was written. A fixture whose description first line is 13 words and whose following indented lines are folded into the same plain scalar by any real YAML parser was accepted: check_tree returned exit 0 with zero violation lines, having measured 13 words against the 10-40 residency budget, while Ruby's YAML parser on the same host read the effective value as 97 words. A second fixture, an indented line placed before any key in the block so that it continues nothing at all, was also accepted at exit 0. Two new canaries were added for those and both reported 'canary NOT caught' on the unrepaired tree; the suite exited 1 with the other ten canaries still passing. The cause is two lines of the continuation arm: every indented line was skipped unconditionally, with no state, no record of which key it continued and no requirement that any key precede it, and the budget was then measured against the first physical line alone. A third case was found while repairing rather than by probing: the arm's tab pattern was written "\t"* inside double quotes, which is a literal backslash-t and matched no tab-indented line on this host, so that half of the arm had been inert since it was written. The positive-direction canary added with them, a legitimate two-line description inside the budget, passes on the unrepaired tree and on the repaired one, because its job is to pin the shape the reader must keep accepting rather than to detect the defect. The v1.55 declaration this replaces still holds in full: re-stated for the block-integrity repair. Run against the tree at 13dec55 with the closing '---' deleted from all three shipped copies of skills/km-brief/SKILL.md, the unrepaired check prints "PASS: every shipped skill file carries a conforming name/description frontmatter" and "ALL SKILL FRONTMATTER CHECKS PASSED", exit 0, because awk runs to end of file when no terminator exists and reads the whole body as the block. Four further malformations were probed on the same tree and all four passed it at exit 0 with 0 violation lines: a '...' terminator, a duplicated name key, a duplicated description key, and an extra key. The fifth, an empty block, was already caught at exit 1 with 6 violation lines. A sixth case was found while repairing rather than by probing, and it is the one that matters: requiring merely that SOME closing '---' exists is not enough, because every shipped skill file carries '---' horizontal rules in its prose, so deleting the real terminator moves the delimiter down the document and the block swallows 16 lines of body while both keys stay present and unique. Measured on the repaired check with only the terminator rule in place: exit 0. The repaired check therefore also requires every line inside the block to read as a mapping entry, a continuation, a comment or a blank, and it then fails all five with a named violation each and passes the clean tree unchanged. The v1.27 declaration this replaces was 'unrecorded'; that debt is discharged for the delimiter and duplicate-key rules only.
+# km-unrepaired-tree: v1.61 | re-stated for the comment-ends-a-scalar repair, which edits this file, and to correct a false claim this file published in v1.60. THE REPAIR. Run against the unrepaired tree at 164ecfb (published v1.60) before the repair was written. The external reviewer's own script (reproduce-indented-comment-continuation.sh, sha256 9415c372b9dd22f519d92ccac6d574b318affa102a9b41be1296251943d55e56, pins 164ecfb36fd7a644365ee9dff41a540130e15e82 internally and re-clones it whatever source root it is handed, so it can test the v1.60 tree and no other) was run here UNMODIFIED against that tree, on an environment identical to theirs (macOS 26.5.2 arm64, bash 3.2.57, ruby 2.6.10p210 with Psych 3.1.0 and libyaml 0.2.1, python 3.9.6, git 2.50.1), and printed 'PASS: 23 skill file(s) ...', 'ALL SKILL FRONTMATTER CHECKS PASSED', checker_exit=0 and ruby_yaml_exit=1 with Psych::SyntaxError 'did not find expected key while parsing a block mapping at line 2 column 1', reporting REPRODUCED. Nine cases were added here in section 7 and run against that same unrepaired tree; FIVE were red. Four reported 'canary NOT caught' -- a column-zero comment then a continuation, an indented comment then a continuation (the reviewer's content byte for byte), a comment deeper than the continuation then another, and an empty '#' comment then a continuation -- and the fifth reported 'legitimate input REJECTED: a comment between two keys', the unrepaired reader folding that comment into name and answering "name 'km-thing # a comment between two keys is a comment, and the key below opens its own value' is not the directory slug". FOUR passed on the unrepaired tree and only two of them legitimately, which is recorded rather than counted as detection: a comment between two sequence entries and a blank line inside a plain scalar passed for their own reasons and pin shapes this reader must keep accepting; a comment ending the block after a scalar, and a comment before the value has started, passed for the WRONG reason, the comment text being folded into description and the inflated word count landing inside the 10-40 budget by luck. On the repaired tree all nine pass, the four detection cases naming '! FRONTMATTER CONTINUATION LINE CONTINUES NO KEY' on the line after the comment, and every canary of sections 3 to 6 still fires. HOW THE REPAIR WAS VERIFIED, AND HOW IT WAS NOT. The reviewer's script CANNOT show the repair, because it re-clones the revision it pins; run against the repaired tree it would test v1.60 again and report REPRODUCED again. It was therefore not used for that, and no claim is made here about what it prints on a repaired tree. Three other means were used and each is named. First, the nine integrated canaries above, one of which carries the reviewer's fixture content byte for byte and is the same three lines their patch writes. Second, a differential measurement against the reference parser: ten comment and blank-line shapes were put to Psych 3.1.0 one at a time, the ten answers are listed in full above section 7, and the repaired reader answers all ten the same way Psych does, so this repair is a MODEL with no declared divergence, unlike the tab rule above it. Third, a DE-PINNED variant of the reviewer's script, modified in exactly one line -- the pinned checkout replaced by a checkout of the source root's own HEAD plus its working-tree diff, and nothing else -- was run against the repaired tree and reported checker_exit=1, ruby_yaml_exit=1 and 'NOT REPRODUCED: checker and reference parser did not disagree in the expected direction'. That variant is a modified script and is declared as one; it is evidence about the tree it was pointed at, which is what the original could not be. AND THE RULE THIS TEACHES, which the gate now enforces mechanically for any declaration citing a digest: A VERIFICATION DECLARATION IS A RECORD OF WHAT WAS RUN, AND A SCRIPT THAT PINS A REVISION CANNOT TESTIFY ABOUT ANY OTHER REVISION. If a fixture pins a revision, the declaration says which tree it tested. The v1.60 declaration this replaces still holds except where it is corrected above: v1.60 | re-stated for the tab-indentation repair. Run against the unrepaired tree at 73f89e8 (published v1.59) before any repair was written, using the external reviewer's OWN reproduction script (reproduce-tab-indentation-false-pass.sh, sha256 526b32d2b21b019ab85540aecc9d504b79b7f5557b89ebd781fad88c5d543832, pins 73f89e80774f7401eebb106572c14824a9e60d15 internally and re-clones it whatever source root it is handed, so it tested the v1.59 tree on every run it ever made) unmodified on a detached clone at that commit, because their environment and this one are identical: macOS 26.5.2 arm64, bash 3.2.57, ruby 2.6.10p210 with Psych 3.1.0 and libyaml 0.2.1, python 3.9.6, git 2.50.1. Their fixture puts a TAB-indented continuation line under description: in all three shipped copies of skills/km-brief/SKILL.md. On the unrepaired tree it printed 'PASS: 23 skill file(s) ...', 'ALL SKILL FRONTMATTER CHECKS PASSED', checker_exit=0 and ruby_yaml_exit=1 with Psych::SyntaxError 'found a tab character that violate indentation while scanning a plain scalar at line 3 column 14', printing REPRODUCED: the v1.59 checker passed tab-indented frontmatter that Ruby YAML rejects. Nine cases were added here and run against the unrepaired tree; SIX were red, reporting 'canary NOT caught': tab-indented continuation (the reviewer's content byte for byte), tab then space as a continuation's indentation, a line whose entire content is one tab, a tab between a sequence indicator and its value, a tab inside a sequence entry's indentation, and a sequence entry indented with a tab. THREE passed on the unrepaired tree and only two of them legitimately, which is recorded rather than counted as detection: the two clean_canary cases -- a tab after the key's colon, and a tab inside the value -- pin shapes libyaml ACCEPTS and that this reader must keep accepting, and they passed for their own reason; the tab-indented COMMENT case passed for the WRONG reason, the tab-indented comment being folded into name and tripping the slug rule with the message "name 'km-thing # a comment indented with a tab' is not the directory slug", so on the unrepaired tree nothing detected a tab at all. On the repaired tree all six fire naming the tab, the comment case fires as a tab rather than as a slug mismatch, and both clean cases still pass. THE NEXT CLAUSE OF THIS SENTENCE WAS FALSE WHEN v1.60 PUBLISHED IT AND IS CORRECTED IN v1.61 (a DRAFT that binds nothing until that version's own owner push): it read 'and the reviewer's script prints NOT REPRODUCED with checker_exit=1'. That script pins 73f89e8 and re-clones it, so it tested v1.59 on every run and printed REPRODUCED on every run; re-measured on 2026-08-26 against the published v1.60 tree it printed 'REPRODUCED: the v1.59 checker passed tab-indented frontmatter that Ruby YAML rejects' at exit 0. It could not have said otherwise, and the drafting report of v1.60 said so in plain words while the artifact said the opposite. The repair was in fact verified by the nine integrated canaries in section 6 of this suite, four of them carrying the reviewer's fixture content byte for byte, six of which were red on the unrepaired tree. The cause is the arm '[[:space:]]' being read as indentation: that class contains the tab, so a tab-indented line was folded as a continuation, and '${#ind_str}' then measured a tab as one column in the v1.59 sequence-indentation comparison. It got there by a repair rather than by an omission -- v1.58 found the original arm written "\t"* inside double quotes, a literal backslash-t that had been INERT since it was written, and made it LIVE without asking whether it should match.  The v1.59 declaration this replaces still holds: v1.59 | re-stated for the top-level-sequence repair, the coverage-claim correction and the subset boundary. Run against the unrepaired tree at be6e4bf (published v1.58) before any repair was written, using the external reviewer's OWN reproduction script (reproduce-invalid-yaml-sequence.sh, sha256 cf6fcbc3d0a7af6d347589c0019ff190c3788949a6ab9c8644b81bfb4b407bbf, pins no revision but reads its checker from the fixed path /private/tmp/km-v158-builder-recheck/repo, so it tested whatever tree stood at that path -- and the digest v1.59 published for this file carried 65 characters and named nothing, corrected here in v1.61, a draft that binds nothing until that version's own owner push) unmodified, because their environment and this one are identical: macOS 26.5.2 arm64, bash 3.2.57, ruby 2.6.10p210 with Psych 3.1.0 and libyaml 0.2.1, python 3.9.6, git 2.50.1. Their fixture is a valid name, a conforming description, and one root-level line reading '- top-level sequence content makes this YAML document invalid'. On the unrepaired tree it reported checker_exit=0 and ruby_yaml_exit=1 with Psych::SyntaxError 'did not find expected key while parsing a block mapping at line 2 column 1', printing REPRODUCED: the v1.58 checker passed a frontmatter block rejected by Ruby YAML. The canary added here carries that fixture byte for byte and reported 'canary NOT caught' on the unrepaired tree, the suite exiting 1 with the other twelve canaries still passing. On the repaired tree the same script reports checker_exit=1 naming '! SEQUENCE ENTRY IS NOT MORE-INDENTED THAN ANY KEY, SO IT CONTINUES NOTHING' on the reviewer's own line. HOW THAT CLAIM WAS RE-VERIFIED IN v1.61 (a draft that binds nothing until that version's own owner push), rather than inherited on the earlier session's word: this script is PATH-pinned, not revision-pinned -- it reads its checker from the fixed /private/tmp/km-v158-builder-recheck/repo, and that path no longer exists -- so it was re-run with THAT ONE LINE re-pointed at this working tree and nothing else changed, and it printed exactly that message at checker_exit=1, then exited 1 at its own 'test CHECK_STATUS -eq 0' without reaching either verdict line. The distinction is the point: a PATH-pinned script can testify about whichever tree stands at that path, so re-pointing it is a re-run rather than a different experiment, whereas a REVISION-pinned script re-clones its commit and can testify about nothing else at all. The cause is one arm the v1.58 repair carried forward from the original pattern without re-deriving it, the leading-marker arm, which accepted a sequence entry at ANY indentation as a continuation of the preceding key; YAML makes it a continuation only when it is more-indented than the key it continues. The positive-direction canary added beside it, a sequence indented under its own key, passes on the unrepaired tree and on the repaired one, because its job is to pin the shape the reader must keep accepting rather than to detect the defect. Two further changes here are claim corrections and carry no unrepaired-tree run, because there is no defect in what the check DOES to run against: the passing line claimed 'every shipped skill file' while reading three directories of a repository that ships a fourth SKILL.md under agents/, and it now states the count and the roots actually read; and the reader now names the plain-scalar subset it models, so a green line is not read as a claim of valid YAML. The v1.58 declaration this replaces still holds in full: re-stated for the folded-value repair. Run against the unrepaired tree at 510cf03 before any repair was written. A fixture whose description first line is 13 words and whose following indented lines are folded into the same plain scalar by any real YAML parser was accepted: check_tree returned exit 0 with zero violation lines, having measured 13 words against the 10-40 residency budget, while Ruby's YAML parser on the same host read the effective value as 97 words. A second fixture, an indented line placed before any key in the block so that it continues nothing at all, was also accepted at exit 0. Two new canaries were added for those and both reported 'canary NOT caught' on the unrepaired tree; the suite exited 1 with the other ten canaries still passing. The cause is two lines of the continuation arm: every indented line was skipped unconditionally, with no state, no record of which key it continued and no requirement that any key precede it, and the budget was then measured against the first physical line alone. A third case was found while repairing rather than by probing: the arm's tab pattern was written "\t"* inside double quotes, which is a literal backslash-t and matched no tab-indented line on this host, so that half of the arm had been inert since it was written. The positive-direction canary added with them, a legitimate two-line description inside the budget, passes on the unrepaired tree and on the repaired one, because its job is to pin the shape the reader must keep accepting rather than to detect the defect. The v1.55 declaration this replaces still holds in full: re-stated for the block-integrity repair. Run against the tree at 13dec55 with the closing '---' deleted from all three shipped copies of skills/km-brief/SKILL.md, the unrepaired check prints "PASS: every shipped skill file carries a conforming name/description frontmatter" and "ALL SKILL FRONTMATTER CHECKS PASSED", exit 0, because awk runs to end of file when no terminator exists and reads the whole body as the block. Four further malformations were probed on the same tree and all four passed it at exit 0 with 0 violation lines: a '...' terminator, a duplicated name key, a duplicated description key, and an extra key. The fifth, an empty block, was already caught at exit 1 with 6 violation lines. A sixth case was found while repairing rather than by probing, and it is the one that matters: requiring merely that SOME closing '---' exists is not enough, because every shipped skill file carries '---' horizontal rules in its prose, so deleting the real terminator moves the delimiter down the document and the block swallows 16 lines of body while both keys stay present and unique. Measured on the repaired check with only the terminator rule in place: exit 0. The repaired check therefore also requires every line inside the block to read as a mapping entry, a continuation, a comment or a blank, and it then fails all five with a named violation each and passes the clean tree unchanged. The v1.27 declaration this replaces was 'unrecorded'; that debt is discharged for the delimiter and duplicate-key rules only.
 # Fixtures for skill-file frontmatter (v1.27), STANDARD.md §"Skill files declare their trigger".
 #
 # Every skill file this standard ships must carry YAML frontmatter with exactly the two fields a
@@ -111,7 +111,7 @@ skill_scan_roots() { # <root>: sets SKILL_ROOTS to the directories this check re
 # Usage: check_tree <root>  → prints one line per violation, exit 1 if any
 check_tree() {
   skill_scan_roots "$1"
-  local root="$1" bad=0 f slug fm name desc words close key val cont cur_key cur_indent n_name n_desc fmline ind_str seq_lead rest ind is_seq
+  local root="$1" bad=0 f slug fm name desc words close key val cont cur_key cur_indent cur_kind n_name n_desc fmline ind_str seq_lead rest ind is_seq
   while IFS= read -r f; do
     [ -z "$f" ] && continue
     slug="$(basename "$(dirname "$f")")"
@@ -176,11 +176,19 @@ check_tree() {
     # re-deriving what the line was for, and an untested arm rode through unexamined. Each line is
     # now measured against the indentation of the key it would continue, which is `cur_indent`, and
     # a sequence entry that is not more-indented than any key is named as continuing nothing.
-    cur_key=""; cur_indent=0; name=""; desc=""; n_name=0; n_desc=0
+    cur_key=""; cur_indent=0; cur_kind=""; name=""; desc=""; n_name=0; n_desc=0
     while IFS= read -r fmline; do
+      # A BLANK LINE ENDS NOTHING. Inside a plain scalar it is a line break that a parser folds,
+      # and Psych accepts a continuation after it, so the state is carried across untouched.
+      # A COMMENT IS NOT SKIPPED BLIND ANY MORE (v1.61 draft; binds nothing until that version's own owner push); see the comment arm below the tab check.
+      # It used to be skipped here, at column zero only, which had two consequences: an INDENTED
+      # comment was never recognised as a comment at all and was folded into the preceding value as
+      # an ordinary continuation, and a column-zero comment left the current key open so that
+      # whatever followed was folded too. Both are false passes -- Psych rejects a continuation
+      # after a comment in either position -- and the second was invisible because the first was
+      # the one a reviewer could see.
       case "$fmline" in
         "") continue ;;
-        "#"*) continue ;;
       esac
       # THE INDENTATION REGION of the line: its leading whitespace, plus -- on a sequence entry --
       # the `-` indicator and the whitespace after it. [[:space:]] is used to CAPTURE the region,
@@ -207,11 +215,38 @@ check_tree() {
       # indentation region -- after the key's colon, or inside a value -- is untouched, and two
       # clean_canary cases below require exactly that.
       if [[ "$ind_str$seq_lead" == *"$TAB"* ]]; then
-        echo "  ! TAB IN THE INDENTATION OF A FRONTMATTER LINE; YAML FORBIDS IT AND INDENTATION HERE IS SPACES: '${fmline:0:60}': ${f#$root/}"; bad=1; cur_key=""; continue
+        echo "  ! TAB IN THE INDENTATION OF A FRONTMATTER LINE; YAML FORBIDS IT AND INDENTATION HERE IS SPACES: '${fmline:0:60}': ${f#$root/}"; bad=1; cur_key=""; cur_kind=""; continue
       fi
       ind=${#ind_str}
       is_seq=0
       [ -n "$seq_lead" ] && is_seq=1
+      # A WHOLE-LINE COMMENT ENDS A PLAIN SCALAR THAT HAS ALREADY STARTED.
+      # (v1.61 draft; binds nothing until that version's own owner push.)
+      #
+      # It ends nothing else, and that is the whole of the rule. It does not end a block sequence,
+      # it does not end a key whose value has not started, and a blank line ends nothing at all.
+      # Every one of those was measured against Psych on the reference environment rather than
+      # reasoned about; the ten shapes and their answers are listed above section 7 of this suite.
+      #
+      # v1.60 registered this rather than repairing it, on the ground that modelling what a parser
+      # does to a continuation after a comment was a repair riding inside the tab repair. The
+      # premise was wrong on the facts: the model is one sentence and one extra piece of state, and
+      # what was missing was a measurement, not a parser. Rejecting the construct outright was the
+      # honest fallback and was refused once the probes came back, because it would refuse a comment
+      # between two sequence entries, which is ordinary YAML.
+      #
+      # `cur_kind` is what the current key's value is: empty (not started), `scalar`, or `seq`. It
+      # is read here and set at every point below where a value begins or a key is cleared.
+      #
+      # The tab check above runs FIRST, deliberately: a tab-indented comment is a tab rejection, as
+      # it has been since v1.60, and its canary still requires that message rather than this one.
+      if [ -z "$seq_lead" ]; then
+        case "$rest" in
+          "#"*)
+            [ "$cur_kind" = "scalar" ] && { cur_key=""; cur_indent=0; cur_kind=""; }
+            continue ;;
+        esac
+      fi
       if [ "$ind" -gt "$cur_indent" ] && [ -n "$cur_key" ]; then
         # `rest` already IS the line with its indentation region removed, computed once above.
         # Taking `rest` here is a v1.60 change.
@@ -219,6 +254,12 @@ check_tree() {
         # is one more place for the same wrong assumption to live and one more place to keep in
         # step; taking the value the single derivation produced removes both.
         cont="$rest"
+        # What kind of value this key is carrying, which the comment arm above reads. A sequence
+        # entry makes it a sequence and it stays one: a plain line under an entry is that ENTRY's
+        # own scalar continuing, not the key's, and a comment does not end a sequence either way.
+        if [ "$is_seq" -eq 1 ]; then cur_kind="seq"
+        elif [ "$cur_kind" != "seq" ]; then cur_kind="scalar"
+        fi
         case "$cur_key" in
           name)        name="$name $cont" ;;
           description) desc="$desc $cont" ;;
@@ -229,15 +270,18 @@ check_tree() {
         echo "  ! FRONTMATTER CONTINUATION LINE CONTINUES NO KEY: '${fmline:0:60}': ${f#$root/}"; bad=1; continue
       fi
       if [ "$is_seq" -eq 1 ]; then
-        echo "  ! SEQUENCE ENTRY IS NOT MORE-INDENTED THAN ANY KEY, SO IT CONTINUES NOTHING: '${fmline:0:60}': ${f#$root/}"; bad=1; cur_key=""; continue
+        echo "  ! SEQUENCE ENTRY IS NOT MORE-INDENTED THAN ANY KEY, SO IT CONTINUES NOTHING: '${fmline:0:60}': ${f#$root/}"; bad=1; cur_key=""; cur_kind=""; continue
       fi
       if [[ "$fmline" =~ ^([A-Za-z_][A-Za-z0-9_.-]*):([[:space:]].*)?$ ]]; then
         key="${BASH_REMATCH[1]}"; val="${BASH_REMATCH[2]}"
         [[ "$val" =~ ^[[:space:]]*(.*)$ ]] && val="${BASH_REMATCH[1]}"
       else
-        echo "  ! FRONTMATTER LINE IS NOT A MAPPING ENTRY: '${fmline:0:60}': ${f#$root/}"; bad=1; cur_key=""; continue
+        echo "  ! FRONTMATTER LINE IS NOT A MAPPING ENTRY: '${fmline:0:60}': ${f#$root/}"; bad=1; cur_key=""; cur_kind=""; continue
       fi
       cur_key="$key"; cur_indent="$ind"
+      # `description:` with nothing after it has not started its value, so a comment on the next
+      # line ends nothing and the value may still begin below it. Psych accepts exactly that.
+      if [ -n "$val" ]; then cur_kind="scalar"; else cur_kind=""; fi
       case "$key" in
         name)        n_name=$((n_name + 1)); [ "$n_name" -eq 1 ] && name="$val" ;;
         description) n_desc=$((n_desc + 1)); [ "$n_desc" -eq 1 ] && desc="$val" ;;
@@ -539,6 +583,179 @@ canary "tab inside a sequence entry's indentation"         write_tab_before_seq_
 canary "sequence entry indented with a tab"                write_tab_indented_sequence "$f"
 clean_canary "a tab after the key's colon is separation"   write_tab_after_key_colon "$f"
 clean_canary "a tab inside the value is not indentation"   write_tab_inside_value "$f"
+
+# --- 7. A WHOLE-LINE COMMENT ENDS A PLAIN SCALAR; IT DOES NOT END A SEQUENCE (v1.61) ---
+# THIS SECTION BELONGS TO v1.61, WHICH IS A DRAFT AND BINDS NOTHING UNTIL THAT VERSION'S OWN
+# OWNER PUSH.
+#
+# v1.60's own sweep found this and registered it rather than repairing it: a space-indented
+# `# comment` inside the block is a comment to Psych, and this reader folded it into the preceding
+# value as an ordinary continuation, then accepted whatever followed. The registered reason was that
+# modelling it "requires modelling what Psych does to a continuation that follows a comment, and
+# doing that inside a repair to tab handling would be a repair riding inside a repair". An external
+# reviewer then demonstrated the false pass with a real fixture, and ruled -- correctly -- that
+# disclosure does not satisfy a no-open-defect criterion. So it is repaired here, on its own, with
+# its own canaries.
+#
+# THE MODEL WAS NOT OUT OF REACH; IT WAS NEVER MEASURED. It is one rule, and it was derived by
+# probing the reference parser rather than by reasoning about the specification. On the reference
+# environment (ruby 2.6.10p210, Psych 3.1.0, libyaml 0.2.1), one shape at a time:
+#
+#   scalar, then `# c` at column 0, then a continuation      -> REJECTED, "did not find expected key"
+#   scalar, then `  # c` indented, then a continuation       -> REJECTED  (the reviewer's fixture)
+#   scalar, a continuation, then `    # c` deeper, then
+#            another continuation                            -> REJECTED
+#   scalar, then `  #` (an empty comment), then a
+#            continuation                                    -> REJECTED
+#   scalar, then a comment, then NOTHING                     -> ACCEPTED
+#   scalar, then a comment, then a new key at column 0       -> ACCEPTED
+#   key with an EMPTY value, then a comment, then the value
+#            as a continuation                               -> ACCEPTED
+#   a sequence entry, then a comment, then another entry     -> ACCEPTED
+#   a sequence entry with its own continuation, then a
+#            comment, then another entry                     -> ACCEPTED
+#   a blank line inside a plain scalar, then a continuation  -> ACCEPTED (a blank is a line break,
+#                                                              not a terminator)
+#
+# One sentence covers every one of them: A WHOLE-LINE COMMENT ENDS A PLAIN SCALAR THAT HAS ALREADY
+# STARTED. It does not end a block sequence, it does not end a key whose value has not started yet,
+# and a blank line ends nothing. So the reader keeps one more piece of state -- what kind of value
+# the current key is carrying -- and a comment clears the current key only when that value is a
+# plain scalar in progress. What follows a cleared key then meets the rule that has stood since
+# v1.58: a line that continues nothing is a violation naming itself.
+#
+# THIS IS A MODEL, NOT A HOUSE RULE, and the difference is worth stating because the tab rule
+# directly above IS a house rule. Every shape listed here was measured, and every one is answered
+# the same way by this reader and by Psych, so there is no declared divergence to record. Rejecting
+# the construct outright was weighed -- it was the honest fallback if the model proved out of reach
+# -- and refused once the probes came back, because a rejection would make this reader refuse
+# `  # c` between two sequence entries, which is ordinary YAML a shipped file may legitimately want.
+write_col0_comment_then_continuation() {
+  cat > "$1" <<'FIX'
+---
+name: km-thing
+description: Use when a synthetic fixture needs a conforming description that names its trigger
+# this comment at column zero ends the scalar
+  and this line then continues nothing at all
+---
+
+# body
+FIX
+}
+write_indented_comment_then_continuation() {
+  # THE REVIEWER'S OWN CONTENT, BYTE FOR BYTE, from reproduce-indented-comment-continuation.sh
+  # (sha256 9415c372b9dd22f519d92ccac6d574b318affa102a9b41be1296251943d55e56, pins
+  # 164ecfb36fd7a644365ee9dff41a540130e15e82 and therefore tests only the v1.60 tree). The three
+  # lines below are what their patch writes into skills/km-brief/SKILL.md, so what is asserted here
+  # is the defect they observed rather than this maintainer's reading of their report.
+  cat > "$1" <<'FIX'
+---
+name: km-thing
+description: Use when someone needs a memo briefing or status report drawn from this hub
+  # this YAML comment interrupts the scalar continuation
+  with traceable source evidence
+---
+
+# body
+FIX
+}
+write_deeper_comment_then_continuation() {
+  cat > "$1" <<'FIX'
+---
+name: km-thing
+description: Use when a synthetic fixture needs a conforming description that names its trigger
+  and its own invocation here
+    # a comment deeper than the continuation still ends the scalar
+  and this line then continues nothing at all
+---
+
+# body
+FIX
+}
+write_empty_comment_then_continuation() { # `  #` with no text after it is still a comment
+  cat > "$1" <<'FIX'
+---
+name: km-thing
+description: Use when a synthetic fixture needs a conforming description that names its trigger
+  #
+  and this line then continues nothing at all
+---
+
+# body
+FIX
+}
+# The other direction. Five shapes Psych ACCEPTS, so a reader tightened until it refuses them has
+# swapped a false pass for a false failure, which is the same defect wearing the opposite sign.
+write_comment_then_end_of_block() {
+  cat > "$1" <<'FIX'
+---
+name: km-thing
+description: Use when a synthetic fixture needs a conforming description that names its trigger and its own invocation, /km-thing, plainly.
+  # a comment that ends the scalar and is followed by nothing
+---
+
+# body
+FIX
+}
+write_comment_then_new_key() {
+  cat > "$1" <<'FIX'
+---
+name: km-thing
+  # a comment between two keys is a comment, and the key below opens its own value
+description: Use when a synthetic fixture needs a conforming description that names its trigger and its own invocation, /km-thing, plainly.
+---
+
+# body
+FIX
+}
+write_comment_before_a_value_starts() { # the key's value has not started, so nothing is ended
+  cat > "$1" <<'FIX'
+---
+name: km-thing
+description:
+  # the value has not started yet, so this comment ends nothing
+  Use when a synthetic fixture needs a conforming description that names its trigger and its own invocation, /km-thing, plainly.
+---
+
+# body
+FIX
+}
+write_comment_between_sequence_entries() { # a comment does not end a block sequence
+  cat > "$1" <<'FIX'
+---
+name: km-thing
+description: Use when a synthetic fixture needs a conforming description that names its trigger and its own invocation, /km-thing, plainly.
+tags:
+  - alpha
+  # a comment between two entries leaves the sequence open
+  - beta
+---
+
+# body
+FIX
+}
+write_blank_line_then_continuation() { # a blank line is a line break inside the scalar, not an end
+  cat > "$1" <<'FIX'
+---
+name: km-thing
+description: Use when a synthetic fixture needs a conforming description that names its trigger
+
+  and its own invocation, /km-thing, across a blank line.
+---
+
+# body
+FIX
+}
+canary "column-zero comment then a continuation"            write_col0_comment_then_continuation "$f"
+canary "indented comment then a continuation"               write_indented_comment_then_continuation "$f"
+canary "comment deeper than the continuation, then another" write_deeper_comment_then_continuation "$f"
+canary "an empty comment then a continuation"               write_empty_comment_then_continuation "$f"
+clean_canary "a comment ending the block after a scalar"    write_comment_then_end_of_block "$f"
+clean_canary "a comment between two keys"                   write_comment_then_new_key "$f"
+clean_canary "a comment before the value has started"       write_comment_before_a_value_starts "$f"
+clean_canary "a comment between two sequence entries"       write_comment_between_sequence_entries "$f"
+clean_canary "a blank line inside a plain scalar"           write_blank_line_then_continuation "$f"
+
 # AND THE PROBE AT THE TOP OF THIS FILE IS ITSELF PROVED IN BOTH DIRECTIONS. (v1.60.) It refuses
 # when the tab matcher is inert; these two lines show that the inert form and the live form are
 # genuinely distinguishable in this shell, so the probe is separating two states rather than
