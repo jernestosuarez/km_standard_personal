@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.60"/>
+  <img src="assets/badges/version.svg" alt="standard v1.61"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 3 adopted, 1 partial, 3 open"/>
   <img src="assets/badges/license.svg" alt="license: Apache-2.0"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,30 +28,34 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.60** (2026-08-26, two findings from an external reviewer's fourth pass, each
-reproduced as a failing case and committed red before either repair was written; **a control
-enforced a spelling where it certified a guarantee**, case 21j of the gate's own suite certifying
-that every verdict phase takes its pathspecs from the structure the fingerprint iterates by grepping
-the gate's source for the literal `git_tracked(root, [`, so a real `.txt`-reading verdict phase
-written with a tuple rather than a list walked straight past it and the suite printed PASS at exit 0
-while the guarantee was false, and case 21h, the pin on what lies outside the covered set, then
-accepted a file mutating mid-run at a moment when that file **was** a gate input; **the repair
-removes the need for the static analysis rather than lengthening the pattern**, a stricter grep being
-the same defect with more characters, so `git_tracked`, `git_untracked` and `read_text` now record
-what they hand out and the closing fingerprint covers what the run actually read, which puts a phase
-added tomorrow inside the covered set by construction, with 21j rewritten into the reviewer's own
-added phase that must be covered with no edit to the case and the narrower residual stated rather
-than implied closed; **indentation was read with a character class that permits what the format
-forbids**, `[[:space:]]` containing the tab where YAML forbids tabs in indentation, so a tab-indented
-continuation was folded into the preceding key at exit 0 while a YAML parser on the same host
-rejected the document outright, and indentation is now spaces with a tab anywhere in a line's
-indentation region a rejection naming the tab, still **taking no YAML library as a dependency**;
-**a dead arm made live is a new rule and must be re-derived rather than repaired**, the arm in
-question having been written as a literal backslash-t and inert since the day it was written, so
-making it live authored it rather than repaired it; **both sweeps returned instances and both are
-recorded**, one repaired and four registered with the direction their error can fall; nothing a
-deployment installs changes and no hub turns red; v1.59 is the preceding published version and v1.23
-remains an unpublished draft awaiting its own push). The full
+**Current version: v1.61** (2026-08-26, four findings from an external reviewer's fifth pass over
+this repository, off `main` at `164ecfb` (published v1.60), each reproduced as a failing case before
+any repair was written; all three reviewer scripts pin `164ecfb` internally, so **none of them can
+testify about a repaired tree**, which is the subject of the fourth finding and is stated here rather
+than discovered later; **a question asked of the tree is a read, even when nothing is opened**, the
+gate's ledger having recorded only what its accessors enumerated and opened while the relative-link
+phase opened nothing, asked `does this path exist?` and put the answer straight into the verdict, so
+a discovered check could delete a link target after that phase had run and the gate still returned
+PASS at exit 0 over a final tree carrying a broken link, and the ledger now records **answers**, with
+existence asked through one accessor and both directions of a presence answer treated as drift;
+**a control whose claim is an absence must measure an absence**, case 20c having certified that the
+CI workflow carries no hand copy of the gate's limits by confirming that it *invokes* `--limits`,
+which is a presence, so the claim is split into a case that asserts the pointer, a case that asserts
+that no line of the gate's own limit definition is restated verbatim in the workflow, compared
+against the gate's own `--limits` output, and a case that injects a verbatim copy and requires the
+detector to fire; **a whole-line comment ends a plain scalar that has already started**, ten comment
+and blank-line shapes having been put to the reference parser one at a time, so the frontmatter
+reader is a model rather than a house rule and carries no declared divergence; and **a verification
+declaration is a record of what was run, and a script that pins a revision cannot testify about any
+other revision**, which this repository broke by publishing in v1.60 a claim it knew to be false —
+both declarations are corrected with the false clauses **struck in place rather than deleted**, and a
+citation that names a script by digest must now state what that script pins; **two of the four
+findings were already ours**, registered rather than repaired in v1.60's own sweep, and the ruling
+accepted here is that **disclosure does not satisfy a no-open-defect criterion**; the
+registered-not-repaired backlog is audited in full with the age of each entry, two closed, three
+re-classified as **policy questions referred to the owner** and four as **approximations with stated
+error directions**; nothing a deployment installs changes and no hub turns red; v1.60 is the
+preceding published version and v1.23 remains an unpublished draft awaiting its own push). The full
 ledger of released versions, and the rule that a published version number is never reused, is in
 [`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.
