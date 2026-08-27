@@ -12,9 +12,9 @@ lifecycle: active
 
 ## Status and scope
 
-**Status:** Owner-authorized Supervisor disposition, commit `f21bf3e` (2026-08-27): “Approve Phase S0 as security-design input only. No residual risk, runtime implementation, or release is approved.” This is binding security-design input. No application, infrastructure, contract, or runtime security control is present in this repository. AD-001 through AD-005 remain blocking and unselected.
+**Status:** Owner-authorized Supervisor disposition, commit `f21bf3e` (2026-08-27): “Approve Phase S0 as security-design input only. No residual risk, runtime implementation, or release is approved.” This is binding security-design input. No application, infrastructure, contract, or runtime security control is present in this repository. AD-001 is resolved at the design layer; AD-002 through AD-005 remain blocking and unselected.
 
-Scope begins at browser submission of an upload, domain-event envelope, or owner answer and ends at a governed tenant-hub record, audit event, or consumed answer. It models both unselected worker modes: Anthropic managed execution and Glassity self-hosted sandbox execution.
+Scope begins at browser submission of an upload, domain-event envelope, or owner answer and ends at a governed tenant-hub record, audit event, or consumed answer. It models the selected self-hosted production boundary and the synthetic-only managed development boundary.
 
 ## Authoritative inputs
 
@@ -120,13 +120,15 @@ flowchart LR
 
 ## Execution-mode responsibilities
 
-The cited Anthropic self-hosted sandbox guidance places the execution environment boundary with the customer operating the sandbox. Therefore, in **self-hosted** mode Glassity is responsible for sandbox image selection and hardening, egress controls, environment and per-session secret handling, tool blast radius, and post-worker data lifecycle, in addition to the common responsibilities below. In **managed** mode, Anthropic provides the managed execution boundary described in its managed-agent documentation, but Glassity still owns deterministic tenant authorization, minimization of content sent to the model, audit attribution, and trust in the configured tools and loaded skills. AD-001 remains blocking until the owner chooses a mode and the responsibility split is recorded.
+AD-001 selects **self-hosted production execution** in Glassity-controlled infrastructure. Glassity is responsible for sandbox image selection and hardening, egress controls, environment and per-session secret handling, tool blast radius, and post-worker data lifecycle, in addition to the common responsibilities below. Anthropic still provides the Managed Agents control plane and model inference: authorized model inputs and tool results pass through that path, so self-hosted does not mean “nothing leaves.” Glassity retains deterministic tenant authorization, minimization under SEC-015, audit attribution, and trust in the configured tools and loaded skills.
 
-## Unresolved architecture decisions
+Anthropic-managed cloud sandboxes are permitted only for development, CI, or evaluation with strictly synthetic data. Synthetic data may not derive from real tenant or prospect content, including anonymized, pseudonymized, redacted, sampled, or paraphrased excerpts. The full responsibility split and follow-on gates are recorded in [AD-001](../decisions/ad-001-self-hosted-production-execution.md).
+
+## Architecture decisions
 
 | ID | Decision | Owner | Gate | Consequence |
 |---|---|---|---|---|
-| AD-001 | Select managed or self-hosted execution and responsibility split. | Accountable owner + security reviewer | before worker contract | **Blocking:** no worker contract/runtime. |
+| AD-001 | **Resolved 2026-08-27:** self-hosted production execution; managed development only with strictly synthetic data. | Accountable owner + security reviewer | before worker contract | Design decision recorded in [AD-001](../decisions/ad-001-self-hosted-production-execution.md); VER-015 and remaining decisions still block runtime/release. |
 | AD-002 | Select IAM/session and tenant-isolation mechanism. | Accountable owner + app security owner | before app/API contract | **Blocking:** no authenticated API/cockpit. |
 | AD-003 | Select upload quarantine/scanner, archive policy, storage, and region. | Accountable owner + security reviewer | before upload contract | **Blocking:** no uploads. |
 | AD-004 | Select key/secrets and Git credential issuance, rotation, and revocation. | Accountable owner + security reviewer | before Git/worker contract | **Blocking:** no governed writes. |
@@ -155,7 +157,7 @@ Inherent severity is before required controls. “Block” is a required disposi
 | TM-013 | T/E | skills/repository | Tampered skill/dependency changes worker behavior. | arbitrary action/exfiltration | medium | critical | SEC-017 | VER-014 | block | none before skill loading |
 | TM-014 | I | worker/API, DF-013 | Prompt/tool output exfiltrates tenant data. | restricted-data disclosure | medium | critical | SEC-006, SEC-008, SEC-015 | VER-005, VER-006, VER-012 | block | owner-only after evidence |
 | TM-015 | R/T | commits, DF-012/015 | Commit lacks actor/tenant/action attribution. | unaccountable governance | medium | high | SEC-005, SEC-013 | VER-004, VER-010 | block | none before governed writes |
-| TM-016 | S/I | mode, TB-007 | Managed/self-hosted gap leaves a boundary unowned. | systemic disclosure/compromise | medium | critical | SEC-018 | VER-015 | blocking decision | owner must select mode |
+| TM-016 | S/I | mode, TB-007 | Managed/self-hosted gap leaves a boundary unowned. | systemic disclosure/compromise | medium | critical | SEC-018 | VER-015 | design mode selected; conformance blocked | no risk accepted; VER-015 required |
 | TM-017 | I/D | all retention stores | Retention/deletion failure preserves tenant data or fails to remove it from a selected store, backup, or provider lifecycle. | disclosure/non-compliance | medium | high | SEC-019 | VER-016 | block | owner-only after policy/evidence |
 | TM-018 | S/T/R/E | privileged app/operator service, TB-002/006/008 | A malicious or compromised privileged operator/service bypasses tenant policy, misuses a credential or secret, widens worker access, or alters attribution. | cross-tenant compromise/unaccountable writes | low | critical | SEC-002, SEC-004, SEC-005, SEC-008, SEC-012, SEC-013 | VER-002, VER-004, VER-006, VER-009, VER-010 | block | owner-only after evidence |
 
