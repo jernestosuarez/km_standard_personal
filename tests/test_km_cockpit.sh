@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: unrecorded | added in v1.24, before this declaration was required; the file records no run against an unrepaired cockpit and one is not reconstructed here.
+# km-unrepaired-tree: v1.64 | the v1.64 canary section (queue parser and initiation-interview date shape) was run RED against the unrepaired component at ac63d2f (v1.63 draft) before either repair was written: a five-cell row whose Defaults cell read "never" fell through to the three-cell legacy reading and titled the card "never"; a Defaults cell reading "someday" did the same with "someday" and raised no PARSE ERROR; a row id written with markdown emphasis was silently dropped; a machine-block row with no rendered table row vanished without a placeholder; and a km-deployment.md whose initiation-interview value was the unsubstituted placeholder <YYYY-MM-DD> counted as initiated. The pre-v1.64 cases carried no recorded unrepaired run (added in v1.24 before the declaration was required) and none is reconstructed here.
 # Fixtures for the KM Cockpit side component (components/km-cockpit/, v1.24).
 #
 # Two halves:
@@ -36,6 +36,102 @@ if (cd "$work" && python3 "$COCKPIT" selftest >"$work/selftest.log" 2>&1); then
   pass "component selftest (ruled lifecycle, links, confinement, request channel)"
 else
   die "component selftest"; tail -5 "$work/selftest.log"
+fi
+
+# --- 1.5 The v1.64 canaries: the two defects std-0008 names, committed RED before repair -----
+# Unit-level, manifest-free: parse_cards() and load_hubs() are pure enough to drive directly.
+#
+# (a) THE QUEUE PARSER (the class the reference deployment repaired as mach-0004/mach-0024 and
+# registered as dev-0019/dev-0021). The canonical row is `| Id | Since | Defaults | Decision |
+# Options |`. The component's parser admitted that schema only when the Defaults cell matched a
+# content whitelist and FELL THROUGH to a three-cell legacy reading when it did not — shifting
+# every field left by one and rendering the Defaults cell as the card's TITLE. ARITY, not
+# content, must decide the schema; an unreadable Defaults value is a defect IN THAT CELL and
+# fails loudly as a PARSE ERROR card, never a wrong title. A row id written with markdown
+# emphasis must still parse (a dropped row is an open decision vanishing from the board), and a
+# machine-block row whose rendered row failed to parse must surface as a loud placeholder,
+# never silently drop.
+#
+# (b) THE INITIATION-INTERVIEW DATE SHAPE. In single-hub mode the component read
+# `initiation-interview:` as initiated on ANY non-empty value, so an unsubstituted placeholder
+# (`<YYYY-MM-DD>`) rendered the hub as initiated while `hub-scan.sh`'s [ DEPLOYMENT ] gate —
+# which is date-shape checked precisely so a placeholder cannot pass — quarantines the same hub.
+# The two instruments must not disagree about the same fact: the component requires the same
+# ISO date shape.
+if python3 - "$COCKPIT" "$work" <<'PY'
+import importlib.util, sys
+from pathlib import Path
+
+spec = importlib.util.spec_from_file_location("kmc", sys.argv[1])
+kmc = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(kmc)
+work = Path(sys.argv[2])
+
+def fail(msg):
+    sys.exit("canary: " + msg)
+
+# (a) arity decides the schema: a five-cell row whose Defaults cell is "never" is canonical.
+raw = ('| b21 | 2026-08-01 | never | **Never-defaults row.** Context sentence. | "approve", "veto" |\n'
+       '| b22 | 2026-08-01 | someday | **Unreadable-defaults row.** Context. | "approve", "veto" |\n'
+       '| **b23** | 2026-08-01 | - | **Emphasised-id row.** Context. | "approve", "veto" |\n'
+       '<!-- QUEUE:BEGIN\n'
+       'b21 | b | 2026-08-01 | never | never-defaults?\n'
+       'b22 | b | 2026-08-01 | - | unreadable defaults?\n'
+       'b23 | b | 2026-08-01 | - | emphasised id?\n'
+       'b24 | b | 2026-08-01 | - | machine-block only?\n'
+       'QUEUE:END -->\n')
+cards = {c["id"]: c for c in kmc.parse_cards(raw)}
+
+b21 = cards.get("b21")
+if b21 is None:
+    fail("b21 (Defaults 'never') did not parse at all")
+if b21["what"].strip().lower() == "never" or not b21["what"].startswith("**Never-defaults row.**"):
+    fail("b21: a 'never' Defaults cell shifted the schema — the Defaults cell became the "
+         f"card's decision text ({b21['what']!r})")
+
+b22 = cards.get("b22")
+if b22 is None:
+    fail("b22 (unreadable Defaults) did not parse at all")
+if not b22.get("parse_error"):
+    fail("b22: an unreadable Defaults cell did not fail loudly as a PARSE ERROR — it read "
+         f"as {b22['what']!r}")
+
+b23 = cards.get("b23")
+if b23 is None:
+    fail("b23: a row id written with markdown emphasis was silently dropped from the board")
+
+b24 = cards.get("b24")
+if b24 is None:
+    fail("b24: a machine-block row with no rendered table row vanished without a placeholder")
+if not b24.get("parse_error"):
+    fail("b24: the machine-block-only placeholder is not marked as a parse error")
+
+# (b) the initiation-interview date shape, single-hub mode.
+placeholder = work / "canary-hub-placeholder"
+placeholder.mkdir(exist_ok=True)
+(placeholder / "km-deployment.md").write_text(
+    '---\ntype: config\ninitiation-interview: "<YYYY-MM-DD>"\nrouting-keywords: "pilot"\n---\n',
+    encoding="utf-8")
+kmc.ROOT, kmc.SUP, kmc.HUB_REGISTRY = placeholder, placeholder, None
+kmc.load_hubs()
+if kmc.INITIATED:
+    fail("an unsubstituted initiation-interview placeholder (<YYYY-MM-DD>) counted as "
+         "initiated — hub-scan's date-shape gate quarantines the same hub")
+
+real = work / "canary-hub-real"
+real.mkdir(exist_ok=True)
+(real / "km-deployment.md").write_text(
+    '---\ntype: config\ninitiation-interview: "2026-08-01"\nrouting-keywords: "pilot"\n---\n',
+    encoding="utf-8")
+kmc.ROOT, kmc.SUP, kmc.HUB_REGISTRY = real, real, None
+kmc.load_hubs()
+if not kmc.INITIATED:
+    fail("a genuine ISO interview date no longer counts as initiated — the fix over-reached")
+PY
+then
+  pass "v1.64 canaries: arity decides the queue schema; unreadable Defaults fails loudly; emphasised id parses; machine-block-only row surfaces; interview date is shape-checked"
+else
+  die "v1.64 canary section (queue parser / date shape) — see message above"
 fi
 
 # --- 2. Single-hub round-trip: hub-local queue, isolated state dir --------------------------
