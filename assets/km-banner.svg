@@ -47,12 +47,12 @@
     <circle cx="640" cy="150" r="1.6"/><circle cx="60" cy="360" r="1.6"/><circle cx="1240" cy="390" r="1.6"/>
   </g>
 
-  <!-- ================= THE RECORD BOUNDARY (hero line) ================= -->
+  <!-- ================= GOVERNED KNOWLEDGE FLOW ================= -->
   <rect x="0" y="300" width="1280" height="16" fill="#E8B34B" opacity="0.07"/>
   <line x1="0" y1="308" x2="1280" y2="308" stroke="#E8B34B" stroke-width="7" opacity="0.14"/>
   <line x1="0" y1="308" x2="1280" y2="308" stroke="#F2C464" stroke-width="2.6" opacity="0.85"/>
   <line x1="0" y1="308" x2="1280" y2="308" stroke="#FFE9B8" stroke-width="0.9" opacity="0.9"/>
-  <text x="82" y="297" font-size="14" letter-spacing="2.5" font-weight="bold" fill="#E8B34B" opacity="0.9">THE RECORD BOUNDARY</text>
+  <text x="82" y="297" font-size="14" letter-spacing="2.5" font-weight="bold" fill="#E8B34B" opacity="0.9">PORTABLE · AUDITABLE · GOVERNED</text>
 
   <!-- ================= BELOW: systems of record (dim world) ================= -->
   <g>
@@ -118,7 +118,7 @@
     <text x="676" y="106" font-size="14" fill="#7FA3BC">knowledge hubs</text>
   </g>
 
-  <!-- supervisor -->
+  <!-- governed coordination -->
   <g>
     <circle cx="951" cy="62" r="34" fill="#E08A6A" opacity="0.10"/><circle cx="951" cy="62" r="22" fill="#E08A6A" opacity="0.16"/>
     <rect x="933" y="44" width="36" height="36" rx="7" transform="rotate(45 951 62)" fill="#341F28" stroke="#E08A6A" stroke-width="2.2"/>
@@ -127,12 +127,12 @@
       <line x1="951" y1="90" x2="941" y2="150"/>
       <line x1="951" y1="90" x2="1110" y2="118"/>
     </g>
-    <text x="994" y="67" font-size="14" fill="#C08D7B">supervisor</text>
+    <text x="994" y="67" font-size="14" fill="#C08D7B">governed flow</text>
   </g>
 
   <!-- ================= LEFT: wordmark ================= -->
-  <text x="82" y="102" font-size="16" font-weight="bold" letter-spacing="6" fill="#4FD1C5">OPEN STANDARD · V1.22</text>
+  <text x="82" y="102" font-size="16" font-weight="bold" letter-spacing="6" fill="#4FD1C5">GLASSITY EDITION</text>
   <text x="78" y="186" font-size="88" font-weight="bold" fill="#F5F9FC">KM <tspan fill="#4FD1C5">Standard</tspan></text>
-  <text x="82" y="232" font-size="24" fill="#AFC4D8">Governed, agent-readable knowledge in plain files.</text>
-  <text x="82" y="268" font-size="21" font-style="italic" fill="#F2C464">“Claims cross; records don’t.”</text>
+  <text x="82" y="232" font-size="24" fill="#AFC4D8">Governed knowledge hubs in plain Markdown and Git.</text>
+  <text x="82" y="268" font-size="21" font-style="italic" fill="#F2C464">Built for people and AI assistants.</text>
 </svg>
