@@ -252,8 +252,7 @@ else
     err
   fi
 fi
-# A hand-maintained integrity manifest is RETIRED (ruling added in v1.63, drafted and
-# unpublished: it binds nothing until its own owner push). Deployments predating this standard's
+# A hand-maintained integrity manifest is RETIRED (ruling added in v1.63). Deployments predating this standard's
 # git-backed model sometimes carry hub-manifest.md, a hand-kept file-hash manifest. Git history
 # is the sole integrity baseline — "there is no separate baseline file to maintain" has been this
 # scan's contract from the start — and a hand-kept manifest is the artifact class the standard
@@ -783,8 +782,7 @@ else
   # procedure drift exactly as two copies of one fact do. Compared only when BOTH trees are
   # installed: a single-runtime deployment has one home and nothing to diverge from.
   #
-  # THE RULING THE FINDINGS CARRY (added in v1.63, drafted and unpublished: it binds nothing
-  # until its own owner push). Neither installed tree is authoritative: the two are mirrors of
+  # THE RULING THE FINDINGS CARRY (added in v1.63). Neither installed tree is authoritative: the two are mirrors of
   # one procedure, and authority lives outside them — for a skill the standard ships, in the
   # canonical copy at the deployment's pinned canonical version; for a hub-local skill, in the
   # governed act that created it. So a shipped skill found divergent is repaired by refreshing
@@ -1060,8 +1058,7 @@ echo "[ RESTRICTED ]"
 #                         so a hit here clears by regenerating, never by hand-editing
 #   docs-site pages       working-docs/*-docs-site/docs/ — the source of a documentation site
 #                         that publishes outward when the site deploys, the hub's most outbound
-#                         artifact (added in v1.63, drafted and unpublished: it binds nothing
-#                         until its own owner push). Until then these pages had no restricted
+#                         artifact (added in v1.63). Until then these pages had no restricted
 #                         lint at all, and a deployment carried the surface as a local line in
 #                         two installed scan copies that every template refresh threatened to
 #                         overwrite. The NAMING CONVENTION IS THE CONTRACT: a site source that
@@ -1201,8 +1198,7 @@ restricted_surfaces=$(
   find "$HUB/shareable" -name '*.md' -type f 2>/dev/null
   find "$HUB/changes" -name '*.md' -type f \
       ! -name 'PROPOSAL_TEMPLATE.md' ! -name 'APPROVAL_TEMPLATE.md' 2>/dev/null
-  # Docs-site pages (added in v1.63, drafted and unpublished: binds nothing until its own owner
-  # push): the source of a documentation site that publishes outward when it deploys is an
+  # Docs-site pages (added in v1.63): the source of a documentation site that publishes outward when it deploys is an
   # outbound surface exactly as shareable/ is.
   find "$HUB/working-docs" -path '*-docs-site/docs/*' -name '*.md' -type f 2>/dev/null
   for dir in $ENTITY_DIRS; do
@@ -1278,8 +1274,8 @@ else
   # owner is the thing that was wrong, and a dispute file that could not be read looks identical
   # to one with no field, so the message names both possibilities instead of picking one.
   #
-  # A dispute RESOLVED IN PLACE is a retained record, not an active dispute (added in v1.63,
-  # drafted and unpublished: it binds nothing until its own owner push). The standard's default
+  # A dispute RESOLVED IN PLACE is a retained record, not an active dispute (added in
+  # v1.63). The standard's default
   # end state for a dispute is capture-the-reasoning-then-delete, but where the adjudication is
   # recorded in the dispute file itself — an owner answer applied under a directive, the record
   # kept under retract-in-place — the file stays, marked `lifecycle: resolved` in OKF

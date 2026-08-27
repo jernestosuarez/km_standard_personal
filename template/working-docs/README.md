@@ -35,8 +35,7 @@ cannot tell it from a current one (STANDARD.md §"Currency of generated document
 advisory, not an error, and it names each file so the marking can be done. Not being monitored has
 never meant not being governed: currency is exactly the thing that fails when nobody looks.
 
-And one naming convention changes the surface class (added in v1.63, drafted and unpublished:
-it binds nothing until its own owner push). Pages under a `<name>-docs-site/docs/` tree here are
+And one naming convention changes the surface class (added in v1.63). Pages under a `<name>-docs-site/docs/` tree here are
 the source of a documentation site that publishes outward when the site deploys, so the
 `[ RESTRICTED ]` check reads them as an **outbound surface**, exactly as it reads `shareable/`:
 restricted content on such a page is an error. Everything else in `working-docs/` stays a

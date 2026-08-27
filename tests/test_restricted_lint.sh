@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: v1.63 | re-stated for the docs-site outbound surface (cases 1h-1k). The detector fixtures were run first against the UNREPAIRED v1.62 template/hub-scan.sh at c5341d9: a docs-site page under working-docs/sample-docs-site/docs/ carrying a verbatim line of a body-restricted section produced "OK: no restricted markers, classes, identifiers or section text on outbound surfaces" at exit 0 — the check did not read the surface at all, which is the false pass 1h and 1i now detect. Cases 1j and 1k pass on both trees by design: 1j pins the boundary (working-docs outside a *-docs-site/docs/ tree is not a surface) and 1k the clean side, and neither is offered as a detector. The v1.57 record stands for cases 1d and 1e: both were run against the then-unrepaired scan first and both failed there ("! RESTRICTED IDENTIFIER '03_risks-decisions'" on the directive, and no RESTRICTED SECTION TEXT finding over a verbatim quotation, exit 0). The v1.16 and v1.21 cases predate this declaration and no run against their own unrepaired trees is reconstructed here.
+# km-unrepaired-tree: v1.63 | re-stated at the v1.63 publish, whose only edit to this file clears the wave's draft markings from comment text: no case, fixture or arm changes, so no new unrepaired-tree run is owed and none is invented. The declaration it re-states: re-stated for the docs-site outbound surface (cases 1h-1k). The detector fixtures were run first against the UNREPAIRED v1.62 template/hub-scan.sh at c5341d9: a docs-site page under working-docs/sample-docs-site/docs/ carrying a verbatim line of a body-restricted section produced "OK: no restricted markers, classes, identifiers or section text on outbound surfaces" at exit 0 — the check did not read the surface at all, which is the false pass 1h and 1i now detect. Cases 1j and 1k pass on both trees by design: 1j pins the boundary (working-docs outside a *-docs-site/docs/ tree is not a surface) and 1k the clean side, and neither is offered as a detector. The v1.57 record stands for cases 1d and 1e: both were run against the then-unrepaired scan first and both failed there ("! RESTRICTED IDENTIFIER '03_risks-decisions'" on the directive, and no RESTRICTED SECTION TEXT finding over a verbatim quotation, exit 0). The v1.16 and v1.21 cases predate this declaration and no run against their own unrepaired trees is reconstructed here.
 # Fixtures for the [ RESTRICTED ] check (v1.16; narrowed in v1.21) in template/hub-scan.sh and
 # for the restricted-note exclusion in template/build-indexes.sh.
 #
@@ -17,8 +17,8 @@
 # root-level 0[0-9]_*.md or 10_*.md restricted in frontmatter is NAMEABLE on an outbound surface
 # while its body text is blocked, a numbered name in a subdirectory is still blocked, and the
 # body-marker path is unchanged. (Added in v1.57.)
-# The v1.63 cases (1h-1k) prove both sides of the docs-site outbound surface (added in v1.63,
-# drafted and unpublished: binds nothing until its own owner push): a documentation site whose
+# The v1.63 cases (1h-1k) prove both sides of the docs-site outbound surface (added in
+# v1.63): a documentation site whose
 # source pages live under working-docs/*-docs-site/docs/ publishes outward when it deploys, so
 # those pages are scanned exactly as shareable/ is — restricted section text and restricted
 # identifiers on a page are errors — while working-docs outside such a tree stays a non-surface

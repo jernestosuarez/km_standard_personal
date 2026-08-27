@@ -110,7 +110,7 @@ Deleting a dispute without it discards the reasoning and guarantees the same sou
 re-ingested, re-flagged, and re-adjudicated from scratch.
 See STANDARD.md §"Resolving a dispute" and §"The correction loop".
 
-## Resolving in place — the retained record (added in v1.63, drafted and unpublished: binds nothing until its own owner push)
+## Resolving in place — the retained record (added in v1.63)
 
 Deletion is the default end state, not the only lawful one. Where the adjudication is recorded
 **in the dispute file itself** — an owner answer applied under a directive, with the reasoning

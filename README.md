@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.62"/>
+  <img src="assets/badges/version.svg" alt="standard v1.63"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 3 adopted, 1 partial, 4 open"/>
   <img src="assets/badges/license.svg" alt="license: Apache-2.0"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,34 +28,27 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.62** (2026-08-27, four mechanisms promoted from the accepted record of an
-external application build, on the deployment owner's direction to integrate that build's
-improvements — the first promotion assessment ever run over that work, each candidate assessed for
-duplication against the current canonical text, for checkability with a real negative test named or
-the absence of one stated, and against the generic-organisation test; **a consuming answer surface
-discloses nothing it will not answer**, a topic restricted beyond the surface's clearance, a topic
-whose evidence is ineligible and a topic the corpus has never held rendering as one byte-identical
-no-answer state, **reconciled with crossing law 3 rather than grafted beside it** — law 3 governs
-traffic between governed parties, where a steward is entitled to existence, while on a surface that
-answers arbitrary questions a differentiated refusal is an oracle that maps restricted holdings by
-enumeration; no shipped instrument evaluates a serving surface, so the rule is stated as convention
-until an implementation ships its byte-identity case; **the diagnostic record**, giving the
-correction loop's own "the mistake was diagnosed" a definition of four required sections —
-environment and validity, the isolation-versus-context matrix with one variable per comparison, the
-hypothesis with stated confidence and named falsifying evidence, and the smallest next boundary with
-no fix riding inside a diagnosis — protecting the rule that a shared failure value is a property of
-the harness that stops a run and never, alone, evidence of a shared cause; **the acceptance
-threshold and the stop predicate are fixed before the measurement runs**, the mechanical half being
-commit ordering, which a check can prove, and what ordering cannot prove stated beside it; **a cache
-may accelerate feedback and never produces the authoritative verdict**, a cache key being a proxy
-for the tree, so the verdict anything is cited on comes from a direct, uncached run whose record
-says it was direct; the fifth candidate returned **no-change**, recorded in the version row rather
-than dropped, because its evidence pointers duplicate obligations the maintainer contract already
-carries; **two of the four carried a question only the owner could answer** — the narrowing of
-published doctrine, and whether this standard should govern a tooling class it does not ship — each
-stated in the text where it is drafted, and the owner's push is the explicit word on both, given
-knowingly rather than ridden past; nothing a deployment installs changes and no hub turns red;
-v1.61 is the preceding published version and v1.23 remains an unpublished draft awaiting its own
+**Current version: v1.63** (2026-08-27, six items clearing the canonical backlog ahead of a
+planned fork, on the deployment owner's direction that nothing stays behind — three defect
+repairs, two rulings, and two no-change verdicts recorded with their reasons rather than dropped,
+the repairs each reproduced as a failing case and committed red before any repair was written; a
+dispute **resolved in place** by an owner answer may be retained as a record carrying
+`lifecycle: resolved`, reported by the scan as a retained record instead of listed under active
+disputes forever; a **docs-site under `working-docs/*-docs-site/docs/`** is an outbound surface
+the restricted lint scans exactly as it scans `shareable/`, absorbing — genericised — a capability
+two installed scan copies carried as hub-local divergence that every template refresh threatened
+to overwrite; `shareable/README.md`'s "not monitored" claim, false as shipped while the restricted
+lint has read that surface since v1.16, is reworded to match the instrument beside it; the
+**hand-maintained integrity manifest `hub-manifest.md` is retired**, git history being the sole
+integrity baseline, with a lingering copy named as an advisory and the migration stated;
+**neither of a deployed hub's two runtime skill trees is authoritative** — a shipped skill
+divergent across them is repaired by refreshing both from the pinned canonical in one act, and a
+hub-local skill belongs in both trees or in neither; and the two no-change verdicts record that
+the initiation skill's merge and withdrawal modes have shipped in canonical since v1.35, the
+reported absence being a stale installed copy, and that the currency check keeps its working-docs
+scope, because excluding it would reverse the published v1.12 correction whose motivating failure
+was an agent answering from a superseded working-docs draft;
+v1.62 is the preceding published version and v1.23 remains an unpublished draft awaiting its own
 push). The full
 ledger of released versions, and the rule that a published version number is never reused, is in
 [`STANDARD.md`](STANDARD.md) → *Version history*.
