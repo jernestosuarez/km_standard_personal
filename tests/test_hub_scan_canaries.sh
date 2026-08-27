@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: v1.30 | each case injects one known violation into a clean fixture hub and requires the block to fire, which is the unrepaired tree built per block; eleven blocks that reported by absence had nothing proving they could fire before this file existed.
+# km-unrepaired-tree: v1.63 | re-stated for the resolved-dispute split (10d, 10e), the one-tree-only mirror pin (14n) and the retired-manifest advisory (15). All three fixtures were run first against the UNREPAIRED v1.62 template/hub-scan.sh at c5341d9: a _disputes/ file carrying `lifecycle: resolved` in frontmatter was reported "! Active disputes: - 2026-08-20_topic_dispute.md (blocked on: Resolved (owner answer, 2026-08-20) ... no hub-owner action)" at exit 0, so a dispute resolved by an owner answer renders as open forever; a hub-manifest.md injected into a clean fixture produced no line anywhere in the scan at exit 0, because nothing reads it; and the one-tree-only arm DID fire there ("HARNESS MIRROR DIVERGENCE hub-local-check: installed in one runtime tree and not the other", exit 1) — that arm has been live since v1.32 and was reached by no case, so 14n pins an existing rule rather than detecting a new repair, and only its 14n2 half (the ruling text in the message) is red on the unrepaired tree. The original v1.30 claim stands for the older cases: each injects one known violation into a clean fixture hub and requires the block to fire, which is the unrepaired tree built per block; eleven blocks that reported by absence had nothing proving they could fire before this file existed.
 # Canaries for template/hub-scan.sh (v1.30; [ QUEUE ] added v1.31) — the session-start integrity
 # and governance scan.
 #
@@ -38,6 +38,11 @@
 # represent the defect. Proving both directions closes the "the check stopped firing" failure. It
 # says nothing about "the check never looked here", which is answered by naming each block's
 # coverage, not by testing it.
+#
+# The v1.63 cases (10d, 10e, 14n, 15) cover the resolved-dispute split in [ RECONCILIATION ],
+# the one-tree-only ruling text in [ PROJECTION ]'s mirror walk, and the retired hub-manifest.md
+# advisory in [ INTEGRITY ]. (Added in v1.63, drafted and unpublished: the behaviours they assert
+# bind nothing until that version's own owner push.)
 #
 # [ QUEUE ] (v1.31) is the twelfth block and the only conditional one: it runs when the hub carries
 # its own owner queue, which is the single-hub deployment shape. Its cases therefore also assert
@@ -361,6 +366,71 @@ git_commit "$hub" 'inject: dispute with no blocker stated'
 expect "10c. [ RECONCILIATION ] reports an unstated blocker as unstated, never as the owner" \
   "$hub" 0 '(blocked-on not stated or file unreadable)'
 
+# 10d. A dispute RESOLVED IN PLACE is a retained record, not an active dispute (added in v1.63,
+# drafted and unpublished: binds nothing until its own owner push). A dispute file whose OKF
+# frontmatter carries `lifecycle: resolved` records an adjudication kept in place under
+# retract-in-place; reporting it under "Active disputes" every session renders two states that
+# mean different things identically, and the demonstrated case carried the advisory on every scan
+# for a week after the owner had answered. Fail-closed: only the exact value `resolved` counts —
+# no frontmatter, any other value, or an unreadable file stays ACTIVE, which cases 10a-10c pin.
+hub="$(fork reconciliation_resolved)"
+mkdir -p "$hub/reconciliation/_disputes"
+cat > "$hub/reconciliation/_disputes/2026-08-20_topic_dispute.md" <<'EOF'
+---
+type: dispute
+title: Synthetic resolved dispute
+description: Fixture dispute resolved by an owner answer and retained in place.
+tags: [fixture]
+resource: ./
+lifecycle: resolved
+timestamp: 2026-08-20
+---
+
+# Dispute — synthetic topic
+
+**Blocked on:** Resolved (owner answer, 2026-08-20) — no hub-owner action.
+
+## Resolution
+
+Resolved by owner answer; the record below is retained in place, not deleted.
+EOF
+git_commit "$hub" 'inject: dispute resolved in place, retained as a record'
+expect "10d. [ RECONCILIATION ] reports a resolved retained dispute as resolved, not active (exit 0)" \
+  "$hub" 0 'RESOLVED (retained record): 2026-08-20_topic_dispute.md'
+if ! printf '%s\n' "$out" | grep -Fq 'Active disputes:'; then
+  pass "10d2. a resolved retained dispute is not listed under Active disputes"
+else
+  die "10d2. a resolved dispute still renders as active"$'\n'"$out"
+fi
+
+# 10e. Both states in one folder render differently: the active dispute still fires its advisory
+# and the resolved one stands beside it as a retained record, never as a second advisory.
+hub="$(fork reconciliation_mixed)"
+mkdir -p "$hub/reconciliation/_disputes"
+printf '# Dispute\n\n**Blocked on:** Hub Owner\n' \
+  > "$hub/reconciliation/_disputes/2026-08-21_open_dispute.md"
+cat > "$hub/reconciliation/_disputes/2026-08-20_settled_dispute.md" <<'EOF'
+---
+type: dispute
+title: Synthetic resolved dispute beside an open one
+description: Fixture for the mixed active-and-resolved state.
+tags: [fixture]
+resource: ./
+lifecycle: resolved
+timestamp: 2026-08-20
+---
+
+**Blocked on:** Resolved — no hub-owner action.
+EOF
+git_commit "$hub" 'inject: one active and one resolved dispute'
+expect "10e. [ RECONCILIATION ] still fires on the active dispute beside a resolved one (advisory, exit 0)" \
+  "$hub" 0 '2026-08-21_open_dispute.md (blocked on: Hub Owner, decision required)'
+if printf '%s\n' "$out" | grep -Fq 'RESOLVED (retained record): 2026-08-20_settled_dispute.md'; then
+  pass "10e2. the resolved dispute beside it renders as a retained record, not as active"
+else
+  die "10e2. the resolved dispute did not render as resolved"$'\n'"$out"
+fi
+
 # --- 11. [ AGENT ] — the false-dispatch walk ------------------------------------------------------
 hub="$(fork agent_false_dispatch)"
 mkdir -p "$hub/.claude/agents"
@@ -652,6 +722,43 @@ rm -rf "$hub/.agents"
 git_commit "$hub" 'inject: single-runtime deployment'
 expect "14m. [ PROJECTION ] does not fire on a deployment carrying one runtime tree (clean, exit 0)" \
   "$hub" 0 'HARNESS SKILLS: one runtime tree installed, nothing to compare'
+
+# 14n. A hub-local skill installed in one runtime tree only (ruling added in v1.63, drafted and
+# unpublished: binds nothing until its own owner push). The one-tree-only arm has been live since
+# v1.32 and was reached by no case, so the first half of this case is a PIN of an existing rule
+# rather than a detector: on the unrepaired v1.62 tree it already fired. What is new is the
+# ruling the finding carries — a hub-local skill belongs in both trees or in neither, and a
+# skill the standard ships is refreshed into both trees from the pinned canonical in one act —
+# so 14n2 asserts the message states the repair route, which is the half that is red before the
+# repair.
+hub="$(fork projection_single_tree_skill)"
+mkdir -p "$hub/.claude/skills/hub-local-check"
+printf -- '---\nname: hub-local-check\ndescription: Use when checking the synthetic hub-local fixture procedure end to end in this hub.\n---\n\n# Skill\nSynthetic.\n' \
+  > "$hub/.claude/skills/hub-local-check/SKILL.md"
+git_commit "$hub" 'inject: hub-local skill in one runtime tree only'
+expect "14n. [ PROJECTION ] catches a skill installed in one runtime tree only (error, exit 1)" \
+  "$hub" 1 'HARNESS MIRROR DIVERGENCE hub-local-check: installed in one runtime tree and not the other'
+if printf '%s\n' "$out" | grep -Fq 'belongs in both trees or in neither'; then
+  pass "14n2. the finding states the ruling and the repair route"
+else
+  die "14n2. the finding does not state the ruling"$'\n'"$out"
+fi
+
+# --- 15. [ INTEGRITY ] — the retired hand-maintained manifest (ruling added in v1.63, drafted
+# and unpublished: binds nothing until its own owner push) ---------------------------------------
+# hub-manifest.md is a hand-maintained hash manifest some deployments predating this standard
+# carry. The ruling retires it: git history is the sole integrity baseline, and in the deployment
+# that motivated the ruling 59 of 94 recorded hashes were measured wrong. The scan names a
+# lingering copy as an ADVISORY — a legacy hub must not go red over a file the ruling itself
+# retired — and the clean template carries none, which case 0 and the closing fixture check
+# already hold at zero advisories, so the not-firing direction is asserted by the suite's own
+# green baseline.
+hub="$(fork integrity_manifest)"
+printf '# Hub manifest\n\n| path | sha256 |\n|---|---|\n| 01_project-brief.md | 0000000000000000000000000000000000000000000000000000000000000000 |\n' \
+  > "$hub/hub-manifest.md"
+git_commit "$hub" 'inject: legacy hand-maintained manifest'
+expect "15. [ INTEGRITY ] names a lingering hub-manifest.md as retired (advisory, exit 0)" \
+  "$hub" 0 'hub-manifest.md present'
 
 # --- the fixture is still clean ------------------------------------------------------------------
 # A case that mutated the shared fixture instead of its own copy would otherwise pass here and

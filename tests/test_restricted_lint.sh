@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: v1.57 | cases 1d and 1e were run against the UNREPAIRED template/hub-scan.sh first and both fail there: the scan reported "! RESTRICTED IDENTIFIER '03_risks-decisions' on outbound surface: changes/2026-08-24_XX_restrict-claim_directive.md", and it raised no RESTRICTED SECTION TEXT finding at all over a verbatim quotation of the same document, exiting 0. Cases 1f and 1g pass on both trees by design: they pin the boundary the narrowing must not cross and the body-marker path it does not touch, and neither is offered as a detector. The v1.16 and v1.21 cases predate this declaration and no run against their own unrepaired trees is reconstructed here.
+# km-unrepaired-tree: v1.63 | re-stated for the docs-site outbound surface (cases 1h-1k). The detector fixtures were run first against the UNREPAIRED v1.62 template/hub-scan.sh at c5341d9: a docs-site page under working-docs/sample-docs-site/docs/ carrying a verbatim line of a body-restricted section produced "OK: no restricted markers, classes, identifiers or section text on outbound surfaces" at exit 0 — the check did not read the surface at all, which is the false pass 1h and 1i now detect. Cases 1j and 1k pass on both trees by design: 1j pins the boundary (working-docs outside a *-docs-site/docs/ tree is not a surface) and 1k the clean side, and neither is offered as a detector. The v1.57 record stands for cases 1d and 1e: both were run against the then-unrepaired scan first and both failed there ("! RESTRICTED IDENTIFIER '03_risks-decisions'" on the directive, and no RESTRICTED SECTION TEXT finding over a verbatim quotation, exit 0). The v1.16 and v1.21 cases predate this declaration and no run against their own unrepaired trees is reconstructed here.
 # Fixtures for the [ RESTRICTED ] check (v1.16; narrowed in v1.21) in template/hub-scan.sh and
 # for the restricted-note exclusion in template/build-indexes.sh.
 #
@@ -17,6 +17,12 @@
 # root-level 0[0-9]_*.md or 10_*.md restricted in frontmatter is NAMEABLE on an outbound surface
 # while its body text is blocked, a numbered name in a subdirectory is still blocked, and the
 # body-marker path is unchanged. (Added in v1.57.)
+# The v1.63 cases (1h-1k) prove both sides of the docs-site outbound surface (added in v1.63,
+# drafted and unpublished: binds nothing until its own owner push): a documentation site whose
+# source pages live under working-docs/*-docs-site/docs/ publishes outward when it deploys, so
+# those pages are scanned exactly as shareable/ is — restricted section text and restricted
+# identifiers on a page are errors — while working-docs outside such a tree stays a non-surface
+# and a clean page raises nothing.
 # All content here is synthetic; no real person, organization or initiative is named.
 set -u
 
@@ -359,6 +365,118 @@ else
   fail=1
 fi
 rm "$hub/changes/2026-08-24_XX_bodymark_proposal.md"
+
+# 1h. DOCS-SITE SURFACE (v1.63), text side and the defect this version repairs: a verbatim line
+#     of a body-restricted section on a docs-site page must fail the scan as an error. Before
+#     v1.63 the check never read the page: the unrepaired scan printed its OK line at exit 0 over
+#     exactly this fixture.
+mkdir -p "$hub/working-docs/sample-docs-site/docs"
+cat > "$hub/working-docs/sample-docs-site/docs/quoting-page.md" <<'EOF'
+---
+type: brief
+title: Docs-site page quoting a restricted section
+description: Synthetic published page for the v1.63 surface fixture.
+tags: [fixture]
+resource: ./
+lifecycle: active
+timestamp: 2026-08-27
+---
+
+# Published page
+
+The synthetic fallback is to concede the annex and hold the fee schedule.
+EOF
+out=$(bash "$hub/hub-scan.sh" 2>&1); status=$?
+if [ "$status" -eq 1 ] && printf '%s' "$out" | grep -q "RESTRICTED SECTION TEXT (from 'negotiation-brief')"; then
+  echo "PASS: restricted section text on a docs-site page fails the scan"
+else
+  echo "FAIL: restricted section text on a docs-site page did not fail the scan (exit $status)"
+  printf '%s\n' "$out"
+  fail=1
+fi
+rm "$hub/working-docs/sample-docs-site/docs/quoting-page.md"
+
+# 1i. DOCS-SITE SURFACE (v1.63), name side: a frontmatter-restricted note's name on a docs-site
+#     page must fail the scan as an error, exactly as on shareable/.
+cat > "$hub/working-docs/sample-docs-site/docs/naming-page.md" <<'EOF'
+---
+type: brief
+title: Docs-site page naming a restricted note
+description: Synthetic published page for the v1.63 surface fixture.
+tags: [fixture]
+resource: ./
+lifecycle: active
+timestamp: 2026-08-27
+---
+
+# Published page
+
+See also [[casey-example]] for details.
+EOF
+out=$(bash "$hub/hub-scan.sh" 2>&1); status=$?
+if [ "$status" -eq 1 ] && printf '%s' "$out" | grep -q "RESTRICTED IDENTIFIER 'casey-example'"; then
+  echo "PASS: a restricted note's name on a docs-site page fails the scan"
+else
+  echo "FAIL: a restricted note's name on a docs-site page did not fail the scan (exit $status)"
+  printf '%s\n' "$out"
+  fail=1
+fi
+rm "$hub/working-docs/sample-docs-site/docs/naming-page.md"
+
+# 1j. BOUNDARY (v1.63), passes on both trees by design: working-docs OUTSIDE a *-docs-site/docs/
+#     tree is not an outbound surface, so the same verbatim quotation in an ordinary working
+#     document raises no finding. Pinned so the surface cannot silently widen to the whole of
+#     working-docs, which would make every internal draft quoting a restricted section an error.
+cat > "$hub/working-docs/internal-notes.md" <<'EOF'
+---
+type: concept
+title: Internal working note
+description: Synthetic internal note for the v1.63 boundary fixture.
+tags: [fixture]
+resource: ./
+lifecycle: active
+timestamp: 2026-08-27
+---
+
+The synthetic fallback is to concede the annex and hold the fee schedule.
+EOF
+out=$(bash "$hub/hub-scan.sh" 2>&1)
+if printf '%s' "$out" | grep -q "on outbound surface: working-docs/internal-notes.md"; then
+  echo "FAIL: an ordinary working document was scanned as an outbound surface (boundary leaked)"
+  printf '%s\n' "$out"
+  fail=1
+else
+  echo "PASS: working-docs outside a docs-site tree is not an outbound surface"
+fi
+rm "$hub/working-docs/internal-notes.md"
+
+# 1k. CLEAN SIDE (v1.63), passes on both trees by design: a docs-site page carrying only open
+#     text and the name of a body-marked note raises nothing — the surface is scanned, not
+#     reddened on sight.
+cat > "$hub/working-docs/sample-docs-site/docs/clean-page.md" <<'EOF'
+---
+type: brief
+title: Clean docs-site page
+description: Synthetic published page carrying only open content.
+tags: [fixture]
+resource: ./
+lifecycle: active
+timestamp: 2026-08-27
+---
+
+# Published page
+
+Open context that anyone on the team may cite. An update is queued for [[negotiation-brief]].
+EOF
+out=$(bash "$hub/hub-scan.sh" 2>&1)
+if printf '%s' "$out" | grep -q "on outbound surface: working-docs/sample-docs-site/docs/clean-page.md"; then
+  echo "FAIL: a clean docs-site page was flagged"
+  printf '%s\n' "$out"
+  fail=1
+else
+  echo "PASS: a clean docs-site page raises nothing"
+fi
+rm -r "$hub/working-docs/sample-docs-site"
 
 # 2. NEGATIVE: the restricted marker itself in change-notice free text must fail the scan.
 cat > "$hub/changes/2026-08-03_XX_leak_proposal.md" <<'EOF'
