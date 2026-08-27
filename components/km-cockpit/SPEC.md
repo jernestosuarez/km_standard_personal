@@ -51,8 +51,8 @@ tier-B row names its specific default action first and `veto` second — generic
 no precise verb exists, and a real row option always wins over a synthetic one. The parser stays
 tolerant of legacy shapes so a schema migration can ship parser-first.
 
-**Arity decides the schema, and an unreadable Defaults cell fails loudly** (added in v1.64,
-drafted and unpublished: binds nothing until its own owner push). Five cells IS a canonical row
+**Arity decides the schema, and an unreadable Defaults cell fails loudly** (added in
+v1.64). Five cells IS a canonical row
 and its third cell IS the Defaults cell whatever it holds — one shared definition of a valid
 Defaults value (`-`, `never`, `MM-DD`, `YYYY-MM-DD`) serves the parser and `queue-check`, so the
 board and the session-start check cannot disagree about what a row means. A Defaults value
@@ -64,8 +64,7 @@ written with markdown emphasis still parses (a dropped row is an open decision v
 the board), and a machine-block row whose rendered row failed to parse surfaces as a loud
 placeholder card, never a silent drop.
 
-**The lane axis** (added in v1.64, drafted and unpublished: binds nothing until its own owner
-push). The machine block MAY carry a 6th field, `lane` — `knowledge | machinery | standard |
+**The lane axis** (added in v1.64). The machine block MAY carry a 6th field, `lane` — `knowledge | machinery | standard |
 hand` — appended last so every positional parser is untouched. Tier is the CLOCK (what happens
 on silence); lane is the CONTEXT (what the owner needs in their head to answer). The decisions
 board groups by lane with tier sections inside, `?lane=` scopes the page and always states what
@@ -76,8 +75,8 @@ the owner's desk are the same KIND of material and are joined at the SECTION, ne
 registered rows keep their briefs, options and answer channel on the board's hand lane; desk
 bullets keep Mark done on the desk; one act never gets two sets of controls.
 
-**A row the queue itself marks ANSWERED is answered, whatever the stores say** (added in v1.64,
-drafted and unpublished: binds nothing until its own owner push). A deployment's pickup
+**A row the queue itself marks ANSWERED is answered, whatever the stores say** (added in
+v1.64). A deployment's pickup
 machinery MAY write a durable marker onto the row — leading the Decision cell as
 `**ANSWERED "<verb>", execution owed by the Supervisor.**`, or appended to the machine-block
 row as an `answered:<verb>` field. The queue file is the record; the answer stores are rotating
@@ -114,7 +113,7 @@ credits the recommendation-follow-rate with a hit against an option the owner wa
 
 **Owner-side state: append-only JSONL** in the configured state directory: answers,
 answers-processed, executions, questions, questions-processed, question-replies, a dismissal
-store (v1.64, drafted), plus a notification-dedup file. Card state is computed per request: open → **answered** (controls
+store (v1.64), plus a notification-dedup file. Card state is computed per request: open → **answered** (controls
 hidden, the recorded verb shown) → **executed** (execution note with its commits/links shown).
 `recommended` is captured with every answer for the follow-rate metric, and must always reflect
 what the served card actually showed.
@@ -184,8 +183,7 @@ implementation:
   requires of every surface. A standard change that needs the owner's word is a governed tier-A/B
   decision, never a button on this card.
 - **The published version is resolved from the publish branch's committed history** (amended in
-  v1.64, drafted and unpublished: the amendment binds nothing until its own owner push; until it,
-  the working-tree H1 rule below stands). The card reports the version of the newest commit on
+  v1.64). The card reports the version of the newest commit on
   the configured publish branch (`standard_publish_branch`, default `main`) whose committed
   `STANDARD.md` H1 carries no draft qualifier, walking past drafted H1s — because a working-tree
   H1 mid-draft reads "(vX.Y draft)", and reporting a drafted number as the pinned version is a
@@ -210,8 +208,7 @@ deployment leads and the specification follows it here, so a conformance pass ne
 back to the last release; every other implementation moves to meet this section.
 
 **Rotation semantics: a record is consumed exactly once, and the trace is written before the
-consumption is final** (step-order clause added in v1.64, drafted and unpublished: binds nothing
-until its own owner push). `pull` and `questions` print pending records and move them to the
+consumption is final** (step-order clause added in v1.64). `pull` and `questions` print pending records and move them to the
 processed file in one call. **Pull consumes for the whole estate:** whoever pulls owns immediate
 surfacing and execution of every record returned — never only the records relevant to their own
 task — and must later record `exec` per id. Tests never invoke `pull` against the live store;
@@ -258,15 +255,14 @@ declared options cannot be read is not answerable, so it renders in "Preparing f
 reason stated, rather than as a complete-looking card with an empty action bar. The two gates are
 one rule seen twice — a card the owner cannot act on says so, in the group for records that are
 not ready, and never by falling quietly silent in the place the control belongs. Since v1.64
-(drafted and unpublished: binds nothing until its own owner push) the two gates state their OWN
-conditions: an options-gated row wears a neutral "Gated" badge with the repair named ("Options
+the two gates state their OWN conditions: an options-gated row wears a neutral "Gated" badge with the repair named ("Options
 unreadable — repair the row's options cell"), where a brief-gated one wears "Preparing" —
 because what the owner can do about the two differs, and two states that mean different things
 must not render identically. Neither ever wears the actionable tier badge (the v1.33 rule,
 unchanged).
 
-**Answered and executed rows swap their tier badge for their state badge** (added in v1.64,
-drafted and unpublished: binds nothing until its own owner push). The tier badge is the CLOCK —
+**Answered and executed rows swap their tier badge for their state badge** (added in
+v1.64). The tier badge is the CLOCK —
 what happens if the owner says nothing — and on an answered or executed row that clock has
 stopped, because the owner already spoke. A tier-A row the owner has answered must not keep its
 red "Needs you" beside its own tick: it wears "Answered" (and an executed row still on the
@@ -277,8 +273,7 @@ and a client disagreeing with the server about what a state is called is the sam
 layer down; the poll announces the change on a page left open, because a surface that changes
 while nobody is looking must announce the change.
 
-**Dismissal of informational items** (added in v1.64, drafted and unpublished: binds nothing
-until its own owner push). Tier-C FYI cards and the "Preparing for you"/"Gated" notices carry a
+**Dismissal of informational items** (added in v1.64). Tier-C FYI cards and the "Preparing for you"/"Gated" notices carry a
 Dismiss control; persistence is the default (nothing expires, times out, or hides itself on a
 seen-heuristic), and dismissal is owner-side VIEW STATE only — an append to the dismissed
 store, exactly like an answer; the queue file is never touched and the item stays in the
@@ -307,7 +302,7 @@ leaves the queue, so the brief is the surviving link source):
 5. `Needs decision routing` — no governing decision found.
 
 **A proposal file still present has not been applied, whatever the execution note says** (added
-in v1.64, drafted and unpublished: binds nothing until its own owner push). A hub's agent
+in v1.64). A hub's agent
 DELETES the proposal file when it applies it, so a proposal still sitting in `changes/` whose
 governing row carries an execution record is downgraded from state 4 to `Directive issued —
 waiting on this hub's own agent to apply it (<id>)`. The exec note is a CLAIM by the recording
@@ -322,7 +317,7 @@ attention signal: clicking it shows, within one step, what is pending and from w
 the supervisor, or a hub agent. A count with no list is a display defect of the same class as an
 unregistered ask.
 
-## 5.5 One home per item, and the activity split (added in v1.64, drafted and unpublished: binds nothing until its own owner push)
+## 5.5 One home per item, and the activity split (added in v1.64)
 
 **An item is rendered in exactly ONE place — where it is ACTED on. Every other surface refers to
 it by a count with a link, never by repeating it.** The rule was ruled in the reference
@@ -374,8 +369,7 @@ supervisor replies with a reasoned alternative the owner can see. Row states: Op
 sent / Supervisor replied / Overdue. An item whose next step is an owner choice never lives only
 in this register — it is registered as a governed tier-A/B decision.
 
-**Run next replaced Prioritize** (amended in v1.64, drafted and unpublished: the amendment binds
-nothing until its own owner push), on the reference deployment owner's own challenge: a relative
+**Run next replaced Prioritize** (amended in v1.64), on the reference deployment owner's own challenge: a relative
 nudge was never a usable instruction, and the distinction it rested on — an owner ANSWER versus
 a request on Supervisor work — was semantic, not structural, since both are one recorded word
 the cockpit never executes. The retired `prioritize` type is REFUSED with an explanatory 400

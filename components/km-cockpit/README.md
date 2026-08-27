@@ -41,7 +41,7 @@ any reimplementation, not just this reference file.
    readable, `1` a row cannot be read, `2` refused — no path, or the queue could not be read. It
    never writes. `pull` writes each consumed answer's trace to `answer-pickup-log.md` beside
    the queue file BEFORE truncating the pending store, so no ordering can lose a record
-   (SPEC.md §3, v1.64 drafted); `dismissed` and `desk` are read-only listings and consume
+   (SPEC.md §3, v1.64); `dismissed` and `desk` are read-only listings and consume
    nothing.
 4. Verify by fetching: `/`, `/decisions`, `/activity`, `/hubs`, `/api/state`. A served-surface
    change is done when the owner can see it — after any change, restart the server and fetch the

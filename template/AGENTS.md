@@ -95,7 +95,7 @@ At the start of every session involving this hub, before doing any other work:
 1. **Run `bash hub-scan.sh`** — covers inbox, proposals, git-backed integrity, OKF frontmatter, and reconciliation disputes in one pass.
 2. **Handle any issues reported by section:**
    - `[HANDOVER]` → **read `HANDOVER.md` first, before any state reconstruction from the git log or a diff**; a missing `HANDOVER.md` is an error, regenerate it via `/km-handover` before continuing
-   - `[INBOX]` files found → run the intake workflow above without waiting for an instruction — the arrival of a file in the inbox is not a decision (added in v1.64, drafted and unpublished: binds nothing until its own owner push); what reaches {{HUB_OWNER}} is the resulting proposal, and only a file held by the date gate stays behind
+   - `[INBOX]` files found → run the intake workflow above without waiting for an instruction — the arrival of a file in the inbox is not a decision (added in v1.64); what reaches {{HUB_OWNER}} is the resulting proposal, and only a file held by the date gate stays behind
    - `[PROPOSALS]` ready to apply → apply, delete both files, log, commit
    - `[INTEGRITY]` uncommitted/untracked change → stop; surface to {{HUB_OWNER}} before doing anything else
    - `[FRONTMATTER]` missing → flag; fix before applying any other change

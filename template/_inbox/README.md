@@ -10,8 +10,8 @@
 - Architecture images and diagrams
 - Any other file to be filed, digested, or moved into the hub
 
-**The arrival of a file here is not a decision** (added in v1.64, drafted and unpublished: binds
-nothing until its own owner push). Dropping a file is the request to process it, so intake runs
+**The arrival of a file here is not a decision** (added in v1.64). Dropping a file is the request
+to process it, so intake runs
 without waiting for a further word: the agent classifies the file, digests it where it is a
 source, resolves its date, and **files it at its retained home in the same act** (`sources/`,
 `working-docs/`, `assets/architecture/`), producing a proposal in `changes/`.

@@ -11,8 +11,8 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.63"/>
-  <img src="assets/badges/rfcs.svg" alt="RFCs: 3 adopted, 1 partial, 4 open"/>
+  <img src="assets/badges/version.svg" alt="standard v1.64"/>
+  <img src="assets/badges/rfcs.svg" alt="RFCs: 4 adopted, 1 partial, 3 open"/>
   <img src="assets/badges/license.svg" alt="license: Apache-2.0"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
   <img src="assets/badges/agents.svg" alt="agents: MCP-ready"/>
@@ -28,27 +28,25 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.63** (2026-08-27, six items clearing the canonical backlog ahead of a
-planned fork, on the deployment owner's direction that nothing stays behind — three defect
-repairs, two rulings, and two no-change verdicts recorded with their reasons rather than dropped,
-the repairs each reproduced as a failing case and committed red before any repair was written; a
-dispute **resolved in place** by an owner answer may be retained as a record carrying
-`lifecycle: resolved`, reported by the scan as a retained record instead of listed under active
-disputes forever; a **docs-site under `working-docs/*-docs-site/docs/`** is an outbound surface
-the restricted lint scans exactly as it scans `shareable/`, absorbing — genericised — a capability
-two installed scan copies carried as hub-local divergence that every template refresh threatened
-to overwrite; `shareable/README.md`'s "not monitored" claim, false as shipped while the restricted
-lint has read that surface since v1.16, is reworded to match the instrument beside it; the
-**hand-maintained integrity manifest `hub-manifest.md` is retired**, git history being the sole
-integrity baseline, with a lingering copy named as an advisory and the migration stated;
-**neither of a deployed hub's two runtime skill trees is authoritative** — a shipped skill
-divergent across them is repaired by refreshing both from the pinned canonical in one act, and a
-hub-local skill belongs in both trees or in neither; and the two no-change verdicts record that
-the initiation skill's merge and withdrawal modes have shipped in canonical since v1.35, the
-reported absence being a stale installed copy, and that the currency check keeps its working-docs
-scope, because excluding it would reverse the published v1.12 correction whose motivating failure
-was an agent answering from a superseded working-docs draft;
-v1.62 is the preceding published version and v1.23 remains an unpublished draft awaiting its own
+**Current version: v1.64** (2026-08-27, the second and final wave of the pre-fork clearance, on
+the deployment owner's direction that nothing stays behind, with the wave's two named defects
+reproduced as failing cases and committed red before either repair was written; **the arrival of
+a file in a hub inbox is not a decision** — intake runs to completion without waiting for a word,
+classify, digest, resolve the date, file the original at its retained home, produce the proposal,
+one committed act, with only the resulting proposal waiting on the owner and the date gate the
+one hold; **RFC-008 is implemented** — the blanket-add prohibition grafted into the shipped
+proposal template beside the staging step it governs with Rule 3 kept as the home of record, the
+hub-local manifest-recompute step ruled homeless because v1.63 retired its subject, and a new
+check holding the template to both halves by their **presence**, never by the absence of a
+blanket-add token, which a template with no staging step at all satisfies; and **the published
+km-cockpit component is brought up to the reference deployment's proven lead** — arity decides
+the queue row schema and an unreadable Defaults cell fails loudly, a row the queue itself marks
+answered renders answered whatever the rotating stores say, answered and executed rows swap
+their tier badge for their state badge, the lane axis groups the board, informational items
+carry Dismiss, every item renders in exactly one home, the Standard card resolves the published
+version from the publish branch's committed history, `pull` writes each consumed answer's trace
+before truncating the pending store, and the activity page splits by actor;
+v1.63 is the preceding published version and v1.23 remains an unpublished draft awaiting its own
 push). The full
 ledger of released versions, and the rule that a published version number is never reused, is in
 [`STANDARD.md`](STANDARD.md) → *Version history*.

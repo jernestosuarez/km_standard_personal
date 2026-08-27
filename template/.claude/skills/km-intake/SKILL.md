@@ -8,8 +8,7 @@ description: Use when this hub has pending proposals in changes/ or unprocessed 
 You have been invoked as `/km-intake`. First handle any pending proposals in `changes/`, then
 process any new files in `_inbox/`.
 
-**The arrival of a file in the inbox is not a decision** (added in v1.64, drafted and
-unpublished: binds nothing until its own owner push). The hub owner put the file there, so asking
+**The arrival of a file in the inbox is not a decision** (added in v1.64). The hub owner put the file there, so asking
 whether to process it asks the owner to authorise work already requested. Intake therefore runs
 to completion without waiting for a word: classify, digest, resolve the date, file the original
 and its digest at their retained home, and produce the proposal — all in one act, committed
@@ -151,7 +150,7 @@ After creating the digest:
 ## Step 5 — File the source and create the proposal
 
 **The move happens now, in the same act as the proposal — never deferred to approval** (added in
-v1.64, drafted and unpublished: binds nothing until its own owner push). Provided the date gate
+v1.64). Provided the date gate
 passed (Step 3.5):
 
 1. Move `_inbox/<original filename>` → `sources/<subfolder>/<original filename>`

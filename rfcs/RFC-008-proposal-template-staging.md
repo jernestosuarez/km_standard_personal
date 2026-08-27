@@ -12,6 +12,11 @@ timestamp: 2026-08-27
 is a dated design record: it states what was designed, on what authority, with what evidence, on
 the day it was written. Disposition lives in [`rfcs/README.md`](README.md), never here.
 
+**Status addendum 2026-08-27: adopted by v1.64, published 2026-08-27 (owner push).** The
+paragraph above is the statement of the day this record was written and is left standing, per
+this repository's correction pattern for implemented RFCs; the disposition of record is the
+index row in [`rfcs/README.md`](README.md).
+
 **Authority:** the deployment owner's direction of 2026-08-27 that the whole canonical backlog
 raised by the reference deployment be cleared before a planned fork. The originating registration
 is that deployment's standard-tier ledger item of 2026-08-24 (genericised here; no deployment

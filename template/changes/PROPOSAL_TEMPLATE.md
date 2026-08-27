@@ -44,7 +44,7 @@ For table rows: include the full row. For paragraphs: include the full paragraph
    Never stage with a blanket add: in synchronized storage a deletion is not durable until the
    sync agent has agreed to it, so an all-changes add can resurrect the proposal and approval
    files step 4 just deleted and re-commit them as live (Rule 3, "Stage explicitly"; added in
-   v1.64, drafted and unpublished: binds nothing until its own owner push).
+   v1.64).
 6. Run `hub-scan.sh` to confirm clean state
 
 ---
