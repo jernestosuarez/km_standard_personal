@@ -37,7 +37,7 @@ Anthropic-managed cloud sandboxes may be used for development, CI, or evaluation
 
 - The worker contract must specify a self-hosted production environment and prove one isolated sandbox per tenant run.
 - Sandbox image hardening, egress control, secret handling, tool blast radius, cleanup after normal and abnormal termination, and incident response are first-version engineering scope owned by Glassity.
-- Ernesto must be shown this operational cost when the first-version scope is reviewed; it is not deferred infrastructure.
+- The first-version scope owner must be shown this operational cost when the first-version scope is reviewed; it is not deferred infrastructure.
 - Managed development must fail closed if test-data provenance cannot prove that the inputs are strictly synthetic.
 - AD-002 through AD-005 remain unresolved and blocking. AD-004 still prevents a worker/Git credential contract, and VER-015 still prevents release.
 - No residual risk from TM-016 or any other Phase S0 threat is accepted by this decision.

@@ -14,7 +14,7 @@ lifecycle: active
 
 **Approved by the accountable owner on 2026-08-27.** This resolves AD-002 at the security-design layer only. It does not assert that IAM, sessions, RLS policies, route coverage, or cross-tenant tests exist, and it does not approve application implementation, production release, or residual risk.
 
-The evidence base establishes separate production and staging PostgreSQL databases with no data syncing between them (`KM-Glassity-Company/working-docs/product/product-knowledge.md`). Ernesto also named Supabase as a component of the Junox work-stream on 2026-08-19 (`KM-Glassity-Company/changes/2026-08-19_Claude_ernesto-call-illia-julia_proposal.md`), but that statement does not confirm Supabase as the application's identity layer. No formal IAM selection is on record, and confirmation with Ernesto remains open. This decision selects Supabase Auth for v1; discovery of a deployed provider is evidence for a governed amendment, not permission for a builder to substitute one silently.
+The evidence base establishes separate production and staging PostgreSQL databases with no data syncing between them (`KM-Glassity-Company/working-docs/product/product-knowledge.md`). The Glassity CEO also named Supabase as a component of the Junox work-stream on 2026-08-19 (Company-hub commit `5acde5519dfac2e0f4b4464af3618bcf4141343c`, Junox change and glossary entries), but that statement does not confirm Supabase as the application's identity layer. No formal IAM selection is on record, and confirmation with the accountable product owner remains open. This decision selects Supabase Auth for v1; discovery of a deployed provider is evidence for a governed amendment, not permission for a builder to substitute one silently.
 
 ## Decision in two sentences
 

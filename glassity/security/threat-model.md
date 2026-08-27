@@ -12,7 +12,7 @@ lifecycle: active
 
 ## Status and scope
 
-**Status:** Owner-authorized Supervisor disposition, commit `f21bf3e` (2026-08-27): “Approve Phase S0 as security-design input only. No residual risk, runtime implementation, or release is approved.” This is binding security-design input. No application, infrastructure, contract, or runtime security control is present in this repository. AD-001 and AD-002 are resolved at the design layer; AD-003 through AD-005 remain blocking and unselected.
+**Status:** Owner-authorized Supervisor disposition, commit `f21bf3e` (2026-08-27): “Approve Phase S0 as security-design input only. No residual risk, runtime implementation, or release is approved.” This is binding security-design input. No application, infrastructure, contract, or runtime security control is present in this repository. AD-001 through AD-003 are resolved at the design layer; AD-004 and AD-005 remain blocking and unselected.
 
 Scope begins at browser submission of an upload, domain-event envelope, or owner answer and ends at a governed tenant-hub record, audit event, or consumed answer. It models the selected self-hosted production boundary and the synthetic-only managed development boundary.
 
@@ -83,8 +83,8 @@ flowchart LR
 | DF-001 | Browser → IAM/session | TLS and authenticated actor. |
 | DF-002 | IAM/session → app/API | Validated actor and tenant context; client value is not authority. |
 | DF-003 | Browser → app/API | Authenticated upload authorization before an upload capability is issued. |
-| DF-004 | App/API → quarantine | Opaque key, quotas, no executable processing. |
-| DF-005 | Quarantine → object storage | Content hash and fail-closed scanner verdict. |
+| DF-004 | App/API → quarantine | Tenant-authorized, quota-reserved presigned POST to private S3 quarantine in `eu-west-1`; opaque key and no executable processing. |
+| DF-005 | Quarantine → clean object storage | Exact object version passes independent Glassity structural limits and GuardDuty `NO_THREATS_FOUND`; content-hash copy to private clean S3. |
 | DF-006 | App/API → app database/event store | Tenant-scoped domain-object/event persistence. |
 | DF-007 | App/API → inbound adapter | Tenant-bound, classified, idempotent pointer envelope; raw content stays in object storage. |
 | DF-008 | Adapter → tenant Git inbox | Inbox-only pointer-envelope route and path confinement. |
@@ -131,7 +131,7 @@ Anthropic-managed cloud sandboxes are permitted only for development, CI, or eva
 |---|---|---|---|---|
 | AD-001 | **Resolved 2026-08-27:** self-hosted production execution; managed development only with strictly synthetic data. | Accountable owner + security reviewer | before worker contract | Design decision recorded in [AD-001](../decisions/ad-001-self-hosted-production-execution.md); VER-015 and remaining decisions still block runtime/release. |
 | AD-002 | **Resolved 2026-08-27:** Supabase Auth, server-side `tenant_sessions.active_tenant_id`, and forced PostgreSQL RLS. | Accountable owner + app security owner | before app/API contract | Design decision recorded in [AD-002](../decisions/ad-002-supabase-session-postgres-rls.md); VER-001/002 and remaining decisions still block runtime/release. |
-| AD-003 | Select upload quarantine/scanner, archive policy, storage, and region. | Accountable owner + security reviewer | before upload contract | **Blocking:** no uploads. |
+| AD-003 | **Resolved 2026-08-27:** private S3 quarantine/clean buckets and GuardDuty in `eu-west-1`, exact archive limits, tenant quotas, and no override. | Accountable owner + security reviewer | before upload contract | Design decision recorded in [AD-003](../decisions/ad-003-s3-quarantine-guardduty.md); VER-007/013 and remaining decisions still block runtime/release. |
 | AD-004 | Select key/secrets and Git credential issuance, rotation, and revocation. | Accountable owner + security reviewer | before Git/worker contract | **Blocking:** no governed writes. |
 | AD-005 | Set retention/deletion periods and privacy authority by data class. | Accountable owner + legal/privacy authority | before production persistence | **Blocking:** no production persistence. |
 
@@ -148,7 +148,7 @@ Inherent severity is before required controls. “Block” is a required disposi
 | TM-003 | I/E | Git credential, DF-012 | Shared/overbroad credential writes another tenant hub. | cross-tenant integrity | medium | critical | SEC-004, SEC-005 | VER-004 | block | owner-only after evidence |
 | TM-004 | AI | uploads, DF-003–008 | Direct/indirect injection is treated as instruction. | tool misuse/exfiltration | high | critical | SEC-006, SEC-007 | VER-005 | block | model output never substitutes for policy |
 | TM-005 | AI/E | worker, DF-010–013 | Excessive agency invokes unapproved tools or egress. | loss/exfiltration | medium | critical | SEC-007, SEC-008 | VER-006 | block | none before conformance |
-| TM-006 | T/I | upload, DF-004/005 | Malware/archive bomb reaches parser or worker. | compromise/DoS | high | high | SEC-009 | VER-007 | block | owner decides scanner exceptions only |
+| TM-006 | T/I | upload, DF-004/005 | Malware/archive bomb reaches parser or worker. | compromise/DoS | high | high | SEC-009 | VER-007 | design mechanism selected; conformance blocked | no risk accepted; no application override; VER-007 required |
 | TM-007 | I/T | browser, DF-001/009 | XSS/CSRF reads or submits another user's answer. | disclosure/unauthorized answer | medium | high | SEC-010 | VER-008 | block | none before browser conformance |
 | TM-008 | I | stores, DF-001–012 | Weak transport/storage encryption or keys. | disclosure | medium | high | SEC-011, SEC-012 | VER-009 | block | owner-only exception |
 | TM-009 | I/R | logs, DF-014/015 | Telemetry leaks secrets/restricted data or lacks identity. | disclosure/non-repudiation | medium | high | SEC-013 | VER-010 | block | none before audit review |
