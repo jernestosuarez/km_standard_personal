@@ -33,12 +33,16 @@ any reimplementation, not just this reference file.
    The manifest is the component's **only** deployment-specific input; the per-hub attribution
    map derives from the governed hub registry, never from edits to the code.
 3. `python3 km-cockpit.py serve` (Python 3 stdlib only — no venv, no dependencies). Session-side
-   CLI: `pull` · `questions` · `reply <id> "text"` · `exec <id> "note"` · `queue-check
-   [<path>]` · `selftest`.
-   `queue-check` reports any tier-A/B row whose declared options the surface cannot read, and is
-   what a supervisor tier runs at session start (a single-hub deployment gets the same check from
-   `hub-scan.sh`'s `[ QUEUE ]` block). Three exit codes: `0` readable, `1` a row cannot be read,
-   `2` refused — no path, or the queue could not be read. It never writes.
+   CLI: `pull` · `questions` · `reply <id> "text"` · `exec <id> "note" [status]` · `dismissed` ·
+   `desk` · `queue-check [<path>]` · `selftest`.
+   `queue-check` reports any tier-A/B row that fails to parse or whose declared options the
+   surface cannot read, and is what a supervisor tier runs at session start (a single-hub
+   deployment gets the same check from `hub-scan.sh`'s `[ QUEUE ]` block). Three exit codes: `0`
+   readable, `1` a row cannot be read, `2` refused — no path, or the queue could not be read. It
+   never writes. `pull` writes each consumed answer's trace to `answer-pickup-log.md` beside
+   the queue file BEFORE truncating the pending store, so no ordering can lose a record
+   (SPEC.md §3, v1.64 drafted); `dismissed` and `desk` are read-only listings and consume
+   nothing.
 4. Verify by fetching: `/`, `/decisions`, `/activity`, `/hubs`, `/api/state`. A served-surface
    change is done when the owner can see it — after any change, restart the server and fetch the
    page before reporting done.

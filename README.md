@@ -12,7 +12,7 @@ timestamp: 2026-07-02
 
 <p align="center">
   <img src="assets/badges/version.svg" alt="standard v1.62"/>
-  <img src="assets/badges/rfcs.svg" alt="RFCs: 3 adopted, 1 partial, 3 open"/>
+  <img src="assets/badges/rfcs.svg" alt="RFCs: 3 adopted, 1 partial, 4 open"/>
   <img src="assets/badges/license.svg" alt="license: Apache-2.0"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
   <img src="assets/badges/agents.svg" alt="agents: MCP-ready"/>

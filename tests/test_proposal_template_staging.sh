@@ -21,6 +21,14 @@
 #
 # Both directions are proved on synthetic fixtures, then the real shipped template is judged.
 # Refuses (exit 2) rather than passes on a template it cannot read.
+#
+# ONE STATED TRADE (the v1.55 quotation class, met while writing this check): the absence arm
+# reads ANY `git add -A/--all/.` in the template as an instruction, so the prohibition sentence
+# itself must not quote the literal token — the first draft of the repaired template did, and
+# this check correctly refused its own repair. The template's prohibition therefore names the
+# act ("a blanket add", "an all-changes add") and points at Rule 3, which is where the literal
+# forms are documented. A future template that must quote the token changes this arm and this
+# comment in the same act.
 set -u
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

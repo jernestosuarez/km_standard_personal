@@ -51,6 +51,45 @@ tier-B row names its specific default action first and `veto` second — generic
 no precise verb exists, and a real row option always wins over a synthetic one. The parser stays
 tolerant of legacy shapes so a schema migration can ship parser-first.
 
+**Arity decides the schema, and an unreadable Defaults cell fails loudly** (added in v1.64,
+drafted and unpublished: binds nothing until its own owner push). Five cells IS a canonical row
+and its third cell IS the Defaults cell whatever it holds — one shared definition of a valid
+Defaults value (`-`, `never`, `MM-DD`, `YYYY-MM-DD`) serves the parser and `queue-check`, so the
+board and the session-start check cannot disagree about what a row means. A Defaults value
+outside that set is a defect IN THAT CELL and renders as a red PARSE ERROR card with no answer
+controls, plus an error out of `queue-check`; it never falls through to a legacy reading that
+shifts every field left and makes the Defaults cell the card's title, because a wrong render
+answers the reader's question and stops them looking. Two companions, same rule: a row id
+written with markdown emphasis still parses (a dropped row is an open decision vanishing from
+the board), and a machine-block row whose rendered row failed to parse surfaces as a loud
+placeholder card, never a silent drop.
+
+**The lane axis** (added in v1.64, drafted and unpublished: binds nothing until its own owner
+push). The machine block MAY carry a 6th field, `lane` — `knowledge | machinery | standard |
+hand` — appended last so every positional parser is untouched. Tier is the CLOCK (what happens
+on silence); lane is the CONTEXT (what the owner needs in their head to answer). The decisions
+board groups by lane with tier sections inside, `?lane=` scopes the page and always states what
+it scoped out, and the Overview carries the per-lane split of the open rows exactly once. The
+surface never infers a lane: absent, empty or unrecognised reads as `knowledge`, because the
+assignment belongs to the registering agent, by contract and not by guess. `hand`-lane rows and
+the owner's desk are the same KIND of material and are joined at the SECTION, never the card:
+registered rows keep their briefs, options and answer channel on the board's hand lane; desk
+bullets keep Mark done on the desk; one act never gets two sets of controls.
+
+**A row the queue itself marks ANSWERED is answered, whatever the stores say** (added in v1.64,
+drafted and unpublished: binds nothing until its own owner push). A deployment's pickup
+machinery MAY write a durable marker onto the row — leading the Decision cell as
+`**ANSWERED "<verb>", execution owed by the Supervisor.**`, or appended to the machine-block
+row as an `answered:<verb>` field. The queue file is the record; the answer stores are rotating
+logs. The parser splits the marker off the decision text — the marker is the row's STATE, never
+its identity, and a card must never be TITLED by it — and the state computation folds it in as
+an answer source, so a row whose store record aged out or was written by another deployment
+still reads answered. **Two states only:** a row is ANSWERED from the moment the answer exists —
+including after a pull consumed it, and including while the row is still on the board — until a
+genuine execution record marks it EXECUTED; it is never answerable again in between, because
+re-rendered answer controls under the owner's own answer are the recurring display lie this
+rule closes. A genuine reopen is re-registered under a new id.
+
 **Quotes make a verb an option; bold is presentation** (ruled 2026-08-19, v1.31). The accepted
 forms, tried in order, are `**"verb"**`, `"verb"`, and the legacy prose `**Verb** (context)`.
 The specification is the fixed reference and the implementation moves to meet it: a queue written
@@ -74,8 +113,8 @@ because answering it against a synthesised pair records an answer the row never 
 credits the recommendation-follow-rate with a hit against an option the owner was never shown.
 
 **Owner-side state: append-only JSONL** in the configured state directory: answers,
-answers-processed, executions, questions, questions-processed, question-replies, plus a
-notification-dedup file. Card state is computed per request: open → **answered** (controls
+answers-processed, executions, questions, questions-processed, question-replies, a dismissal
+store (v1.64, drafted), plus a notification-dedup file. Card state is computed per request: open → **answered** (controls
 hidden, the recorded verb shown) → **executed** (execution note with its commits/links shown).
 `recommended` is captured with every answer for the follow-rate metric, and must always reflect
 what the served card actually showed.
@@ -144,9 +183,17 @@ implementation:
 - **Display only, never a pen.** The card renders state and grows no controls, exactly as §1
   requires of every surface. A standard change that needs the owner's word is a governed tier-A/B
   decision, never a button on this card.
-- **The pinned version comes from the checkout's `STANDARD.md` title line.** The version identifier
-  in the H1 title is the pinned version the card reports; when it cannot be read the card says so
-  rather than showing an empty or invented version.
+- **The published version is resolved from the publish branch's committed history** (amended in
+  v1.64, drafted and unpublished: the amendment binds nothing until its own owner push; until it,
+  the working-tree H1 rule below stands). The card reports the version of the newest commit on
+  the configured publish branch (`standard_publish_branch`, default `main`) whose committed
+  `STANDARD.md` H1 carries no draft qualifier, walking past drafted H1s — because a working-tree
+  H1 mid-draft reads "(vX.Y draft)", and reporting a drafted number as the pinned version is a
+  wrong answer with full confidence. The card names the branch and the resolving commit; when no
+  publishable commit can be resolved it says so rather than showing an empty or invented
+  version. (The v1.38 rule this amends: the version identifier in the working tree's H1 title.)
+  Draft RFCs (status banner reads DRAFT) render inline as title, status and path — never as
+  file links, per the confinement bullet below.
 - **Push state is local git only, never a network call.** The card compares the local branch to its
   configured upstream and reports one of: in sync, N commits not yet pushed (with the unpushed
   subjects available), or origin carries commits not yet pulled. It reads local git alone, states
@@ -162,12 +209,25 @@ and push state on the cockpit; this section is brought up to that implementation
 deployment leads and the specification follows it here, so a conformance pass never drags the lab
 back to the last release; every other implementation moves to meet this section.
 
-**Rotation semantics: a record is consumed exactly once.** `pull` and `questions` print pending
-records and move them to the processed file in one call. **Pull consumes for the whole estate:**
-whoever pulls owns immediate surfacing and execution of every record returned — never only the
-records relevant to their own task — and must later record `exec` per id. Tests never invoke
-`pull` against the live store; they verify by reading fixture files and remove only their own
-throwaway records.
+**Rotation semantics: a record is consumed exactly once, and the trace is written before the
+consumption is final** (step-order clause added in v1.64, drafted and unpublished: binds nothing
+until its own owner push). `pull` and `questions` print pending records and move them to the
+processed file in one call. **Pull consumes for the whole estate:** whoever pulls owns immediate
+surfacing and execution of every record returned — never only the records relevant to their own
+task — and must later record `exec` per id. Tests never invoke `pull` against the live store;
+they verify by reading fixture files and remove only their own throwaway records.
+
+Because consumption is irreversible, `pull`'s step order is the guarantee: read the pending
+answers; append them to the processed store; append one `consumed, processing` line per record
+to the **pickup log** (`answer-pickup-log.md` beside the queue file); and TRUNCATE the pending
+store LAST. A failure at any earlier step leaves the answers pending, so the next pull retries
+them — there is no ordering that loses a record. The log line is the consume path's own
+obligation, never the caller's, because a caller can forget it or die before meeting it; the
+consumer then resolves each line to its outcome. The activity page renders the log as the
+"picked up without you asking" panel: the owner's own input, consumed while nobody was
+watching, must be visible, because the pull rotated it out of the store and the log is its
+only trace. (Writing the log is a session-side CLI act under the pulling session's own
+authority; the serving surface itself still writes nothing.)
 
 ## 4. The card contract
 
@@ -197,7 +257,36 @@ specification follows it here; every other implementation moves to meet this sec
 declared options cannot be read is not answerable, so it renders in "Preparing for you" with the
 reason stated, rather than as a complete-looking card with an empty action bar. The two gates are
 one rule seen twice — a card the owner cannot act on says so, in the group for records that are
-not ready, and never by falling quietly silent in the place the control belongs.
+not ready, and never by falling quietly silent in the place the control belongs. Since v1.64
+(drafted and unpublished: binds nothing until its own owner push) the two gates state their OWN
+conditions: an options-gated row wears a neutral "Gated" badge with the repair named ("Options
+unreadable — repair the row's options cell"), where a brief-gated one wears "Preparing" —
+because what the owner can do about the two differs, and two states that mean different things
+must not render identically. Neither ever wears the actionable tier badge (the v1.33 rule,
+unchanged).
+
+**Answered and executed rows swap their tier badge for their state badge** (added in v1.64,
+drafted and unpublished: binds nothing until its own owner push). The tier badge is the CLOCK —
+what happens if the owner says nothing — and on an answered or executed row that clock has
+stopped, because the owner already spoke. A tier-A row the owner has answered must not keep its
+red "Needs you" beside its own tick: it wears "Answered" (and an executed row still on the
+board wears "Executed" — execution recorded, reconciliation pending), with the registered tier
+kept in the tooltip as context. The badge metadata the client poll swaps in is serialised from
+the server's own constants, never restated in the script, because two copies of a label drift
+and a client disagreeing with the server about what a state is called is the same defect one
+layer down; the poll announces the change on a page left open, because a surface that changes
+while nobody is looking must announce the change.
+
+**Dismissal of informational items** (added in v1.64, drafted and unpublished: binds nothing
+until its own owner push). Tier-C FYI cards and the "Preparing for you"/"Gated" notices carry a
+Dismiss control; persistence is the default (nothing expires, times out, or hides itself on a
+seen-heuristic), and dismissal is owner-side VIEW STATE only — an append to the dismissed
+store, exactly like an answer; the queue file is never touched and the item stays in the
+record. A tier-A/B decision card is never dismissible (it leaves the board by being answered)
+and a supervisor action is never dismissible (it is work owed; it leaves when done). Undo sits
+on the card the instant it is dismissed, and each informational section carries an
+"N dismissed" disclosure that restores any of them — never a count that dead-ends. Ids are
+validated live against the queue on every request, never against a hardcoded list.
 
 **Links resolve relative to the file that carries them** — queue rows from the queue file's
 directory, briefs from `queue-briefs/`, any viewed document from its own directory — with
@@ -217,6 +306,15 @@ leaves the queue, so the brief is the surviving link source):
 4. `Execution recorded — proposal reconciliation pending (<id>)`;
 5. `Needs decision routing` — no governing decision found.
 
+**A proposal file still present has not been applied, whatever the execution note says** (added
+in v1.64, drafted and unpublished: binds nothing until its own owner push). A hub's agent
+DELETES the proposal file when it applies it, so a proposal still sitting in `changes/` whose
+governing row carries an execution record is downgraded from state 4 to `Directive issued —
+waiting on this hub's own agent to apply it (<id>)`. The exec note is a CLAIM by the recording
+session; the file's presence is the FACT, and the fact wins — in the reference deployment three
+proposals once read "executed" on the strength of notes recording "directives committed" while
+the hub agents had never been dispatched and the files sat untouched.
+
 Hub attention badges and estate-level signals derive from these same states: a hub whose only
 pending item is answered-awaiting-execution says so, never a generic contradiction. **Open owner
 decisions and pending supervisor work are never conflated in any count.** The test for every
@@ -224,13 +322,50 @@ attention signal: clicking it shows, within one step, what is pending and from w
 the supervisor, or a hub agent. A count with no list is a display defect of the same class as an
 unregistered ask.
 
+## 5.5 One home per item, and the activity split (added in v1.64, drafted and unpublished: binds nothing until its own owner push)
+
+**An item is rendered in exactly ONE place — where it is ACTED on. Every other surface refers to
+it by a count with a link, never by repeating it.** The rule was ruled in the reference
+deployment after one evening's features left the same items repeated across pages ("it starts
+being a bit cluttered with info repeated in different pages"), and it binds every future
+addition. The two main pages have distinct jobs: the Overview answers *what needs me, and is
+anything wrong* (counts, exceptions, status — no answerable item that exists elsewhere);
+`/decisions` answers *let me work through them*. Concretely: tier-C items live on the decisions
+board, inside their lanes, where Dismiss belongs beside the item — the Overview's watchlist is
+a pointer; the desk lives on its own page — the Overview's desk tile is a pointer; agent
+activity lives on the Activity page — the Overview carries a count and a link; the governed
+totals (tier A, tier B) stay in the stat grid because the halt and the defaults act on them,
+each number stated once, and every tile that stands for items is a link to the page that
+renders them. Two standing constraints: a count may never point at a page that does not show
+the thing, and a de-duplication pass changes rendering only, never a written record.
+
+**The activity page splits by ACTOR**: what the owner decided ("Your decisions"), what agents
+did on their own dispatches ("Agents"), and what ran unattended ("Picked up without you
+asking") — one feed mixing all three hides the entries that matter, a refusal or an answer
+consumed while nobody watched. The Agents section reads curated frontmatter from an
+`agent-reports/` directory beside the queue file (`agent`, `row`, `outcome` ∈ applied | refused
+| stopped | reported, `commits`, `hubs`, `timestamp`): git records what an agent CHANGED, and a
+refusal changes nothing, so its report file is the only record it has. Refusals and stops
+render in their own group ABOVE routine applies, never interleaved, and claim the display cap
+first. An outcome outside the four governed values, or a file the parser cannot read, is listed
+unreadable BY NAME — a typo becomes visible instead of silently miscounting. The directory is a
+convention a deployment's dispatch machinery fills; the surface ships the reading contract
+only, and a deployment with no such machinery sees the section say so. A bookkeeping-recorded
+execution entry renders truthfully as "Answered — awaiting execution", never as executed.
+
+**The single-hub initiated read is date-shape checked.** In single-hub mode the surface reads
+`initiation-interview:` from the hub's deployment binding as the hub scan's own gate reads it —
+requiring the ISO date shape — so an unsubstituted placeholder cannot render a hub as initiated
+while the scan quarantines the same hub. Two instruments reading one fact must not disagree
+about it.
+
 ## 6. The supervisor-actions request channel
 
 Work owed by the supervisor renders as **"Waiting on KM Supervisor"** with the label "Work owed
 by the KM Supervisor. No owner action is required unless you choose to redirect it." — never as
-an implied owner task list. Per action: **Ask for update / Prioritize / Hold / View evidence**.
+an implied owner task list. Per action: **Ask for update / Run next / Hold / View evidence**.
 All three controls record **requests** through the existing questions pipeline under the stable
-ref `supervisor-action:<action-id>` with a message type (`question` | `prioritize` | `hold`),
+ref `supervisor-action:<action-id>` with a message type (`question` | `run-next` | `hold`),
 validated live against the queue's SUPERVISOR-ACTIONS block (never a hardcoded id list), and
 confirmed with "Request recorded — awaiting KM Supervisor acknowledgement." No control edits the
 queue. The pulling session acknowledges each request in the same session it pulls (a pull is not
@@ -238,6 +373,22 @@ an acknowledgement); a Hold binds the supervisor's scheduling until the owner re
 supervisor replies with a reasoned alternative the owner can see. Row states: Open / Request
 sent / Supervisor replied / Overdue. An item whose next step is an owner choice never lives only
 in this register — it is registered as a governed tier-A/B decision.
+
+**Run next replaced Prioritize** (amended in v1.64, drafted and unpublished: the amendment binds
+nothing until its own owner push), on the reference deployment owner's own challenge: a relative
+nudge was never a usable instruction, and the distinction it rested on — an owner ANSWER versus
+a request on Supervisor work — was semantic, not structural, since both are one recorded word
+the cockpit never executes. The retired `prioritize` type is REFUSED with an explanatory 400
+rather than silently re-filed, so a click on a stale page is never recorded under a word the
+owner no longer has. What genuinely differs about these rows is the DEPENDENCY, so each card
+shows its due state (overdue / due today / ahead / no due date — rendered as a defect, because
+"when a session picks it up" is not a plan, compared exactly as the session-start scan compares
+it) and, where the action's own prose names something it waits on, that clause QUOTED verbatim —
+never parsed into a structured field the estate never wrote, and never front-trimmed, because
+trimming can lop a negation and turn a quote into a claim. **Run next over a stated dependency
+is recorded, never refused**: the clause travels into the pulled record and the confirmation, so
+both sides see what is being overridden and the Supervisor either runs it or comes back with
+why not.
 
 ## 7. Session integration
 

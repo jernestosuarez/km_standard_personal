@@ -10,16 +10,20 @@
 - Architecture images and diagrams
 - Any other file to be filed, digested, or moved into the hub
 
-The agent classifies the file, confirms with you, and routes it to the correct permanent location
-(`sources/`, `working-docs/`, `assets/architecture/`) after proposal approval.
-Nothing moves until confirmed.
+**The arrival of a file here is not a decision** (added in v1.64, drafted and unpublished: binds
+nothing until its own owner push). Dropping a file is the request to process it, so intake runs
+without waiting for a further word: the agent classifies the file, digests it where it is a
+source, resolves its date, and **files it at its retained home in the same act** (`sources/`,
+`working-docs/`, `assets/architecture/`), producing a proposal in `changes/`.
 
-**What happens after you drop a file:**
-1. Agent classifies: source/input → digest + propose hub updates; team output → propose move to `working-docs/`; visual asset → propose move to `assets/architecture/`
-2. For source files: agent creates digest, runs reconciliation check, creates proposal in `changes/`
-3. All moves happen only after proposal approval
-4. This folder returns to empty once everything is processed
+**Only the resulting proposal waits on the owner.** No hub document changes without approval —
+that rule is untouched; what no longer waits is the move out of this folder.
 
-**Run `/km-intake` to process files here.**
+**The one hold is the date gate:** a source whose date cannot be resolved stays here, with a
+`MISSING` row in `sources/dates-register.md` and the question put to the hub owner. Nothing else
+sits in this folder between sessions.
 
-> This folder should be empty when nothing is pending.
+**Run `/km-intake` to process files here** (a session that finds files here runs it without
+being asked).
+
+> This folder should be empty when nothing is pending and no date question is open.

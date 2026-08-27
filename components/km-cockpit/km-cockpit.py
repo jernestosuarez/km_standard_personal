@@ -7,19 +7,37 @@ state; every answer becomes committed estate artifacts only through a supervisor
 agent) session, under the same governance as a chat answer. See SPEC.md in this directory for
 the component's normative contract.
 
-Lineage (behavior shipped exactly as proven in deployment, v3.8, 2026-08-17): phases 1+2 + 2.5
+Lineage (behavior shipped exactly as proven in the reference deployment): phases 1+2 + 2.5
 decision briefs; the display-contract ruling (canonical row schema Id|Since|Defaults|Decision|
 Options, legacy shapes still parse; links resolved relative to the file that carries them with
 safe #fragment pass-through; semantic §5 brief validation; gated records rendered in a separate
 non-actionable "Preparing for you" group); the pending-proposal state alignment (every pending
 hub proposal listed with its truthful lifecycle state — awaiting owner decision / answered
 "<verb>" awaiting Supervisor execution / queued / execution recorded, reconciliation pending /
-needs decision routing — matched through the queue row and its canonical decision brief, live or
-archived, with hub attention badges derived from the same states); and the supervisor-actions
-owner interaction ("Waiting on KM Supervisor" with per-action request controls — Ask for update /
-Prioritize / Hold — each a REQUEST through the questions pipeline under the stable ref
-`supervisor-action:<action-id>`, validated live against the SUPERVISOR-ACTIONS block, never
-mutating QUEUE.md; `reply` keyed to the same ref lands back on the action row).
+directive issued, waiting on the hub's own agent / needs decision routing — matched through the
+queue row and its canonical decision brief, live or archived, with hub attention badges derived
+from the same states); and the supervisor-actions owner interaction ("Waiting on KM Supervisor"
+with per-action request controls — Ask for update / Run next / Hold — each a REQUEST through the
+questions pipeline under the stable ref `supervisor-action:<action-id>`, validated live against
+the SUPERVISOR-ACTIONS block, never mutating QUEUE.md; `reply` keyed to the same ref lands back
+on the action row).
+
+v1.64 brings the component up to the reference deployment's proven lead (SPEC.md carries each
+rule): ARITY decides the canonical row schema and an unreadable Defaults cell fails loudly as a
+PARSE ERROR card, never a wrong title; a row the queue itself marks ANSWERED (the durable
+Decision-cell marker, or the machine block's appended `answered:` field) renders answered
+whatever the rotating stores say, and an answered or executed row swaps its tier badge for its
+state badge — two states that mean different things never look alike; the LANE axis groups the
+decisions board (knowledge | machinery | standard | hand, the machine block's appended 6th
+field); informational items carry DISMISS (owner-side view state, append-only, undo always);
+every surface renders an item in exactly ONE home and refers to it elsewhere by a count with a
+link; the Standard card resolves the PUBLISHED version from the configured publish branch's
+committed history (draft H1s walked past), never the working tree; `pull` writes each consumed
+answer's trace to the pickup log BEFORE truncating the pending store, so no ordering can lose a
+record, and /activity shows the unattended pickups; /activity splits by ACTOR (your decisions /
+agents / unattended), reading agent reports from an `agent-reports/` directory beside the queue
+file when one exists; and the single-hub initiated read is date-shape checked, so an
+unsubstituted placeholder cannot render a hub as initiated while the hub scan quarantines it.
 
 Deployment is CONFIGURATION ONLY: a manifest (km-cockpit.json beside this file, or
 $KM_COCKPIT_CONFIG) carries the estate root, queue path, hub-registry path, port, organization
@@ -43,10 +61,14 @@ http://127.0.0.1:<port>
   desktop notification (macOS `osascript`; best-effort no-op elsewhere).
 
 CLI (session side):
-  pull                 print unprocessed ANSWERS as JSON lines, rotate to processed
+  pull                 CONSUME pending ANSWERS: append to processed, log each consumption to the
+                       pickup log, then truncate — in that order, so a crash loses no record
   questions            print unprocessed owner QUESTIONS, rotate to processed
   reply <id> "text"    attach a supervisor reply to a card (renders under it)
   exec <id> "note"     record that an answer was EXECUTED (note may carry markdown links)
+  dismissed            LIST the owner's dismissed informational items — read-only, consumes nothing
+  desk                 LIST the owner's effective desk ticks — read-only, consumes nothing
+  queue-check [path]   fail-closed options/parse check (three exit codes; safe from status paths)
   selftest             regression fixtures only — needs no manifest, reads no live state
 
 Local-only (binds 127.0.0.1, not configurable), stdlib-only, never published beside a reading
@@ -82,9 +104,21 @@ GOV_KEY = None       # the governance-tier pseudo-hub key (multi-hub mode only)
 FALLBACK_KEY = "estate"  # attribution fallback when no keyword matches
 INITIATED = set()    # hub directories with full governance (registry status `hub`)
 STANDARD_REPO = None  # tracked KM Standard checkout for the status card, or None if not configured
+STANDARD_PUBLISH_BRANCH = "main"  # manifest key standard_publish_branch; the branch whose
+                                  # committed history the status card resolves the version from
+PICKUP_LOG = None    # SUP / "answer-pickup-log.md" once configured: the consumption trace
+AGENT_REPORTS = None  # SUP / "agent-reports" once configured: read-only agent activity source
 
-# The pinned version reported by the status card: the vX.Y in the STANDARD.md H1 title line.
-STD_VERSION_RE = re.compile(r"^#\s+.*\((v\d[\w.]*)\b", re.M)
+# The PUBLISHED version the status card reports: the vX.Y of the newest publish-branch commit
+# whose STANDARD.md H1 carries no draft qualifier. Resolved from committed history, never the
+# working tree — a working-tree H1 mid-draft says "(vX.Y draft)", and reporting a drafted number
+# as the pinned version is a wrong answer with full confidence (v1.64, from the reference
+# deployment's dev-0018).
+STD_PUBLISHED_H1_RE = re.compile(r"^#\s+.*\((v\d+\.\d+)(?:\s+([^)]*))?\)\s*$", re.I | re.M)
+# Open queue rows about the standard itself (push/publish/RFC decisions) link from the card.
+STANDARD_ROW_RE = re.compile(
+    r"\brfc-\d+\b|\bkm[ -]standard\b|\bstandard\b[^|]{0,60}?\b(push|publish|version|draft)\b",
+    re.I)
 
 CFG = Path.home() / ".config/km-cockpit"
 
@@ -92,7 +126,7 @@ CFG = Path.home() / ".config/km-cockpit"
 def _state_files():
     """(Re)derive the owner-side state paths from CFG. Separate estates on one machine must
     configure distinct state_dir values, or their answer stores collide."""
-    global ANSWERS, PROCESSED, EXECUTIONS, QUESTIONS, QPROCESSED, QREPLIES, NOTIFIED
+    global ANSWERS, PROCESSED, EXECUTIONS, QUESTIONS, QPROCESSED, QREPLIES, NOTIFIED, DISMISSED
     ANSWERS = CFG / "answers.jsonl"
     PROCESSED = CFG / "answers-processed.jsonl"
     EXECUTIONS = CFG / "executions.jsonl"
@@ -100,6 +134,7 @@ def _state_files():
     QPROCESSED = CFG / "questions-processed.jsonl"
     QREPLIES = CFG / "question-replies.jsonl"
     NOTIFIED = CFG / "notified.json"
+    DISMISSED = CFG / "dismissed.jsonl"  # owner-side view state: {id, at} + {id, at, undo: true}
 
 
 _state_files()
@@ -162,7 +197,13 @@ def load_hubs():
             # to those readers rather than inside a repair to an unrelated instrument.
             m = re.search(r'^routing-keywords:\s*"?([^"\n]*)"?\s*$', dep_raw, re.M)
             kws = [k.strip().lower() for k in (m.group(1) if m else "").split(",") if k.strip()]
-            if re.search(r'^initiation-interview:\s*"?\S', dep_raw, re.M):
+            # The interview date is SHAPE-CHECKED (v1.64). This read used to accept any non-empty
+            # value, so an unsubstituted placeholder (`<YYYY-MM-DD>`) rendered the hub as
+            # initiated while hub-scan's [ DEPLOYMENT ] gate — date-shape checked since v1.25
+            # precisely so a placeholder cannot pass — quarantined the same hub. Two instruments
+            # reading one fact must not disagree about it; this reads the same ISO shape the gate
+            # reads. (The check proves the field's shape, never that the date is true.)
+            if re.search(r'^initiation-interview:\s*"?\d{4}-\d{2}-\d{2}', dep_raw, re.M):
                 INITIATED.add(".")
         HUBS[key] = (ROOT.name.replace("_", " ").strip(), ".", kws)
         GOV_KEY, FALLBACK_KEY = None, key
@@ -173,6 +214,7 @@ def load_config(path=None):
     no manifest serves nothing. Relative paths: estate_root resolves against the manifest's own
     directory; queue_path and hub_registry_path resolve against estate_root."""
     global ROOT, SUP, QUEUE, BRIEFS, HUB_REGISTRY, PORT, ORG, CFG, NOTIFY, STANDARD_REPO
+    global STANDARD_PUBLISH_BRANCH, PICKUP_LOG, AGENT_REPORTS
     cfg_path = Path(path or os.environ.get("KM_COCKPIT_CONFIG")
                     or SCRIPT_DIR / "km-cockpit.json").resolve()
     if not cfg_path.exists():
@@ -186,10 +228,16 @@ def load_config(path=None):
     QUEUE = (ROOT / cfg["queue_path"]).resolve()
     SUP = QUEUE.parent
     BRIEFS = SUP / "queue-briefs"
+    # Conventions beside the queue file, presence-driven, no manifest key: the pickup log is
+    # written by this component's own `pull`, and agent-reports/ is a read-only directory a
+    # deployment's dispatch machinery fills (a missing directory is a state, never an error).
+    PICKUP_LOG = SUP / "answer-pickup-log.md"
+    AGENT_REPORTS = SUP / "agent-reports"
     reg = cfg.get("hub_registry_path", "")
     HUB_REGISTRY = (ROOT / reg).resolve() if reg else None
     std = cfg.get("standard_repo_path", "")
     STANDARD_REPO = (ROOT / std).resolve() if std else None
+    STANDARD_PUBLISH_BRANCH = str(cfg.get("standard_publish_branch", "main") or "main")
     PORT = int(cfg.get("port", 8485))
     ORG = str(cfg["organization_name"])
     NOTIFY = bool(cfg.get("notifications", True))
@@ -204,6 +252,97 @@ TIER_META = {
     "b": ("Auto-applies", "#7a5900", "Applies its recommendation on the default date unless you veto"),
     "c": ("FYI / reminder", "#3d5afe", "Nothing asked"),
 }
+
+# ---------- the row's own ANSWERED marker (v1.64; SPEC.md §3) ----------
+# A deployment's pickup machinery may write a consumed owner answer onto the queue row itself:
+#     **ANSWERED "<verb>", execution owed by the Supervisor.** <the decision text>
+# It leads the Decision cell deliberately, so a human reading the queue file cannot miss it —
+# which is exactly why the parser must take it OUT of the cell before reading the cell as
+# decision text: decision_title() takes the first bold span as the card's title, and in the
+# reference deployment the owner's board once showed a card HEADED by the marker, under a red
+# NEEDS YOU badge, on a row he had already answered. The marker is the row's STATE, never its
+# identity. Two consequences, both load-bearing:
+#   1. parse_cards SPLITS the marker off `what`, so it can never become the title, a
+#      hub-inference input, or the queue-context blurb; it re-renders as the answered badge.
+#   2. a row carrying it is ANSWERED whatever the answer stores say: the queue file is the
+#      record, the jsonl stores are rotating logs. state() folds it into `queued`.
+# The em-dash separator form is accepted too, for rows marked under the earlier convention.
+ROW_ANSWER_RE = re.compile(
+    r'^\*\*ANSWERED\s+"(?P<verb>[^"]*)"\s*[,—–-]\s*'
+    r"execution owed by the Supervisor\.\*\*\s*")
+# The answered/executed badges REPLACE the tier badge and must beat `.badge.tier-a`'s
+# `!important` red, so each carries its own class rather than only an inline colour. A tier-A
+# row the owner has answered is not a tier-A row waiting on him, and the two must never look
+# alike (SPEC.md §4; two states that mean different things must not render identically).
+ANSWERED_META = ("Answered", "#7b5a00",
+                 "You answered this. It waits on the Supervisor to execute it, never on you.")
+EXECUTED_META = ("Executed", "#1f6b3a",
+                 "The Supervisor executed this and recorded it. The row is still on the board "
+                 "until the queue is reconciled. Nothing is asked of you.")
+
+# ---------- the Defaults cell (v1.64; SPEC.md §3) ----------
+# THE ONE definition of a valid Defaults cell, shared by the parser and by queue-check so the
+# owner's board and the session-start check can never disagree about what a row means.
+#
+# History, because the shape of the defect matters more than the values in it. The canonical row
+# is `| Id | Since | Defaults | Decision | Options |`. This parser used to admit that schema only
+# when the Defaults cell matched a content whitelist, and FELL THROUGH to a three-cell legacy
+# reading when it did not — which shifts every field left by one and makes the Defaults cell the
+# card's TITLE. The reference deployment's owner met it first as a card headed `never` (fixed by
+# widening the whitelist), then hours later as four cards headed by a date: fixing the VALUE left
+# the CLASS, because any third value produced a fourth wrong title. So ARITY, not content, now
+# decides the schema: five cells IS a canonical row and its third cell IS the Defaults cell
+# whatever it holds. An unreadable value is a defect IN THAT CELL and fails loudly — a PARSE
+# ERROR card with no answer controls, and an error out of queue-check — rather than silently
+# promoting itself to the headline. A wrong render answers the reader's question and stops them
+# looking, which is the worst of the three outcomes available here.
+DEFAULTS_CELL_RE = re.compile(r"^(-|never|\d{2}-\d{2}|\d{4}-\d{2}-\d{2})$")
+DEFAULTS_CELL_FORMS = '"-", "never", "MM-DD" or "YYYY-MM-DD"'
+
+
+def split_row_answer(decision_cell):
+    """Split the durable ANSWERED marker off a Decision cell -> (decision_text, verb or None)."""
+    text = decision_cell.strip()
+    m = ROW_ANSWER_RE.match(text)
+    if not m:
+        return decision_cell, None
+    return text[m.end():].strip(), m.group("verb").strip()
+
+
+# ---------- the lane axis (v1.64; SPEC.md §3) ----------
+# Two INDEPENDENT labels per row. Tier is the CLOCK — what happens if the owner says nothing.
+# Lane is the CONTEXT — what the owner needs in their head to answer. Lanes group the board; the
+# tier badge stays on every card inside a lane, because it is still the clock.
+#
+# The lane is the LAST field of the QUEUE machine block, appended precisely so every existing
+# positional parser is untouched. An absent lane — and a row that predates the field entirely —
+# reads as `knowledge`. The cockpit NEVER infers a lane from keywords (contrast hubs_of, which
+# does and says so): the assignment belongs to the registering agent, so an unclassified row is
+# `knowledge` by contract, not by guess; an unrecognised value reads as `knowledge` for the same
+# reason.
+LANE_ORDER = ("knowledge", "machinery", "standard", "hand")
+DEFAULT_LANE = "knowledge"
+LANES = {
+    "knowledge": ("Knowledge",
+                  "What the estate asserts: facts, identity, terminology, routing, restricted "
+                  "marking, outward-facing artifacts. A wrong answer makes the estate say "
+                  "something false."),
+    "machinery": ("Machinery",
+                  "How the estate runs: tooling, the cockpit, routines, scripts, collection "
+                  "setup, your own environment. A wrong answer is re-run, not un-done."),
+    "standard": ("Standard",
+                 "The governed KM Standard: version pushes, RFCs, template changes, pin "
+                 "adoption. A wrong answer is inherited by every future deployment."),
+    "hand": ("By your hand",
+             "Not decisions. Acts only you can perform: run a command, paste a brief, chase a "
+             "person, say your own draft is final. Nothing happens until you do it."),
+}
+
+
+def lane_of(value):
+    """The lane of a row, tolerant by contract: absent, empty, or unrecognised -> knowledge."""
+    v = (value or "").strip().lower()
+    return v if v in LANES else DEFAULT_LANE
 
 
 def hubs_of(text):
@@ -504,20 +643,8 @@ STYLE = """
   .sup-confirm.sup-error { color:var(--km-urgent); }
   .sup-guidance { margin:9px 0 0; color:var(--km-muted); font-size:11px; }
   .register-warning { margin:8px 0 0; color:var(--km-urgent); font-size:11px; }
-  .watchlist { margin-top:26px; }
- .watchlist-title { display:flex; align-items:baseline; gap:14px; margin-bottom:10px; }
- .watchlist-title h2 { margin:0; font-size:20px; }
- .watchlist-title p { margin:0; color:var(--km-muted); font-size:12px; }
- .watch-items { border:1px solid var(--km-line); border-radius:8px; background:var(--km-surface);
-   box-shadow:var(--km-shadow); overflow:hidden; }
- .watch-item { display:grid; grid-template-columns:34px 40px minmax(0,1fr) auto; gap:10px;
-   align-items:start; padding:13px 15px; border-top:1px solid var(--km-line); }
- .watch-item:first-child { border-top:0; }
- .watch-id { font:850 12px ui-monospace, monospace; text-transform:uppercase; }
- .watch-badge { padding:2px 5px; border-radius:3px; background:var(--km-accent-soft);
-   color:var(--km-accent); font:800 9px ui-monospace, monospace; text-align:center; }
- .watch-text { min-width:0; font-size:13px; }
- .watch-item time,.watch-date { color:var(--km-muted); font:700 10px ui-monospace, monospace; white-space:nowrap; }
+  .watchlist-pointer { margin-top:26px; }
+ .watchlist-pointer h2 { margin:0 0 8px; font-size:20px; }
  .desk { margin-top:26px; }
  .desk-title { display:flex; align-items:baseline; gap:14px; margin-bottom:10px; }
  .desk-title h2 { margin:0; font-size:20px; }
@@ -603,6 +730,124 @@ STYLE = """
  .doc table,.frag table { border-collapse:collapse; display:block; overflow-x:auto; }
  .doc td,.doc th,.frag td,.frag th { border:1px solid var(--km-line); padding:6px 10px; vertical-align:top; }
  .doc blockquote,.frag blockquote { border-left:4px solid var(--km-accent); margin-left:0; padding-left:14px; }
+ /* ---------- v1.64 additions (SPEC.md carries each rule) ---------- */
+ a.stat { display:block; color:inherit; text-decoration:none; }
+ a.stat:hover { border-color:var(--km-accent); }
+ .stat-note { margin:12px 0 0; color:var(--km-muted); font-size:12px; }
+ .pointer-note { margin:0; padding:11px 14px; border:1px dashed var(--km-line);
+   border-radius:7px; background:var(--km-surface); font-size:12.5px; }
+ .pointer-note b { color:var(--km-ink); }
+ /* An ANSWERED/EXECUTED row replaces its tier badge with these, and they must beat the tier
+    rules' own !important — otherwise a tier-A row the owner has already answered keeps its red
+    NEEDS YOU. */
+ .badge.badge-answered { background:#7b5a00 !important; }
+ .badge.badge-executed { background:#1f6b3a !important; }
+ .flag-warn { color:var(--km-urgent); font-weight:750; }
+ /* The state flag renders owner-supplied answer text: it wraps inside a bounded box rather than
+    widening the column (no owner-supplied value may size a layout, SPEC.md §8). */
+ .stateflag { display:block; max-width:32ch; white-space:normal; line-height:1.35;
+   text-align:right; }
+ .decision-actions { min-width:0; }
+ .lane-strip { margin-top:20px; }
+ .lane-strip-head { display:flex; align-items:baseline; gap:14px; margin-bottom:10px; }
+ .lane-strip-head h2 { margin:0; font-size:20px; }
+ .lane-strip-head p { margin:0; color:var(--km-muted); font-size:12px; }
+ .lane-pills { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:11px; }
+ .lane-pill { display:block; padding:14px 15px; border:1px solid var(--km-line);
+   border-radius:8px; background:var(--km-surface); box-shadow:var(--km-shadow);
+   text-decoration:none; color:inherit; }
+ .lane-pill:hover { border-color:var(--km-accent); }
+ .lane-pill-n { display:block; font:850 24px/1 ui-monospace, monospace; }
+ .lane-pill-l { display:block; margin-top:6px; color:var(--km-muted);
+   font:750 9px/1.35 ui-monospace, monospace; text-transform:uppercase; }
+ .lane-note { display:block; margin-top:5px; color:var(--km-muted); font-size:11px; }
+ .lane-bar { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 6px; }
+ .lane-chip { padding:6px 12px; border:1px solid var(--km-line); border-radius:999px;
+   background:var(--km-surface); color:var(--km-muted); text-decoration:none;
+   font:750 10px ui-monospace, monospace; text-transform:uppercase; letter-spacing:.05em; }
+ .lane-chip b { color:var(--km-ink); }
+ .lane-chip.on { background:var(--km-header); border-color:var(--km-header); color:#fff; }
+ .lane-chip.on b { color:#fff; }
+ .lane-scope { margin:0 0 4px; color:var(--km-muted); font-size:12px; }
+ .lane-section { border-top:2px solid var(--km-line); padding-top:16px; }
+ .lane-heading { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+ .lane-heading h2 { margin:0; font-size:19px; }
+ .lane-heading .lane-count { background:var(--km-header); color:#fff; padding:3px 8px;
+   font:800 10px ui-monospace, monospace; }
+ .lane-def { margin:5px 0 0; color:var(--km-muted); font-size:12px; }
+ .lane-section .ledger-section { margin-top:20px; }
+ .desk > .pointer-note { margin-bottom:12px; }
+ .dismiss-controls { display:flex; align-items:center; gap:8px; }
+ .dismiss-note { color:var(--km-muted); font-size:11px; }
+ .dismiss-note:empty { display:none; }
+ .dismiss-note.dismiss-error { color:var(--km-urgent); }
+ .dismissed-strip { display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+   padding:11px 15px; margin:0; border:1px dashed var(--km-line); border-radius:6px;
+   background:var(--km-accent-soft); color:var(--km-muted); font-size:12px; }
+ .dismissed-disclosure { margin-top:12px; }
+ .dismissed-disclosure > summary { cursor:pointer; color:var(--km-muted);
+   font:800 10px ui-monospace, monospace; letter-spacing:.04em; text-transform:uppercase; }
+ .dismissed-note { margin:9px 0; color:var(--km-muted); font-size:12px; }
+ .dismissed-list { margin:0; padding:0; list-style:none; border:1px solid var(--km-line);
+   border-radius:8px; background:var(--km-surface); overflow:hidden; }
+ .dismissed-item { display:grid; grid-template-columns:46px minmax(0,1fr) auto auto; gap:10px;
+   align-items:center; padding:10px 14px; border-top:1px solid var(--km-line); font-size:12.5px; }
+ .dismissed-item:first-child { border-top:0; }
+ .dismissed-item .feedat { white-space:nowrap; }
+ .activity-subnav { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 20px; }
+ .activity-subnav a { border:1px solid var(--km-line); border-radius:999px; padding:6px 13px;
+   font:750 12px/1 ui-sans-serif, system-ui; text-decoration:none; color:var(--km-ink);
+   background:var(--km-surface); }
+ .activity-subnav a:hover { border-color:var(--km-accent); }
+ .sectioncount { display:inline-block; margin-left:5px; padding:1px 7px; border-radius:999px;
+   background:var(--km-line); font:800 11px ui-monospace, monospace; vertical-align:middle; }
+ .activity-decisions > h2 { margin:0 0 4px; font-size:20px; }
+ .activity-unattended > h2 { margin:0 0 4px; font-size:20px; }
+ .feeditem { display:grid; grid-template-columns:auto minmax(0,1fr); gap:8px 12px;
+   align-items:baseline; padding:12px 16px; border-top:1px solid var(--km-line); }
+ .feeditem:first-child { border-top:0; }
+ .agent-activity { margin-bottom:36px; }
+ .agent-activity > h2 { margin:0 0 4px; font-size:20px; }
+ .agent-group { margin-top:16px; overflow:hidden; border:1px solid var(--km-line);
+   border-radius:8px; background:var(--km-surface); box-shadow:var(--km-shadow); }
+ .agent-group > h3 { margin:0; padding:11px 18px; border-bottom:1px solid var(--km-line);
+   font:800 11px ui-monospace, monospace; letter-spacing:.09em; text-transform:uppercase; }
+ .agent-group-boundary { border-color:var(--km-urgent); }
+ .agent-group-boundary > h3 { background:#fbeceb; color:var(--km-urgent);
+   border-bottom-color:var(--km-urgent); }
+ .agent-group-note { margin:0; padding:10px 18px; border-bottom:1px solid var(--km-line);
+   color:var(--km-muted); font-size:12px; }
+ .agent-entry-boundary { border-left:4px solid var(--km-urgent); }
+ .agent-state-refused,.agent-state-stopped { background:var(--km-urgent); }
+ .agent-state-applied { background:var(--km-success); }
+ .agent-state-reported { background:var(--km-info); }
+ .agent-meaning { margin:14px 0 6px; color:var(--km-muted); font-size:12px; }
+ .agent-read { margin:0 0 12px; font-weight:750; }
+ .agent-note { margin:13px 0 0; color:var(--km-muted); font-size:12px; }
+ .agent-none { margin-top:16px; }
+ .agent-pointer { margin-top:26px; }
+ .agent-pointer h2 { margin:0 0 8px; font-size:20px; }
+ .agent-unreadable { margin-top:13px; border-style:solid; border-color:#8a6500; }
+ .agent-unreadable ul { margin:6px 0 0; padding-left:18px; }
+ .supervisor-action-list li > .sup-dependency { grid-column:1/-1; }
+ .sup-dependency { margin-top:5px; color:var(--km-muted); font-size:12px; }
+ .sup-dependency b { color:var(--km-urgent); }
+ .sup-dependency q { color:var(--km-ink); }
+ .sup-due-overdue, .sup-due-missing, .sup-due-unreadable { color:var(--km-urgent);
+   font-weight:750; }
+ .sup-due-today { color:var(--km-accent); font-weight:750; }
+ .standard-card { margin-top:18px; }
+ .standard-card h2 { font-size:17px; margin:16px 0 4px; }
+ .standard-card .std-line { margin:8px 0; font-size:13.5px; }
+ .standard-card .std-muted { color:var(--km-muted); font-size:12px; }
+ .standard-card ul { margin:5px 0; padding-left:20px; }
+ .standard-card li { margin:3px 0; font-size:13px; }
+ .standard-card details { margin:3px 0 3px 2px; }
+ .standard-card summary { cursor:pointer; color:var(--km-accent); font-size:12.5px; }
+ .standard-card .std-path { font:600 10.5px ui-monospace, monospace; color:var(--km-muted); }
+ .waiting-estate { margin-top:30px; }
+ .waiting-estate h2 { margin:0 0 4px; font-size:19px; }
+ .waiting-estate .feed { margin-top:10px; }
  @media (prefers-color-scheme:dark) { :root { --km-ink:#e2e7eb; --km-accent:#55b8e8;
    --km-accent-soft:#19384a; --km-paper:#1c2026; --km-surface:#22272e; --km-line:#3e4650;
    --km-muted:#a9b1b9; --km-urgent:#d66c62; --km-success:#67b98f; --km-info:#73c7ef;
@@ -638,9 +883,7 @@ STYLE = """
     .supervisor-action-meta { text-align:left; white-space:normal; }
    .desk-title { display:block; } .desk-title p { margin-top:4px; }
    .desk-item { grid-template-columns:1fr; gap:6px; }
-    .watchlist-title { display:block; } .watchlist-title p { margin-top:4px; }
-   .watch-item { grid-template-columns:32px 38px minmax(0,1fr); }
-   .watch-item time,.watch-date { grid-column:3; }
+    .lane-pills { grid-template-columns:repeat(2,minmax(0,1fr)); }
    .hub-detail summary { position:relative; grid-template-columns:1fr auto; padding-right:24px; }
    .hub-directory-update,.hub-directory-signals { grid-column:1/-1; }
    .hub-directory-update > span:last-child { white-space:normal; }
@@ -744,11 +987,56 @@ async function untick(id) {
   }
   location.reload();
 }
+async function dismiss(id) {
+  const note = document.getElementById('dismiss-note-' + id);
+  try {
+    const r = await fetch('/dismiss', {method: 'POST',
+      headers: {'Content-Type': 'application/json'}, body: JSON.stringify({id: id})});
+    if (!r.ok) {
+      if (note) { note.textContent = await r.text(); note.classList.add('dismiss-error'); }
+      return;
+    }
+    document.querySelectorAll('[data-dismissable="' + id + '"]').forEach(
+      el => el.style.display = 'none');
+    document.querySelectorAll('[data-dismissed-strip="' + id + '"]').forEach(
+      el => el.style.display = '');
+  } catch (e) {
+    if (note) { note.textContent = 'Not recorded — the cockpit server did not respond.';
+      note.classList.add('dismiss-error'); }
+  }
+}
+async function undismiss(id) {
+  const strip = document.querySelector('[data-dismissed-strip="' + id + '"]');
+  try {
+    const r = await fetch('/dismiss', {method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({id: id, undo: true})});
+    if (!r.ok) {
+      if (strip) strip.textContent = await r.text();
+      return;
+    }
+  } catch (e) {
+    if (strip) strip.textContent = 'Not restored — the cockpit server did not respond.';
+    return;
+  }
+  location.reload();
+}
 async function viewfrag(id, p) {
   const box = document.getElementById('frag-' + id);
   box.style.display = '';
   box.innerHTML = 'loading…';
   box.innerHTML = await (await fetch('/fragment?p=' + encodeURIComponent(p))).text();
+}
+function setBadge(card, meta) {
+  // A surface that changes while nobody is looking must announce the change: without this, a
+  // page left open kept the red tier badge beside a tick it now contradicted.
+  const b = card.querySelector('[data-badge]');
+  if (!b || b.textContent === meta.label) return;
+  b.classList.remove('badge-answered', 'badge-executed');
+  b.classList.add(meta.cls);
+  b.style.background = meta.color;
+  b.title = meta.tip;
+  b.textContent = meta.label;
 }
 async function refresh() {
   try {
@@ -759,12 +1047,21 @@ async function refresh() {
       if (!flag) return;
       if (s.executed[id]) {
         card.classList.add('done');
-        flag.innerHTML = '<span class="execflag">✓ executed</span> — ' + s.executed[id];
+        setBadge(card, KM_BADGE.executed);
+        flag.innerHTML = '<span class="execflag">✓ Execution recorded — reconciliation pending</span> — ' + s.executed[id];
         card.querySelectorAll('[data-answer-control]').forEach(e => e.style.display = 'none');
       } else if (s.pending.includes(id) || s.queued.includes(id)) {
         card.classList.add('done');
-        const verb = (s.answers && s.answers[id]) ? '"' + s.answers[id] + '" ' : '';
-        flag.innerHTML = '<span class="doneflag">✓ answer ' + verb + 'recorded — awaiting Supervisor execution</span>';
+        setBadge(card, KM_BADGE.answered);
+        // /api/state serves the verb already shortened and escaped server-side (short_verb).
+        // Two truthful phrasings of the ONE answered state: a consumed answer (queued) is being
+        // executed by the Supervisor; an unconsumed one awaits the pickup. Either way the row is
+        // ANSWERED — never answerable again until executed.
+        const a = (s.answers && s.answers[id]) ? s.answers[id] : '';
+        flag.innerHTML = s.queued.includes(id)
+          ? '<span class="doneflag">✓ Answered' + (a ? ' “' + a + '”' : '') + ' — executing</span>'
+          : (a ? '<span class="doneflag">✓ “' + a + '” recorded — awaiting execution</span>'
+               : '<span class="doneflag">✓ answer recorded — awaiting execution</span>');
         card.querySelectorAll('[data-answer-control]').forEach(e => e.style.display = 'none');
       }
     });
@@ -773,6 +1070,16 @@ async function refresh() {
 setInterval(refresh, 4000);
 window.addEventListener('load', refresh);
 """
+
+# The badge metadata the poll swaps in is SERIALISED FROM THE PYTHON CONSTANTS the server renders
+# from, never restated in the JS. Two copies of a label drift, and a client that disagreed with
+# the server about what a row's state is called is the same defect one layer down.
+BADGE_JS = "const KM_BADGE = " + json.dumps({
+    "executed": {"cls": "badge-executed", "color": EXECUTED_META[1],
+                 "label": EXECUTED_META[0], "tip": EXECUTED_META[2]},
+    "answered": {"cls": "badge-answered", "color": ANSWERED_META[1],
+                 "label": ANSWERED_META[0], "tip": ANSWERED_META[2]},
+}) + ";\n"
 
 
 def page(title, inner, sub="", active="", context=None):
@@ -802,7 +1109,7 @@ def page(title, inner, sub="", active="", context=None):
 {f'<div class="sub">{sub}</div>' if sub else ''}<div class="page-content">{inner}</div></main>
 <aside class="portal-context" aria-label="Cockpit context">{context_html}</aside>
 </div>
-<script>{JS}</script></body></html>"""
+<script>{BADGE_JS}{JS}</script></body></html>"""
 
 
 # ---------- queue parsing ----------
@@ -810,16 +1117,9 @@ def page(title, inner, sub="", active="", context=None):
 def parse_cards(raw=None):
     if raw is None:
         raw = QUEUE.read_text(encoding="utf-8")
-    joined = []
-    for line in raw.splitlines():
-        if joined and line.startswith("  ") and not line.lstrip().startswith(("-", "|", "#", "<")) \
-                and (joined[-1].lstrip().startswith("|") or joined[-1].lstrip().startswith("- ")):
-            joined[-1] += " " + line.strip()
-        else:
-            joined.append(line)
     cards = []
     fenced = False
-    for line in joined:
+    for line in _join_wrapped(raw):
         s = line.strip()
         # A fenced block is documentation, not queue content (v1.31): the template ships worked
         # example rows so there is something to copy and something to check against, and an
@@ -829,16 +1129,36 @@ def parse_cards(raw=None):
             continue
         if fenced:
             continue
-        m = re.match(r"^\|\s*([ab]\d+)\s*\|(.*)\|\s*$", s)
+        # Tolerate markdown emphasis / code ticks around the id (v1.64). A row written as
+        # `| **b57** |` used to drop out entirely here, so an open decision VANISHED from the
+        # board while its ask still circulated elsewhere. The fail-closed machine-block
+        # cross-check at the end catches any that still slip through.
+        m = re.match(r"^\|\s*[*_`]*([ab]\d+)[*_`]*\s*\|(.*)\|\s*$", s)
         if m:
             rid, tier = m.group(1), m.group(1)[0]
             cells = [c.strip() for c in m.group(2).split("|")]
-            # Canonical schema (ruled 2026-08-17, dossier §2.1): Id | Since | Defaults | Decision |
-            # Options — recognized by the Defaults cell ("-" or a date). The legacy shapes below
-            # (tier-A 4-col, tier-B 3-col, repaired 4-col) stay parseable until the queue migrates.
-            if len(cells) >= 4 and re.match(r"^(-|\d{2}-\d{2}|\d{4}-\d{2}-\d{2})$", cells[1]):
+            # Canonical schema: Id | Since | Defaults | Decision | Options. ARITY DECIDES IT,
+            # never the Defaults cell's content (v1.64; see DEFAULTS_CELL_RE for why this is a
+            # class and not a value). Five cells is a canonical row and cells[1] is its Defaults
+            # cell whatever it holds; an unreadable value FAILS LOUDLY here instead of falling
+            # through to the three-cell legacy reading, which shifted every field left by one
+            # and rendered the Defaults cell as the card's title. The legacy shapes below stay
+            # parseable until a queue migrates.
+            if len(cells) >= 4:
+                if not DEFAULTS_CELL_RE.match(cells[1]):
+                    cards.append({
+                        "id": rid, "tier": tier, "when": cells[0],
+                        "what": (f"⚠ This row's Defaults cell reads {cells[1]!r}, which is not a "
+                                 f"default the board can read. Write it as one of "
+                                 f"{DEFAULTS_CELL_FORMS} in the queue file. Shown as a defect so "
+                                 f"it cannot render as this card's title."),
+                        "next": "",
+                        "parse_error": True,
+                        "parse_error_reason": (f"Defaults cell {cells[1]!r} is not one of "
+                                               f"{DEFAULTS_CELL_FORMS}")})
+                    continue
                 when = cells[0]
-                if tier == "b" and cells[1] != "-":
+                if tier == "b" and cells[1] not in ("-", "never"):
                     when = f"{cells[0]} · defaults {cells[1]}"
                 what, nxt = cells[2], " | ".join(cells[3:])
             elif len(cells) >= 3:
@@ -850,7 +1170,12 @@ def parse_cards(raw=None):
                        'default date). **"veto"** stops it.') if tier == "b" else ""
             else:
                 continue
-            cards.append({"id": rid, "when": when, "what": what, "next": nxt, "tier": tier})
+            # The ANSWERED marker is state, not decision text: take it out here, once, so every
+            # downstream reader of `what` (title, hub inference, queue context) sees the decision
+            # and nothing else. The verb travels beside it (v1.64).
+            what, answered_row = split_row_answer(what)
+            cards.append({"id": rid, "when": when, "what": what, "next": nxt, "tier": tier,
+                          "answered_row": answered_row})
             continue
         m = re.match(r"^- \*\*(c\d+)[ —:-]*([^*]*)\*\*[ :—-]*(.*)$", s)
         if m:
@@ -865,9 +1190,34 @@ def parse_cards(raw=None):
         for line in mb.group(1).splitlines():
             p = [x.strip() for x in line.split("|")]
             if len(p) >= 4 and re.match(r"^[abc]\d+$", p[0]):
-                dates[p[0]] = {"raised": p[2], "default": p[3]}
+                # `lane` is field 6, appended last so every positional reader above is untouched;
+                # a row written before the field existed has len(p) == 5 and takes the contract
+                # default. `answered:<verb>` is appended after it for the same reason; scan the
+                # tail rather than indexing, so a later appended field cannot displace it.
+                answered_mb = next(
+                    (x.split(":", 1)[1].strip() for x in p[6:] if x.startswith("answered:")), None)
+                dates[p[0]] = {"raised": p[2], "default": p[3],
+                               "lane": lane_of(p[5] if len(p) >= 6 else ""),
+                               "answered_mb": answered_mb}
     for c in cards:
         c.update(dates.get(c["id"], {}))
+        # A rendered row with no machine-block line at all still gets a lane.
+        c["lane"] = lane_of(c.get("lane"))
+    # FAIL CLOSED (v1.64): a row present in the QUEUE machine block but with NO rendered card
+    # must SURFACE here, never vanish — a silent row-drop is invisible precisely because the
+    # dropped row produces nothing to see. The placeholder makes a parse failure loud.
+    seen = {c["id"] for c in cards}
+    for rid, meta in dates.items():
+        if rid in seen:
+            continue
+        cards.append({"id": rid, "tier": rid[0], "when": meta.get("raised", ""),
+                      "what": ("⚠ This row is in the QUEUE machine block but its rendered row "
+                               "did not parse — fix its formatting in the queue file. Shown so "
+                               "it is not silently dropped."),
+                      "next": "", "raised": meta.get("raised", ""),
+                      "default": meta.get("default", ""),
+                      "lane": meta.get("lane", lane_of("")), "parse_error": True})
+    cards.sort(key=lambda c: (order[c["tier"]], int(c["id"][1:])))
     return cards
 
 
@@ -907,6 +1257,10 @@ OPTION_FORMS = (
 
 
 def options_of(card):
+    if card.get("parse_error"):
+        # A row that failed to parse offers no options at all — above all not the tier-B
+        # synthetic pair, which would answer a question the surface never read (v1.64).
+        return []
     found = []
     for form in OPTION_FORMS:
         found = re.findall(form, card["next"])
@@ -953,6 +1307,11 @@ def options_gate(card, opts):
     the gate reason, which routes the card into the "Preparing for you" group exactly like a
     failing decision brief. Rendering an empty action bar is a false pass: the owner sees a
     complete-looking card and no control, with nothing anywhere saying why."""
+    if card.get("parse_error"):
+        # A row that failed to parse is never answerable, whatever else it declares: answering it
+        # would record a word against a question the surface could not even read (v1.64).
+        return (card.get("parse_error_reason")
+                or "the row is in the QUEUE machine block but its rendered row failed to parse")
     if card.get("tier") == "c" or opts:
         return None
     if declares_options(card):
@@ -987,10 +1346,14 @@ OWNER_TEXT_GRIDS = {
     # selector: (1-based track positions carrying owner-supplied text, what the owner supplies)
     ".decision-glance": ((2, 3), "the queue's Decision text, and the row's own option labels"),
     ".activity-summary": ((5,), "the recorded answer or execution note"),
-    ".watch-item": ((3,), "the tier-C row's text"),
     ".supervisor-action-list li": ((1,), "the supervisor-action text from the queue"),
     ".desk-item": ((2,), "the owner's desk item text from the queue"),
     ".desk-done-item": ((1,), "the ticked desk item text from the queue"),
+    # v1.64 surfaces, registered in the same change that added them (SPEC.md §8): the tier-C
+    # watch-item grid left with the watchlist (tier C now renders as decision rows), and these
+    # arrived with dismissal and the actor-split activity page.
+    ".dismissed-item": ((2,), "the dismissed item's queue text"),
+    ".feeditem": ((2,), "the pickup-log line or owed-proposal state text"),
 }
 UNBOUNDED_TRACK_MAX = ("auto", "max-content")
 
@@ -1334,9 +1697,15 @@ def decision_brief_sections(path):
 
 
 def decision_title(card):
-    """Extract the queue's short recognition phrase without its full narrative."""
-    match = re.search(r"\*\*(.+?)\*\*", card["what"])
-    source = match.group(1) if match else card["what"]
+    """Extract the queue's short recognition phrase without its full narrative.
+
+    The ANSWERED marker is stripped FIRST. parse_cards already splits it off `what`, so this is
+    the floor that holds if a marker ever reaches here by another route — a hand-written row, a
+    future caller building a card dict itself. A title is the decision's identity; the marker is
+    the row's state, and a card headed by it hides the very thing the owner is looking for."""
+    cell = ROW_ANSWER_RE.sub("", card["what"].strip())
+    match = re.search(r"\*\*(.+?)\*\*", cell)
+    source = match.group(1) if match else cell
     source = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", source)
     source = re.sub(r"[*_`]+", "", source).strip().split("\n", 1)[0]
     sentence = re.match(r"^(.+?[.!?])(?:\s|$)", source)
@@ -1399,6 +1768,22 @@ def read_jsonl(p):
     return out
 
 
+def executed_records():
+    """Execution-ledger records that ARE executions. A status:"recorded" entry is a bookkeeping
+    acknowledgement — answered, not executed — and must never appear on any surface that presents
+    work as done ("Recent executions", the executed count). /activity renders those entries
+    itself, truthfully labelled (v1.64)."""
+    return [r for r in read_jsonl(EXECUTIONS) if r.get("status") != "recorded"]
+
+
+def _decision_answers(path):
+    """Answer records that are DECISIONS. A desk tick rides the same channel (so the ordinary
+    `pull` consumes it) but it is not an owner decision, and it must never be counted as one:
+    conflating the two would inflate "awaiting Supervisor execution" with the owner's own
+    personal follow-ups (dev-0013)."""
+    return [r for r in read_jsonl(path) if not str(r.get("id", "")).startswith(DESK_PREFIX)]
+
+
 def state():
     # An execution record with status "recorded" is a BOOKKEEPING acknowledgement (an unattended
     # answer pickup captured the owner's answer) and is NOT the work being done. It must never
@@ -1419,40 +1804,80 @@ def state():
         else:
             executed[r["id"]] = r
             recorded.pop(r["id"], None)      # a real execution supersedes an earlier bookkeeping note
-    # Desk ticks ride the ANSWERS channel ({"id": "desk-<slug>", "answer": "done", ...}), so the
-    # decision accounting must skip them or a cleared personal follow-up reads as a decision
-    # awaiting execution. The desk lane is derived separately (render_desk/desk_ticks) and stays
-    # the only place desk ids surface (dev-0013).
-    pending = [r["id"] for r in read_jsonl(ANSWERS)
-               if r["id"] not in executed and not str(r["id"]).startswith(DESK_PREFIX)]
-    # A pulled answer whose row is STILL open in QUEUE.md means the row was reopened/repaired
-    # (sequencing rule: pull updates the queue immediately; ledger #7: such rows return to open).
-    open_ids = {c["id"] for c in parse_cards()}
-    queued = [r["id"] for r in read_jsonl(PROCESSED)
-              if r["id"] not in executed and r["id"] not in pending and r["id"] not in open_ids
-              and not str(r["id"]).startswith(DESK_PREFIX)]
+    pending = [r["id"] for r in _decision_answers(ANSWERS) if r["id"] not in executed]
+    # TWO STATES ONLY (v1.64, an owner-ruled evolution in the reference deployment that
+    # supersedes the earlier reopened-row reading): a row is ANSWERED from the moment the owner's
+    # answer exists — INCLUDING after a pickup CONSUMED it into the processed store — until a
+    # status-less execution record marks it EXECUTED. There is no third state. So a consumed
+    # answer whose row is still open in the queue stays answered/queued here: during the
+    # execution window the row IS still open, and re-rendered answer buttons on it were the
+    # recurring display lie. TRADEOFF, stated plainly: this code previously read
+    # open-row-with-consumed-answer as a REOPEN and made the row answerable again. A reopen is
+    # only reliably signalled by the row's text or brief CHANGING after the answer, which these
+    # stores do not record, so the two cases cannot be told apart from here. The non-answerable
+    # rendering is preferred: a false "answerable" re-collects an answer the estate already
+    # holds, while a genuine reopen is re-registered under a NEW id and is untouched by this.
+    queued = [r["id"] for r in _decision_answers(PROCESSED)
+              if r["id"] not in executed and r["id"] not in pending]
     # A "recorded" row (answer captured, work owed) is the SAME owner-visible state as queued —
     # "answered, awaiting Supervisor execution" — so fold it in and let every renderer handle it.
-    # It stays in `recorded` for provenance. An open row is excluded: an answered row still on the
-    # board is a re-ask, not a captured answer awaiting execution.
+    # It stays in `recorded` for provenance.
     for rid in recorded:
-        if rid not in queued and rid not in executed and rid not in pending and rid not in open_ids:
+        if rid not in queued and rid not in executed and rid not in pending:
             queued.append(rid)
+    # Dedupe: the processed store can carry the same id twice when a row is re-answered and
+    # re-pulled, which would double-count it in "awaiting execution".
     pending = list(dict.fromkeys(pending))
     queued = list(dict.fromkeys(queued))
     replies = {}
     for r in read_jsonl(QREPLIES):
         replies.setdefault(r["id"], []).append(r)
     answers = {}
-    for r in read_jsonl(PROCESSED) + read_jsonl(ANSWERS):
+    for r in _decision_answers(PROCESSED) + _decision_answers(ANSWERS):
         if r.get("id") and r.get("answer"):
             answers[r["id"]] = r["answer"]
+    # THE ROW'S OWN MARKER IS AN ANSWER SOURCE (v1.64). The queue file is the record; the two
+    # jsonl stores are rotating logs. A row the pickup marked but whose store record has aged
+    # out, been pruned, or was written by a different deployment must still read ANSWERED —
+    # otherwise the board offers answer controls under the owner's own answer. Read HERE rather
+    # than at each render site, so every executed|pending|queued computation, the lane counts
+    # and the card agree.
+    marked = row_answers()
+    for rid, verb in marked.items():
+        if rid not in executed and rid not in pending and rid not in queued:
+            queued.append(rid)
+        answers.setdefault(rid, verb)
     return {"pending": pending, "queued": queued, "executed": executed,
-            "recorded": list(recorded), "replies": replies, "answers": answers}
+            "recorded": list(recorded), "replies": replies, "answers": answers,
+            "row_marked": marked}
+
+
+def row_answers(raw=None):
+    """{id: verb} for every queue row carrying the durable ANSWERED marker (Decision cell, or
+    the machine block's appended `answered:` field).
+
+    Fails SOFT on an unreadable queue and only there: this feeds a state() that many surfaces
+    call, and a fixture with no queue file must not take the whole cockpit down. A queue that IS
+    readable but carries a malformed marker simply yields no verb for that row, and the row keeps
+    whatever the answer stores say about it."""
+    if raw is None:
+        if QUEUE is None:
+            return {}
+        try:
+            raw = QUEUE.read_text(encoding="utf-8")
+        except OSError:
+            return {}
+    out = {}
+    for c in parse_cards(raw):
+        verb = c.get("answered_row") or c.get("answered_mb")
+        if verb:
+            out[c["id"]] = verb
+    return out
 
 
 def rec_stats():
-    recs = [r for r in read_jsonl(PROCESSED) + read_jsonl(ANSWERS) if r.get("recommended")]
+    recs = [r for r in _decision_answers(PROCESSED) + _decision_answers(ANSWERS)
+            if r.get("recommended")]
     followed = sum(1 for r in recs if r["answer"].lower().strip() == r["recommended"].lower().strip())
     return len(recs), followed
 
@@ -1464,10 +1889,119 @@ def age_days(datestr):
         return None
 
 
+# ---------- Dismissal of informational items (v1.64; SPEC.md §4) ----------
+# "The information should have a way to be dismissed; if not dismissed, the message stays."
+# Four things this is, and is not:
+#   1. It covers INFORMATIONAL items only — tier-C FYI cards and the "Preparing for you" gate
+#      notices. A tier-A/B decision card is never dismissible: it leaves the board by being
+#      ANSWERED. A "Waiting on KM Supervisor" action is never dismissible: it is work owed, and
+#      it leaves when the work is done.
+#   2. Persistence is the DEFAULT. Nothing here expires, times out, or hides itself on a
+#      seen-heuristic; dismissal is the only exit and it is always the owner's hand.
+#   3. It is OWNER-SIDE VIEW STATE, never an estate write — an append to dismissed.jsonl,
+#      exactly like an answer. The queue file is not touched: the item stays in the record, it
+#      only leaves the owner's screen.
+#   4. Undo is immediate and re-revealing is permanent: the card offers Undo the instant it is
+#      dismissed, and each informational section carries an "N dismissed" disclosure that
+#      restores any of them. Dismissal must never feel like deletion.
+# The store is append-only: an undo is itself an appended record ({"id", "at", "undo": true}),
+# never a rewrite, and the LAST record for an id wins.
+
+
+def dismissals(records=None):
+    """Effective dismissals: id -> the record that dismissed it. Read-only."""
+    latest = {}
+    for r in (read_jsonl(DISMISSED) if records is None else records):
+        if r.get("id"):
+            latest[r["id"]] = r
+    return {rid: r for rid, r in latest.items() if not r.get("undo")}
+
+
+def dismissible_ids(cards=None):
+    """Ids the owner may dismiss: tier-C rows, and tier-A/B records currently GATED (a missing
+    or failing decision brief, or options the surface cannot read — they render in the
+    non-actionable "Preparing for you" group). Computed live from the queue on every request —
+    never a hardcoded list — so a record whose gate later clears returns to its tier as an
+    answerable card, dismissal or not."""
+    cards = parse_cards() if cards is None else cards
+    out = set()
+    for c in cards:
+        if c["tier"] == "c":
+            out.add(c["id"])
+        elif c["tier"] in ("a", "b"):
+            if brief_check(c["id"])[1] or options_gate(c, options_of(c)):
+                out.add(c["id"])
+    return out
+
+
+def record_dismissal(item_id, undo=False, cards=None, now=None):
+    """Append one dismissal (or its undo) for an informational item. Returns (http-code,
+    message). Validates against the live queue; appends only to the append-only owner store;
+    never touches the queue file."""
+    item_id = (item_id or "").strip()
+    if item_id not in dismissible_ids(cards):
+        return 404, (f"{item_id or 'that item'} is not a dismissible informational item — "
+                     "decisions leave by being answered, Supervisor work by being done")
+    CFG.mkdir(parents=True, exist_ok=True)
+    record = {"id": item_id, "at": now or time.strftime("%Y-%m-%d %H:%M:%S")}
+    if undo:
+        record["undo"] = True
+    with DISMISSED.open("a") as f:
+        f.write(json.dumps(record) + "\n")
+    return 200, ("Restored to your view." if undo else
+                 "Dismissed from your view — it stays in the queue file, the record.")
+
+
+def dismissed_listing():
+    """The `dismissed` CLI view: one JSON line per effective dismissal. READ-ONLY by
+    construction — it consumes nothing and rotates nothing (never call a consuming verb from a
+    status path)."""
+    return [json.dumps(r, sort_keys=True) for r in dismissals().values()]
+
+
+def dismiss_control(rid):
+    """The owner's only control on an informational item."""
+    return (f'<div class="dismiss-controls">'
+            f'<button class="small" title="Hide this from your cockpit view. It stays in the '
+            f'queue file, and you can restore it." onclick="dismiss(\'{rid}\')">Dismiss</button>'
+            f'<span class="dismiss-note" id="dismiss-note-{rid}" role="status"></span></div>')
+
+
+def dismiss_strip(rid):
+    """The Undo affordance, rendered with the card and revealed the instant it is dismissed —
+    same page render, no reload, so a mis-click is recoverable on the spot."""
+    return (f'<div class="dismissed-strip" data-dismissed-strip="{rid}" style="display:none" '
+            f'role="status"><span><b>{rid}</b> dismissed — it stays in the queue file, the '
+            f'record.</span><button class="small" onclick="undismiss(\'{rid}\')">Undo</button>'
+            f'</div>')
+
+
+def dismissed_entry(card, at=""):
+    """One line in the "N dismissed" disclosure: enough to recognise the item, and Restore."""
+    text = card["what"][:180] + ("…" if len(card["what"]) > 180 else "")
+    when = (f'<span class="feedat">dismissed {html.escape(at)}</span>' if at else
+            '<span class="feedat">dismissed</span>')
+    return (f'<li class="dismissed-item"><span class="rid">{html.escape(card["id"])}</span>'
+            f'<span class="dismissed-text">{md_inline(text)}</span>{when}'
+            f'<button class="small" onclick="undismiss(\'{card["id"]}\')">Restore</button></li>')
+
+
+def render_dismissed_disclosure(entries):
+    """The small foot disclosure. Absent when nothing is dismissed; never a count that
+    dead-ends — it opens onto the items themselves, each with Restore."""
+    if not entries:
+        return ""
+    return (f'<details class="dismissed-disclosure"><summary>{len(entries)} dismissed</summary>'
+            '<p class="dismissed-note">Dismissed items are hidden from this view only. They stay '
+            'in the queue file, which is the record, and the Supervisor still sees them. '
+            'Restore any of them here.</p>'
+            f'<ul class="dismissed-list">{"".join(entries)}</ul></details>')
+
+
 # ---------- Waiting on KM Supervisor — owner requests on Supervisor actions ----------
 # Ruled 2026-08-17 (_inbox/processed/2026-08-17_KM-Cockpit_supervisor-actions-owner-interaction_
 # RULED.md): the register is work owed by the KM Supervisor, never the owner's task list. The
-# owner may REQUEST (ask for update / prioritize / hold); every request rides the existing
+# owner may REQUEST (ask for update / run next / hold); every request rides the existing
 # questions pipeline under the stable ref `supervisor-action:<action-id>` and reaches the normal
 # `questions` pull; the Supervisor's `reply` keyed to the same ref lands back on the row. No
 # control edits QUEUE.md or the SUPERVISOR-ACTIONS block, ever — the Supervisor alone updates the
@@ -1477,31 +2011,111 @@ def age_days(datestr):
 SUP_REF_PREFIX = "supervisor-action:"
 SUP_REQUEST_TYPES = {
     "question": None,  # free text, required
-    "prioritize": "Please prioritize this action",
+    "run-next": "Run this next — make this the next action you pick up",
     "hold": "Hold this action pending my direction",
 }
 SUP_CONFIRMATION = "Request recorded — awaiting KM Supervisor acknowledgement."
+SUP_RUN_NEXT_CONFIRMATION = "Recorded — the KM Supervisor picks this up next."
+# The superseded control, kept ONLY as a named rejection (v1.64): an owner on a page rendered
+# before this version must be told the click was not recorded, not have it filed under a word
+# they no longer have. Nothing is written on this path. Prioritize was retired on the owner's
+# own challenge in the reference deployment: a relative nudge was never a usable instruction,
+# and the distinction it rested on (an owner ANSWER versus a request on Supervisor work) was
+# semantic, not structural — both are one recorded word the cockpit never executes.
+SUP_RETIRED_TYPES = {
+    "prioritize": "the Prioritize control is now Run next — nothing was recorded; "
+                  "reload this page and press Run next",
+}
+
+# ---- the dependency, which is the one real difference from a queue row (v1.64) ----
+# The SUPERVISOR-ACTIONS block is five cells and nothing else, so a blocker can only live INSIDE
+# the action prose. It is therefore QUOTED, never parsed into a field the estate never wrote.
+# The cue list is deliberately narrow: a missed dependency costs nothing (the full action text
+# is rendered immediately above the quote), an invented one would put words in the estate's
+# mouth. Run next over a stated dependency is RECORDED, never refused — the owner may override —
+# and the clause travels into the pulled record and the confirmation, so both sides see what is
+# being overridden and the Supervisor either runs it or comes back with why not.
+SUP_DEPENDENCY_CUES = re.compile(
+    r"(\bwaits? on\b|\bwaiting on\b|\bblocked by\b|\bdepends on\b|\bdependent on\b"
+    r"|\btrigger is\b|\btrigger:|\bpending (?:his|her|my|the|owner)\b"
+    r"|\brequires\b[^.;]{0,90}?\bbefore\b|\bcannot\b[^.;]{0,60}?\buntil\b"
+    r"|\bonly after\b|\bnot before\b)", re.I)
+
+
+def supervisor_dependencies(text, limit=2, cap=200):
+    """The clauses of an action's own text that say what it is waiting on, verbatim (trimmed
+    with an ellipsis past CAP, trailing clause separators dropped). Empty when the text names
+    nothing: the card then shows the action text alone rather than a guessed field. When a
+    quoted clause reads badly, fix the action text so the dependency leads — never front-trim
+    the quote in the renderer, because trimming can lop a negation and turn a quote into a
+    claim."""
+    out = []
+    for chunk in re.split(r"(?<=[.;])\s+", " ".join((text or "").split())):
+        chunk = chunk.strip()
+        if not chunk or not SUP_DEPENDENCY_CUES.search(chunk):
+            continue
+        if len(chunk) > cap:
+            chunk = chunk[:cap].rsplit(" ", 1)[0].rstrip(",;:") + " …"
+        chunk = chunk.rstrip(" ;")
+        if chunk and chunk not in out:
+            out.append(chunk)
+        if len(out) >= limit:
+            break
+    return out
+
+
+def due_status(due):
+    """(state, text) for an action's due cell, the same ISO-against-today comparison the
+    session-start scan makes, so the board and the scan cannot tell different stories. An
+    absent due date renders as a defect rather than as blank space, because "when a session
+    picks it up" is not a plan."""
+    due = (due or "").strip()
+    if not due or due == "-":
+        return "missing", "No due date"
+    days = age_days(due)
+    if days is None:
+        return "unreadable", f"Due date unreadable ({due})"
+    if days > 0:
+        return "overdue", f"Overdue by {days} day{'s' if days != 1 else ''} — was due {due}"
+    if days == 0:
+        return "today", f"Due TODAY ({due})"
+    return "ahead", f"Due {due} (in {-days} day{'s' if days != -1 else ''})"
 
 
 def record_supervisor_request(action_id, mtype, text="", register=None, now=None):
     """Validate and append one owner request on a Supervisor action. Returns (http-code,
     message). Action ids are parsed LIVE from the SUPERVISOR-ACTIONS block on every request —
     never a hardcoded list; invalid ids and types are rejected. Appends only to the append-only
-    questions store; never touches QUEUE.md."""
+    questions store; never touches the queue file.
+
+    Run next is never refused, whatever the action says it is waiting on: the owner may
+    override. The dependency is carried instead — into the record the Supervisor pulls AND into
+    the confirmation the owner reads, so nothing is swallowed on either side."""
+    if mtype in SUP_RETIRED_TYPES:
+        return 400, SUP_RETIRED_TYPES[mtype]
     if mtype not in SUP_REQUEST_TYPES:
-        return 400, f"invalid request type {mtype!r} — question, prioritize, or hold"
+        return 400, f"invalid request type {mtype!r} — question, run-next, or hold"
     register = parse_supervisor_actions() if register is None else register
-    if action_id not in {a["id"] for a in register["actions"]}:
+    action = next((a for a in register["actions"] if a["id"] == action_id), None)
+    if action is None:
         return 404, f"unknown supervisor action id {action_id!r}"
     message = SUP_REQUEST_TYPES[mtype] or " ".join((text or "").split())
     if not message:
         return 400, "an update request needs text"
+    confirmation = SUP_RUN_NEXT_CONFIRMATION if mtype == "run-next" else SUP_CONFIRMATION
+    if mtype == "run-next":
+        stated = supervisor_dependencies(action["action"], limit=1, cap=140)
+        if stated:
+            message += (f' (the action states: "{stated[0]}" — run it or come back with why not)')
+            confirmation += (f' Note: this action states it is waiting on something — '
+                             f'"{stated[0]}". The Supervisor will either run it or come back '
+                             f'with why not.')
     CFG.mkdir(parents=True, exist_ok=True)
     with QUESTIONS.open("a") as f:
         f.write(json.dumps({"id": SUP_REF_PREFIX + action_id, "type": mtype,
                             "question": message,
                             "at": now or time.strftime("%Y-%m-%d %H:%M:%S")}) + "\n")
-    return 200, SUP_CONFIRMATION
+    return 200, confirmation
 
 
 def supervisor_action_messages():
@@ -1548,12 +2162,16 @@ def render_supervisor_actions(register, messages=None):
             age = age_days(action["since"])
             age_text = ("Date unavailable" if age is None else
                         f'Open {age} day{"s" if age != 1 else ""}')
-            due_text = ""
-            if action["due"] != "-":
-                due_age = age_days(action["due"])
-                due_text = (" · Date unavailable" if due_age is None else
-                            f' · {"Overdue" if due_age > 0 else "Due"} '
-                            f'{html.escape(action["due"])}')
+            dstate, dlabel = due_status(action["due"])
+            due_text = (f' · <span class="sup-due sup-due-{dstate}">'
+                        f'{html.escape(dlabel)}</span>')
+            stated = supervisor_dependencies(action["action"])
+            dep_html = ""
+            if stated:
+                dep_html = ('<div class="sup-dependency"><b>Stated dependency</b> — quoted '
+                            'from the action above: '
+                            + " ".join(f"<q>{html.escape(d)}</q>" for d in stated)
+                            + '</div>')
             astate, last_req, last_rep = supervisor_action_state(
                 requests.get(aid, []), replies.get(aid, []))
             flag = ""
@@ -1583,23 +2201,29 @@ def render_supervisor_actions(register, messages=None):
                     f'<div class="answer"><input type="text" id="sup-q-{html.escape(aid)}" '
                     f'placeholder="What would you like to know about this work?">'
                     f'<button class="small" onclick="supAsk(\'{aid}\')">Send</button></div></details>'
-                    f'<button class="small" onclick="supSend(\'{aid}\', \'prioritize\')">Prioritize</button>'
-                    f'<button class="small" onclick="supSend(\'{aid}\', \'hold\')">Hold</button></div>'
+                    f'<button class="small" title="Record that this is the next action the '
+                    f'KM Supervisor picks up — recorded here, executed in its own session." '
+                    f'onclick="supSend(\'{aid}\', \'run-next\')">Run next</button>'
+                    f'<button class="small" title="Bind the scheduling of this action until you '
+                    f'release it." onclick="supSend(\'{aid}\', \'hold\')">Hold</button></div>'
                     f'<div class="sup-confirm" id="sup-confirm-{html.escape(aid)}" role="status"></div>')
             items.append(
                 f'<li data-sup-action="{html.escape(aid)}" data-sup-state="{astate}">'
                 f'<div>{md_inline(action["action"])}{flag}</div>'
                 f'<div class="supervisor-action-meta">{age_text}{due_text} · '
                 f'{md_inline(action["evidence"])}</div>'
-                f'{reply_html}{thread}{controls}</li>'
+                f'{dep_html}{reply_html}{thread}{controls}</li>'
             )
         body = f'<ol class="supervisor-action-list">{"".join(items)}</ol>'
     malformed = register["malformed"]
     warning = (f'<p class="register-warning">{malformed} malformed entr'
                f'{"y" if malformed == 1 else "ies"} omitted.</p>' if malformed else "")
-    guidance = ('<p class="sup-guidance">Anything that needs your decision is never held here — '
-                'it is registered on the <a href="/decisions">Decisions</a> page as a governed '
-                'Tier A or B row with explicit options.</p>')
+    guidance = ('<p class="sup-guidance">Run next records one word for the KM Supervisor to act '
+                'on at its next pull; nothing here is executed by this page, and an action that '
+                'states a dependency is still triggered — the Supervisor runs it or comes back '
+                'with why not. Anything that needs your decision is never held here: it is '
+                'registered on the <a href="/decisions">Decisions</a> page as a governed Tier A '
+                'or B row with explicit options.</p>')
     return ('<section class="supervisor-actions" aria-labelledby="supervisor-actions-heading">'
             '<div class="supervisor-actions-title">'
             '<h2 id="supervisor-actions-heading">Waiting on KM Supervisor</h2>'
@@ -1607,23 +2231,136 @@ def render_supervisor_actions(register, messages=None):
             'to redirect it.</p></div>' + body + warning + guidance + '</section>')
 
 
-def render_watchlist(cards):
+def render_watchlist_pointer(cards):
+    """Tier-C FYI on the Overview: a COUNT and a link, never the items (v1.64, the one-home
+    rule — SPEC.md §5.5). Tier C has ONE home — the decisions board, inside its lane — because
+    that is where it is acted on: the Dismiss control belongs with the item, and the
+    "N dismissed" restore disclosure with it. This line says how many there are and takes one
+    click to them."""
     if not cards:
         return ""
-    items = []
-    for card in cards:
-        text = card["what"][:280]
-        raised = card.get("raised", "")
-        date = (f'<time datetime="{html.escape(raised)}">{html.escape(raised)}</time>'
-                if raised else '<span class="watch-date">Open FYI</span>')
-        items.append(f"""<article class="watch-item">
-<span class="watch-id">{html.escape(card['id'])}</span><span class="watch-badge">FYI</span>
-<div class="watch-text">{md_inline(text)}{"…" if len(card['what']) > 280 else ""}</div>{date}
-</article>""")
-    return f"""<section class="watchlist" aria-labelledby="watchlist-heading">
-<div class="watchlist-title"><h2 id="watchlist-heading">Watchlist</h2>
-<p>Time-bound reminders and information to keep in view.</p></div>
-<div class="watch-items">{''.join(items)}</div></section>"""
+    dismissed = dismissals()
+    shown = [c for c in cards if c["id"] not in dismissed]
+    hidden = len(cards) - len(shown)
+    lead = (f'<b>{len(shown)} item{"" if len(shown) == 1 else "s"} in view</b>'
+            if shown else "<b>Nothing in view</b>")
+    tail = (f' {hidden} dismissed, restorable there.' if hidden else "")
+    return f"""<section class="watchlist-pointer" aria-labelledby="watchlist-heading">
+<h2 id="watchlist-heading">Watchlist</h2>
+<p class="pointer-note">{lead} — information and reminders, nothing asked, nothing expiring.
+Each sits in its own lane on the <a href="/decisions">decisions board →</a>, which is where you
+dismiss it and where a dismissed one is restored.{tail}</p></section>"""
+
+
+# ---------- the lane axis on the board (v1.64; SPEC.md §3) ----------
+
+def lane_counts(cards, st=None):
+    """Open decision rows (tier A and B, not yet answered) per lane. Counts ROWS — exactly what
+    the global tier counts beside it count — so the two are directly comparable and the halt
+    stays global. Desk items are NOT folded in: they are counted separately, as themselves."""
+    st = state() if st is None else st
+    resolved = set(st["executed"]) | set(st["pending"]) | set(st["queued"])
+    counts = {lane: 0 for lane in LANE_ORDER}
+    for c in cards:
+        if c["tier"] in ("a", "b") and c["id"] not in resolved:
+            # A row with no answerable option renders GATED, not answerable, so it must not
+            # inflate the answerable lane counts — a count the board then refuses to let the
+            # owner act on is a dead-end signal. Machine-block-only parse errors keep counting:
+            # they render LOUD inside their tier section, not gated out.
+            if not c.get("parse_error") and not options_of(c):
+                continue
+            counts[lane_of(c.get("lane"))] += 1
+    return counts
+
+
+def render_lane_strip(counts):
+    """Per-lane counts on the Overview: the ONE place the per-lane split is stated. It does not
+    restate the desk count — the desk has its own page and tile — and it must not, because
+    these pills link to /decisions?lane=…, which renders rows and not the desk."""
+    pills = []
+    for lane in LANE_ORDER:
+        name, _desc = LANES[lane]
+        note = ""
+        if lane == "hand":
+            note = '<span class="lane-note">acts, not decisions</span>'
+        pills.append(f'<a class="lane-pill" href="/decisions?lane={lane}">'
+                     f'<span class="lane-pill-n">{counts.get(lane, 0):02d}</span>'
+                     f'<span class="lane-pill-l">{html.escape(name)}</span>{note}</a>')
+    return f"""<section class="lane-strip" aria-labelledby="lane-strip-heading">
+<div class="lane-strip-head"><h2 id="lane-strip-heading">Open rows by lane</h2>
+<p>The same open tier A and B rows counted above, split by what you need in your head to answer:
+tier is the clock, the lane is the context. This is the only per-lane statement of those numbers;
+the halt and the defaults act on the estate totals above. Open a lane to work through its rows.</p></div>
+<div class="lane-pills">{"".join(pills)}</div></section>"""
+
+
+def lane_href(lane=None, hub_filter=None):
+    parts = [(k, v) for k, v in (("lane", lane), ("hub", hub_filter)) if v]
+    return "/decisions" + ("?" + urllib.parse.urlencode(parts) if parts else "")
+
+
+def render_lane_bar(counts, active=None, hub_filter=None):
+    """The lane selector on the decisions board: one lane at a time, or all of them grouped.
+    It counts ROWS only; the desk is not counted here, because this board does not render the
+    desk and a count must never point at a page that does not show the thing it counts."""
+    chips = [f'<a class="lane-chip{"" if active else " on"}" href="{lane_href(None, hub_filter)}"'
+             ' title="Every lane, grouped">All lanes</a>']
+    for lane in LANE_ORDER:
+        name, desc = LANES[lane]
+        tip = f"{desc} Count: open tier A and B rows; tier C and prepared items also sit here."
+        chips.append(
+            f'<a class="lane-chip{" on" if active == lane else ""}" '
+            f'href="{lane_href(lane, hub_filter)}" title="{html.escape(tip)}">'
+            f'{html.escape(name)} <b>{counts.get(lane, 0):02d}</b></a>')
+    return f'<nav class="lane-bar" aria-label="Lane">{"".join(chips)}</nav>'
+
+
+def lane_scope_note(active, counts, desk_open=0):
+    """When one lane is showing, say what the OTHER lanes still hold. A scoped view must never
+    hide the size of what it scoped out."""
+    if not active:
+        return ""
+    others = [f"{LANES[l][0].lower()} {counts.get(l, 0)}" for l in LANE_ORDER if l != active]
+    desk = (f' Your desk holds {desk_open} item{"" if desk_open == 1 else "s"}, on '
+            '<a href="/desk">Your desk</a>.' if desk_open and active != "hand" else "")
+    return (f'<p class="lane-scope">Showing <b>{html.escape(LANES[active][0])}</b> only. '
+            f'Still open elsewhere: {html.escape(", ".join(others))}.{desk} '
+            f'<a href="{lane_href(None)}">Show all lanes</a></p>')
+
+
+def hand_row_pointers(cards=None, st=None):
+    """Open `hand`-lane rows (tier A/B, not yet answered), as compact pointers for the desk.
+    The two surfaces carry the SAME KIND of material — acts only the owner can perform, neither
+    a decision — and are reconciled at the SECTION, not the card: a registered hand row keeps
+    its brief, options and answer channel on the board's hand lane; a desk bullet keeps Mark
+    done on the desk. One act never gets two sets of controls."""
+    cards = parse_cards() if cards is None else cards
+    st = state() if st is None else st
+    resolved = set(st["executed"]) | set(st["pending"]) | set(st["queued"])
+    out = []
+    for c in cards:
+        if lane_of(c.get("lane")) != "hand" or c["tier"] not in ("a", "b"):
+            continue
+        if c["id"] in resolved:
+            continue
+        age = age_days(c.get("raised", ""))
+        out.append({"id": c["id"], "title": decision_title(c),
+                    "age": f"open {age}d" if age else ""})
+    return out
+
+
+def render_hand_rows(rows):
+    """A POINTER, not a list. Registered `hand` rows are the same kind of material as the desk,
+    but they are ACTED on where their case, options and answer buttons live: the decisions
+    board's hand lane. So the desk never re-lists them — their number is stated once, in the
+    lane counts, and this line is the way in (an item is rendered in exactly one place; every
+    other surface refers to it by count with a link)."""
+    if not rows:
+        return ""
+    return ('<p class="pointer-note">Some registered rows are also acts by your hand — the same '
+            'kind of thing as the items below, but each carries a full case and options. They '
+            'are answered where they live: <a href="/decisions?lane=hand">the "By your hand" '
+            'lane →</a>.</p>')
 
 
 def render_hub_portfolio(rows, heading="Knowledge hub portfolio", intro=None, show_all=False):
@@ -1833,10 +2570,11 @@ def render_desk_done_disclosure(entries):
             f'<ul class="desk-done-list">{"".join(entries)}</ul></details>')
 
 
-def render_desk(items=None, ticks=None):
-    """The owner's desk section. Compact cards, clearly separated from the decision tiers: nothing
-    here is a decision and nothing here is owed by the Supervisor. A ticked item moves off the active
-    list into the done disclosure."""
+def render_desk(items=None, ticks=None, hand_rows=None):
+    """The owner's desk section. Compact cards, clearly separated from the decision tiers and
+    from Supervisor work: nothing here is a decision and nothing here is owed by the Supervisor.
+    A ticked item moves off the active list into the done disclosure; open `hand` rows are
+    pointed at, never re-listed (one home per item, v1.64)."""
     items = parse_desk() if items is None else items
     ticks = desk_ticks() if ticks is None else ticks
     rows, done = [], []
@@ -1856,43 +2594,103 @@ def render_desk(items=None, ticks=None):
 <div class="desk-title"><h2 id="desk-heading">Your desk</h2>
 <p>Your own follow-ups: what you are waiting on and what you owe someone. Not decisions, and not
 Supervisor work. Nothing here defaults or expires: an item stays until you mark it done.</p></div>
-{body}{render_desk_done_disclosure(done)}</section>"""
+{render_hand_rows(hand_rows or [])}{body}{render_desk_done_disclosure(done)}</section>"""
 
 
 def desk_page():
-    return page("KM Cockpit — Your desk", render_desk(), active="desk")
+    cards = parse_cards()
+    st = state()
+    return page("KM Cockpit — Your desk",
+                render_desk(hand_rows=hand_row_pointers(cards, st)), active="desk")
 
 
-def standard_info(repo=None):
+_standard_cache = {}
+
+
+def published_standard(repo, publish_branch):
+    """Return (version, full commit, failure) from LOCAL publish-branch history: the newest
+    commit on the branch whose committed STANDARD.md H1 carries a version with no draft
+    qualifier. Resolved from committed history, never the working tree — a working-tree H1
+    mid-draft reads "(vX.Y draft)", and reporting a drafted number as the pinned version is a
+    wrong answer with full confidence (v1.64)."""
+    ref = f"refs/heads/{publish_branch}"
+    resolved = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "--verify", f"{ref}^{{commit}}"],
+        capture_output=True, text=True, timeout=10)
+    if resolved.returncode != 0:
+        return "", "", f"publish branch '{publish_branch}' not found"
+    history = subprocess.run(
+        ["git", "-C", str(repo), "rev-list", resolved.stdout.strip(), "--", "STANDARD.md"],
+        capture_output=True, text=True, timeout=10)
+    if history.returncode != 0:
+        detail = (history.stderr.strip() or "git rev-list failed").splitlines()[0]
+        return "", "", f"cannot read STANDARD.md history: {detail[:120]}"
+    for commit in (line.strip() for line in history.stdout.splitlines() if line.strip()):
+        shown = subprocess.run(
+            ["git", "-C", str(repo), "show", f"{commit}:STANDARD.md"],
+            capture_output=True, text=True, timeout=10)
+        if shown.returncode != 0:
+            detail = (shown.stderr.strip() or "git show failed").splitlines()[0]
+            return "", "", f"cannot read committed STANDARD.md: {detail[:120]}"
+        match = STD_PUBLISHED_H1_RE.search(shown.stdout[:6000])
+        if not match or re.search(r"\bdraft\b", match.group(2) or "", re.I):
+            continue
+        return match.group(1), commit, ""
+    return "", "", "no non-draft STANDARD.md commit on publish branch"
+
+
+def standard_info(repo=None, publish_branch=None):
     """Read-only LOCAL state of the tracked KM Standard checkout for the Home status card.
     Local git plumbing only, never a fetch and never any network call: the render must not depend
     on connectivity, and the origin comparison is honestly 'as of the last fetch' (the mtime of
-    .git/FETCH_HEAD). A missing or unreadable checkout reports itself instead of fabricating state.
-    When no checkout is configured (STANDARD_REPO is None), the card does not render."""
+    .git/FETCH_HEAD). A missing or unreadable checkout reports itself instead of fabricating
+    state. When no checkout is configured (STANDARD_REPO is None), the card does not render.
+    The default call (the live card) is cached 60 seconds; explicit repo arguments (fixtures)
+    are never cached."""
+    cached = repo is None and publish_branch is None
     repo = Path(repo) if repo else STANDARD_REPO
+    publish_branch = publish_branch or STANDARD_PUBLISH_BRANCH
     info = {"configured": True, "ok": False, "missing": False, "error": "",
-            "version": "", "ahead": 0, "behind": 0, "unpushed": [], "fetched": ""}
+            "version": "", "publish_branch": publish_branch, "published_commit": "",
+            "publication_error": "", "ahead": 0, "behind": 0, "unpushed": [],
+            "drafts": [], "fetched": ""}
     if repo is None:
         info["configured"] = False
         return info
+    if cached:
+        # Keyed on the reflog's mtime as well as the clock, so a commit in the checkout
+        # invalidates the cache immediately: a card that keeps saying "in sync" for a minute
+        # after a commit is a wrong render with full confidence.
+        try:
+            reflog_mtime = (repo / ".git" / "logs" / "HEAD").stat().st_mtime
+        except OSError:
+            reflog_mtime = 0
+        hit = _standard_cache.get("info")
+        if hit and time.time() - hit[0] < 60 and hit[2] == reflog_mtime:
+            return hit[1]
     if not repo.is_dir() or not (repo / ".git").exists():
         info["missing"] = True
         info["error"] = f"standard checkout not found at {repo}"
         return info
-    try:  # pinned version: the H1 title line "(vX.Y)"
-        text = (repo / "STANDARD.md").read_text(encoding="utf-8", errors="replace")[:6000]
-        m = STD_VERSION_RE.search(text)
-        info["version"] = m.group(1) if m else ""
-    except OSError:
-        pass
-    try:  # push state: local branch versus its configured upstream, local git only
+    try:
+        version, commit, failure = published_standard(repo, publish_branch)
+        info["version"] = version
+        info["published_commit"] = commit
+        info["publication_error"] = failure
+    except (OSError, subprocess.SubprocessError) as exc:
+        info["publication_error"] = f"git unavailable while reading publication: {exc}"[:160]
+    try:  # push state: the publish branch versus its origin counterpart, local git only
+        origin_ref = f"origin/{publish_branch}"
+        local_ref = f"refs/heads/{publish_branch}"
         r = subprocess.run(["git", "-C", str(repo), "rev-list", "--left-right", "--count",
-                            "@{u}...HEAD"], capture_output=True, text=True, timeout=10)
+                            f"{origin_ref}...{local_ref}"],
+                           capture_output=True, text=True, timeout=10)
         if r.returncode == 0:
             behind, ahead = (int(x) for x in r.stdout.split())
             info["behind"], info["ahead"], info["ok"] = behind, ahead, True
             if ahead:
-                lg = subprocess.run(["git", "-C", str(repo), "log", "@{u}..HEAD",
+                lg = subprocess.run(["git", "-C", str(repo), "log",
+                                     f"{origin_ref}..{local_ref}",
                                      "--format=%h %s"], capture_output=True, text=True, timeout=10)
                 if lg.returncode == 0:
                     info["unpushed"] = [s for s in lg.stdout.strip().splitlines() if s][:20]
@@ -1905,17 +2703,43 @@ def standard_info(repo=None):
                                         time.localtime((repo / ".git" / "FETCH_HEAD").stat().st_mtime))
     except OSError:
         pass
+    # Draft RFCs: status banner reads DRAFT. Rendered inline (title, status, path) rather than
+    # as /view links, because the checkout lives outside the estate root and the file routes'
+    # confinement is a boundary this card must not widen.
+    rfcs = repo / "rfcs"
+    for f in (sorted(rfcs.glob("*.md")) if rfcs.is_dir() else []):
+        try:
+            head = f.read_text(encoding="utf-8", errors="replace")[:4000]
+        except OSError:
+            continue
+        sm = re.search(r"\*\*Status:\s*DRAFT\b[^*]*\*\*", head, re.I)
+        if not sm:
+            continue
+        tm = re.search(r"^title:\s*(.+)$", head, re.M)
+        vm = re.search(r"[Dd]rafted as \*{0,2}(v\d[\w.]*)", head)
+        info["drafts"].append({"file": f.name,
+                               "title": (tm.group(1).strip() if tm else f.stem),
+                               "status": re.sub(r"\*+", "", sm.group(0)).strip(),
+                               "drafts_version": vm.group(1) if vm else ""})
+    if cached:
+        try:
+            reflog_mtime = (repo / ".git" / "logs" / "HEAD").stat().st_mtime
+        except OSError:
+            reflog_mtime = 0
+        _standard_cache["info"] = (time.time(), info, reflog_mtime)
     return info
 
 
-def render_standard_card(info):
+def render_standard_card(info, related=()):
     """The KM Standard status card on Home: read-only visibility on the standard checkout the
-    deployment tracks, showing the version it is pinned to and the checkout's push state against
-    origin. Display only, never a control (a surface, not a pen, SPEC.md §1); a standard change
-    that needs the owner is a governed tier-A/B decision, never a button here. The checkout lives
-    OUTSIDE the estate root, so this card emits no file link into it: the file-serving routes'
-    root confinement (§4) is a boundary this card must not widen. Returns "" when no checkout is
-    configured, so a deployment that keeps none shows nothing rather than a guess."""
+    deployment tracks, showing the PUBLISHED version resolved from the publish branch's committed
+    history and the checkout's push state against origin. Display only, never a control (a
+    surface, not a pen, SPEC.md §1); a standard change that needs the owner is a governed
+    tier-A/B decision, never a button here — decision-shaped items link their queue row. The
+    checkout lives OUTSIDE the estate root, so this card emits no file link into it: the
+    file-serving routes' root confinement (§4) is a boundary this card must not widen. Returns
+    "" when no checkout is configured, so a deployment that keeps none shows nothing rather
+    than a guess."""
     if not info.get("configured"):
         return ""
     lines = []
@@ -1924,12 +2748,16 @@ def render_standard_card(info):
                      'so nothing is shown rather than guessed.</div>'
                      f'<div class="std-line std-path">{html.escape(info["error"])}</div>')
     else:
-        if info["version"]:
-            lines.append(f'<div class="std-line"><b>Pinned to {html.escape(info["version"])}</b> '
-                         '<span class="std-muted">(from STANDARD.md&rsquo;s title line)</span></div>')
+        if info["version"] and info["published_commit"]:
+            branch = html.escape(info["publish_branch"])
+            short_commit = html.escape(info["published_commit"][:7])
+            lines.append(f'<div class="std-line"><b>Published {html.escape(info["version"])}</b> '
+                         f'<span class="std-muted">— {branch} at '
+                         f'<code>{short_commit}</code></span></div>')
         else:
-            lines.append('<div class="std-line">Pinned version not readable from '
-                         'STANDARD.md&rsquo;s title line.</div>')
+            detail = info.get("publication_error") or "published commit not readable"
+            lines.append('<div class="std-line"><b>Published version unavailable.</b> '
+                         f'<span class="std-muted">{html.escape(detail)}</span></div>')
         if info["ok"]:
             if info["ahead"]:
                 n = info["ahead"]
@@ -1948,6 +2776,21 @@ def render_standard_card(info):
         else:
             lines.append('<div class="std-line">Local-vs-origin state unavailable: '
                          f'{html.escape(info["error"] or "git failed")}.</div>')
+        if info["drafts"]:
+            items = "".join(
+                f'<li>{html.escape(d["title"])}'
+                + (f' <b>(drafts {html.escape(d["drafts_version"])})</b>' if d["drafts_version"] else "")
+                + f' — <span class="std-muted">{html.escape(d["status"])}</span> '
+                  f'<span class="std-path">rfcs/{html.escape(d["file"])}</span></li>'
+                for d in info["drafts"])
+            lines.append(f'<div class="std-line">Draft RFCs ({len(info["drafts"])}):<ul>{items}</ul></div>')
+        for rid, txt in related:
+            plain = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", txt).replace("**", "").strip()
+            plain = plain[:140] + ("…" if len(plain) > 140 else "")
+            lines.append(f'<div class="std-line">Open decision on this: '
+                         f'<a href="/decisions#card-{html.escape(rid)}"><b>{html.escape(rid)}</b></a>'
+                         f' — {html.escape(plain)} '
+                         f'<a href="/decisions#card-{html.escape(rid)}">review →</a></div>')
         fetched = info["fetched"]
         lines.append('<div class="std-line std-muted">Origin state is as of the last local fetch'
                      + (f": {html.escape(fetched)}" if fetched else " (no fetch recorded)")
@@ -1978,51 +2821,79 @@ def home():
                 soon.append((x["id"], d, dd))
         except Exception:
             pass
+    desk_items = parse_desk()
+    ticks = desk_ticks()
+    open_desk = [i for i in desk_items if i["id"] not in ticks]
     n_rec, n_followed = rec_stats()
     rate = f"{100 * n_followed // n_rec}%" if n_rec else "—"
     halt = "ON" if len(a) + len(b) > 10 else "off"
+    # Each number is stated ONCE, where a reader would look for it (the one-home rule, v1.64).
+    # This grid holds the ESTATE TOTALS the governance acts on — the routine decision-halt and
+    # the tier-B default clock are computed from tier A + tier B — plus the state no other
+    # surface reports (desk load, execution debt, follow-rate). The per-lane split of the SAME
+    # open rows is stated once, in the lane strip below, and nowhere else; "defaults within
+    # 48 h" is stated by the Closing-soon list itself. Every tile that stands for items is a
+    # LINK to the page that actually renders them.
     stats = f"""
 <div class="grid">
- <div class="stat"><div class="n urgent">{len(open_a)}</div><div class="l">need your word (tier A)</div></div>
- <div class="stat"><div class="n">{len(open_b)}</div><div class="l">tier B open</div></div>
- <div class="stat"><div class="n">{len(soon)}</div><div class="l">defaults within 48 h</div></div>
+ <a class="stat" href="/decisions" title="Every open tier-A row, all lanes"><div class="n urgent">{len(open_a)}</div><div class="l">need your word (tier A)</div></a>
+ <a class="stat" href="/decisions" title="Every open tier-B row, all lanes"><div class="n">{len(open_b)}</div><div class="l">tier B open · applies on its date</div></a>
  <div class="stat"><div class="n">{oldest}d</div><div class="l">oldest open tier-A</div></div>
- <div class="stat"><div class="n">{len(st['pending']) + len(st['queued'])}</div><div class="l">answered · awaiting supervisor execution</div></div>
- <div class="stat"><div class="n">{len(st['executed'])}</div><div class="l">answers executed</div></div>
+ <a class="stat" href="/desk" title="Your desk, on its own page"><div class="n">{len(open_desk)}</div><div class="l">on your desk</div></a>
+ <a class="stat" href="/activity" title="Every answer and what the estate did with it"><div class="n">{len(st['pending']) + len(st['queued'])}</div><div class="l">answered · awaiting supervisor execution</div></a>
+ <a class="stat" href="/activity"><div class="n">{len(st['executed'])}</div><div class="l">answers executed</div></a>
  <div class="stat"><div class="n">{rate}</div><div class="l">recommendation follow-rate<br>({n_followed}/{n_rec})</div></div>
  <div class="stat"><div class="n">{halt}</div><div class="l">routine decision-halt</div></div>
-</div>"""
+</div>
+<p class="stat-note"><b>Estate totals, and the state the estate acts on.</b> The decision-halt
+trips on tier A + tier B over 10, and each tier-B row applies its recommendation on its own date,
+so those two totals are governed numbers and are kept here. The same open rows split by lane are
+below; the rows themselves are rendered only on the <a href="/decisions">decisions
+board</a>.</p>"""
     urgent_rows = ""
     if soon:
+        # The exception list states its own number; there is no separate "defaults within 48 h"
+        # tile restating it (each number stated once).
         items = "".join(
             f'<li><b>{i}</b> defaults <b>{d}</b> ({"today" if dd <= 0 else f"in {dd}d"}) — <a href="/decisions#card-{i}">review</a></li>'
             for i, d, dd in soon)
-        urgent_rows = f'<div class="card"><b>Closing soon</b><ul>{items}</ul></div>'
-    rows = hub_portfolio(cards, st, read_jsonl(EXECUTIONS))
+        urgent_rows = (f'<div class="card"><b>Closing soon — {len(soon)} tier-B default'
+                       f'{"" if len(soon) == 1 else "s"} within 48 h</b>'
+                       f'<ul>{items}</ul></div>')
+    rows = hub_portfolio(cards, st, executed_records())
     attention = [row for row in rows if row["status"] != "Current"]
+    std_related = [(c["id"], c["what"]) for c in a + b
+                   if c["id"] not in (set(st["executed"]) | set(st["pending"]) | set(st["queued"]))
+                   and STANDARD_ROW_RE.search(f'{c["what"]} {c["next"]}')]
     supervisor_actions = render_supervisor_actions(parse_supervisor_actions())
-    standard_card = render_standard_card(standard_info())
-    watchlist = render_watchlist(c_)
+    standard_card = render_standard_card(standard_info(), related=std_related)
+    lane_strip = render_lane_strip(lane_counts(cards, st))
+    agent_pointer = render_agent_pointer()
+    watchlist = render_watchlist_pointer(c_)
     portfolio = render_hub_portfolio(
         attention,
         heading="Hubs needing attention",
         intro="Exceptions only: open decisions, proposals needing decision or routing, answered work awaiting Supervisor execution, stale hubs, or unavailable evidence.",
         show_all=True,
     )
-    inner = (stats + urgent_rows
-             + supervisor_actions
+    inner = (stats + lane_strip + urgent_rows
              + standard_card
+             + supervisor_actions
+             + agent_pointer
              + watchlist
              + portfolio
              )
     unpulled = []
-    na = len(read_jsonl(ANSWERS))
+    na = len(_decision_answers(ANSWERS))
+    nd = len([r for r in read_jsonl(ANSWERS) if str(r.get("id", "")).startswith(DESK_PREFIX)])
     nq = len(read_jsonl(QUESTIONS))
     if na:
         unpulled.append(f"{na} answer{'s' if na != 1 else ''}")
+    if nd:
+        unpulled.append(f"{nd} desk tick{'s' if nd != 1 else ''}")
     if nq:
         unpulled.append(f"{nq} question{'s' if nq != 1 else ''}")
-    unpulled_line = (f"<br><b>{' and '.join(unpulled)} recorded, awaiting the next supervisor pull</b>"
+    unpulled_line = (f"<br><b>{', '.join(unpulled)} recorded, awaiting the next supervisor pull</b>"
                      if unpulled else "")
     return page("KM Cockpit", inner,
                 sub=f"as of {time.strftime('%Y-%m-%d %H:%M')} · live from QUEUE.md · cards update themselves as the estate executes{unpulled_line}",
@@ -2055,17 +2926,61 @@ def decision_authority_context():
 <dd>The recommended action applies unless you veto or change it.</dd>
 <dt><span class="badge tier-c">Tier C</span> Information</dt>
 <dd>For awareness only. No answer is required.</dd></dl>
+<h2>Lanes</h2><p class="lane-def">Tier is the clock. The lane is the context: what you need in
+your head to answer. Pick one lane and stay in it.</p><dl class="authority-guide">""" + "".join(
+        f"<dt>{html.escape(LANES[l][0])}</dt><dd>{html.escape(LANES[l][1])}</dd>"
+        for l in LANE_ORDER) + """</dl>
 <div class="source-note"><b>Reading order</b>Decide at a glance. Open rationale or the full record only when needed.</div>"""
 
 
-def decisions(hub_filter=None):
+def render_waiting_on_estate(rows=None):
+    """Everything the estate owes, BY NAME, on the page where the owner looks for it (v1.64;
+    a count that does not resolve to a visible item is a display defect). Hub proposals the
+    owner has already answered wait on a hub's agent or the Supervisor, never on the owner —
+    naming them here is what keeps "awaiting execution" from dead-ending."""
+    rows = hub_portfolio() if rows is None else rows
+    items = []
+    for row in rows:
+        for p in row.get("proposals", []):
+            if p.get("state") in ("open", None):
+                continue                      # that one waits on the owner, already on the board
+            items.append({
+                "who": row["name"],
+                "what": Path(p["path"]).name.replace("_", " ").replace(".md", ""),
+                "state": p.get("label", ""),
+            })
+    if not items:
+        return ""
+    feed = "".join(
+        f'<div class="feeditem"><span class="feedid">{html.escape(i["who"])}</span> '
+        f'<div class="activity-outcome"><b>{html.escape(i["what"])}</b><br>'
+        f'<span class="sub">{html.escape(i["state"])}</span></div></div>'
+        for i in items)
+    return ('<section class="waiting-estate" id="waiting" aria-labelledby="waiting-heading">'
+            f'<h2 id="waiting-heading">Waiting on the estate, not on you '
+            f'<span class="sectioncount">{len(items)}</span></h2>'
+            '<p class="section-description">You have already answered these. They are named here '
+            'so "awaiting execution" always resolves to something you can see, and so you can '
+            'tell what waits on a hub\'s agent from what waits on the Supervisor.</p>'
+            f'<div class="feed">{feed}</div></section>')
+
+
+def decisions(hub_filter=None, lane_filter=None):
     cards = parse_cards()
     st = state()
+    dismissed = dismissals()
+    desk_items = parse_desk()
+    ticks = desk_ticks()
+    open_desk = [i for i in desk_items if i["id"] not in ticks]
+    lane_filter = lane_filter if lane_filter in LANES else None
     prefix = []
-    by_tier = {"a": [], "b": [], "c": []}
+    # Grouped by LANE first (the context), tier sections inside each lane (the clock). v1.64.
+    by_lane = {lane: {"a": [], "b": [], "c": []} for lane in LANE_ORDER}
+    dismissed_c = {lane: [] for lane in LANE_ORDER}
+    dismissed_preparing = []
     preparing = []
     if hub_filter and hub_filter in HUBS:
-        prefix.append(f'<div class="sub" style="padding:0">Filtered to <b>{html.escape(HUBS[hub_filter][0])}</b> · <a href="/decisions">show all</a></div>')
+        prefix.append(f'<div class="sub" style="padding:0">Filtered to <b>{html.escape(HUBS[hub_filter][0])}</b> · <a href="{lane_href(lane_filter)}">show all hubs</a></div>')
     visible_cards = []
     for source_card in cards:
         c = dict(source_card)
@@ -2073,22 +2988,80 @@ def decisions(hub_filter=None):
         if hub_filter and hub_filter not in c["hubs"]:
             continue
         visible_cards.append(c)
+    # Counts are taken BEFORE the lane filter, so the bar always shows the whole board. The desk
+    # is not hub-attributed, so a hub-filtered view neither renders nor counts it: a "+N" the
+    # view then refuses to show would be exactly the dead-end signal this surface forbids.
+    counts = lane_counts(visible_cards, st)
+    desk_shown = 0 if hub_filter else len(open_desk)
+    prefix.append(render_lane_bar(counts, lane_filter, hub_filter))
+    prefix.append(lane_scope_note(lane_filter, counts, desk_shown))
     for c in visible_cards:
+        if lane_filter and lane_of(c.get("lane")) != lane_filter:
+            continue
+        lane = lane_of(c.get("lane"))
         tier = c["tier"]
         label, color, tip = TIER_META[c["tier"]]
         rid = c["id"]
+        if tier == "c" and rid in dismissed:
+            dismissed_c[lane].append(dismissed_entry(c, dismissed[rid].get("at", "")))
+            continue
+        if c.get("parse_error"):
+            # Fail-closed surface for a row that failed to parse (a malformed Defaults cell, or
+            # a machine-block row with no rendered table row). Never answerable — it is a
+            # formatting defect to fix, not a decision to take, and it renders LOUD in its tier
+            # section rather than sliding into the Preparing group (v1.64).
+            by_lane[lane][tier].append(
+                f'<article class="decision-row tier-{tier}" data-decision-row data-row="{rid}" '
+                f'id="card-{rid}"><header class="decision-glance">'
+                f'<div class="decision-identity"><span class="rid">{rid}</span>'
+                f'<span class="badge" style="background:#b3261e" '
+                f'title="{html.escape(c.get("parse_error_reason") or "Row failed to parse")}">'
+                f'PARSE ERROR</span></div>'
+                f'<div class="decision-title-block"><h3>{html.escape(decision_title(c))}</h3></div>'
+                f'<div class="decision-actions"><span class="stateflag flag-warn">'
+                f'{html.escape(c["what"])}</span></div></header></article>')
+            continue
         ex = st["executed"].get(rid)
-        answered = rid in st["pending"] or rid in st["queued"]
+        # A recorded row (answer captured, work owed) is answered-awaiting-execution, never
+        # answerable again: include it so it never renders answer controls while still on the
+        # board (two states only, v1.64).
+        answered = rid in st["pending"] or rid in st["queued"] or rid in st.get("recorded", [])
+        # The row's own durable marker, for the flag's wording below: when the row states the
+        # execution is owed, the card says what the row says rather than paraphrasing it.
+        row_answer = c.get("answered_row") or c.get("answered_mb")
+        # TWO STATES MUST NOT LOOK ALIKE (v1.64). The tier badge is the CLOCK — what happens if
+        # the owner says nothing — and on an answered or executed row that clock has stopped.
+        # The tier is kept in the tooltip; it is context now, not a call on the owner.
+        badge_class = f"tier-{tier}"
+        if ex:
+            label, color, badge_tip = EXECUTED_META
+            tip = f"{badge_tip} (registered tier {tier.upper()}: {TIER_META[tier][2]})"
+            badge_class = "badge-executed"
+        elif answered:
+            label, color, badge_tip = ANSWERED_META
+            tip = f"{badge_tip} (registered tier {tier.upper()}: {TIER_META[tier][2]})"
+            badge_class = "badge-answered"
         opts = options_of(c)
         rec = opts[0] if opts else ""
-        # Phase 2.5 gate (§8.5): tier-A/B cards answer only against a passing decision brief.
-        # Options gate (§3, added v1.31): and only when the row's declared options are readable.
+        # Gates, in order (both route into "Preparing for you"; SPEC.md §4): the options gate
+        # first — a row with no answerable option is not answerable whatever its brief says —
+        # then the phase-2.5 decision-brief gate.
         brief, gate = None, None
+        gate_badge = "Preparing"
+        gate_flag = "Being prepared — nothing for you to do yet"
+        gate_tip = f"Tier {tier.upper()} once ready — {tip}. Not ready for your word yet."
         if c["tier"] in ("a", "b"):
-            bp, gate = brief_check(rid)
-            if gate is None:
-                brief = str(bp)
-            gate = gate or options_gate(c, opts)
+            ogate = options_gate(c, opts)
+            if ogate:
+                gate = ogate
+                gate_badge = "Gated"
+                gate_flag = "Options unreadable — repair the row's options cell (quoted form)"
+                gate_tip = (f"Tier {tier.upper()} once repaired — {tip}. The row declares "
+                            "options this surface cannot read, so it is not answerable yet.")
+            else:
+                bp, gate = brief_check(rid)
+                if gate is None:
+                    brief = str(bp)
         replies = "".join(
             f'<div class="qreply"><b>Supervisor:</b> {md_inline(r["reply"])} <span class="feedat">{r.get("at", "")}</span></div>'
             for r in st["replies"].get(rid, []))
@@ -2100,37 +3073,60 @@ def decisions(hub_filter=None):
                           f'<input type="text" id="q-{rid}" placeholder="Ask the Supervisor about {rid}">'
                           f'<button class="small" onclick="ask(\'{rid}\')">Ask</button></div></div></details>')
         if gate and not ex and not answered:
-            # Ruled 2026-08-17 (§8.5 amended): a gated/incomplete record renders in the compact
-            # "Preparing for you" group — visible and auditable, NO answer controls, the precise
-            # gate reason inside the expanded details only, never in the glance. The Ask channel
-            # stays open (§8.5). The actionable tiers are never deformed by it.
+            # A gated/incomplete record renders in the compact "Preparing for you" group —
+            # visible and auditable, NO answer controls, the precise gate reason inside the
+            # expanded details only, never in the glance. The Ask channel stays open. The
+            # actionable tiers are never deformed by it. Gate notices are informational, so they
+            # carry Dismiss (v1.64).
+            if rid in dismissed:
+                dismissed_preparing.append(dismissed_entry(c, dismissed[rid].get("at", "")))
+                continue
             queue_what = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", c["what"])
-            preparing.append(f"""<article class="decision-row preparing tier-{tier}" data-decision-row data-row="{rid}" id="card-{rid}">
+            preparing.append(f"""<article class="decision-row preparing tier-{tier}" data-decision-row data-row="{rid}" data-dismissable="{rid}" id="card-{rid}">
 <header class="decision-glance" data-level="preparing">
 <div class="decision-identity"><span class="rid">{rid}</span>
-<span class="badge" style="background:#5f6368" title="Tier {tier.upper()} once ready — {tip}. Not ready for your word yet.">Preparing</span></div>
+<span class="badge" style="background:#5f6368" title="{html.escape(gate_tip)}">{html.escape(gate_badge)}</span></div>
 <div class="decision-title-block"><h3>{html.escape(decision_title(c))}</h3>
 <div class="decision-meta"><span class="decision-hubs">{hub_chips(c["hubs"])}</span>
 <span class="when">{html.escape(c['when'])}{agetxt}</span></div></div>
-<div class="decision-actions"><span class="preparing-flag">Being prepared — nothing for you to do yet</span></div></header>
+<div class="decision-actions"><span class="preparing-flag">{html.escape(gate_flag)}</span>{dismiss_control(rid)}</div></header>
 <details class="decision-detail"><summary>Details for audit</summary>
 <div class="decision-detail-body">
 <p class="decision-gate"><b>Returned to the Supervisor.</b> {html.escape(gate)}</p>
 <div class="decision-deep-links">
 <details class="decision-deep-section"><summary>Full queue context</summary>
 <div class="queue-context">{md_inline(queue_what)}</div></details>{ask_supervisor}</div>
-</div></details></article>""")
+</div></details></article>""" + dismiss_strip(rid))
             continue
         quick_controls = ""
         custom_controls = ""
         flag = ""
         if ex:
-            flag = f'<span class="execflag">✓ executed</span> — {md_inline(ex.get("note", ""))}'
+            # The state has a name (proposal_lifecycle uses it too): execution recorded,
+            # reconciliation pending. Saying it here is what tells the owner why a row they
+            # have finished with is still on the board.
+            flag = ('<span class="execflag">✓ Execution recorded — reconciliation pending</span>'
+                    f' — {md_inline(ex.get("note", ""))}')
         elif answered:
             verb = short_verb(st["answers"].get(rid, ""))
-            flag = (f'<span class="doneflag">✓ answer "{html.escape(verb)}" recorded — '
-                    'awaiting Supervisor execution</span>' if verb else
-                    '<span class="doneflag">✓ answer recorded — executing…</span>')
+            chip = verb if len(verb) <= 28 else verb[:28].rstrip() + "…"
+            quoted = f" “{html.escape(chip)}”" if verb else ""
+            # Truthful phrasings of the ONE answered state (two states only, v1.64): a
+            # bookkeeping-recorded answer and an unconsumed answer await execution; a row the
+            # queue itself marks answered says the execution is owed; a consumed answer is being
+            # executed right now. None ever shows answer controls, and none ever reads
+            # "executed".
+            if rid in st.get("recorded", []):
+                flag = f'<span class="doneflag">✓ Answered{quoted} — awaiting execution</span>'
+            elif row_answer:
+                flag = (f'<span class="doneflag">✓ Answered{quoted}, execution owed by the '
+                        'Supervisor</span>')
+            elif rid in st["queued"]:
+                flag = f'<span class="doneflag">✓ Answered{quoted} — executing</span>'
+            else:
+                flag = (f'<span class="doneflag">✓{quoted} recorded — awaiting '
+                        'execution</span>' if verb else
+                        '<span class="doneflag">✓ answer recorded — awaiting execution</span>')
         elif c["tier"] != "c":
             quick_controls = "".join(
                 f"""<button data-answer-control class="{'rec' if o == rec else ''}" onclick="send('{rid}', '{html.escape(o)}', '{html.escape(rec)}')">{html.escape(sentence_case(o))}</button>"""
@@ -2181,33 +3177,65 @@ def decisions(hub_filter=None):
         other_answer = (f'<details class="decision-deep-section"><summary>Give another answer</summary>'
                         f'<div class="answer decision-custom-answer">{custom_controls}</div></details>'
                         if custom_controls else "")
-        actions = ""
-        if tier != "c":
+        if tier == "c":
+            # Informational: the owner's only control is Dismiss. A tier-A/B card never gets
+            # one — it leaves the board by being ANSWERED (v1.64).
+            actions = f'<div class="decision-actions">{dismiss_control(rid)}</div>'
+        else:
             recommendation = (f'<span class="recommended-answer">Recommended: '
                               f'<b>{html.escape(sentence_case(rec))}</b></span>' if rec else "")
             actions = (f'<div class="decision-actions" data-decision="{rid}" '
                        f'aria-label="Answer and state">{recommendation}'
                        f'<div class="decision-action-buttons">{quick_controls}</div>'
                        f'<span class="stateflag">{flag}</span></div>')
-        by_tier[tier].append(f"""<article class="decision-row tier-{tier}{done_class}" data-decision-row data-row="{rid}" id="card-{rid}">
+        dismiss_attr = f' data-dismissable="{rid}"' if tier == "c" else ""
+        strip = dismiss_strip(rid) if tier == "c" else ""
+        by_lane[lane][tier].append(f"""<article class="decision-row tier-{tier}{done_class}" data-decision-row data-row="{rid}"{dismiss_attr} id="card-{rid}">
 <header class="decision-glance" data-level="decide-now">
 <div class="decision-identity"><span class="rid">{rid}</span>
-<span class="badge tier-{tier}" style="background:{color}" title="{tip}">{label}</span></div>
+<span class="badge {badge_class}" data-badge style="background:{color}" title="{html.escape(tip)}">{html.escape(label)}</span></div>
 <div class="decision-title-block"><h3>{html.escape(decision_title(c))}</h3>
 <div class="decision-meta"><span class="decision-hubs">{hub_chips(c["hubs"])}</span>
 <span class="when">{html.escape(c['when'])}{agetxt}</span></div></div>{actions}</header>
 <details class="decision-detail"><summary>Need more detail?</summary>
 <div class="decision-detail-body">{snapshot}{proposal_section}
 <div class="decision-deep-links" data-level="full-record">{briefhtml}{sources}{queue_context}{ask_supervisor}{other_answer}</div>
-</div></details></article>""")
-    groups = "".join(
-        f'<section class="ledger-section" data-tier="{tier}" aria-labelledby="tier-{tier}-title">'
-        f'<div class="section-label"><span id="tier-{tier}-title">{TIER_SECTIONS[tier]}</span>'
-        f'<span class="count">{len(by_tier[tier]):02d}</span></div>'
-        f'<p class="section-description">{TIER_DESCRIPTIONS[tier]}</p>'
-        f'{"".join(by_tier[tier])}</section>'
-        for tier in ("a", "b", "c") if by_tier[tier])
-    if preparing:
+</div></details></article>""" + strip)
+    groups = ""
+    for lane in LANE_ORDER:
+        if lane_filter and lane != lane_filter:
+            continue
+        inner = ""
+        for tier in ("a", "b", "c"):
+            foot = render_dismissed_disclosure(dismissed_c[lane]) if tier == "c" else ""
+            # A section every one of whose items is dismissed still renders, so its disclosure —
+            # the way back — is never lost with the last visible card.
+            if not by_lane[lane][tier] and not foot:
+                continue
+            sid = f"{lane}-tier-{tier}-title"
+            inner += (
+                f'<section class="ledger-section" data-tier="{tier}" aria-labelledby="{sid}">'
+                f'<div class="section-label"><span id="{sid}">{TIER_SECTIONS[tier]}</span>'
+                f'<span class="count">{len(by_lane[lane][tier]):02d}</span></div>'
+                f'<p class="section-description">{TIER_DESCRIPTIONS[tier]}</p>'
+                f'{"".join(by_lane[lane][tier])}{foot}</section>')
+        # The desk is the same KIND of material as the hand rows, but it has ONE home and this
+        # is not it: the hand lane carries a count-and-link pointer, never a second set of
+        # Mark-done controls.
+        if lane == "hand" and not hub_filter and open_desk:
+            inner += ('<p class="pointer-note"><b>{n} item{s} on your desk</b> — your own '
+                      'follow-ups, with Mark done, live on <a href="/desk">Your desk →</a></p>'
+                      ).format(n=len(open_desk), s="" if len(open_desk) == 1 else "s")
+        if not inner:
+            continue
+        name, desc = LANES[lane]
+        groups += (
+            f'<section class="lane-section" data-lane="{lane}" aria-labelledby="lane-{lane}-title">'
+            f'<div class="lane-heading"><h2 id="lane-{lane}-title">{html.escape(name)}</h2>'
+            f'<span class="lane-count">{counts.get(lane, 0):02d} open</span></div>'
+            f'<p class="lane-def">{html.escape(desc)}</p>{inner}</section>')
+    preparing_foot = render_dismissed_disclosure(dismissed_preparing)
+    if preparing or preparing_foot:
         groups += (
             '<section class="ledger-section preparing-section" data-tier="preparing" '
             'aria-labelledby="tier-preparing-title">'
@@ -2216,15 +3244,22 @@ def decisions(hub_filter=None):
             f'<span class="count">{len(preparing):02d}</span></div>'
             '<p class="section-description">Visible for audit; not yet answerable. The Supervisor '
             'owes each a completed decision brief before it joins its tier.</p>'
-            f'{"".join(preparing)}</section>')
+            f'{"".join(preparing)}{preparing_foot}</section>')
     if groups:
         body = f'<div class="decision-ledger" data-view="decision-ledger">{groups}</div>'
+    elif lane_filter:
+        body = ('<div class="empty-state"><b>Nothing in the '
+                f'{html.escape(LANES[lane_filter][0])} lane'
+                + (" for this hub" if hub_filter else "") + '.</b> '
+                f'<a href="{lane_href(None, hub_filter)}">Show all lanes</a>.</div>')
     else:
         body = ('<div class="empty-state"><b>No decisions in this view.</b> '
                 'Choose another hub or show all decisions.</div>')
-    return page("Decisions — KM Cockpit", "".join(prefix) + body,
-                sub="Decide at a glance. Open more detail only when you need it.",
-                active="decisions", context=decision_authority_context())
+    sub = "Decide at a glance. Open more detail only when you need it."
+    if lane_filter:
+        sub = f"One lane at a time: {LANES[lane_filter][0].lower()}. " + sub
+    return page("Decisions — KM Cockpit", "".join(prefix) + body + render_waiting_on_estate(),
+                sub=sub, active="decisions", context=decision_authority_context())
 
 
 def activity_outcome(value, limit=140):
@@ -2264,9 +3299,19 @@ def render_activity_entry(record, kind, hub_keys=None):
 
     if kind == "execution":
         source = record.get("note", "")
-        state_class, state_label = "executed", "Executed"
-        outcome = activity_outcome(source) or "Execution recorded"
-        full_record = md_inline(source)
+        # A ledger record with status "recorded" is a bookkeeping acknowledgement (an unattended
+        # pickup captured the answer). Two states only (v1.64): it is ANSWERED — awaiting
+        # execution, and must never render as executed.
+        if record.get("status") == "recorded":
+            state_class, state_label = "awaiting", "Answered — awaiting execution"
+            outcome = activity_outcome(source) or "Answer acknowledged, work owed"
+            full_record = ('<p>Bookkeeping acknowledgement: an unattended pickup captured the '
+                           'owner’s answer, but the work is not yet executed.</p>'
+                           + md_inline(source))
+        else:
+            state_class, state_label = "executed", "Executed"
+            outcome = activity_outcome(source) or "Execution recorded"
+            full_record = md_inline(source)
     else:
         source = record.get("answer", "")
         state_class, state_label = "awaiting", "Awaiting Supervisor"
@@ -2291,7 +3336,339 @@ def render_activity_entry(record, kind, hub_keys=None):
 </details>"""
 
 
-def activity(hub_filter=None):
+# ---------- unattended answer pickups (v1.64; SPEC.md §3) ----------
+# `pull` writes one `consumed, processing` line per record to the pickup log BEFORE truncating
+# the pending store (see pull_answers), so the log is the trace of the owner's own input being
+# consumed while nobody was watching. This panel is the other half: the consumed answers must be
+# VISIBLE, because the pull rotated them out of the store and the log is their only trace.
+# Line format: `- <date> <id> — answered "<verbatim>" — <what happened to it>`
+
+
+def unattended_pickups():
+    """Parsed pickup-log lines, newest first. Read-only; a missing log is a state, not an
+    error."""
+    out = []
+    if PICKUP_LOG is None or not PICKUP_LOG.exists():
+        return out
+    for line in PICKUP_LOG.read_text(encoding="utf-8", errors="replace").splitlines():
+        m = re.match(r"^-\s*(\d{4}-\d{2}-\d{2})\s+(\S+)\s*[—-]\s*(.*)$", line.strip())
+        if m:
+            out.append({"at": m.group(1), "id": m.group(2), "what": m.group(3)})
+    out.reverse()
+    return out
+
+
+def render_unattended(limit=25):
+    picks = unattended_pickups()
+    body = "".join(
+        f'<div class="feeditem"><span class="feedid">{html.escape(p["id"])}</span> '
+        f'<div class="activity-outcome"><span class="feedat">{html.escape(p["at"])}</span> '
+        f'{md_inline(p["what"])}</div></div>'
+        for p in picks[:limit]) or (
+        '<div class="feeditem"><i>Nothing yet — every answer so far was picked up in a live '
+        'session.</i></div>')
+    return ('<section class="activity-unattended" id="unattended" '
+            'aria-labelledby="activity-unattended-heading">'
+            f'<h2 id="activity-unattended-heading">Picked up without you asking '
+            f'<span class="sectioncount">{len(picks)}</span></h2>'
+            '<p class="section-description">Answers the estate collected on its own, while no '
+            'session was running. Bookkeeping only: nothing here wrote into a hub, dispatched '
+            'an agent, or decided anything.</p>'
+            f'<div class="feed">{body}</div></section>')
+
+
+# ---------- agent activity (agent-reports/ beside the queue file, read-only; v1.64) ----------
+# Different material from the answer feed: that feed is what the estate did with the OWNER'S
+# decisions; this is what the estate's agents did on their own dispatches. Sourced from curated
+# frontmatter in agent-reports/ (never from git-log parsing): git records what an agent CHANGED,
+# and a refusal changes nothing, so the report file is the only record a refusal has. The
+# directory is a convention a deployment's dispatch machinery fills; a deployment with none sees
+# the section say so and nothing else — the CONTRACT ships here, the machinery that writes the
+# reports stays the deployment's own.
+
+AGENT_REPORT_CAP = 12  # entries rendered; the footer states what is not shown and where it is
+# outcome -> (group, badge, what it means in the owner's words)
+AGENT_OUTCOMES = {
+    "refused": ("boundary", "Refused",
+                "the agent declined work it was not authorised to do"),
+    "stopped": ("boundary", "Stopped",
+                "the agent halted because the work could not be done as directed"),
+    "applied": ("routine", "Applied", "the work was carried out and committed"),
+    "reported": ("routine", "Reported",
+                 "the agent reported findings without changing anything"),
+}
+AGENT_ROW_RE = re.compile(r"^[abc]\d+$", re.I)
+AGENT_FILE_DATE_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})")
+
+
+def _frontmatter(raw):
+    """Split a leading `---` frontmatter block into (mapping, body). A file with no block, or
+    with an unterminated one, yields ({}, raw) — it is then REPORTED as unreadable, never
+    guessed at."""
+    if not raw.startswith("---\n"):
+        return {}, raw
+    end = raw.find("\n---", 4)
+    if end == -1:
+        return {}, raw
+    fm = {}
+    for line in raw[4:end].splitlines():
+        if ":" in line and not line.startswith(("#", " ", "\t", "-")):
+            key, value = line.split(":", 1)
+            fm[key.strip()] = value.strip()
+    return fm, raw[end + 4:]
+
+
+def _fm_list(value):
+    """Parse a flow-style frontmatter list (`[a, b]`, `a, b`, or empty) into a list."""
+    v = (value or "").strip()
+    if v.startswith("[") and v.endswith("]"):
+        v = v[1:-1]
+    return [item.strip().strip("'\"") for item in v.split(",") if item.strip().strip("'\"")]
+
+
+def agent_hub_keys(values):
+    """Map a report's `hubs:` values onto HUBS keys. An unrecognised value is kept VERBATIM as a
+    plain label, never guessed into a hub; a report naming no hub reads as the attribution
+    fallback, exactly like hubs_of(). Returns (keys, unmatched-labels)."""
+    keys, unmatched = [], []
+    for value in values:
+        v = value.strip().lower()
+        hit = next((k for k, (name, d, _kw) in HUBS.items()
+                    if v in (k, d.lower(), name.lower())), None)
+        if hit and hit not in keys:
+            keys.append(hit)
+        elif not hit and value.strip():
+            unmatched.append(value.strip())
+    if not keys and not unmatched:
+        keys = [FALLBACK_KEY]
+    return keys, unmatched
+
+
+def agent_report_date(fm_value, filename):
+    """Frontmatter timestamp first, the filename's date prefix second, "" when neither parses.
+    Never invents a date from the file's mtime: an undated report displays as undated."""
+    match = AGENT_FILE_DATE_RE.match(filename or "")
+    for candidate in (str(fm_value or "").strip()[:10], match.group(1) if match else ""):
+        try:
+            return datetime.date.fromisoformat(candidate).isoformat()
+        except ValueError:
+            continue
+    return ""
+
+
+def parse_agent_reports(directory=None):
+    """Read agent-reports/ frontmatter. READ-ONLY, and honest about what it cannot read: a file
+    with no frontmatter, no agent, or an outcome outside the four governed values is listed as
+    unreadable BY NAME rather than given a fabricated outcome or silently dropped. A missing
+    directory is a state, not an error. Returns {state, path, reports, unreadable}."""
+    directory = AGENT_REPORTS if directory is None else Path(directory)
+    if directory is None or not directory.is_dir():
+        return {"state": "missing", "path": str(directory or ""), "reports": [],
+                "unreadable": []}
+    reports, unreadable = [], []
+    for p in sorted(directory.glob("*.md")):
+        try:
+            raw = p.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            unreadable.append({"file": p.name, "path": str(p),
+                               "problem": "the file could not be read"})
+            continue
+        fm, body = _frontmatter(raw)
+        if fm.get("type", "agent-report") != "agent-report":
+            continue  # the directory's own README, and any other index file filed beside it
+        outcome = fm.get("outcome", "").strip().lower()
+        if not fm:
+            problem = "no readable frontmatter"
+        elif not fm.get("agent"):
+            problem = "frontmatter names no agent"
+        elif outcome not in AGENT_OUTCOMES:
+            problem = (f"outcome '{outcome}' is not one of {', '.join(AGENT_OUTCOMES)}"
+                       if outcome else "frontmatter states no outcome")
+        else:
+            problem = ""
+        if problem:
+            unreadable.append({"file": p.name, "path": str(p), "problem": problem})
+            continue
+        heading = re.search(r"^#\s+(.+)$", body, re.M)
+        reports.append({
+            "file": p.name,
+            "path": str(p),
+            "agent": fm.get("agent", ""),
+            "dispatched_by": fm.get("dispatched-by", ""),
+            "row": fm.get("row", "").strip(),
+            "outcome": outcome,
+            "group": AGENT_OUTCOMES[outcome][0],
+            "commits": _fm_list(fm.get("commits")),
+            "hubs": _fm_list(fm.get("hubs")),
+            "date": agent_report_date(fm.get("timestamp"), p.name),
+            "title": heading.group(1).strip() if heading else p.stem,
+        })
+    reports.sort(key=lambda r: (bool(r["date"]), r["date"], r["file"]), reverse=True)
+    return {"state": "ok", "path": str(directory), "reports": reports, "unreadable": unreadable}
+
+
+def _plural(n, word, suffix="s"):
+    return f"{n} {word}{'' if n == 1 else suffix}"
+
+
+def agent_reports_for(data, hub_filter=None):
+    """The reports in scope for a view. A hub filter uses the report's own `hubs:` field."""
+    reports = data["reports"]
+    if hub_filter and hub_filter in HUBS:
+        reports = [r for r in reports if hub_filter in agent_hub_keys(r["hubs"])[0]]
+    return reports
+
+
+def render_agent_entry(rep):
+    """One report at a glance — agent, what it served, outcome, date — opening onto its own
+    words. The report FILE is the evidence, so the link to it is the first thing in the body."""
+    group, label, meaning = AGENT_OUTCOMES[rep["outcome"]]
+    keys, unmatched = agent_hub_keys(rep["hubs"])
+    chips = hub_chips(keys) + "".join(
+        f'<span class="activity-no-hub">{html.escape(u)}</span>' for u in unmatched)
+    if rep["date"]:
+        when = (f'<time class="activity-time" datetime="{rep["date"]}">'
+                f'{html.escape(rep["date"][5:])}</time>')
+        filed = f'<time datetime="{rep["date"]}">{html.escape(rep["date"])}</time>'
+    else:
+        when = '<span class="activity-time">—</span>'
+        filed = "date not stated in the report"
+    row = (rep["row"] or "").strip()
+    if AGENT_ROW_RE.match(row):
+        # Stated, never linked: the row is usually closed by now, and a link to a board that no
+        # longer renders it would dead-end.
+        served = f"queue row {html.escape(row.lower())}"
+    elif row.lower() in ("", "none", "n/a", "-"):
+        served = "no queue row — dispatched work"
+    else:
+        served = html.escape(row)
+    if rep["commits"]:
+        commits = ", ".join(f'<code>{html.escape(c)}</code>' for c in rep["commits"])
+    elif group == "boundary":
+        commits = "none — nothing was changed, so this report is the only record"
+    else:
+        commits = "none recorded"
+    link = f'/view?p={urllib.parse.quote(rep["path"])}'
+    return f"""<details class="activity-entry agent-entry agent-entry-{group}"
+data-agent-outcome="{rep["outcome"]}" data-agent-file="{html.escape(rep["file"])}">
+<summary class="activity-summary">
+{when}<span class="feedid">{html.escape(rep["agent"])}</span>
+<span class="activity-hubs">{chips}</span>
+<span class="activity-state agent-state-{rep["outcome"]}">{label}</span>
+<span class="activity-outcome">{html.escape(rep["title"])}</span>
+<span class="activity-disclosure"><span class="show-details">View details</span>
+<span class="hide-details">Hide details</span></span>
+</summary>
+<div class="activity-detail">
+<p class="agent-meaning">{label} — {meaning}.</p>
+<p class="agent-read"><a href="{link}">Read the report in the agent's own words →</a></p>
+<dl class="activity-meta"><dt>Agent</dt><dd>{html.escape(rep["agent"])}</dd>
+<dt>Dispatched by</dt><dd>{html.escape(rep["dispatched_by"] or "not stated")}</dd>
+<dt>Served</dt><dd>{served}</dd>
+<dt>Hubs</dt><dd>{chips}</dd>
+<dt>Commits</dt><dd>{commits}</dd>
+<dt>Filed</dt><dd>{filed}</dd>
+<dt>Report file</dt><dd><a href="{link}">{html.escape(rep["file"])}</a></dd></dl>
+</div></details>"""
+
+
+def render_agent_activity(data=None, hub_filter=None):
+    """The Agent activity section — its ONE home is the Activity page; the Overview states it as
+    a count with a link and never repeats an entry. Refusals and stops lead, in their own
+    bordered group, and claim the cap before routine reports do: a view that shows twelve
+    applies and hides one refusal has failed its only job."""
+    data = parse_agent_reports() if data is None else data
+    head = ('<section class="agent-activity" id="agents" aria-labelledby="agent-activity-heading">'
+            '<h2 id="agent-activity-heading">Agent activity</h2>'
+            '<p class="section-description">What the estate\'s agents did on their own '
+            'dispatches: what they checked, judged, and refused. Git records what an agent '
+            'changed; a refusal changes nothing, so its report file is the only record it has. '
+            'Nothing in this section is waiting on you — your own decisions are below.</p>')
+    if data["state"] == "missing":
+        return head + ('<p class="pointer-note agent-none"><b>No agent-reports directory</b> — '
+                       'nothing is filed beside the queue file, so there is nothing to show. '
+                       'This section reports only what a deployment\'s dispatch machinery files '
+                       'there.</p></section>')
+    reports = agent_reports_for(data, hub_filter)
+    boundary = [r for r in reports if r["group"] == "boundary"]
+    routine = [r for r in reports if r["group"] == "routine"]
+    shown_b = boundary[:AGENT_REPORT_CAP]
+    shown_r = routine[:max(0, AGENT_REPORT_CAP - len(shown_b))]
+    blocks = []
+    if shown_b:
+        nouns = {"refused": "refusal", "stopped": "stop"}
+        counts = ", ".join(
+            _plural(len([r for r in shown_b if r["outcome"] == o]), noun)
+            for o, noun in nouns.items()
+            if any(r["outcome"] == o for r in shown_b))
+        blocks.append(
+            '<div class="agent-group agent-group-boundary">'
+            f'<h3>Boundaries held — {counts}</h3>'
+            '<p class="agent-group-note">An agent declining or halting work it was not '
+            'authorised to do, or could not do as directed. These are the estate\'s rules '
+            'holding, including against the Supervisor. None of them produced a commit.</p>'
+            + "".join(render_agent_entry(r) for r in shown_b) + '</div>')
+    elif reports:
+        blocks.append('<p class="pointer-note agent-none">No refusal or stop among the '
+                      f'{_plural(len(reports), "report")} in view.</p>')
+    if shown_r:
+        blocks.append(
+            '<div class="agent-group">'
+            f'<h3>Applied and reported — {len(shown_r)}</h3>'
+            + "".join(render_agent_entry(r) for r in shown_r) + '</div>')
+    if not reports:
+        scope = (f' attributed to {html.escape(HUBS[hub_filter][0])}'
+                 if hub_filter and hub_filter in HUBS else "")
+        blocks.append('<p class="pointer-note agent-none">No agent report'
+                      f'{scope} has been filed yet.</p>')
+    hidden = len(reports) - len(shown_b) - len(shown_r)
+    note = (f'Showing {len(shown_b) + len(shown_r)} of '
+            f'{_plural(len(reports), "filed report")}, newest first'
+            + (f'; {_plural(hidden, "older report")} not shown here' if hidden else "")
+            + (f'. Filtered to {html.escape(HUBS[hub_filter][0])}'
+               if hub_filter and hub_filter in HUBS else "")
+            + '. Every report lives in <code>agent-reports/</code> beside the queue file — '
+            f'<a href="/open?p={urllib.parse.quote(data["path"])}">open the folder</a>.')
+    blocks.append(f'<p class="agent-note">{note}</p>')
+    if data["unreadable"]:
+        items = "".join(
+            f'<li><a href="/view?p={urllib.parse.quote(u["path"])}">{html.escape(u["file"])}</a>'
+            f' — {html.escape(u["problem"])}</li>' for u in data["unreadable"])
+        blocks.append(
+            '<p class="pointer-note agent-unreadable"><b>'
+            f'{_plural(len(data["unreadable"]), "file")} in agent-reports could not be read as a '
+            'report</b> — named here rather than counted into anything or guessed at:'
+            f'<ul>{items}</ul></p>')
+    return head + "".join(blocks) + "</section>"
+
+
+def render_agent_pointer(data=None):
+    """The Agent activity section's ONLY appearance outside the Activity page: a count and a
+    link, never an entry (the one-home rule)."""
+    data = parse_agent_reports() if data is None else data
+    reports, bad = data["reports"], data["unreadable"]
+    if data["state"] == "missing" or not (reports or bad):
+        return ""
+    boundary = [r for r in reports if r["group"] == "boundary"]
+    lead = (f'<b>{_plural(len(reports), "agent report")}, '
+            + (f'{len(boundary)} refused or stopped</b>' if boundary
+               else "none refused or stopped</b>"))
+    tail = (f' {_plural(len(bad), "file")} there could not be read as a report.' if bad else "")
+    return f"""<section class="agent-pointer" aria-labelledby="agent-pointer-heading">
+<h2 id="agent-pointer-heading">Agent activity</h2>
+<p class="pointer-note">{lead} — what the estate's agents checked, judged and refused on their
+own dispatches. Nothing here needs you. Each one, in the agent's own words, is on the
+<a href="/activity#agents">Activity page →</a>.{tail}</p></section>"""
+
+
+def activity_subnav(counts):
+    items = "".join(
+        f'<a href="#{anchor}">{label} <span class="sectioncount">{n}</span></a>'
+        for anchor, label, n in counts)
+    return f'<nav class="activity-subnav" aria-label="Activity sections">{items}</nav>'
+
+
+def activity(hub_filter=None, show_all=False):
     ex = read_jsonl(EXECUTIONS)
     pend = read_jsonl(ANSWERS) + read_jsonl(PROCESSED)
     done_ids = {record["id"] for record in ex}
@@ -2302,6 +3679,8 @@ def activity(hub_filter=None):
                   f'<b>{html.escape(HUBS[hub_filter][0])}</b> · '
                   f'<a href="/activity">show all</a></div>')
     for record in ex:
+        if str(record.get("id", "")).startswith(DESK_PREFIX):
+            continue  # desk ids surface on the desk alone (dev-0013)
         hks = hubs_of(record.get("note", ""))
         if hub_filter and hub_filter not in hks:
             continue
@@ -2314,7 +3693,7 @@ def activity(hub_filter=None):
         for card in parse_cards()
     }
     for record in pend:
-        if record["id"] in done_ids:
+        if record["id"] in done_ids or str(record.get("id", "")).startswith(DESK_PREFIX):
             continue
         answer_hubs = card_hubs.get(record["id"], [])
         if hub_filter and hub_filter not in answer_hubs:
@@ -2351,10 +3730,44 @@ def activity(hub_filter=None):
             f'<h2 class="activity-date" id="{heading_id}">{heading}</h2>'
             f'<div class="feed">{"".join(rows)}</div></section>'
         )
-    grouped = (f'<div class="activity-days">{"".join(sections)}</div>'
+    # CAP: an unbounded feed buries the entries that matter. Show the most recent days; the rest
+    # stay one click away rather than scrolled past.
+    DAYS = 7
+    hidden = max(0, len(sections) - DAYS)
+    if hidden and not show_all:
+        more = (f'<p class="section-description"><a href="/activity?all=1">Show '
+                f'{hidden} earlier day(s)</a></p>')
+        sections = sections[:DAYS]
+    else:
+        more = ""
+    grouped = (f'<div class="activity-days">{"".join(sections)}</div>{more}'
                if sections else '<div class="feed">Nothing yet.</div>')
-    return page("Activity — KM Cockpit", prefix + grouped,
-                sub="every answer you gave, and what the estate did with it — newest first",
+    # SPLIT BY ACTOR (v1.64): what YOU decided, what an AGENT did on a dispatch, and what ran
+    # UNATTENDED. One feed mixing all three hides the entries that matter — a refusal, or an
+    # answer consumed while nobody watched. Refusals render above routine applies, never
+    # interleaved.
+    decisions_feed = (
+        '<section class="activity-decisions" id="decisions" '
+        'aria-labelledby="activity-decisions-heading">'
+        f'<h2 id="activity-decisions-heading">Your decisions '
+        f'<span class="sectioncount">{len(entries)}</span></h2>'
+        '<p class="section-description">Every answer you gave, and what the estate did with '
+        'it.</p>' + grouped + '</section>')
+    _ar = parse_agent_reports()
+    agents_html = render_agent_activity(_ar, hub_filter=hub_filter)
+    unattended_html = render_unattended()
+    nav = activity_subnav([
+        ("decisions", "Your decisions", len(entries)),
+        # parse_agent_reports() returns a DICT, so len() on it would count keys, not reports.
+        # Count the reports, and count an unreadable file too: a report the parser cannot read
+        # still happened.
+        ("agents", "Agents", len(_ar.get("reports", [])) + len(_ar.get("unreadable", []))),
+        ("unattended", "Unattended", len(unattended_pickups())),
+    ])
+    return page("Activity — KM Cockpit",
+                prefix + nav + decisions_feed + agents_html + unattended_html,
+                sub="split by who acted: your decisions, the agents' own dispatches, and what "
+                    "the estate picked up unattended — newest first",
                 active="activity")
 
 
@@ -2470,7 +3883,7 @@ def hub_portfolio(cards=None, st=None, executions=None):
     """Build the read-only supervisor portfolio from existing estate evidence."""
     cards = parse_cards() if cards is None else cards
     st = state() if st is None else st
-    executions = read_jsonl(EXECUTIONS) if executions is None else executions
+    executions = executed_records() if executions is None else executions
     initiated = initiated_hubs()
     resolved = set(st["executed"]) | set(st["pending"]) | set(st["queued"])
     priority = {"Needs decision": 0, "Pending changes": 1, "Awaiting execution": 2,
@@ -2492,9 +3905,16 @@ def hub_portfolio(cards=None, st=None, executions=None):
                 str(Path(proposal["path"]).resolve()))
             proposal["state"], proposal["label"] = proposal_lifecycle(
                 proposal["decision_id"], st)
+            # A proposal file is DELETED when the hub's agent applies it, so a proposal STILL
+            # PRESENT here has NOT been applied, whatever the row's execution note says. The
+            # exec note is a CLAIM; the file's presence is the FACT, and the fact wins (v1.64).
+            if proposal["state"] == "executed":
+                proposal["state"] = "awaiting-hub"
+                proposal["label"] = ("Directive issued — waiting on this hub's own agent to "
+                                     f"apply it ({proposal['decision_id']})")
             proposals.append(proposal)
         awaiting_exec = sum(1 for p in proposals
-                            if p["state"] in ("answered", "queued", "executed"))
+                            if p["state"] in ("answered", "queued", "executed", "awaiting-hub"))
         owner_pending = len(proposals) - awaiting_exec
         prop_states = {p["state"] for p in proposals}
         last_date, last_subject = last_update_parts(info.get("last", ""))
@@ -2626,7 +4046,7 @@ def render_hub_directory(rows, cards, st, executions):
 def hubs_page():
     cards = parse_cards()
     st = state()
-    executions = read_jsonl(EXECUTIONS)
+    executions = executed_records()
     rows = hub_portfolio(cards, st, executions)
     return page("Hubs — KM Cockpit", render_hub_directory(rows, cards, st, executions),
                 sub="the complete hub directory — status at a glance, evidence and recent history on expansion",
@@ -2638,7 +4058,7 @@ def hub_profile_page(key):
         return None
     cards = parse_cards()
     st = state()
-    executions = read_jsonl(EXECUTIONS)
+    executions = executed_records()
     row = next((record for record in hub_portfolio(cards, st, executions)
                 if record["key"] == key), None)
     if not row:
@@ -2836,9 +4256,10 @@ class H(BaseHTTPRequestHandler):
         if u.path == "/":
             self._send(200, home())
         elif u.path == "/decisions":
-            self._send(200, decisions(q.get("hub", [None])[0]))
+            self._send(200, decisions(q.get("hub", [None])[0], q.get("lane", [None])[0]))
         elif u.path == "/activity":
-            self._send(200, activity(q.get("hub", [None])[0]))
+            self._send(200, activity(q.get("hub", [None])[0],
+                                     show_all="all=1" in (u.query or "")))
         elif u.path == "/hubs":
             self._send(200, hubs_page())
         elif u.path == "/desk":
@@ -2915,6 +4336,10 @@ class H(BaseHTTPRequestHandler):
             self._send(code, msg, "text/plain")
         elif self.path == "/desk":
             code, msg = record_desk_tick(data.get("id", ""), undo=bool(data.get("undo")))
+            self._send(code, msg, "text/plain")
+        elif self.path == "/dismiss":
+            # Owner-side view state only — an append, never a queue-file edit.
+            code, msg = record_dismissal(data.get("id", ""), bool(data.get("undo")))
             self._send(code, msg, "text/plain")
         else:
             self._send(404, "not found")
@@ -3015,15 +4440,16 @@ def selftest():
         {"id": "act-two", "since": "2026-08-01", "due": "2026-08-02",
          "action": "Repoint the other thing.", "evidence": "[hygiene](HANDOVER.md)"},
     ]}
-    req1 = {"id": "supervisor-action:act-one", "type": "prioritize",
-            "question": "Please prioritize this action", "at": "2026-08-17 10:00:00"}
+    req1 = {"id": "supervisor-action:act-one", "type": "run-next",
+            "question": "Run this next — make this the next action you pick up",
+            "at": "2026-08-17 10:00:00"}
     open_html = render_supervisor_actions(reg, ({}, {}))
     check("section renamed Waiting on KM Supervisor",
           "Waiting on KM Supervisor" in open_html and "KM Supervisor actions" not in open_html)
     check("supporting label present",
           "No owner action is required unless you choose to redirect it" in open_html)
     check("controls on every action",
-          open_html.count("Ask for update") == 2 and open_html.count(">Prioritize<") == 2
+          open_html.count("Ask for update") == 2 and open_html.count(">Run next<") == 2
           and open_html.count(">Hold<") == 2)
     check("evidence link retained", "/view?p=" in open_html and ">handover<" in open_html)
     check("open state when nothing awaits acknowledgement",
@@ -3035,13 +4461,13 @@ def selftest():
     check("request-sent state renders awaiting acknowledgement",
           'data-sup-state="sent"' in sent_html
           and "Request sent — awaiting KM Supervisor acknowledgement" in sent_html
-          and "Please prioritize this action" in sent_html)
-    rep1 = {"id": "supervisor-action:act-one", "reply": "Prioritized — runs first tomorrow.",
+          and "Run this next" in sent_html)
+    rep1 = {"id": "supervisor-action:act-one", "reply": "Scheduled — runs first tomorrow.",
             "at": "2026-08-17 11:00:00"}
     replied_html = render_supervisor_actions(reg, ({"act-one": [req1]}, {"act-one": [rep1]}))
     check("reply renders inline on the row with its timestamp",
           'data-sup-state="replied"' in replied_html
-          and "Prioritized — runs first tomorrow." in replied_html
+          and "Scheduled — runs first tomorrow." in replied_html
           and "2026-08-17 11:00:00" in replied_html)
     saved_q = (QUESTIONS, QPROCESSED, QREPLIES)
     try:
@@ -3049,15 +4475,15 @@ def selftest():
             QUESTIONS = Path(td) / "questions.jsonl"
             QPROCESSED = Path(td) / "questions-processed.jsonl"
             QREPLIES = Path(td) / "question-replies.jsonl"
-            code, msg = record_supervisor_request("act-one", "prioritize", register=reg)
+            code, msg = record_supervisor_request("act-one", "run-next", register=reg)
             check("valid request accepted with the ruled confirmation",
-                  code == 200 and msg == SUP_CONFIRMATION)
+                  code == 200 and msg == SUP_RUN_NEXT_CONFIRMATION)
             recorded = read_jsonl(QUESTIONS)
             check("stable ref, type, and message stored in the questions pipeline",
                   len(recorded) == 1
                   and recorded[0]["id"] == "supervisor-action:act-one"
-                  and recorded[0]["type"] == "prioritize"
-                  and recorded[0]["question"] == "Please prioritize this action")
+                  and recorded[0]["type"] == "run-next"
+                  and recorded[0]["question"].startswith("Run this next"))
             check("invalid action id rejected",
                   record_supervisor_request("no-such-action", "hold", register=reg)[0] == 404)
             check("invalid message type rejected",
@@ -3140,6 +4566,149 @@ def selftest():
     check("layout canary: a registered grid the checker cannot find REFUSES, never passes",
           any("no grid-template-columns declaration" in v for v in
               layout_contract_violations(STYLE.replace(".decision-glance {", ".gone {"))[0]))
+    # --- v1.64: the row's own ANSWERED marker ------------------------------------------------
+    marked = ('**ANSWERED "restrict", execution owed by the Supervisor.** '
+              '**Restrict the claim.** Context sentence.')
+    text, verb = split_row_answer(marked)
+    check("ANSWERED marker splits off the Decision cell with its verb",
+          verb == "restrict" and text.startswith("**Restrict the claim.**"))
+    check("the em-dash marker form (earlier convention) still splits",
+          split_row_answer('**ANSWERED "apply" — execution owed by the Supervisor.** X')[1]
+          == "apply")
+    check("a cell with no marker is untouched",
+          split_row_answer("**Plain decision.** ctx") == ("**Plain decision.** ctx", None))
+    check("decision_title never titles a card by the marker",
+          decision_title({"what": text}) == "Restrict the claim.")
+    marked_raw = ('| a11 | 2026-08-01 | - | **ANSWERED "restrict", execution owed by the '
+                  'Supervisor.** **Restrict the claim.** ctx | "restrict", "veto" |\n')
+    mc = parse_cards(marked_raw)[0]
+    check("parse_cards splits the marker and carries the verb",
+          mc["answered_row"] == "restrict" and mc["what"].startswith("**Restrict the claim.**"))
+    check("row_answers folds the marker into an answer source",
+          row_answers(marked_raw) == {"a11": "restrict"})
+    mb_raw = ('| a12 | 2026-08-01 | - | **Decide.** ctx | "yes", "no" |\n'
+              "<!-- QUEUE:BEGIN\n"
+              "a12 | a | 2026-08-01 | - | decide? | knowledge | answered:yes\n"
+              "QUEUE:END -->\n")
+    check("the machine block's appended answered: field reads as an answer source",
+          row_answers(mb_raw) == {"a12": "yes"})
+    check("the machine block's appended lane field reads positionally, absent -> knowledge",
+          [c["lane"] for c in parse_cards(mb_raw)] == ["knowledge"]
+          and lane_of("machinery") == "machinery" and lane_of("") == "knowledge"
+          and lane_of("nonsense") == "knowledge")
+    # --- v1.64: the badge constants the client poll swaps in are serialised, never restated ---
+    check("BADGE_JS derives from the server's own ANSWERED/EXECUTED constants",
+          ANSWERED_META[0] in BADGE_JS and EXECUTED_META[0] in BADGE_JS
+          and ANSWERED_META[1] in BADGE_JS and EXECUTED_META[1] in BADGE_JS)
+    # --- v1.64: dismissal is owner-side view state, validated live, undone in place ----------
+    saved_dis = DISMISSED
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            globals()["DISMISSED"] = Path(td) / "dismissed.jsonl"
+            fix_cards = parse_cards('| a13 | 2026-08-01 | - | **Gated.** ctx | prose options |\n'
+                                    "- **c9 — note** — an informational card\n")
+            check("a tier-C row and a gated tier-A row are dismissible; nothing else is",
+                  dismissible_ids(fix_cards) == {"a13", "c9"})
+            code, _ = record_dismissal("c9", cards=fix_cards, now="2026-08-27 00:00:00")
+            check("a valid dismissal is recorded", code == 200
+                  and set(dismissals()) == {"c9"})
+            code, _ = record_dismissal("c9", undo=True, cards=fix_cards,
+                                       now="2026-08-27 00:00:01")
+            check("an undo is an appended record and the last record wins",
+                  code == 200 and dismissals() == {}
+                  and len(read_jsonl(DISMISSED)) == 2)
+            check("a decision row is never dismissible",
+                  record_dismissal("a99", cards=fix_cards)[0] == 404)
+    finally:
+        globals()["DISMISSED"] = saved_dis
+    # --- v1.64: run-next, the retired control, the dependency quote, the due state -----------
+    reg64 = {"state": "present", "malformed": 0, "actions": [
+        {"id": "act-dep", "since": "2026-08-01", "due": "-",
+         "action": "Re-point the mirror. Blocked by the vendor's reply; waits on their window.",
+         "evidence": "[handover](HANDOVER.md)"}]}
+    saved_q64 = QUESTIONS
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            globals()["QUESTIONS"] = Path(td) / "questions.jsonl"
+            code, msg = record_supervisor_request("act-dep", "prioritize", register=reg64)
+            check("the retired Prioritize control is REFUSED by name, never re-filed",
+                  code == 400 and "Run next" in msg
+                  and not Path(td, "questions.jsonl").exists())
+            code, msg = record_supervisor_request("act-dep", "run-next", register=reg64)
+            recorded64 = read_jsonl(QUESTIONS)
+            check("run-next over a stated dependency is RECORDED with the clause carried",
+                  code == 200 and "waiting on something" in msg
+                  and len(recorded64) == 1 and "Blocked by" in recorded64[0]["question"])
+    finally:
+        globals()["QUESTIONS"] = saved_q64
+    check("supervisor_dependencies quotes the stated clause verbatim and nothing else",
+          supervisor_dependencies("Do the thing. Blocked by the vendor's reply.")
+          == ["Blocked by the vendor's reply."]
+          and supervisor_dependencies("Do the thing, no blocker named.") == [])
+    check("due_status: overdue/today/ahead/missing/unreadable are distinct states",
+          due_status("-")[0] == "missing" and due_status("garbage")[0] == "unreadable"
+          and due_status(datetime.date.today().isoformat())[0] == "today"
+          and due_status((datetime.date.today() - datetime.timedelta(days=2)).isoformat())[0]
+          == "overdue"
+          and due_status((datetime.date.today() + datetime.timedelta(days=2)).isoformat())[0]
+          == "ahead")
+    # --- v1.64: pull writes the trace BEFORE truncating, and the log survives the consumer ---
+    saved_pull = (ANSWERS, PROCESSED, PICKUP_LOG)
+    try:
+        with tempfile.TemporaryDirectory() as td:
+            globals()["ANSWERS"] = Path(td) / "answers.jsonl"
+            globals()["PROCESSED"] = Path(td) / "answers-processed.jsonl"
+            globals()["PICKUP_LOG"] = Path(td) / "answer-pickup-log.md"
+            ANSWERS.write_text(json.dumps({"id": "b42", "answer": "apply",
+                                           "at": "2026-08-27 00:00:00"}) + "\n")
+            pulled = pull_answers()
+            log = PICKUP_LOG.read_text()
+            check("pull consumes, rotates, and logs the consumption trace",
+                  len(pulled) == 1 and ANSWERS.read_text() == ""
+                  and '"b42"' in PROCESSED.read_text()
+                  and "b42" in log and "consumed, processing" in log)
+            check("the logged line is what the unattended panel parses",
+                  [p["id"] for p in unattended_pickups()] == ["b42"])
+            check("an empty pending store pulls nothing and logs nothing",
+                  pull_answers() == [] and PICKUP_LOG.read_text() == log)
+            # THE STEP ORDER IS THE GUARANTEE: a failure before truncation leaves the answers
+            # pending, so the next pull retries them and no record is lost.
+            ANSWERS.write_text(json.dumps({"id": "b43", "answer": "veto"}) + "\n")
+            PICKUP_LOG.unlink()
+            PICKUP_LOG.mkdir()          # a directory where a file must be: the log write fails
+            try:
+                pull_answers()
+                failed_before_truncate = False
+            except Exception:
+                failed_before_truncate = True
+            check("a failure at the log step leaves the pending store UNTOUCHED (no ordering "
+                  "loses a record)",
+                  failed_before_truncate and '"b43"' in ANSWERS.read_text())
+    finally:
+        (globals()["ANSWERS"], globals()["PROCESSED"], globals()["PICKUP_LOG"]) = saved_pull
+    # --- v1.64: the agent-reports reader is honest about what it cannot read ----------------
+    with tempfile.TemporaryDirectory() as td:
+        d = Path(td) / "agent-reports"
+        d.mkdir()
+        (d / "2026-08-01_ok.md").write_text(
+            "---\ntype: agent-report\nagent: km-example-hub\nrow: a1\noutcome: refused\n"
+            "hubs: [example]\ntimestamp: 2026-08-01\n---\n\n# Refused the directive\n")
+        (d / "2026-08-02_bad.md").write_text(
+            "---\ntype: agent-report\nagent: km-example-hub\noutcome: exploded\n---\n\n# X\n")
+        (d / "README.md").write_text("---\ntype: reference\n---\n\n# About this directory\n")
+        data = parse_agent_reports(d)
+        check("agent reports parse; an ungoverned outcome is named unreadable, never guessed",
+              [r["outcome"] for r in data["reports"]] == ["refused"]
+              and len(data["unreadable"]) == 1
+              and "exploded" in data["unreadable"][0]["problem"])
+        check("a missing agent-reports directory is a state, not an error",
+              parse_agent_reports(Path(td) / "absent")["state"] == "missing")
+    # --- v1.64: a proposal still present is not executed (awaiting-hub) ----------------------
+    st64 = {"pending": [], "queued": [], "executed": {"b8": {"id": "b8", "note": "", "at": ""}},
+            "answers": {}, "replies": {}, "recorded": []}
+    pstate, plabel = proposal_lifecycle("b8", st64)
+    check("proposal_lifecycle still reports executed (the portfolio downgrades it)",
+          pstate == "executed")
     print("selftest:", "FAIL" if failures else "OK")
     if failures:
         sys.exit(1)
@@ -3177,10 +4746,14 @@ def queue_check(path):
     if bad:
         print(f"queue-check: {len(bad)} of {len(cards)} tier-A/B rows in {p} are not answerable")
         for rid, gate in bad:
+            # A parse failure states WHICH cell defeated it (v1.64): a malformed Defaults cell
+            # and a row missing from the board must not read identically at session start.
             print(f"  {rid} — {gate}")
+        print(f'  repair the named cell: options take the quoted form ("verb", recommendation '
+              f'first); a Defaults cell takes one of {DEFAULTS_CELL_FORMS}')
         return 1
     print(f"queue-check: OK — {len(cards)} tier-A/B rows read in {p}, "
-          "every row's declared options are readable")
+          "every row parses and every row's declared options are readable")
     return 0
 
 
@@ -3195,6 +4768,79 @@ def rotate(src, dst):
     return lines
 
 
+def pull_answers():
+    """CONSUME the pending owner answers, writing each one's trace BEFORE the consumption is
+    final (v1.64; SPEC.md §3).
+
+    WHY THE ORDER IS WHAT IT IS. Consumption is irreversible: once an id leaves the pending
+    store the cockpit never offers it again. In the reference deployment a run once consumed
+    twelve answers and logged eight, and the four it dropped were recoverable only because the
+    owner happened to look at his board — the caller's step order was mark, then process, then
+    log, so any failure between the mark and the log destroyed the record entirely. So the log
+    line is no longer the CALLER's obligation, which it can forget or die before meeting: it is
+    written HERE, by the consume path, for every consumer — an unattended routine and a live
+    session alike — carrying the non-terminal verdict `consumed, processing`. The consumer then
+    resolves that line to its outcome in the log; a crash at any point after this function
+    leaves a line naming what was taken and saying it was never finished.
+
+    THE STEP ORDER IS THE GUARANTEE:
+        1. read the pending answers            (nothing is committed yet)
+        2. append them to the processed store  (duplicates here are harmless and already occur)
+        3. append one log line each            (the trace)
+        4. TRUNCATE the pending store          (the irreversible act, LAST)
+    A failure at 2 or 3 leaves the pending store untouched, so the answers stay pending and the
+    next pull retries them. There is no ordering that loses a record."""
+    if not ANSWERS.exists():
+        return []
+    lines = [l for l in ANSWERS.read_text().splitlines() if l.strip()]
+    if not lines:
+        return []
+    with PROCESSED.open("a") as f:                                     # 2
+        for line in lines:
+            f.write(line + "\n")
+    _log_consumption(lines)                                            # 3
+    ANSWERS.write_text("")                                             # 4
+    return lines
+
+
+def _log_consumption(lines):
+    """One `consumed, processing` line per record, appended to the pickup log beside the queue
+    file. The consumer resolves each line to its outcome; an unresolved line is the honest
+    record that a pulled answer was never finished."""
+    if PICKUP_LOG is None:
+        return
+    stamp = time.strftime("%Y-%m-%d %H:%M:%S")
+    day = stamp[:10]
+    out = []
+    for line in lines:
+        try:
+            r = json.loads(line)
+        except Exception:
+            continue
+        rid = str(r.get("id", "")).strip()
+        if not rid:
+            continue
+        verb = str(r.get("answer", "")).replace('"', "'")
+        out.append(f'- {day} {rid} — answered "{verb}" — [consumed, processing] consumed '
+                   f"{stamp} by `km-cockpit.py pull`; whoever pulled now owns this record and "
+                   "resolves this line to its outcome.")
+    if not out:
+        return
+    if not PICKUP_LOG.exists():
+        PICKUP_LOG.write_text("# Unattended answer pickups\n\n", encoding="utf-8")
+    text = PICKUP_LOG.read_text(encoding="utf-8")
+    if not text.endswith("\n"):
+        text += "\n"
+    PICKUP_LOG.write_text(text + "\n".join(out) + "\n", encoding="utf-8")
+
+
+def desk_listing():
+    """The `desk` CLI view: one JSON line per effective tick. READ-ONLY by construction — it
+    consumes nothing and rotates nothing. The consuming path for a tick is the ordinary `pull`,
+    which already owns the whole estate's answer records."""
+    return [json.dumps(r, sort_keys=True) for r in desk_ticks().values()]
+
+
 def main_cli():
     cmd = sys.argv[1] if len(sys.argv) > 1 else "serve"
     if cmd == "selftest":
@@ -3206,8 +4852,18 @@ def main_cli():
     if cmd == "queue-check":
         sys.exit(queue_check(QUEUE))
     if cmd == "pull":
-        lines = rotate(ANSWERS, PROCESSED)
+        lines = pull_answers()
         print("\n".join(lines) if lines else "pull: no new answers")
+    elif cmd == "dismissed":
+        # READ-ONLY. Lists what the owner has taken off the screen; consumes nothing, rotates
+        # nothing, and is therefore safe to call from a status path (unlike `pull`).
+        lines = dismissed_listing()
+        print("\n".join(lines) if lines else "dismissed: none")
+    elif cmd == "desk":
+        # READ-ONLY. Lists what the owner has marked done on the desk; consumes nothing and
+        # rotates nothing (the ticks themselves arrive through the ordinary `pull`).
+        lines = desk_listing()
+        print("\n".join(lines) if lines else "desk: nothing marked done")
     elif cmd == "questions":
         lines = rotate(QUESTIONS, QPROCESSED)
         print("\n".join(lines) if lines else "questions: none")
@@ -3236,7 +4892,7 @@ def main_cli():
         ThreadingHTTPServer(("127.0.0.1", PORT), H).serve_forever()
     else:
         sys.exit("usage: km-cockpit.py [serve|pull|questions|reply <id> <text>|"
-                 "exec <id> <note> [status]|queue-check [<queue path>]|selftest]")
+                 "exec <id> <note> [status]|dismissed|desk|queue-check [<queue path>]|selftest]")
 
 
 if __name__ == "__main__":

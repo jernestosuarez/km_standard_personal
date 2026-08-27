@@ -60,8 +60,8 @@ For fuller context on the hub initiator's role, goals, and working preferences, 
 1. Find new files in `_inbox/` (`hub-scan.sh` [INBOX] section flags them)
 2. **Classify** the file:
    - **Source/input** (partner decks, external docs, transcripts, research) → steps 3–8 below
-   - **Team output** (memos, briefings authored by the team) → propose move to `working-docs/<topic>/`; no digest
-   - **Visual asset** (diagrams, images) → propose move to `assets/architecture/`; no digest
+   - **Team output** (memos, briefings authored by the team) → file to `working-docs/<topic>/` at intake, record by proposal; no digest
+   - **Visual asset** (diagrams, images) → file to `assets/architecture/` at intake, record by proposal; no digest
 3. **Digest** — extract full content; for image-based PPTX extract embedded slide images, read visually, clean up temp files; note "what's new vs hub"
 4. **Move** original to `sources/<subfolder>/`
 5. **Write digest** as `<name>_digest.md` next to the original
@@ -95,7 +95,7 @@ At the start of every session involving this hub, before doing any other work:
 1. **Run `bash hub-scan.sh`** — covers inbox, proposals, git-backed integrity, OKF frontmatter, and reconciliation disputes in one pass.
 2. **Handle any issues reported by section:**
    - `[HANDOVER]` → **read `HANDOVER.md` first, before any state reconstruction from the git log or a diff**; a missing `HANDOVER.md` is an error, regenerate it via `/km-handover` before continuing
-   - `[INBOX]` files found → report to {{HUB_OWNER}}; wait for instruction before processing
+   - `[INBOX]` files found → run the intake workflow above without waiting for an instruction — the arrival of a file in the inbox is not a decision (added in v1.64, drafted and unpublished: binds nothing until its own owner push); what reaches {{HUB_OWNER}} is the resulting proposal, and only a file held by the date gate stays behind
    - `[PROPOSALS]` ready to apply → apply, delete both files, log, commit
    - `[INTEGRITY]` uncommitted/untracked change → stop; surface to {{HUB_OWNER}} before doing anything else
    - `[FRONTMATTER]` missing → flag; fix before applying any other change

@@ -40,7 +40,11 @@ For table rows: include the full row. For paragraphs: include the full paragraph
 2. Move any inbox files to their destinations (if applicable)
 3. Update `sources/transcript-index.md` change log
 4. Delete this proposal and its approval file
-5. Commit the change, staging each touched path by name (`git add <path> ... && git commit -m "apply: <slug>"`)
+5. Commit the change, staging each touched path by name (`git add <path> ... && git commit -m "apply: <slug>"`).
+   Never stage with a blanket add: in synchronized storage a deletion is not durable until the
+   sync agent has agreed to it, so an all-changes add can resurrect the proposal and approval
+   files step 4 just deleted and re-commit them as live (Rule 3, "Stage explicitly"; added in
+   v1.64, drafted and unpublished: binds nothing until its own owner push).
 6. Run `hub-scan.sh` to confirm clean state
 
 ---

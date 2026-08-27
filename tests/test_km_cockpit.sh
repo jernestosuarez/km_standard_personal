@@ -295,14 +295,17 @@ if "data-answer-control" in a3:
     sys.exit("a3: answer controls rendered on a row whose options cannot be read")
 if "cannot read" not in a3:
     sys.exit("a3: gated with no reason stated in the card")
-if "Being prepared" not in a3:
-    sys.exit("a3: not routed into the Preparing group")
+# v1.64: an options-gated row states its OWN condition — "Options unreadable", with the repair
+# named — rather than the brief gate's "Being prepared", so the owner can tell a row the
+# Supervisor owes a brief from a row whose options cell needs repairing.
+if "Options unreadable" not in a3:
+    sys.exit("a3: not routed into the gated group with its options-unreadable flag")
 # The other direction: the gate must not fire on rows it can read.
 for rid in ("a1", "a2"):
     body = card(rid)
     if "data-answer-control" not in body:
         sys.exit(f"{rid}: readable row lost its answer controls")
-    if "Being prepared" in body:
+    if "Being prepared" in body or "Options unreadable" in body:
         sys.exit(f"{rid}: readable row wrongly gated")
 PY
 echo "$card" | grep -q 'card-a9' \
@@ -326,12 +329,15 @@ def glance(rid):
         sys.exit(f"{rid}: glance did not render — fixture extraction empty, failing closed")
     return m.group(0)
 
-# Gated tier-A (a3, options this surface cannot read) is routed into the Preparing group.
+# Gated tier-A (a3, options this surface cannot read) is routed into the gated group. Since
+# v1.64 an options-gated row wears "Gated" (repair named) where a brief-gated one wears
+# "Preparing"; both are neutral — the dev-0007 rule is that NEITHER carries the actionable
+# tier badge.
 a3 = glance("a3")
-if "Being prepared" not in a3:
-    sys.exit("a3: not the gated/preparing card — fixture drifted, failing closed")
-if ">Preparing<" not in a3:
-    sys.exit("a3: gated glance is missing the neutral 'Preparing' badge")
+if "Options unreadable" not in a3:
+    sys.exit("a3: not the gated card — fixture drifted, failing closed")
+if ">Gated<" not in a3:
+    sys.exit("a3: options-gated glance is missing its neutral 'Gated' badge")
 if "Needs you" in a3:
     sys.exit("a3: gated glance still shows the actionable tier-A 'Needs you' badge (dev-0007)")
 
@@ -371,11 +377,15 @@ echo "$pulled" | grep -q '"id": "a1"' && pass "pull returns the answer" || die "
 grep -q '"a1"' "$state/answers-processed.jsonl" \
   && pass "processed store holds the record" || die "processed store empty"
 
-# Reopened-row protection: a pulled answer whose row is STILL open in the queue reads as
-# neither pending nor queued (the row was reopened/repaired — the card returns to open).
-curl -s "http://127.0.0.1:$PORT/api/state" | grep -q '"queued": \[\]' \
-  && pass "row still open after pull is NOT queued (reopened protection)" \
-  || die "reopened protection missing"
+# TWO STATES ONLY (v1.64, inverting the earlier reopened-row reading, which this case used to
+# assert): a row is ANSWERED from the moment the answer exists — including after the pull
+# consumed it — until an execution record marks it EXECUTED. A consumed answer whose row is
+# still open therefore reads as queued (answered — executing), never as answerable again: the
+# re-rendered answer buttons were the recurring display lie the ruling closed, and a genuine
+# reopen is re-registered under a NEW id.
+curl -s "http://127.0.0.1:$PORT/api/state" | grep -q '"queued": \["a1"\]' \
+  && pass "consumed answer with its row still open reads ANSWERED/queued (two states only)" \
+  || die "two-states rule: a consumed answer with an open row did not read as queued"
 
 # The sequencing rule: the pulling session updates the queue immediately — answered rows
 # leave the open tables. Then, and only then, the answer reads as queued for execution.
@@ -568,6 +578,51 @@ if "not yet pushed" not in card:
 if "In sync with origin" in card:
     sys.exit("the card still reads 'in sync' after an unpushed local commit")
 PY
+
+# --- v1.64 live-surface cases: lanes, dismissal, the pickup log panel ------------------------
+dec=$(curl -s "http://127.0.0.1:$PORT/decisions")
+echo "$dec" | grep -q 'data-lane="knowledge"' \
+  && pass "decisions board groups by lane (knowledge lane renders)" \
+  || die "no lane section on the decisions board"
+echo "$dec" | grep -q 'lane-bar' \
+  && pass "lane bar renders" || die "lane bar missing"
+lanedec=$(curl -s "http://127.0.0.1:$PORT/decisions?lane=machinery")
+echo "$lanedec" | grep -q 'Showing <b>Machinery</b> only' \
+  && pass "lane filter scopes the board and states what it scoped out" \
+  || die "lane scope note missing on a filtered view"
+
+# Dismissal round-trip: the gated a3 card is informational and dismissible; the queue file is
+# never written; undo restores it.
+before_q=$(shasum "$hub/QUEUE.md" | awk '{print $1}')
+code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+  -d '{"id":"a3"}' "http://127.0.0.1:$PORT/dismiss")
+[ "$code" = "200" ] && pass "gated card dismissal accepted" || die "dismiss POST -> $code"
+code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+  -d '{"id":"a2"}' "http://127.0.0.1:$PORT/dismiss")
+[ "$code" = "404" ] && pass "an answerable decision row is NOT dismissible (404)" \
+  || die "an answerable decision row accepted a dismissal -> $code"
+after_q=$(shasum "$hub/QUEUE.md" | awk '{print $1}')
+[ "$before_q" = "$after_q" ] && pass "dismissal never writes the queue file" \
+  || die "the queue file changed after a dismissal"
+curl -s "http://127.0.0.1:$PORT/decisions" | grep -q '1 dismissed' \
+  && pass "dismissed disclosure renders with the way back" \
+  || die "no dismissed disclosure after a dismissal"
+code=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' \
+  -d '{"id":"a3","undo":true}' "http://127.0.0.1:$PORT/dismiss")
+[ "$code" = "200" ] && pass "dismissal undo accepted (append-only, last record wins)" \
+  || die "dismiss undo -> $code"
+
+# The pickup log: the suite's own `pull` above consumed a1, so the consumption trace must exist
+# beside the queue file and the activity page's unattended panel must show it.
+grep -q 'a1 — answered' "$hub/answer-pickup-log.md" 2>/dev/null \
+  && pass "pull wrote the consumption trace to the pickup log beside the queue file" \
+  || die "no pickup-log trace after pull"
+curl -s "http://127.0.0.1:$PORT/activity" | grep -q 'Picked up without you asking' \
+  && pass "activity page carries the unattended-pickups panel" \
+  || die "unattended panel missing from /activity"
+curl -s "http://127.0.0.1:$PORT/activity" | grep -q 'id="agents"' \
+  && pass "activity page splits by actor (agents section present)" \
+  || die "agents section missing from /activity"
 
 # Root confinement holds in single-hub mode too.
 code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT/view?p=/etc/hosts")

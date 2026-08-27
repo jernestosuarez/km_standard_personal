@@ -8,6 +8,15 @@ description: Use when this hub has pending proposals in changes/ or unprocessed 
 You have been invoked as `/km-intake`. First handle any pending proposals in `changes/`, then
 process any new files in `_inbox/`.
 
+**The arrival of a file in the inbox is not a decision** (added in v1.64, drafted and
+unpublished: binds nothing until its own owner push). The hub owner put the file there, so asking
+whether to process it asks the owner to authorise work already requested. Intake therefore runs
+to completion without waiting for a word: classify, digest, resolve the date, file the original
+and its digest at their retained home, and produce the proposal — all in one act, committed
+together. **Only the resulting proposal waits on the owner**: nothing edits a hub document
+without approval, exactly as before. The one thing that can hold a file in the inbox is the date
+gate (Step 3.5): a source whose date cannot be resolved stays until the owner supplies one.
+
 ---
 
 ## Step 0 — Handle pending proposals
@@ -39,8 +48,9 @@ List all files in `_inbox/` excluding `README.md`.
 
 - **Empty:** report "Inbox is empty — nothing to process." and stop.
 - **One file:** proceed with that file.
-- **Multiple files:** list them and ask the user which to process now (or "all"). If "all",
-  process each in turn and create one proposal per file (or one combined proposal if the user prefers).
+- **Multiple files:** process each in turn, one proposal per file — do not ask which to process;
+  the arrival of a file is not a decision. (Combine related files into one proposal only when
+  they are plainly one source, e.g. a deck and its own transcript.)
 
 ---
 
@@ -50,9 +60,9 @@ Determine which category the file falls into:
 
 | Category | Description | Route |
 |---|---|---|
-| **source/input** | External content to be digested: partner decks, vendor docs, external transcripts, meeting notes from outside the team, research papers | Digest → propose hub updates → move to `sources/` |
-| **team output** | Docs produced by the team: memos, briefings, strategy notes, advisory reports | Propose move to `working-docs/<topic>/`; no digest needed unless requested |
-| **visual asset** | Diagrams, architecture images, photos (.png, .jpg, .svg, .drawio, .vsdx) | Propose move to `assets/architecture/`; no digest needed |
+| **source/input** | External content to be digested: partner decks, vendor docs, external transcripts, meeting notes from outside the team, research papers | Digest → file to `sources/` at intake → propose hub updates |
+| **team output** | Docs produced by the team: memos, briefings, strategy notes, advisory reports | File to `working-docs/<topic>/` at intake, recorded by proposal; no digest needed unless requested |
+| **visual asset** | Diagrams, architecture images, photos (.png, .jpg, .svg, .drawio, .vsdx) | File to `assets/architecture/` at intake, recorded by proposal; no digest needed |
 
 If the category is not obvious from the filename and extension, read the first page/slide/section
 to determine. If still unclear, ask the user.
@@ -110,7 +120,8 @@ Write `_inbox/<original-name>_digest.md`:
    Record the value **and how it was derived**.
 2. Add or refresh the source's row in `sources/dates-register.md`.
 3. If no date is found, set the row to `MISSING`, **present the register to the hub owner and ask**.
-   Do not proceed to the move.
+   Do not proceed to the move: the file stays in `_inbox/` and the date question rides the
+   proposal — this is the one thing that holds a file in the inbox.
 4. A source may only be moved out of `_inbox/` when its row is `CONFIRMED`,
    `UNKNOWN — reconstruction pending`, or `N/A — reference artifact` (owner-marked; reference
    artifacts are excluded from timelines).
@@ -137,7 +148,22 @@ After creating the digest:
 
 ---
 
-## Step 5 — Create proposal
+## Step 5 — File the source and create the proposal
+
+**The move happens now, in the same act as the proposal — never deferred to approval** (added in
+v1.64, drafted and unpublished: binds nothing until its own owner push). Provided the date gate
+passed (Step 3.5):
+
+1. Move `_inbox/<original filename>` → `sources/<subfolder>/<original filename>`
+2. Move `_inbox/<digest filename>` → `sources/<subfolder>/<digest filename>`
+3. Create the proposal (below), naming where the files now live
+4. Commit the move, the digest, the dates-register row and the proposal together, staging each
+   path by name (`git add <path> ... && git commit -m "intake: <slug>"`) — never a blanket add
+
+An ingested source is **evidence**, kept unmodified as permanent reference, so filing it asserts
+nothing about the hub's content: if the owner later rejects the proposal, the hub documents do
+not change and the source stays in `sources/` as the record of what was received. The provenance
+entry in `sources/transcript-index.md` is a monitored-document edit and still rides the apply.
 
 Create `changes/<YYYY-MM-DD>_agent_<slug>_proposal.md`:
 
@@ -149,7 +175,7 @@ Derive `<slug>` from the source filename: lowercase, hyphens (e.g. `partner-deck
 **Author:** Agent (via /km-intake)
 **Date:** YYYY-MM-DD
 **Hub docs affected:** <list>
-**Source:** `_inbox/<original filename>`
+**Source:** `sources/<subfolder>/<original filename>` (filed at intake from `_inbox/`)
 
 ---
 
@@ -178,35 +204,37 @@ Derive `<slug>` from the source filename: lowercase, hyphens (e.g. `partner-deck
 
 ## Post-apply steps (agent)
 
-1. Move `_inbox/<original filename>` → `sources/<subfolder>/<original filename>` *(only if the date gate passed — see Step 3.5)*
-2. Move `_inbox/<digest filename>` → `sources/<subfolder>/<digest filename>`
-3. Update `sources/transcript-index.md` with a new provenance entry
-4. Delete this proposal and its approval file
-5. Commit the change, staging each touched path by name (`git add <path> ... && git commit -m "apply: <slug>"`)
-6. Run `hub-scan.sh` to confirm clean state
+1. Update `sources/transcript-index.md` with a new provenance entry
+2. Delete this proposal and its approval file
+3. Commit the change, staging each touched path by name (`git add <path> ... && git commit -m "apply: <slug>"`).
+   Never stage with a blanket add: in synchronized storage a deletion is not durable, so an
+   all-changes add can resurrect the files step 2 just deleted (Rule 3, "Stage explicitly")
+4. Run `hub-scan.sh` to confirm clean state
 ```
 
-For **team output** and **visual asset** files, the proposal is simpler:
+For **team output** and **visual asset** files, the move likewise happens at intake — to
+`working-docs/<topic>/` or `assets/architecture/` — and the proposal records it:
 
 ```markdown
-# Proposal — file-move-<slug> (<YYYY-MM-DD>)
+# Proposal — file-record-<slug> (<YYYY-MM-DD>)
 
 **Author:** Agent (via /km-intake)
 **Date:** YYYY-MM-DD
-**Source:** `_inbox/<original filename>`
-**Action:** Move only — no hub doc edits
+**Source:** `<working-docs or assets/architecture>/<filename>` (filed at intake from `_inbox/`)
+**Action:** Record only — the file is filed; this adds its provenance entry
 
 ---
 
 ## Summary
 
-`<filename>` is a <team output / visual asset>. No digest needed.
+`<filename>` is a <team output / visual asset>, filed at intake. No digest needed. Approving
+this records it in the provenance index; nothing else changes.
 
 ## Post-apply steps (agent)
 
-1. Move `_inbox/<filename>` → `<working-docs or assets/architecture>/<filename>`
-2. Log in `sources/transcript-index.md`
-3. Delete this proposal and its approval file
+1. Log in `sources/transcript-index.md`
+2. Delete this proposal and its approval file
+3. Commit, staging each touched path by name — never a blanket add
 4. Run `hub-scan.sh`
 ```
 
@@ -215,9 +243,10 @@ For **team output** and **visual asset** files, the proposal is simpler:
 ## Step 6 — Report to user
 
 Tell the user:
-- What was found and classified
+- What was found and classified, and where each file was filed
 - Key findings from the digest (3–5 bullet points)
 - Reconciliation status (clean or list of disputes)
+- Any file HELD in `_inbox/` by the date gate, with its `MISSING` register row and the ask
 - Proposal path: `changes/<filename>`
 - **Next step:** review the proposal, then either:
   - Create `changes/<YYYY-MM-DD>_<slug>_approval.md` using `APPROVAL_TEMPLATE.md`, OR
