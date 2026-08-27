@@ -12,7 +12,7 @@ lifecycle: active
 
 ## Status and scope
 
-**Status:** Owner-authorized Supervisor disposition, commit `f21bf3e` (2026-08-27): “Approve Phase S0 as security-design input only. No residual risk, runtime implementation, or release is approved.” This is binding security-design input. No application, infrastructure, contract, or runtime security control is present in this repository. AD-001 through AD-003 are resolved at the design layer; AD-004 and AD-005 remain blocking and unselected.
+**Status:** Owner-authorized Supervisor disposition, commit `f21bf3e` (2026-08-27): “Approve Phase S0 as security-design input only. No residual risk, runtime implementation, or release is approved.” This is binding security-design input. No application, infrastructure, contract, or runtime security control is present in this repository. AD-001 through AD-004 are resolved at the design layer; AD-005 remains blocking and unselected.
 
 Scope begins at browser submission of an upload, domain-event envelope, or owner answer and ends at a governed tenant-hub record, audit event, or consumed answer. It models the selected self-hosted production boundary and the synthetic-only managed development boundary.
 
@@ -26,7 +26,7 @@ Scope begins at browser submission of an upload, domain-event envelope, or owner
 
 ## System context
 
-The browser authenticates through Supabase Auth. The app/API validates provider identity and resolves `tenant_sessions.active_tenant_id` from a server-only binding before authorizing any tenant action; PostgreSQL RLS supplies the independent data boundary. The app persists domain objects and events in the app database/event store, records an authorized pointer envelope through the inbound adapter, and sends that envelope to a tenant inbox. One worker context runs core skills for one tenant and may use the Claude control plane/API. Raw uploads remain in object/document storage; tenant Git holds digests, claims, decisions, classified extracts, and pointers; pending answers are delivered to the worker with retryable at-least-once pickup and result acknowledgement. Idempotency and trace-before-finalization prevent duplicate governed effects and lost answers. The accountable owner approves governance and is the only residual-risk acceptor.
+The browser authenticates through Supabase Auth. The app/API validates provider identity and resolves `tenant_sessions.active_tenant_id` from a server-only binding before authorizing any tenant action; PostgreSQL RLS supplies the independent data boundary. The app persists domain objects and events in the app database/event store, records an authorized pointer envelope through the inbound adapter, and sends that envelope to a tenant inbox. One worker context runs core skills for one tenant and may use the Claude control plane/API. Raw uploads remain in object/document storage; one private GitHub.com repository per tenant holds digests, claims, decisions, classified extracts, and pointers, with the explicit US-hosting consequence recorded in AD-004. A privileged Git credential broker keeps provider credentials from workers, enforces one active tenant/run/repository/ref lease per operation, and supplies the only GitHub egress path. Pending answers are delivered to the worker with retryable at-least-once pickup and result acknowledgement. Idempotency and trace-before-finalization prevent duplicate governed effects and lost answers. The accountable owner approves governance and is the only residual-risk acceptor.
 
 ## Actors and attacker classes
 
@@ -35,6 +35,7 @@ The browser authenticates through Supabase Auth. The app/API validates provider 
 | Tenant user | Submits content and reads authorized tenant resources. |
 | Accountable owner | Gives governed decisions and may accept documented residual risk. |
 | App/API and worker | Proposed policy-enforcement and skill-execution components. |
+| Git credential broker | Privileged service holding provider-token and lease authority across every tenant write path. |
 | Claude control plane/API | External model service receiving only mode-authorized data. |
 | Malicious tenant user | Attempts tenant escape, browser abuse, replay, and upload abuse. |
 | Malicious uploaded-content author | Embeds instructions, malware, traversal, archive bombs, or exfiltration lures. |
@@ -48,10 +49,10 @@ The browser authenticates through Supabase Auth. The app/API validates provider 
 |---|---|---|---|
 | Raw uploads | tenant record; possibly malicious/restricted | object/document storage by content hash | never copied to Git; quarantined first |
 | App objects/events | operational record | app database or event store | tenant-scoped integrity |
-| Digests, claims, decisions, extracts, pointers | governed knowledge | per-tenant Git hub | governed lifecycle and attributable commits |
+| Digests, claims, decisions, classified extracts, pointers | governed knowledge; may contain tenant-restricted extracts | private per-tenant GitHub.com hub (USA by default) | minimized governed lifecycle, explicit hosting consequence, and attributable commits |
 | Pending answers | unconsumed operational state | isolated per-tenant answer store | retryable pickup; idempotent governed effect and trace-before-finalization |
 | Session/tenant claims | sensitive security data | IAM/session layer | validated server-side |
-| Git/API credentials | secret | selected secret boundary | per-session and scoped |
+| Git/API credentials | secret | AWS Secrets Manager and broker memory | provider credential never enters worker; per-run lease and repository/ref scope |
 | Audit/telemetry | audit record | selected telemetry store | attributable and minimized |
 
 ## Data-flow diagram
@@ -69,7 +70,8 @@ flowchart LR
   A -->|DF-009| P[Isolated pending-answer store]
   P -->|DF-010 retryable delivery| W[Worker sandbox]
   W -->|DF-011 result / acknowledgement| P
-  W -->|DF-012| G
+  W -->|DF-012a active run credential| R[Git credential broker]
+  R -->|DF-012b repository/ref-scoped provider operation| G
   W -->|DF-013| C[Claude control plane/API]
   A -->|DF-014| T[Audit/telemetry]
   W -->|DF-015| T
@@ -91,7 +93,7 @@ flowchart LR
 | DF-009 | App/API → pending answers | CSRF-protected, attributed, idempotent append. |
 | DF-010 | Pending-answer store → worker | Retryable at-least-once tenant-bound delivery; duplicate pickup is safe. |
 | DF-011 | Worker → pending-answer store | Idempotent governed-result acknowledgement; trace before finalization. |
-| DF-012 | Worker → Git hub | Scoped credential and attributable governed write. |
+| DF-012 | Worker → broker → private tenant GitHub.com hub | Provider credential remains broker-confined; every operation requires an active run/tenant/repository/ref lease, serialized publication, and complete attribution. |
 | DF-013 | Worker → Claude API | Minimal permitted data and external tool policy. |
 | DF-014 | App/API → telemetry | Auth/authz/mutation outcome without secrets. |
 | DF-015 | Worker → telemetry | Run, policy, and attribution outcome without restricted payloads. |
@@ -108,7 +110,7 @@ flowchart LR
 | TB-005 | App/API/pending store/worker | Per-tenant retryable delivery, idempotent effect, trace-before-finalization, and result acknowledgement. |
 | TB-006 | Worker sandbox → resources/tools | Deny-by-default tools, egress, filesystem, credentials. |
 | TB-007 | Worker → Claude API | Selected-mode responsibility and data path. |
-| TB-008 | Git → commit/audit identity | Scoped credential and attributable action. |
+| TB-008 | Worker → privileged Git broker → GitHub.com → commit/audit identity | Broker workload isolation, provider-secret confinement, active per-operation lease, serialized revocation/publication, egress denial, and attributable action. |
 | TB-009 | Services → telemetry | Sanitized, access-controlled audit. |
 
 ## Security assumptions
@@ -132,7 +134,7 @@ Anthropic-managed cloud sandboxes are permitted only for development, CI, or eva
 | AD-001 | **Resolved 2026-08-27:** self-hosted production execution; managed development only with strictly synthetic data. | Accountable owner + security reviewer | before worker contract | Design decision recorded in [AD-001](../decisions/ad-001-self-hosted-production-execution.md); VER-015 and remaining decisions still block runtime/release. |
 | AD-002 | **Resolved 2026-08-27:** Supabase Auth, server-side `tenant_sessions.active_tenant_id`, and forced PostgreSQL RLS. | Accountable owner + app security owner | before app/API contract | Design decision recorded in [AD-002](../decisions/ad-002-supabase-session-postgres-rls.md); VER-001/002 and remaining decisions still block runtime/release. |
 | AD-003 | **Resolved 2026-08-27:** private S3 quarantine/clean buckets and GuardDuty in `eu-west-1`, exact archive limits, tenant quotas, and no override. | Accountable owner + security reviewer | before upload contract | Design decision recorded in [AD-003](../decisions/ad-003-s3-quarantine-guardduty.md); VER-007/013 and remaining decisions still block runtime/release. |
-| AD-004 | Select key/secrets and Git credential issuance, rotation, and revocation. | Accountable owner + security reviewer | before Git/worker contract | **Blocking:** no governed writes. |
+| AD-004 | **Resolved 2026-08-28:** AWS Secrets Manager/KMS, private per-tenant GitHub.com hubs, privileged broker, per-run leases, serialized revocation/publication, and governed break-glass. | Accountable owner + security reviewer | before Git/worker contract | Design decision recorded in [AD-004](../decisions/ad-004-aws-secrets-github-broker.md); VER-004/006/009/010 and AD-005 still block runtime/release. |
 | AD-005 | Set retention/deletion periods and privacy authority by data class. | Accountable owner + legal/privacy authority | before production persistence | **Blocking:** no production persistence. |
 
 ## Threat register
@@ -145,7 +147,7 @@ Inherent severity is before required controls. “Block” is a required disposi
 |---|---|---|---|---|---|---|---|---|---|---|
 | TM-001 | S/E | session, DF-001/002 | Forged/stolen session selects another tenant. | cross-tenant disclosure/write | medium | critical | SEC-001, SEC-002 | VER-001, VER-002 | design mechanism selected; conformance blocked | no risk accepted; VER-001/002 required |
 | TM-002 | T/E | Git, DF-008/012 | Traversal/symlink reaches another path or hub. | integrity/disclosure | medium | high | SEC-003, SEC-004 | VER-003 | block | none before conformance |
-| TM-003 | I/E | Git credential, DF-012 | Shared/overbroad credential writes another tenant hub. | cross-tenant integrity | medium | critical | SEC-004, SEC-005 | VER-004 | block | owner-only after evidence |
+| TM-003 | I/E | broker/Git credential, DF-012 | Shared, leaked, overbroad, stale, or broker-misissued authority reads/writes another tenant hub or ref. | cross-tenant integrity/disclosure | medium | critical | SEC-004, SEC-005, SEC-008 | VER-004, VER-006 | design mechanism selected; conformance blocked | no risk accepted; VER-004/006 required |
 | TM-004 | AI | uploads, DF-003–008 | Direct/indirect injection is treated as instruction. | tool misuse/exfiltration | high | critical | SEC-006, SEC-007 | VER-005 | block | model output never substitutes for policy |
 | TM-005 | AI/E | worker, DF-010–013 | Excessive agency invokes unapproved tools or egress. | loss/exfiltration | medium | critical | SEC-007, SEC-008 | VER-006 | block | none before conformance |
 | TM-006 | T/I | upload, DF-004/005 | Malware/archive bomb reaches parser or worker. | compromise/DoS | high | high | SEC-009 | VER-007 | design mechanism selected; conformance blocked | no risk accepted; no application override; VER-007 required |
@@ -157,10 +159,10 @@ Inherent severity is before required controls. “Block” is a required disposi
 | TM-012 | D | edge/upload/worker | Exhaustion, decompression, or model-call abuse. | outage/cost abuse | high | high | SEC-016 | VER-013 | block | capacity threshold needs owner decision |
 | TM-013 | T/E | skills/repository | Tampered skill/dependency changes worker behavior. | arbitrary action/exfiltration | medium | critical | SEC-017 | VER-014 | block | none before skill loading |
 | TM-014 | I | worker/API, DF-013 | Prompt/tool output exfiltrates tenant data. | restricted-data disclosure | medium | critical | SEC-006, SEC-008, SEC-015 | VER-005, VER-006, VER-012 | block | owner-only after evidence |
-| TM-015 | R/T | commits, DF-012/015 | Commit lacks actor/tenant/action attribution. | unaccountable governance | medium | high | SEC-005, SEC-013 | VER-004, VER-010 | block | none before governed writes |
+| TM-015 | R/T | broker operations/commits, DF-012/015 | Operation or commit lacks actor, run, tenant, repository, ref, policy decision, or credential attribution. | unaccountable governance | medium | high | SEC-005, SEC-013 | VER-004, VER-010 | design mechanism selected; conformance blocked | none before conformance |
 | TM-016 | S/I | mode, TB-007 | Managed/self-hosted gap leaves a boundary unowned. | systemic disclosure/compromise | medium | critical | SEC-018 | VER-015 | design mode selected; conformance blocked | no risk accepted; VER-015 required |
 | TM-017 | I/D | all retention stores | Retention/deletion failure preserves tenant data or fails to remove it from a selected store, backup, or provider lifecycle. | disclosure/non-compliance | medium | high | SEC-019 | VER-016 | block | owner-only after policy/evidence |
-| TM-018 | S/T/R/E | privileged app/operator service, TB-002/006/008 | A malicious or compromised privileged operator/service bypasses tenant policy, misuses a credential or secret, widens worker access, or alters attribution. | cross-tenant compromise/unaccountable writes | low | critical | SEC-002, SEC-004, SEC-005, SEC-008, SEC-012, SEC-013 | VER-002, VER-004, VER-006, VER-009, VER-010 | block | owner-only after evidence |
+| TM-018 | S/T/R/E | privileged app/operator/broker service, TB-002/006/008 | A malicious or compromised privileged operator or Git broker bypasses tenant/repository/ref policy, mints or replays authority, misuses a root secret, widens egress, races revocation, or alters attribution. | cross-tenant compromise/unaccountable writes | low | critical | SEC-002, SEC-004, SEC-005, SEC-008, SEC-012, SEC-013 | VER-002, VER-004, VER-006, VER-009, VER-010 | design mechanism selected for broker; conformance blocked | no risk accepted; independent broker review required |
 
 ## Security requirements
 
@@ -169,15 +171,15 @@ Inherent severity is before required controls. “Block” is a required disposi
 | SEC-001 | Authenticate every request through selected IAM; validate issuer, audience, expiry, and session binding server-side. |
 | SEC-002 | Deterministically enforce tenant/object authorization at every API, pointer, answer, Git, and worker boundary; deny absent/mismatched context. |
 | SEC-003 | Canonicalize and confine repository paths; reject traversal, symlink escape, absolute paths, and unapproved remotes. |
-| SEC-004 | Issue per-session tenant-scoped Git credentials; never share writable credentials or volumes across tenants. |
-| SEC-005 | Bind each governed write to tenant, authenticated actor, worker run, policy decision, and credential identity. |
+| SEC-004 | Keep provider Git credentials inside the privileged broker; issue only opaque run credentials bound server-side to one tenant, run, repository and approved ref set, check the active lease per operation, serialize final publication against terminal revocation, and never share writable credentials or volumes across tenants. |
+| SEC-005 | Bind and audit each attempted governed write to tenant, authenticated actor, worker identity/run, repository, ref, policy decision, lease result, provider outcome, and credential identity; require expected-old-ref publication so a revoked or partial operation cannot become visible later. |
 | SEC-006 | Treat prompts, uploads, retrieved text, model output, URLs, and tool output as untrusted data; never grant authority from them. |
 | SEC-007 | Enforce tool policy outside the model: deny by default, allow named tools/arguments only, require governed authorization for consequential action. |
-| SEC-008 | Isolate each tenant worker run; deny cross-tenant filesystem, credentials, processes, and egress except explicit policy. |
+| SEC-008 | Isolate each tenant worker run; deny cross-tenant filesystem, credentials, processes, and egress except explicit policy; deny direct GitHub, Secrets Manager, KMS, Supabase-elevated, and database-administrator access from workers so the broker cannot be bypassed. |
 | SEC-009 | Quarantine uploads outside executable paths; enforce type/size/count/archive limits and fail-closed malware scanning before extraction. |
 | SEC-010 | Apply output encoding/sanitization, framework-appropriate CSP, CSRF defenses, secure sessions, and origin checks. |
 | SEC-011 | Require current TLS and encryption at rest for records, knowledge, secrets, and backups under selected-provider responsibility. |
-| SEC-012 | Keep secrets only in selected secret management; scope, rotate, revoke, audit, and exclude from Git, prompts, client state, and telemetry. |
+| SEC-012 | Keep roots and service secrets in AWS Secrets Manager and transient provider tokens in broker memory; scope, rotate, revoke, and audit them under AD-004; prohibit Supabase RLS-bypassing keys from workers and tenant paths; exclude secrets from Git, prompts, client state, telemetry, command arguments, crash dumps, and persistent worker storage. |
 | SEC-013 | Emit tamper-evident, access-controlled audit events with actor, tenant, action, object/pointer, decision, and correlation ID; redact secrets/restricted payloads. |
 | SEC-014 | Permit retryable at-least-once pending-answer delivery, but make governed effects and result acknowledgement idempotent per tenant; write the trace before finalization and reject replay keys. |
 | SEC-015 | Re-authorize pointer resolution at use time and pass only minimal authorized content to worker/model. |
@@ -193,12 +195,12 @@ Inherent severity is before required controls. “Block” is a required disposi
 | VER-001 | Reject forged, expired, wrong-audience, and session-fixed credentials. |
 | VER-002 | Cross-tenant negative tests reject a valid actor from another tenant on every route/object. |
 | VER-003 | Traversal/symlink corpus proves Git and inbox confinement. |
-| VER-004 | Credential/commit tests prove session scope, revocation, and complete attribution. |
+| VER-004 | Broker/commit tests prove tenant/run/repository/ref scope, direct-egress denial, normal and abnormal revocation, mid-stream termination, no post-terminal visible ref update, expected-old-ref publication, and complete attribution. |
 | VER-005 | Injection corpus proves content cannot change tenant, policy, tool, or release decision. |
 | VER-006 | Sandbox tests prove denied tools, commands, paths, credentials, and egress are unavailable. |
 | VER-007 | Upload corpus covers malware signals, nested/archive bombs, malformed types, quotas, and scanner failure. |
 | VER-008 | Browser tests cover XSS, CSRF, session flags, origin handling, and authorized answer submission. |
-| VER-009 | Configuration tests prove TLS, encryption responsibility, key scope, rotation, and revocation. |
+| VER-009 | Configuration and lifecycle tests prove TLS, KMS and Secrets Manager scope, provider/root-secret confinement, Supabase/database rotation, break-glass expiry, and revocation under the selected AD-004 responsibilities. |
 | VER-010 | Audit inspection proves attribution/redaction for permitted and denied requests. |
 | VER-011 | Concurrent/replay tests prove retryable at-least-once pickup produces one idempotent governed effect and trace-first finalization. |
 | VER-012 | Pointer tests prove authorization at creation and dereference, including cross-tenant denial. |
