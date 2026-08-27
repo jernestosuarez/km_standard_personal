@@ -1,142 +1,127 @@
 ---
 type: config
-title: Knowledge Management Standard — Package Overview
-description: Organization-agnostic knowledge hub framework — governance model, reference template, and optional agent skills, ready to adopt by any team or company.
-tags: [standard, knowledge-management, governance, okf]
-timestamp: 2026-07-02
+title: KM Standard - Glassity Edition
+description: A governed knowledge-hub framework for people and AI assistants, built in plain Markdown and Git.
+tags: [standard, knowledge-management, governance, glassity]
+timestamp: 2026-08-27
 ---
 
-<p align="center"><img src="assets/km-banner.png" alt="KM Standard — governed, agent-readable knowledge in plain files" width="100%"/></p>
+<p align="center"><img src="assets/km-banner.png" alt="KM Standard - Glassity Edition: governed knowledge hubs in plain Markdown and Git" width="100%"/></p>
 
-<p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
+# KM Standard - Glassity Edition
 
-<p align="center">
+**A governed knowledge-hub framework for people and AI assistants, built in plain Markdown and Git.**
+
+KM Standard helps teams turn scattered project material into decision-grade, auditable knowledge
+without depending on a proprietary knowledge platform.
+
+> **Baseline:** Glassity Edition - based on KM Standard v1.64<br>
+> Normative baseline: [`STANDARD.md`](STANDARD.md) · Edition history: [`CHANGELOG.md`](CHANGELOG.md)
+
+<p>
   <img src="assets/badges/version.svg" alt="standard v1.64"/>
-  <img src="assets/badges/rfcs.svg" alt="RFCs: 4 adopted, 1 partial, 3 open"/>
+  <a href="https://github.com/cjgama/km_standard_glassity/actions/workflows/release-gate.yml"><img src="https://github.com/cjgama/km_standard_glassity/actions/workflows/release-gate.yml/badge.svg?branch=main" alt="release gate status"/></a>
   <img src="assets/badges/license.svg" alt="license: Apache-2.0"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
-  <img src="assets/badges/agents.svg" alt="agents: MCP-ready"/>
 </p>
 
-<p align="center">
-  <a href="STANDARD.md"><img src="assets/badges/nav-standard.svg" alt="The Standard"/></a>&nbsp;
-  <a href="template/"><img src="assets/badges/nav-template.svg" alt="Template"/></a>&nbsp;
-  <a href="rfcs/"><img src="assets/badges/nav-rfcs.svg" alt="RFCs"/></a>&nbsp;
-  <a href="skills/"><img src="assets/badges/nav-skills.svg" alt="Skills"/></a>&nbsp;
-  <a href="#quick-start--one-hub"><img src="assets/badges/nav-quickstart.svg" alt="Quick start"/></a>
-</p>
+**Start here:** [Adopt the Standard](docs/adopting.md) · [Maintain this edition](docs/maintaining.md)
+· [Read the Standard](STANDARD.md) · [Browse the docs](docs/README.md)
 
-# Knowledge Management Standard
+## Choose your path
 
-**Current version: v1.64** (2026-08-27, the second and final wave of the pre-fork clearance, on
-the deployment owner's direction that nothing stays behind, with the wave's two named defects
-reproduced as failing cases and committed red before either repair was written; **the arrival of
-a file in a hub inbox is not a decision** — intake runs to completion without waiting for a word,
-classify, digest, resolve the date, file the original at its retained home, produce the proposal,
-one committed act, with only the resulting proposal waiting on the owner and the date gate the
-one hold; **RFC-008 is implemented** — the blanket-add prohibition grafted into the shipped
-proposal template beside the staging step it governs with Rule 3 kept as the home of record, the
-hub-local manifest-recompute step ruled homeless because v1.63 retired its subject, and a new
-check holding the template to both halves by their **presence**, never by the absence of a
-blanket-add token, which a template with no staging step at all satisfies; and **the published
-km-cockpit component is brought up to the reference deployment's proven lead** — arity decides
-the queue row schema and an unreadable Defaults cell fails loudly, a row the queue itself marks
-answered renders answered whatever the rotating stores say, answered and executed rows swap
-their tier badge for their state badge, the lane axis groups the board, informational items
-carry Dismiss, every item renders in exactly one home, the Standard card resolves the published
-version from the publish branch's committed history, `pull` writes each consumed answer's trace
-before truncating the pending store, and the activity page splits by actor;
-v1.63 is the preceding published version and v1.23 remains an unpublished draft awaiting its own
-push). The full
-ledger of released versions, and the rule that a published version number is never reused, is in
-[`STANDARD.md`](STANDARD.md) → *Version history*.
-Pin the version you adopted; adopting a later one is a decision, not a background update.
+### Adopt a knowledge hub
 
-A reproducible, organization-agnostic framework for standing up a governed, agent-readable knowledge
-hub for any initiative — a project, a team, a product line, a nonprofit, a research group. It is not
-tied to any specific company, industry, or AI vendor.
+Use the reference template to create a portable, Git-governed hub for one initiative. Keep source
+records in their authoritative systems while the hub retains reviewed evidence, claims, decisions,
+and working knowledge. The framework works with people alone or with optional AI skills that
+automate intake, proposals, scans, handovers, briefs, and publication.
 
-## What's in this package
+**Next:** follow [`docs/adopting.md`](docs/adopting.md) or start from [`template/`](template/).
 
-| Path | What it is |
+### Evolve the Standard
+
+Maintain the package through explicit authority, dated design records, red-before-repair evidence,
+exact staging, and one direct release gate. Descriptive guides never override `STANDARD.md`, and a
+cache never substitutes for an authoritative gate result. Glassity-specific normative changes must
+cross the edition boundary visibly.
+
+**Next:** read [`docs/maintaining.md`](docs/maintaining.md) and the
+[`Standard Maintainer`](STANDARD.md#standard-maintainer) contract.
+
+## Why this exists
+
+Project knowledge often ends up split across documents, messages, issue trackers, repositories, and
+AI conversations. The KM Standard supplies a stable boundary around the knowledge worth retaining:
+where it came from, what is claimed, what was decided, what remains uncertain, and who may change
+it. Plain files keep that record inspectable and portable; governance keeps it trustworthy.
+
+It is organization-agnostic and vendor-neutral. It can support a project, team, product, nonprofit,
+research group, or any initiative that needs evidence-backed continuity.
+
+## What you get
+
+- A normative governance and architecture standard.
+- A ready-to-copy hub with schemas, scans, handover, and proposal workflow.
+- Optional skills for AI-assisted intake, maintenance, briefing, and publication.
+- Entity notes for decisions, risks, stakeholders, milestones, partners, corrections, claims,
+  relationships, and source systems.
+- An optional Supervisor tier for routing and governing work across multiple hubs.
+- A release gate that discovers and checks the maintained package before publication.
+
+## How it works
+
+```mermaid
+flowchart LR
+    S[Sources and systems of record] --> I[Intake and governed proposals]
+    I --> H[Knowledge hub in Markdown and Git]
+    H --> P[People]
+    H --> A[AI assistants]
+    X[Optional Supervisor tier] --> H
+```
+
+Source records remain in their systems of record. The hub governs the retained evidence, claims,
+decisions, and working knowledge that people and assistants use.
+
+## Quick start for adopters
+
+1. Read [`STANDARD.md`](STANDARD.md) from **Purpose** through **Governance Layer**.
+2. Copy [`template/`](template/) into the initiative workspace, or use
+   [`km-init`](skills/km-init/SKILL.md).
+3. Replace the placeholders and record the inherited version and source in `km-deployment.md`.
+4. Initialize Git, commit the scaffold, and run `hub-scan.sh`.
+5. Add inputs through `_inbox/`, review proposals in `changes/`, and stage later edits by exact path.
+
+For multiple hubs, add the minimum Supervisor tier when a source first crosses hub boundaries. See
+[`km-supervise`](skills/km-supervise/SKILL.md) and the
+[`supervisor threshold`](STANDARD.md#the-supervisor-threshold).
+
+## Quick start for maintainers
+
+1. Read [`docs/maintaining.md`](docs/maintaining.md) and locate the authority for the change.
+2. Record the proposal and, for a defect, reproduce it on the unrepaired tree first.
+3. Make the smallest accepted change and stage exact paths.
+4. Run `python3 tools/km-release-gate.py` directly.
+5. Record the exit status and evidence before proposing publication.
+
+## Repository map
+
+| Path | Purpose |
 |---|---|
-| [`STANDARD.md`](STANDARD.md) | The full standard — architecture, governance rules, frontmatter spec, ontology layer, checklists. Read this first. |
-| [`template/`](template/) | A ready-to-copy reference hub: stub docs, `context.jsonld`, `km-deployment.md`, entity-note folders (`decisions/`, `risks/`, `stakeholders/`, `milestones/`, `partners/`, `corrections/`, plus the optional `relationships/`, `claims/`, and `sources/systems/`), governance files, and the per-hub agent skills (`km-intake`, `km-propose`, `km-gather`, `km-start`, `km-handover`, `km-brief`, `km-publish`) already wired up for Claude Code and AGENTS.md-compatible tools. Both enumerations in this row are compared against the template itself by `tests/test_readme_inventory.sh`, so neither is a hand-kept memory of a directory. |
-| [`rfcs/`](rfcs/README.md) | Design RFCs, each a dated design record that is never rewritten to agree with what happened afterwards. **Start at [`rfcs/README.md`](rfcs/README.md), the index**, which records for every proposal its status, the published version that implemented it, where a design was implemented in narrowed form, and how the RFC badge above is generated from that table rather than counted by hand. |
-| [`contracts/organization-profile.schema.json`](contracts/organization-profile.schema.json) | Portable JSON contract for an approved Enterprise Knowledge Layer organization profile. |
-| [`scripts/validate_organization_profile.py`](scripts/validate_organization_profile.py) | Dependency-free validator for profile shape, compatibility, safe paths, and module eligibility. |
-| [`skills/km-init/`](skills/km-init/SKILL.md) | Workspace-level skill: runs the purpose interview and either stands up a brand-new hub from `template/` or adopts a directory that already exists, writing only what it lacks. |
-| [`skills/km-supervise/`](skills/km-supervise/SKILL.md) | Optional workspace-level skill: routes a source that touches multiple hubs (the "Supervisor tier"). Includes a starter `_KM_Supervisor_template/`. |
-| [`skills/km-brief/`](skills/km-brief/SKILL.md) | Per-hub skill: generates an audience-tailored memo/briefing/status report by querying entity notes instead of freehand-reading hub docs. |
-| [`components/km-cockpit/`](components/km-cockpit/README.md) | Optional side component (published as v1.24, 2026-08-17): the KM Cockpit — the owner decision surface. Renders the owner queue as full-context decision cards on localhost; configured entirely by a deployment manifest; never published beside a reading site. Normative contract in [`SPEC.md`](components/km-cockpit/SPEC.md). |
-| [`agents/km-hub-builder/`](agents/km-hub-builder/SKILL.md) | Optional Standard Maintainer package: one governed contract, distributable Claude and Codex adapters, safe installation, and runtime-parity checks. It changes standards and hands adoption to the Supervisor; it never edits hubs. |
-| [`docs/architecture/`](docs/architecture/README.md) | **A historical v1.22 snapshot, not the current architecture.** The layer model, the canonical-first hub deployment protocol, the OrganizationProfile contract, and authority boundaries, as they stood at v1.22. Descriptive, not normative, and not maintained forward: the cockpit, the projection contract, the supervisor threshold, hub merge, editions, the Reader tier, the MCP quarantine and the release gate all postdate it and are described in [`STANDARD.md`](STANDARD.md) instead. |
+| [`STANDARD.md`](STANDARD.md) | Current normative architecture, governance, schemas, and release history. |
+| [`template/`](template/) | Reference hub. Its entity-note folders (`decisions/`, `risks/`, `stakeholders/`, `milestones/`, `partners/`, `corrections/`, `relationships/`, `claims/`, `sources/systems/`) and per-hub agent skills (`km-intake`, `km-propose`, `km-gather`, `km-start`, `km-handover`, `km-brief`, `km-publish`) are checked against the tree. |
+| [`skills/`](skills/) | Optional initialization, supervision, hub, briefing, and publication skills. |
+| [`components/`](components/) | Optional components, including the owner-facing KM Cockpit. |
+| [`rfcs/`](rfcs/README.md) | Dated design records and their derived lifecycle index. <img src="assets/badges/rfcs.svg" alt="RFCs: 4 adopted, 1 partial, 3 open"/> |
+| [`openspec/`](openspec/) | Governed change proposals and implementation evidence. |
+| [`docs/`](docs/README.md) | Adopter and maintainer guides plus historical architecture material. |
+| [`tools/km-release-gate.py`](tools/km-release-gate.py) | The authoritative direct release gate. |
 
-## Quick start — one hub
+## License and reuse
 
-1. Read [`STANDARD.md`](STANDARD.md), sections "Purpose" through "Governance Layer."
-2. Copy [`template/`](template/) to your new hub's location, e.g. `cp -R template/ ~/projects/my-initiative`.
-3. Replace every `{{PLACEHOLDER}}` in the copied files (see the placeholder map in
-   [`skills/km-init/SKILL.md`](skills/km-init/SKILL.md)) — or, if you're using an AI agent that
-   supports custom skills, install `skills/km-init/SKILL.md` and invoke it to do this
-   interactively.
-4. `git init`, make the initial commit, and run `hub-scan.sh` (Steps 1 and 4–5 in `STANDARD.md`).
-   That scaffold commit is the one place a blanket `git add -A` is safe; after it, stage the paths you
-   touched (see *Rule 3 → Stage explicitly*), which matters most when the hub lives in synced storage.
-5. Start working: drop files in `_inbox/`, propose changes in `changes/`, run `hub-scan.sh` at the
-   start of every session. Track individual decisions/risks/stakeholders/milestones/partners as entity
-   notes (`decisions/`, `risks/`, `stakeholders/`, `milestones/`, `partners/`), not as table rows in
-   the numbered docs — see "Ontology & Entity Layer" in `STANDARD.md`. Use `/km-brief` to generate a
-   memo or briefing from those entity notes for a given audience.
+The repository is licensed under Apache-2.0. You may use, adapt, fork, and redistribute it subject
+to the conditions in [`LICENSE`](LICENSE) and the attribution in [`NOTICE`](NOTICE).
 
-`km-init` always creates a canonical-only hub and records its canonical version, revision, and source
-in `km-deployment.md`. Organization binding is a separate Supervisor action. The Supervisor resolves
-and validates an approved OrganizationProfile from the configured Enterprise Knowledge Layer, then
-records the organization customization in a second commit.
-
-No AI agent is required to use this standard — it works as a plain governance discipline for a
-human-maintained markdown folder. The optional skills exist to automate the mechanical parts (digesting
-sources, drafting proposals, running the scan) for teams using an AI coding/knowledge assistant.
-
-## Quick start — more than one hub
-
-The moment a workspace runs more than one hub, the standard advises creating the Supervisor
-tier (v1.26) — starting from the **minimum tier**: a hub registry, an estate queue,
-an inbox, and its own git history, with every further capability adopted against a named
-condition. See "The supervisor threshold" and "Supervisor Tier — Cross-Hub Orchestration" in
-`STANDARD.md`, and [`skills/km-supervise/`](skills/km-supervise/SKILL.md) for the routing
-skill (adopted when a source first spans two hubs).
-
-## License / reuse
-
-**This repository is licensed under the Apache License, Version 2.0.** The complete text is in
-[`LICENSE`](LICENSE) and the attribution notice is in [`NOTICE`](NOTICE). The grant is in force: it
-is a licence rather than a statement of intent, which is what this page could offer while the
-decision was open at v1.49. Copyright 2026 Carlos Correia.
-
-What an adopter may rely on, in the licence's own terms rather than this page's:
-
-- **Use, adapt, fork, and redistribute**, for internal or external knowledge management, commercially
-  or not, with no fee and no permission to ask for (§2, §4).
-- **An express patent grant** from each contributor over their own contributions, irrevocable except
-  under the defensive termination clause that ends it for an adopter who brings patent litigation
-  over the work (§3). That grant is why this licence was chosen for a specification other
-  organizations implement.
-- **One licence over the whole repository.** The specification prose and the code are not split,
-  because the tree interleaves them: templates, skills, and scaffolds are both at once.
-
-What the licence asks in return, and it asks it **when you redistribute** the work or a derivative of
-it, in source or object form: **keep the copyright, patent, trademark and attribution notices, hand
-on a copy of the licence, mark the files you changed, and carry the `NOTICE` attribution** (§4).
-Those conditions attach to distribution. Using this repository inside your own organization, or
-modifying it and not passing it on, triggers none of them. This page previously said that no
-attribution was required at all; that is false under Apache-2.0 once anything is redistributed, and
-it is withdrawn here. `LICENSE` §4 states the conditions in full and governs.
-
-**The repository now carries a licence. The standard still asserts none.** Those are separate facts
-about separate objects. Licensing this repository puts no licence, price, or commercial term on any
-hub, estate, or deployment that adopts the standard, and it changes nothing in the editions boundary.
-Both facts are recorded in [`STANDARD.md`](STANDARD.md) → *The boundary asserts no license*.
-
-Nothing on this page is legal advice, and where this summary and [`LICENSE`](LICENSE) differ,
-[`LICENSE`](LICENSE) governs.
+The repository license does not impose a license or commercial term on hubs that adopt the Standard.
+See [`docs/license-and-reuse.md`](docs/license-and-reuse.md) for the detailed explanation; if any
+summary differs from [`LICENSE`](LICENSE), the license governs.
