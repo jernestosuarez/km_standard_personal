@@ -11,7 +11,7 @@ timestamp: 2026-07-02
 <p align="center"><em>The open standard for governed knowledge hubs — built for organizations and their agents.</em></p>
 
 <p align="center">
-  <img src="assets/badges/version.svg" alt="standard v1.61"/>
+  <img src="assets/badges/version.svg" alt="standard v1.62"/>
   <img src="assets/badges/rfcs.svg" alt="RFCs: 3 adopted, 1 partial, 3 open"/>
   <img src="assets/badges/license.svg" alt="license: Apache-2.0"/>
   <img src="assets/badges/format.svg" alt="format: markdown + git"/>
@@ -28,34 +28,35 @@ timestamp: 2026-07-02
 
 # Knowledge Management Standard
 
-**Current version: v1.61** (2026-08-26, four findings from an external reviewer's fifth pass over
-this repository, off `main` at `164ecfb` (published v1.60), each reproduced as a failing case before
-any repair was written; all three reviewer scripts pin `164ecfb` internally, so **none of them can
-testify about a repaired tree**, which is the subject of the fourth finding and is stated here rather
-than discovered later; **a question asked of the tree is a read, even when nothing is opened**, the
-gate's ledger having recorded only what its accessors enumerated and opened while the relative-link
-phase opened nothing, asked `does this path exist?` and put the answer straight into the verdict, so
-a discovered check could delete a link target after that phase had run and the gate still returned
-PASS at exit 0 over a final tree carrying a broken link, and the ledger now records **answers**, with
-existence asked through one accessor and both directions of a presence answer treated as drift;
-**a control whose claim is an absence must measure an absence**, case 20c having certified that the
-CI workflow carries no hand copy of the gate's limits by confirming that it *invokes* `--limits`,
-which is a presence, so the claim is split into a case that asserts the pointer, a case that asserts
-that no line of the gate's own limit definition is restated verbatim in the workflow, compared
-against the gate's own `--limits` output, and a case that injects a verbatim copy and requires the
-detector to fire; **a whole-line comment ends a plain scalar that has already started**, ten comment
-and blank-line shapes having been put to the reference parser one at a time, so the frontmatter
-reader is a model rather than a house rule and carries no declared divergence; and **a verification
-declaration is a record of what was run, and a script that pins a revision cannot testify about any
-other revision**, which this repository broke by publishing in v1.60 a claim it knew to be false —
-both declarations are corrected with the false clauses **struck in place rather than deleted**, and a
-citation that names a script by digest must now state what that script pins; **two of the four
-findings were already ours**, registered rather than repaired in v1.60's own sweep, and the ruling
-accepted here is that **disclosure does not satisfy a no-open-defect criterion**; the
-registered-not-repaired backlog is audited in full with the age of each entry, two closed, three
-re-classified as **policy questions referred to the owner** and four as **approximations with stated
-error directions**; nothing a deployment installs changes and no hub turns red; v1.60 is the
-preceding published version and v1.23 remains an unpublished draft awaiting its own push). The full
+**Current version: v1.62** (2026-08-27, four mechanisms promoted from the accepted record of an
+external application build, on the deployment owner's direction to integrate that build's
+improvements — the first promotion assessment ever run over that work, each candidate assessed for
+duplication against the current canonical text, for checkability with a real negative test named or
+the absence of one stated, and against the generic-organisation test; **a consuming answer surface
+discloses nothing it will not answer**, a topic restricted beyond the surface's clearance, a topic
+whose evidence is ineligible and a topic the corpus has never held rendering as one byte-identical
+no-answer state, **reconciled with crossing law 3 rather than grafted beside it** — law 3 governs
+traffic between governed parties, where a steward is entitled to existence, while on a surface that
+answers arbitrary questions a differentiated refusal is an oracle that maps restricted holdings by
+enumeration; no shipped instrument evaluates a serving surface, so the rule is stated as convention
+until an implementation ships its byte-identity case; **the diagnostic record**, giving the
+correction loop's own "the mistake was diagnosed" a definition of four required sections —
+environment and validity, the isolation-versus-context matrix with one variable per comparison, the
+hypothesis with stated confidence and named falsifying evidence, and the smallest next boundary with
+no fix riding inside a diagnosis — protecting the rule that a shared failure value is a property of
+the harness that stops a run and never, alone, evidence of a shared cause; **the acceptance
+threshold and the stop predicate are fixed before the measurement runs**, the mechanical half being
+commit ordering, which a check can prove, and what ordering cannot prove stated beside it; **a cache
+may accelerate feedback and never produces the authoritative verdict**, a cache key being a proxy
+for the tree, so the verdict anything is cited on comes from a direct, uncached run whose record
+says it was direct; the fifth candidate returned **no-change**, recorded in the version row rather
+than dropped, because its evidence pointers duplicate obligations the maintainer contract already
+carries; **two of the four carried a question only the owner could answer** — the narrowing of
+published doctrine, and whether this standard should govern a tooling class it does not ship — each
+stated in the text where it is drafted, and the owner's push is the explicit word on both, given
+knowingly rather than ridden past; nothing a deployment installs changes and no hub turns red;
+v1.61 is the preceding published version and v1.23 remains an unpublished draft awaiting its own
+push). The full
 ledger of released versions, and the rule that a published version number is never reused, is in
 [`STANDARD.md`](STANDARD.md) → *Version history*.
 Pin the version you adopted; adopting a later one is a decision, not a background update.
