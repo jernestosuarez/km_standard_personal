@@ -68,7 +68,7 @@ Expected: both commands resolve to `9d43e193d044e2bdd6084480b80195b7e8ba9adf`.
 
 - [ ] **Step 1: Update the editable SVG source**
 
-Edit the existing SVG rather than replacing its visual system. Preserve the 2048 by 672 canvas and dark navy, teal, coral, and gold palette. Make these exact copy changes:
+Edit the existing SVG rather than replacing its visual system. Preserve its native `1280 420` viewBox, `2560` width, `840` height, and dark navy, teal, coral, and gold palette. The PNG render remains 2048 by 672. Make these exact copy changes:
 
 ```text
 OPEN STANDARD · V1.22
