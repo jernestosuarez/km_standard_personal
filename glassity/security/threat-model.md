@@ -12,7 +12,7 @@ lifecycle: active
 
 ## Status and scope
 
-**Status:** Owner-authorized Supervisor disposition, commit `f21bf3e` (2026-08-27): “Approve Phase S0 as security-design input only. No residual risk, runtime implementation, or release is approved.” This is binding security-design input. No application, infrastructure, contract, or runtime security control is present in this repository. AD-001 is resolved at the design layer; AD-002 through AD-005 remain blocking and unselected.
+**Status:** Owner-authorized Supervisor disposition, commit `f21bf3e` (2026-08-27): “Approve Phase S0 as security-design input only. No residual risk, runtime implementation, or release is approved.” This is binding security-design input. No application, infrastructure, contract, or runtime security control is present in this repository. AD-001 and AD-002 are resolved at the design layer; AD-003 through AD-005 remain blocking and unselected.
 
 Scope begins at browser submission of an upload, domain-event envelope, or owner answer and ends at a governed tenant-hub record, audit event, or consumed answer. It models the selected self-hosted production boundary and the synthetic-only managed development boundary.
 
@@ -26,7 +26,7 @@ Scope begins at browser submission of an upload, domain-event envelope, or owner
 
 ## System context
 
-The browser authenticates through an unselected IAM/session layer. The app/API authorizes uploads, persists domain objects and events in the app database/event store, records an authorized pointer envelope through the inbound adapter, and sends that envelope to a tenant inbox. One worker context runs core skills for one tenant and may use the Claude control plane/API. Raw uploads remain in object/document storage; tenant Git holds digests, claims, decisions, classified extracts, and pointers; pending answers are delivered to the worker with retryable at-least-once pickup and result acknowledgement. Idempotency and trace-before-finalization prevent duplicate governed effects and lost answers. The accountable owner approves governance and is the only residual-risk acceptor.
+The browser authenticates through Supabase Auth. The app/API validates provider identity and resolves `tenant_sessions.active_tenant_id` from a server-only binding before authorizing any tenant action; PostgreSQL RLS supplies the independent data boundary. The app persists domain objects and events in the app database/event store, records an authorized pointer envelope through the inbound adapter, and sends that envelope to a tenant inbox. One worker context runs core skills for one tenant and may use the Claude control plane/API. Raw uploads remain in object/document storage; tenant Git holds digests, claims, decisions, classified extracts, and pointers; pending answers are delivered to the worker with retryable at-least-once pickup and result acknowledgement. Idempotency and trace-before-finalization prevent duplicate governed effects and lost answers. The accountable owner approves governance and is the only residual-risk acceptor.
 
 ## Actors and attacker classes
 
@@ -114,6 +114,7 @@ flowchart LR
 ## Security assumptions
 
 - Tenant identity is not inferred from URL, prompt, path, file, or Git remote; it comes from validated server-side authorization.
+- Supabase proves the actor and provider session; `tenant_sessions.active_tenant_id`, after an active membership check, is the sole tenant-selection fact. Client tenant values are selection attempts only.
 - AI output, prompts, retrieved text, uploads, URLs, and tool output are data, never authority.
 - Each worker run has one tenant context, no cross-tenant writable volume or Git credential, deny-by-default tools, and egress only by explicit policy.
 - Managed and self-hosted execution do not transfer Glassity's authorization, data-minimization, audit, or tenant-isolation obligations.
@@ -129,7 +130,7 @@ Anthropic-managed cloud sandboxes are permitted only for development, CI, or eva
 | ID | Decision | Owner | Gate | Consequence |
 |---|---|---|---|---|
 | AD-001 | **Resolved 2026-08-27:** self-hosted production execution; managed development only with strictly synthetic data. | Accountable owner + security reviewer | before worker contract | Design decision recorded in [AD-001](../decisions/ad-001-self-hosted-production-execution.md); VER-015 and remaining decisions still block runtime/release. |
-| AD-002 | Select IAM/session and tenant-isolation mechanism. | Accountable owner + app security owner | before app/API contract | **Blocking:** no authenticated API/cockpit. |
+| AD-002 | **Resolved 2026-08-27:** Supabase Auth, server-side `tenant_sessions.active_tenant_id`, and forced PostgreSQL RLS. | Accountable owner + app security owner | before app/API contract | Design decision recorded in [AD-002](../decisions/ad-002-supabase-session-postgres-rls.md); VER-001/002 and remaining decisions still block runtime/release. |
 | AD-003 | Select upload quarantine/scanner, archive policy, storage, and region. | Accountable owner + security reviewer | before upload contract | **Blocking:** no uploads. |
 | AD-004 | Select key/secrets and Git credential issuance, rotation, and revocation. | Accountable owner + security reviewer | before Git/worker contract | **Blocking:** no governed writes. |
 | AD-005 | Set retention/deletion periods and privacy authority by data class. | Accountable owner + legal/privacy authority | before production persistence | **Blocking:** no production persistence. |
@@ -142,7 +143,7 @@ Inherent severity is before required controls. “Block” is a required disposi
 
 | ID | Category | Assets/flows | Scenario | Impact | Likelihood | Inherent severity | Required controls | Verification | Disposition | Residual risk |
 |---|---|---|---|---|---|---|---|---|---|---|
-| TM-001 | S/E | session, DF-001/002 | Forged/stolen session selects another tenant. | cross-tenant disclosure/write | medium | critical | SEC-001, SEC-002 | VER-001, VER-002 | block | owner-only after evidence |
+| TM-001 | S/E | session, DF-001/002 | Forged/stolen session selects another tenant. | cross-tenant disclosure/write | medium | critical | SEC-001, SEC-002 | VER-001, VER-002 | design mechanism selected; conformance blocked | no risk accepted; VER-001/002 required |
 | TM-002 | T/E | Git, DF-008/012 | Traversal/symlink reaches another path or hub. | integrity/disclosure | medium | high | SEC-003, SEC-004 | VER-003 | block | none before conformance |
 | TM-003 | I/E | Git credential, DF-012 | Shared/overbroad credential writes another tenant hub. | cross-tenant integrity | medium | critical | SEC-004, SEC-005 | VER-004 | block | owner-only after evidence |
 | TM-004 | AI | uploads, DF-003–008 | Direct/indirect injection is treated as instruction. | tool misuse/exfiltration | high | critical | SEC-006, SEC-007 | VER-005 | block | model output never substitutes for policy |
