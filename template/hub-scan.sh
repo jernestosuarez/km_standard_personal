@@ -252,6 +252,24 @@ else
     err
   fi
 fi
+# A hand-maintained integrity manifest is RETIRED (ruling added in v1.63, drafted and
+# unpublished: it binds nothing until its own owner push). Deployments predating this standard's
+# git-backed model sometimes carry hub-manifest.md, a hand-kept file-hash manifest. Git history
+# is the sole integrity baseline — "there is no separate baseline file to maintain" has been this
+# scan's contract from the start — and a hand-kept manifest is the artifact class the standard
+# names as the one that rots: measured in the deployment that motivated the ruling, 59 of 94
+# recorded hashes were wrong, and a manifest that is mostly wrong is a false assurance, worse
+# than an acknowledged gap, because it is trusted. No check reads the file and none may be built
+# to. Advisory, never an error: a legacy hub must not go red over a file the ruling itself
+# retired. The scaffold exclusions (skip_doc, the corrections-count scaffold set) keep the name
+# so a lingering copy is not misread as a generated document while it awaits removal.
+if [ -f "$HUB/hub-manifest.md" ]; then
+  echo "  hub-manifest.md present — a hand-maintained hash manifest, retired by the standard:"
+  echo "    git history is the sole integrity baseline and no check reads this file. Remove it"
+  echo "    through this hub's own governance (or move it to archive/); until then this line is"
+  echo "    the only place the scan mentions it."
+  adv
+fi
 echo
 
 # Build the monitored document list once — reused by FRONTMATTER, FRESHNESS, LINKS and SHAPE.
@@ -764,6 +782,17 @@ else
   # The harness carries the same skills twice, once per runtime tree, and two copies of one
   # procedure drift exactly as two copies of one fact do. Compared only when BOTH trees are
   # installed: a single-runtime deployment has one home and nothing to diverge from.
+  #
+  # THE RULING THE FINDINGS CARRY (added in v1.63, drafted and unpublished: it binds nothing
+  # until its own owner push). Neither installed tree is authoritative: the two are mirrors of
+  # one procedure, and authority lives outside them — for a skill the standard ships, in the
+  # canonical copy at the deployment's pinned canonical version; for a hub-local skill, in the
+  # governed act that created it. So a shipped skill found divergent is repaired by refreshing
+  # BOTH trees from the pinned canonical in one act (levelling two stale copies at whichever is
+  # newer is bookkeeping, not repair), a hub-local skill by raising both copies to the one
+  # carrying the stronger protection, and a hub-local skill belongs in both trees or in neither,
+  # because placement decides which runtime discovers it. A refresh that writes one tree
+  # manufactures the divergence this walk then reports.
   claude_skills="$HUB/.claude/skills"
   agents_skills="$HUB/.agents/skills"
   mirror_state="not installed"
@@ -776,6 +805,9 @@ else
       b="$agents_skills/$slug/SKILL.md"
       if [ ! -f "$a" ] || [ ! -f "$b" ]; then
         echo "  ! HARNESS MIRROR DIVERGENCE $slug: installed in one runtime tree and not the other"
+        echo "    A skill belongs in both trees or in neither — placement decides which runtime"
+        echo "    discovers it, so a one-tree skill is a procedure half the harness cannot see."
+        echo "    Install it in the other tree in the same governed act, or retire it from both."
         projection_errors=$((projection_errors + 1))
         continue
       fi
@@ -786,7 +818,9 @@ else
       if ! diff -q <(sed -e 's/CLAUDE\.md/HARNESS-INSTRUCTIONS/g' -e 's/AGENTS\.md/HARNESS-INSTRUCTIONS/g' "$a") \
                    <(sed -e 's/CLAUDE\.md/HARNESS-INSTRUCTIONS/g' -e 's/AGENTS\.md/HARNESS-INSTRUCTIONS/g' "$b") >/dev/null 2>&1; then
         echo "  ! HARNESS MIRROR DIVERGENCE $slug: the .claude and .agents copies of SKILL.md differ"
-        echo "    beyond the harness instruction-file name; one tree was updated and the other was not"
+        echo "    beyond the harness instruction-file name; one tree was updated and the other was not."
+        echo "    Neither tree is authoritative: refresh a shipped skill into BOTH trees from the"
+        echo "    pinned canonical in one act; raise a hub-local skill to the stronger copy."
         projection_errors=$((projection_errors + 1))
       fi
     done <<< "$mirror_slugs"
@@ -1024,6 +1058,15 @@ echo "[ RESTRICTED ]"
 #   changes/ free text    proposals and approvals travel to reviewers and other tiers
 #   generated indexes     the hub's summary surface; build-indexes.sh excludes restricted notes,
 #                         so a hit here clears by regenerating, never by hand-editing
+#   docs-site pages       working-docs/*-docs-site/docs/ — the source of a documentation site
+#                         that publishes outward when the site deploys, the hub's most outbound
+#                         artifact (added in v1.63, drafted and unpublished: it binds nothing
+#                         until its own owner push). Until then these pages had no restricted
+#                         lint at all, and a deployment carried the surface as a local line in
+#                         two installed scan copies that every template refresh threatened to
+#                         overwrite. The NAMING CONVENTION IS THE CONTRACT: a site source that
+#                         does not match the pattern is not scanned, which is this check's
+#                         stated limit, not a hidden one.
 # WHERE the marker sits decides WHAT is restricted (narrowed in v1.21):
 #   frontmatter marker    the whole note is restricted, name included — the note's name on a
 #                         surface discloses the existence and identity of the restricted record
@@ -1079,12 +1122,15 @@ restricted_surface_unreadable=0
 #                          of a note classed restricted/record in frontmatter: TEXT is blocked
 #   U <path>               unreadable: identifier/section coverage gap
 restricted_id_scan=$(
+  # The docs-site exclusion mirrors shareable/ and changes/: a surface is scanned as a surface
+  # (pass 2), never walked as a note whose text is collected as evidence against itself (v1.63).
   find "$HUB" -name '*.md' -type f \
       -not -path '*/.git/*' \
       -not -path '*/.venv/*' \
       -not -path "$HUB/_inbox/*" \
       -not -path "$HUB/shareable/*" \
-      -not -path "$HUB/changes/*" 2>/dev/null | sort \
+      -not -path "$HUB/changes/*" \
+      -not -path "$HUB/working-docs/*-docs-site/docs/*" 2>/dev/null | sort \
   | while IFS= read -r f; do
       # Leading paren keeps this case parseable inside $( ) on bash 3.2 (macOS default).
       case "$f" in (*/TEMPLATE.md|*/index.md) continue ;; esac
@@ -1155,6 +1201,10 @@ restricted_surfaces=$(
   find "$HUB/shareable" -name '*.md' -type f 2>/dev/null
   find "$HUB/changes" -name '*.md' -type f \
       ! -name 'PROPOSAL_TEMPLATE.md' ! -name 'APPROVAL_TEMPLATE.md' 2>/dev/null
+  # Docs-site pages (added in v1.63, drafted and unpublished: binds nothing until its own owner
+  # push): the source of a documentation site that publishes outward when it deploys is an
+  # outbound surface exactly as shareable/ is.
+  find "$HUB/working-docs" -path '*-docs-site/docs/*' -name '*.md' -type f 2>/dev/null
   for dir in $ENTITY_DIRS; do
     [ -f "$HUB/$dir/index.md" ] && echo "$HUB/$dir/index.md"
   done
@@ -1227,17 +1277,49 @@ else
   # An unstated blocker is reported as unstated rather than assumed to be the owner. Assuming the
   # owner is the thing that was wrong, and a dispute file that could not be read looks identical
   # to one with no field, so the message names both possibilities instead of picking one.
-  echo "  ! Active disputes:"
+  #
+  # A dispute RESOLVED IN PLACE is a retained record, not an active dispute (added in v1.63,
+  # drafted and unpublished: it binds nothing until its own owner push). The standard's default
+  # end state for a dispute is capture-the-reasoning-then-delete, but where the adjudication is
+  # recorded in the dispute file itself — an owner answer applied under a directive, the record
+  # kept under retract-in-place — the file stays, marked `lifecycle: resolved` in OKF
+  # frontmatter. Before this, every file in _disputes/ counted as active, so a dispute the owner
+  # had answered raised the advisory on every scan forever: two states that mean different
+  # things rendered identically. Fail-closed on purpose: only the exact frontmatter value
+  # `resolved` counts as resolved — no frontmatter, any other value, or a file that cannot be
+  # read stays ACTIVE, because a check reporting by absence must never read "could not evaluate"
+  # as "nothing open".
+  active_disputes=""
+  resolved_disputes=""
   while IFS= read -r f; do
-    blocked=$(sed -n 's/^\*\*Blocked on:\*\*[[:space:]]*//p' "$f" 2>/dev/null | head -1)
-    blocked=$(printf '%s' "$blocked" | sed 's/[[:space:]]*$//')
-    case "$blocked" in
-      "")           echo "    - $(basename "$f") (blocked-on not stated or file unreadable)" ;;
-      "Hub Owner")  echo "    - $(basename "$f") (blocked on: Hub Owner, decision required)" ;;
-      *)            echo "    - $(basename "$f") (blocked on: $blocked, no hub-owner action)" ;;
-    esac
-    adv
+    [ -z "$f" ] && continue
+    if [ "$(fm_field "$f" "lifecycle")" = "resolved" ]; then
+      resolved_disputes="${resolved_disputes}${f}"$'\n'
+    else
+      active_disputes="${active_disputes}${f}"$'\n'
+    fi
   done <<< "$disputes"
+  if [ -n "$active_disputes" ]; then
+    echo "  ! Active disputes:"
+    while IFS= read -r f; do
+      [ -z "$f" ] && continue
+      blocked=$(sed -n 's/^\*\*Blocked on:\*\*[[:space:]]*//p' "$f" 2>/dev/null | head -1)
+      blocked=$(printf '%s' "$blocked" | sed 's/[[:space:]]*$//')
+      case "$blocked" in
+        "")           echo "    - $(basename "$f") (blocked-on not stated or file unreadable)" ;;
+        "Hub Owner")  echo "    - $(basename "$f") (blocked on: Hub Owner, decision required)" ;;
+        *)            echo "    - $(basename "$f") (blocked on: $blocked, no hub-owner action)" ;;
+      esac
+      adv
+    done <<< "$active_disputes"
+  fi
+  while IFS= read -r f; do
+    [ -z "$f" ] && continue
+    echo "  RESOLVED (retained record): $(basename "$f")"
+  done <<< "$resolved_disputes"
+  if [ -z "$active_disputes" ]; then
+    echo "  OK — no active disputes; the resolved dispute(s) above are retained records, not open items"
+  fi
 fi
 echo
 

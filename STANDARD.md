@@ -1,46 +1,65 @@
 ---
 type: brief
-title: Knowledge Management Standard: Hub Framework (v1.62)
+title: Knowledge Management Standard: Hub Framework (v1.63 draft)
 description: Reproducible, organization-agnostic standard for standing up a governed, agent-readable knowledge hub for any initiative, project, or team, with an optional cross-hub Supervisor tier for routing cross-cutting sources, an optional Agent Tier for named, discoverable agent instances, an optional record-boundary layer for governed use of systems of record, and an editions boundary that names where consuming the standard ends and evolving it begins.
 tags: [standard, knowledge-management, governance, okf, agents]
 resource: template/
 timestamp: 2026-08-27
 ---
 
-# Knowledge Management Standard: Hub Framework (v1.62)
+# Knowledge Management Standard: Hub Framework (v1.63 draft)
 
-**Published v1.62** (2026-08-27, owner push: four
-mechanisms promoted from the accepted record of an external application build, on the deployment
-owner's direction to integrate that build's improvements into the standard — the first promotion
-assessment ever run over that work, off an inventory that settled seventeen of its twenty-two
-accepted slices as application-specific and shortlisted five. Each candidate was assessed three ways
-before a word was drafted: duplication against the current canonical text, by property search in
-both case forms with known-positive controls; checkability, with a real negative test named or the
-absence of one stated plainly; and the generic-organisation test. Four survived; the fifth returned
-**no-change**, and the reason is recorded in the version row rather than dropped.
+**v1.63 — DRAFT, awaiting owner push. Nothing this version adds binds until that push.** Six items
+clear the canonical backlog ahead of a planned fork, on the deployment owner's direction that
+nothing stays behind: three defect repairs, two rulings, and two verdicts of **no-change** with
+their reasons recorded rather than dropped. The repairs, each reproduced as a failing case and
+committed red before any repair was written: a dispute **resolved in place by an owner answer**
+may be retained as a record carrying `lifecycle: resolved`, and `[ RECONCILIATION ]` reports it as
+resolved instead of listing it under active disputes forever; a **docs-site under
+`working-docs/*-docs-site/docs/`** is an outbound surface the `[ RESTRICTED ]` check now scans
+exactly as it scans `shareable/`, absorbing a capability two installed scan copies carried as
+hub-local divergence that every template refresh threatened to overwrite; and the canonical
+`shareable/README.md` claimed the folder was "not monitored" while the restricted lint has read it
+since v1.16 — a shipped directory contract contradicting the shipped instrument beside it.
 
-**Two of the four carry a question only the owner can answer, and each is stated where it is drafted
-rather than resolved silently.** The first survivor reconciles a disclosure rule with crossing law 3
-— *existence crosses; contents don't* — and **narrows the reach of published doctrine**: on a
-consuming answer surface, a topic restricted beyond the surface's clearance, a topic whose evidence
-is ineligible to ground an answer, and a topic the corpus has never held must be one byte-identical
-no-answer state, because on a surface that answers arbitrary questions a differentiated refusal is
-an oracle that maps restricted holdings by enumeration. Law 3 stands untouched between governed
-parties, where a steward is entitled to existence. The fourth survivor — a cache may accelerate
-feedback and never produces the authoritative verdict — asks the owner whether this standard should
-govern a tooling class it does not ship at all, and says so in the paragraph itself.
+**The two rulings.** A **hand-maintained integrity manifest (`hub-manifest.md`) is retired**: git
+history is the sole integrity baseline, the measured state of the one deployment carrying the
+convention is 59 of 94 recorded hashes wrong across seven hubs while four hubs carry none and lost
+nothing, and a manifest that is mostly wrong is a false assurance, which this standard holds worse
+than an acknowledged gap; the scan names a lingering copy as an advisory and the migration is
+stated. And for the **two runtime skill trees** a deployed hub installs: neither tree is
+authoritative — a shipped skill divergent across the trees is repaired by refreshing both from the
+pinned canonical, a refresh writes both trees in one act, and a hub-local skill belongs in both
+trees or in neither; `[ PROJECTION ]`'s findings now carry the ruling, and its one-tree-only arm,
+live since v1.32 and reached by no case, is pinned by a canary.
 
-**The other two are ordinary promotions.** The diagnostic record gives the correction loop's own
-"the mistake was diagnosed" a definition: four required sections — environment and validity, the
-isolation-versus-context matrix with one variable per comparison, the hypothesis with stated
-confidence, route-qualified scope and named falsifying evidence, and the smallest next boundary —
-protecting the rule that a shared failure value is a property of the harness that stops a run and
-never, by itself, evidence of a shared cause. And the acceptance threshold and stop predicate are
-fixed before the measurement runs, grafted beside the deferral rule as the same line drawn one step
-earlier: the mechanical half is commit ordering, which a check can prove, and what commit ordering
-cannot prove is stated beside it.)
+**The two no-change verdicts, recorded because a verdict without its reason is dropped work.** The
+initiation skill's merge and withdrawal modes, reported absent from a deployment's installed copy,
+have shipped in canonical `skills/km-init/SKILL.md` since v1.35: the absence is a stale installed
+copy, and the adoption action is a workspace-level refresh, not a canonical edit. And the
+`working-docs/` half of the README-versus-`[ CURRENCY ]` contradiction was already consistent in
+canonical — the shipped README has disclosed the currency read since this repository's first
+commit, the contradiction lives in deployed copies predating v1.12, and the check keeps its scope,
+because excluding `working-docs/` from currency would reverse the published v1.12 correction whose
+motivating failure was a working-docs draft.
 
-The preceding published version is **v1.61** (2026-08-26, owner push: four findings from an external
+The preceding published version is **v1.62** (2026-08-27, owner push: four mechanisms promoted from
+the accepted record of an external application build, on the deployment owner's direction — the
+first promotion assessment ever run over that work, off an inventory that settled seventeen of
+twenty-two accepted slices as application-specific and shortlisted five, of which four survived and
+the fifth returned no-change with its reason recorded. Rule 6 gained *a consuming answer surface
+discloses nothing it will not answer*: restricted-beyond-clearance, ineligible-evidence and
+genuinely-absent render as one byte-identical no-answer state, reconciled with crossing law 3
+rather than grafted beside it, law 3 standing untouched between governed parties; the correction
+loop's `agent-error` trigger gained the **diagnostic record**, four required sections protecting
+the rule that a shared failure value is a property of the harness that stops a run; the Standard
+Maintainer role gained *the acceptance threshold and the stop predicate are fixed before the
+measurement runs*, the mechanical half being commit ordering; and the release-gate section gained
+*a cache may accelerate feedback and never produces the authoritative verdict*. Two of the four
+narrowed or scoped published doctrine and said so where drafted, so the owner's push was given
+knowingly).
+
+The version before that is **v1.61** (2026-08-26, owner push: four findings from an external
 reviewer's fifth pass, off `main` at `164ecfb` (published v1.60). The gate's ledger now records
 **answers** rather than a proxy for them — every answer the run took from the tree is taken again at
 the verdict, presence answered by yes or no with both directions of drift counted — because the
@@ -56,17 +75,6 @@ record of what was run, and a script that pins a revision cannot testify about a
 Disclosure is not closure: the registered-not-repaired backlog was audited in full, two items
 closed, three referred to the owner as policy questions, and four re-classified as approximations
 owing a measured error direction and a version).
-
-The version before that is **v1.60** (2026-08-26, owner push: two findings from an external
-reviewer's fourth pass. A case that certified *every verdict phase takes its pathspecs from the
-structure the fingerprint iterates* enforced it by grepping the gate's source for one spelling of the
-call, and a tuple walked past it, so the covered set became **what the run actually read** — recorded
-by the accessors as they hand files out — and that case became a real added phase. And the
-frontmatter reader read `[[:space:]]` as indentation, a class that contains the tab, which YAML
-forbids there; indentation is now spaces, a tab in it is a rejection naming the tab, and the matcher
-is probed against the live shell before it is trusted. Both of that version's sweeps returned further
-instances, and the ones it registered rather than repaired are closed or re-classified in v1.61
-above).
 
 **v1.23** (stations, compartments, and the resolution plane) **remains drafted
 and unpublished**: its sections are marked with their version and bind nothing until its own push.
@@ -991,7 +999,8 @@ three independent instruments in that deployment already agreeing on 89.
 
 The predicate has three arms and all must hold: the file is **not scaffold**, it carries a **`rule:`**,
 and it is **`lifecycle: active`**. Scaffold is this standard's own set — `README.md`, `TEMPLATE.md`,
-`hub-manifest.md` (§"Currency of generated documents") — plus a generated `index.md`, which carries
+`hub-manifest.md` (§"Currency of generated documents"; the manifest is a retired legacy artifact
+since v1.63, kept in the set so a lingering copy is not miscounted — see Rule 3) — plus a generated `index.md`, which carries
 `lifecycle: active` by construction since v1.15 and is therefore the second shape that reads as
 current while asserting nothing. **The printed line states that predicate rather than a wider claim**,
 because a check whose printed claim outruns what it counts is the defect one layer up from the count
@@ -1106,6 +1115,38 @@ verification was not run, the message says what was written, not what was merged
 
 This binds a human committer as much as an agent. Agents fail it more often only because they chain
 more steps between one verification and the next.
+
+#### A hand-maintained integrity manifest is retired (added in v1.63, drafted and unpublished: this ruling binds nothing until its own owner push)
+
+Deployments predating this standard's git-backed model sometimes carry `hub-manifest.md`: a
+hand-maintained manifest of file hashes, kept beside the tree as an integrity baseline. This
+standard has never shipped one — its own integrity model says in terms that *there is no separate
+baseline file to maintain* — and until now it acknowledged the file only as scaffold, without
+ruling on it. The ruling: **retired.** Git history is the sole integrity baseline; no check reads a
+hand-maintained manifest, and none may be built to.
+
+The evidence is the measured state of the one deployment known to carry the convention: four of its
+eleven hubs hold no manifest and lost nothing by it, and across the seven that do, **59 of 94
+recorded hashes are wrong** — with the best-maintained copy belonging to the hub whose staleness
+raised the question, five wrong hashes after two correctly-executed applies. That is not an
+argument for building a verification check; it is the artifact class this standard already names as
+the one that rots, measured. A manifest that is mostly wrong is a **false assurance**, and a false
+assurance is worse than an acknowledged gap, because it is trusted. The v1.30 rule already records
+the sharper half: the git-backed integrity check cannot even see a manifest's own omissions, so the
+file added no coverage git does not already provide while claiming exactly the coverage it did not
+have.
+
+**The migration a deployed hub performs.** Remove `hub-manifest.md` through the hub's own
+governance — a proposal or an owner's word, a commit whose message states the retirement — or move
+it to `archive/` where the owner wants a visible tombstone. The manifest is machinery, not a
+knowledge record, so removal is lawful and git retains every generation; nothing is retracted,
+because after this ruling nothing asserts the hashes. Until a hub migrates, `hub-scan.sh` names a
+lingering copy in `[ INTEGRITY ]` as an **advisory, never an error** — a legacy hub must not go red
+over a file the ruling itself retired — and the scaffold sets (`skip_doc`, the corrections-count
+scaffold set) keep the filename, so a lingering copy is not misread as a generated document while
+it awaits removal. The name stays in those sets after migration too: a list entry matching nothing
+costs nothing, and removing it the day the last copy dies is the kind of tidying that reintroduces
+the defect when a fork's legacy hub arrives carrying one.
 
 ### Rule 4: OKF frontmatter on every monitored doc
 
@@ -1680,7 +1721,9 @@ proposal lifecycle), `archive/` (already withdrawn from the live set), and publi
 `shareable/` (currency carried by the publication log).
 
 **Scaffold is not a generated document.** A folder's `README.md`, `TEMPLATE.md` or
-`hub-manifest.md` describes the folder rather than asserting anything about the initiative, and has
+`hub-manifest.md` (the last a retired legacy artifact since v1.63 — see Rule 3, §"A
+hand-maintained integrity manifest is retired" — named here so a lingering copy is treated as
+scaffold rather than as a generated document) describes the folder rather than asserting anything about the initiative, and has
 exactly one generation by construction, so "is this the current one" does not apply to it. A folder
 index is also where rule 1 below records the status of the non-markdown artifacts beside it, which
 makes it the carrier of other files' currency rather than a bearer of its own. This is the same
@@ -1904,6 +1947,24 @@ its name and blocked **none** of its text. After it, the text is blocked and the
 proposal quoting a verbatim line of a restricted numbered document is now an error where it was not.
 That is the check doing what the marker asks, and it is the reason the repair is a change of what is
 protected rather than a relaxation of it.
+
+**A docs-site is an outbound surface (added in v1.63, drafted and unpublished: it binds nothing
+until its own owner push).** A hub may hold the source of a documentation site — pages that publish
+outward when the site deploys — under a `working-docs/<name>-docs-site/docs/` tree. Those pages are
+the hub's most outbound artifact, and until this version the check did not read them: one
+deployment added the surface to two installed scan copies under an owner word, and every template
+refresh then threatened to overwrite the local line — a capability that exists only as hub-local
+divergence is re-lost at every refresh until canonical absorbs it. The check now scans every
+markdown page under such a tree exactly as it scans `shareable/`: restricted markers, restricted
+note names, restricted-class lines and verbatim restricted section text on a page are errors, and
+pass 1 excludes those pages from the note walk for the same reason it excludes the other surfaces —
+a surface is scanned as a surface, never collected as evidence against itself. **The naming
+convention is the contract, and that is the stated limit:** a site source that does not match
+`working-docs/*-docs-site/docs/` is not scanned, and a deployment whose site source lives elsewhere
+moves it under the convention or extends its own scan under its own governance. The rest of
+`working-docs/` stays a non-surface, deliberately: an internal draft may quote what a published
+page may not, and widening the surface to the whole folder would redden every hub that drafts
+about its own restricted material.
 
 **Deliberately not SHACL.** Full shape-constraint machinery is rung-3 formalism, and the standard's
 rule is: don't climb higher than you need. A required-field check catches the defects that actually
@@ -3266,8 +3327,11 @@ reconciliation/
 the `monitored_files` glob in `hub-scan.sh` and subject to the same git-backed checking as hub docs.
 They represent adjudicated ground truth and must not change outside the proposal/approval workflow.
 
-**Dispute files** (`_disputes/`) are **not monitored**, they are transient records of active
-conflicts, created by the agent and deleted once the hub owner resolves the dispute.
+**Dispute files** (`_disputes/`) are **not monitored**. An active dispute is a transient record of
+a live conflict, created by the agent and, by default, deleted once the hub owner resolves it. A
+dispute may instead be **resolved in place and retained** (added in v1.63, drafted and unpublished:
+this option binds nothing until its own owner push) — see "A dispute may be resolved in place",
+below.
 
 ### Topic file format
 
@@ -3387,6 +3451,31 @@ deleting a reviewer's rejection reason. See §"Never delete the reason".
    context-dependent verdict is the most valuable kind: the rule is *when* each value applies
 4. Delete the dispute file
 
+#### A dispute may be resolved in place and retained (added in v1.63, drafted and unpublished: it binds nothing until its own owner push)
+
+Deletion is the default end state above, not the only lawful one. Where the adjudication is
+recorded **in the dispute file itself** — the demonstrated case is an owner answer applied under a
+committed directive, with the resolution written into the file and the original dispute kept below
+it under retract-in-place — the file MAY be retained as the record of the adjudication instead of
+deleted. Three conditions make a retention lawful, and each is load-bearing:
+
+1. **The resolution is in the file**, above the original dispute text, which stays: a retained
+   dispute whose body still reads as open is a record contradicting its own marking.
+2. **The file carries OKF frontmatter with `lifecycle: resolved`** (added, where the file had
+   none). Only that exact value counts. No frontmatter, any other value, or a file the scan cannot
+   read still reads as an **active** dispute — the check fails closed, because a check reporting by
+   absence must never read *could not evaluate* as *nothing open*.
+3. **The `corrections/` capture still happens.** Retention replaces the deletion, never the
+   reasoning capture; §"Never delete the reason" is untouched.
+
+The scan then counts it as what it is: `[ RECONCILIATION ]` reads the frontmatter `lifecycle:` and
+reports a resolved dispute as `RESOLVED (retained record)`, outside the active list and raising no
+advisory. Before this, every file in `_disputes/` counted as active, so a dispute the owner had
+answered raised an "active dispute" advisory on every scan forever — in the deployment that earned
+this, for a week after the owner's answer — and two states that mean different things to a reader
+must not render identically: an advisory that is wrong every day stops being read, and the genuine
+disputes in the list go with it.
+
 ### `hub-scan.sh`: Reconciliation check
 
 Add this section to `hub-scan.sh` (after `[ FRONTMATTER ]`):
@@ -3398,22 +3487,42 @@ if [ -d "$HUB/reconciliation/_disputes" ]; then
   if [ -z "$disputes" ]; then
     echo "  OK — no active disputes"
   else
-    echo "  ! Active disputes:"
+    # A dispute resolved in place carries `lifecycle: resolved` in frontmatter and is a retained
+    # record, not an active dispute (v1.63). Fail-closed: only that exact value counts.
+    active=""; resolved=""
     while IFS= read -r f; do
-      # Read who the dispute is blocked on. Never infer an owner action from the filename.
-      blocked=$(sed -n 's/^\*\*Blocked on:\*\*[[:space:]]*//p' "$f" 2>/dev/null | head -1)
-      case "$blocked" in
-        "")          echo "    - $(basename "$f") (blocked-on not stated or file unreadable)" ;;
-        "Hub Owner") echo "    - $(basename "$f") (blocked on: Hub Owner, decision required)" ;;
-        *)           echo "    - $(basename "$f") (blocked on: $blocked, no hub-owner action)" ;;
-      esac
+      if [ "$(fm_field "$f" "lifecycle")" = "resolved" ]; then resolved="$resolved$f"$'\n'
+      else active="$active$f"$'\n'; fi
     done <<< "$disputes"
+    if [ -n "$active" ]; then
+      echo "  ! Active disputes:"
+      while IFS= read -r f; do
+        [ -z "$f" ] && continue
+        # Read who the dispute is blocked on. Never infer an owner action from the filename.
+        blocked=$(sed -n 's/^\*\*Blocked on:\*\*[[:space:]]*//p' "$f" 2>/dev/null | head -1)
+        case "$blocked" in
+          "")          echo "    - $(basename "$f") (blocked-on not stated or file unreadable)" ;;
+          "Hub Owner") echo "    - $(basename "$f") (blocked on: Hub Owner, decision required)" ;;
+          *)           echo "    - $(basename "$f") (blocked on: $blocked, no hub-owner action)" ;;
+        esac
+      done <<< "$active"
+    fi
+    while IFS= read -r f; do
+      [ -z "$f" ] && continue
+      echo "  RESOLVED (retained record): $(basename "$f")"
+    done <<< "$resolved"
+    [ -z "$active" ] && echo "  OK — no active disputes; resolved dispute(s) above are retained records"
   fi
 else
   echo "  OK — reconciliation not configured"
 fi
 echo ""
 ```
+
+(The reference implementation in [`template/hub-scan.sh`](template/hub-scan.sh) is the shipped
+form; `fm_field` is its frontmatter reader. Since v1.63 — drafted and unpublished; the split binds
+nothing until its own owner push — the block separates retained resolved disputes from active
+ones, as above.)
 
 ### Initialising reconciliation for an existing hub
 
@@ -4437,6 +4546,38 @@ fully covered by comparing the installed trees to each other, which needs no dec
 the alternative would have added a hand-maintained manifest — the artifact class that produced the
 blind spot this section is otherwise trying to narrow.
 
+**Which copy governs, and how the trees stay level (added in v1.63, drafted and unpublished: this
+ruling binds nothing until its own owner push).** The block above detects divergence; this rules
+what a finder does with it, because a deployment was found holding one shipped skill at two
+different published versions across its two trees, with a hub-local skill existing in one tree
+only, and levelling each pair at whichever copy the hub happened to hold newer would have closed
+the finding without repairing anything. Three rules:
+
+1. **Neither installed tree is authoritative.** The two trees are mirrors of one procedure, and
+   authority lives outside them: for a skill this standard ships, in the **canonical copy at the
+   deployment's pinned canonical version** — the same canonical-copy rule §"One canonical copy"
+   states for this repository, reaching the deployed hub; for a hub-local skill, in the governed
+   act that created it. So a divergent shipped skill is repaired by **refreshing both trees from
+   the pinned canonical**, because two installed copies at different published versions are two
+   degrees of stale, not a newer and an older truth; a divergent hub-local skill is repaired by
+   raising both copies to the one carrying the stronger protection, which is §"One canonical
+   copy"'s obligation 4 and stays a judgement, deliberately not mechanised.
+2. **A refresh writes both trees in one act.** Installing or updating any skill in a hub that
+   carries both trees touches both mirrors in the same commit. A refresh that writes one tree
+   manufactures the divergence the scan then reports, and that is exactly how the observed state
+   arose: primaries updated, mirrors left behind.
+3. **A hub-local skill belongs in both trees, or in neither.** Placement decides which runtime
+   discovers a skill, so a skill in one tree only is a procedure half the harness cannot see.
+   There is no runtime-specific skill class, and the one designed per-runtime difference remains
+   the harness instruction-file name.
+
+The `[ PROJECTION ]` block has reported both divergence shapes as errors since v1.32; what it did
+not do was tell the finder which way to repair, so its findings now carry the ruling — the
+one-tree-only finding says install-in-both-or-retire-from-both, the body-divergence finding says
+refresh-both-from-the-pinned-canonical — and the one-tree-only arm, live since v1.32 and reached by
+no case, is pinned by a canary in the same change, under the rule that an arm never tested is
+indistinguishable from one that works.
+
 #### What this must not do
 
 1. **Never generate an agent-instruction file whole**, and never treat the template as its superset.
@@ -5276,7 +5417,7 @@ v1.42).
 | v1.60 | 2026-08-26 | Drafted and published 2026-08-26 (owner push). Two findings from an external reviewer's **fourth** pass over this repository, off `main` at `73f89e8` (published v1.59). Each was verified here by reading the code rather than the report, each was reproduced as a failing case on this branch, and both were **committed red before either repair was written** (`1294b5d`). Both arrived as runnable reproduction scripts with stated SHA-256 digests; both digests verified (`2610ce37…`, `526b32d2…`), both scripts run here **unmodified** on detached clones at the tag, and both reproduced on the first attempt. The reference environment is identical on both sides — macOS 26.5.2 arm64, bash 3.2.57, git 2.50.1, python 3.9.6, ruby 2.6.10p210 with Psych 3.1.0 and libyaml 0.2.1 — and every parser measurement below names the parser that made it. **Finding 1 [P2], case 21j enforced a syntax and not the guarantee it certified.** Case 21j of `tests/test_release_gate.sh` is the control for *every verdict phase takes its pathspecs from `INPUT_CLASSES`*, so that a phase reading a new file class cannot fall outside the stability fingerprint. It enforced that by grepping `tools/km-release-gate.py` for the literal `git_tracked(root, [`. *Reproduced with the reviewer's own script, unmodified:* a real `.txt`-reading verdict phase written `git_tracked(root, ("*.txt",))` — a **tuple** instead of a list — walked straight past the pattern, and the suite printed `PASS: 21j. every phase takes its pathspecs from the structure the fingerprint iterates` at `suite_exit=0` while the guarantee was false. Case **21h**, the pin on what lies *outside* the covered set, then accepted `notes.txt` mutating mid-run at a moment when `notes.txt` **was** a gate input, so the gap pin was certifying the wrong thing as well. **This is this repository's own published doctrine met in its own suite:** v1.29/v1.30 state that a check proved in both directions fires on the class it models, never that it models the right class. Case 21j was proved in both directions and still modelled a call's spelling. **The repair removes the need for static analysis rather than lengthening the pattern**, and the alternative was weighed and refused in `design.md`: a stricter grep — more spellings, a regex over call forms — is the same defect with more characters, and the next reader writes a helper or a variable. `git_tracked`, `git_untracked` and `read_text` now **record what they hand out**, in a `Reads` ledger of every pathspec enumerated and every path opened, digested at first observation; the closing fingerprint re-enumerates those pathspecs and re-hashes those paths, so **the covered set is what the run actually read** rather than what a table predicted it would read. `INPUT_CLASSES` remains as the **opening baseline**, so a file is pinned from t=0 rather than from the moment its phase reaches it, and it is no longer the guarantee. A phase added tomorrow is covered **by construction**. Case 21j becomes a **real added phase** — the reviewer's own, tuple and all, injected into a copy of the real gate with its anchors asserted — which must be covered with **no edit to the case**; **21j2** requires the same added phase over a stable tree to keep passing; and **21h keeps its gap on the unmodified gate**, the pair now stating the boundary exactly. **The residual is stated rather than implied closed:** a phase that obtained a file without going through any of the three accessors would be outside the ledger and no check detects it — narrower than the v1.59 residual, which any unrecognised spelling escaped, and not zero. A process-wide audit hook was weighed as the structural close and **refused for a mechanical reason**: it would record the gate's own source, every temporary file the suites write and every path git touches, which is a gate that refuses itself. **Finding 2 [P2], `[[:space:]]` was read as indentation, and that class contains the tab.** YAML forbids tabs in indentation. `tests/test_skill_frontmatter.sh` captured a line's indentation with `[[:space:]]*`, so a tab-indented continuation was folded into the preceding key and the block accepted. *Reproduced with the reviewer's own script, unmodified:* `PASS: 23 skill file(s) …`, `ALL SKILL FRONTMATTER CHECKS PASSED`, `checker_exit=0` against `ruby_yaml_exit=1` with `Psych::SyntaxError: found a tab character that violate indentation while scanning a plain scalar at line 3 column 14`. **This is inside the declared contract by v1.59's own words**: the paragraph v1.59 added classifies accepting a parser-rejected document as a false pass, so the version that drew the line is the version that crossed it. **How it got there is the sharper lesson and is written into the standard as its own rule.** v1.58 found the original tab arm written `"\t"*` inside double quotes — a literal backslash-t, **inert since the day it was written** — and repaired it by substituting a class the shell honours, which made the arm live for the first time and wrong in the same motion. **Discovering that a matcher never fired is discovering that its rule was never tested**, so making it live is authoring it, not repairing it. **The repair derives the rule from the parser rather than from the shell:** indentation is spaces, and a tab anywhere in a line's indentation region — its leading whitespace, plus the `-` indicator and the whitespace after it on a sequence entry — is a rejection **naming the tab**. Eleven boundary shapes were probed against Psych one at a time and recorded beside the rule, the **accepted** ones as well as the rejected. **The reader is stricter than libyaml in one named place and the divergence is declared rather than discovered:** libyaml accepts `  <TAB>text`, where a space has already satisfied the indentation and the tab is separation; this reader refuses it, a house rule whose error can fall only as a false failure and never as a false pass. Six canaries were red on the unrepaired tree and two clean canaries pin the shapes that must keep passing — a tab after a key's colon, and a tab inside a value. A seventh case, the tab-indented **comment**, passed on the unrepaired tree **for the wrong reason** — the comment was folded into `name` and tripped the slug rule — which is recorded rather than counted as detection: nothing on the unrepaired tree detected a tab at all. **The rejection also makes the v1.59 sequence-indentation comparison sound, which it was not:** with tabs excluded from the region, `${#ind_str}` is a true column count rather than a measurement that scored a tab as one column and compared it against spaces. **And the matcher is now probed against the live shell before it is trusted** — this repository's v1.29 rule applied to the construct that made this version necessary. The suite runs the tab matcher against a string it must match and a string it must not, and **REFUSES** rather than returning a verdict it cannot support, because an inert matcher and a clean tree are the same colour; two canaries prove the probe separates the states, one of them asserting that the literal backslash-t form is genuinely inert against a real tab. **Both sweeps returned instances and both are recorded.** *A control enforces a spelling where it claims to enforce a property* was swept across every check that greps source text to certify a code property and returned **four** further instances, all **registered rather than repaired**, each with its error direction stated: case **20c** certifies *the CI workflow obtains the limits from the gate rather than copying them* by confirming the string `km-release-gate.py --limits` appears — the sharpest of the three, because a workflow could invoke the flag **and** carry a copy; case **15b** certifies *the header argues no numbered limit of its own* by matching `^# [0-9]+\. [A-Z]`, which a differently formatted enumeration escapes; case **15c** certifies *every constant the header names is defined* by requiring `^NAME=`, which a constant assigned in a tuple or inside a scope would read as undefined; and cases **12/12b** of `tests/test_km_publish_portability.sh` certify *the `.gitignore` covers a virtual environment* by requiring the exact line `^\.venv/$`, where `.venv`, `/.venv/` and `**/.venv/` all cover it and all fail here — the cheapest of the four to close, because `git check-ignore` answers the actual property in one call. Case **20**'s source-text count of `Limit(` was examined and **left alone with its reason recorded**: any miscount produces a false **failure**, never a false pass. Cases 15a and 20d grep **prose** to certify a claim about prose and are not this class. *A character-class assumption imported from shell into a format that forbids it* was swept across every whitespace-class construct in every shipped shell and Python file and returned **one** further instance, inside the same reader and **repaired here**: the continuation arm re-derived the indentation region a second time with its own `[[:space:]]` match, and now takes the value the single derivation already produced. Every other `[[:space:]]` in the repository was checked against Psych and sits in **separation-space** position — after a key's colon, around a value — where a tab is legal; the other frontmatter readers (`template/hub-scan.sh`, `template/build-indexes.sh`, `template/mcp/server.py`, `components/km-cockpit/km-cockpit.py`) model no indentation at all and already declare that limit. **One bounded observation is registered, not repaired:** a *space*-indented `# comment` inside a block is a comment to Psych and is folded into the preceding value by this reader, which can move a description's word count in either direction. No shipped file does it, and modelling it correctly requires modelling what Psych does to a continuation that follows a comment — a repair riding inside a repair to tab handling. **The prior repairs were re-verified on this branch and none had regressed:** the v1.58 branch-switch fixture (`37426e96…`) and the v1.59 root-sequence fixture (`cf6fcbc3…`) were both re-run and both still fire. **Nothing is redeployed anywhere by this version**, and no hub is edited or dispatched. |
 | v1.61 | 2026-08-26 | Drafted and published 2026-08-26 (owner push). Four findings from an external reviewer's **fifth** pass over this repository, off `main` at `164ecfb` (published v1.60). Each was verified here by reading the code rather than the report, and each was reproduced as a failing case before any repair was written. **Those reproductions were run and recorded, but they were not committed as a red commit**, and this version cites none where v1.58 (`fbf8002`), v1.59 (`998b859`) and v1.60 (`1294b5d`) each cite one: canaries and repairs were authored in one working tree across the same three instrument files — `tools/km-release-gate.py`, `tests/test_release_gate.sh` and `tests/test_skill_frontmatter.sh`, the last carrying both the repaired reader and its own canaries as interleaved hunks — so no revision exists at which these cases stand red alone. A retroactive red commit was refused rather than overlooked, because manufacturing one in the version whose own subject is a true statement in a working report becoming a false statement in a published artifact would be the defect this version is about. The red-before evidence is reproducible from git instead: take the unrepaired instrument with `git show 164ecfb:<instrument>` and run the case against it. Three arrived as runnable reproduction scripts with stated SHA-256 digests; all three digests verified (`a242059f…`, `9415c372…`, `fa35fad9…`), all three run here **unmodified against the unrepaired tree** and all three reproduced on the first attempt. **All three pin `164ecfb` internally** — one by refusing at exit 2 on any other `HEAD`, two by re-cloning the commit whatever source root they are handed — so **none can testify about a repaired tree**, which is stated here because it is the subject of finding 4. Reference environment identical on both sides: macOS 26.5.2 arm64, bash 3.2.57, git 2.50.1, python 3.9.6, ruby 2.6.10p210 with Psych 3.1.0 and libyaml 0.2.1. **Finding 1 [P1], link targets bypassed the gate's read ledger.** `check_links()` validated a target with `os.path.exists()` and recorded nothing, so a discovered check could delete a resolved target after the link phase had run: *reproduced with the reviewer's own script, unmodified* — `PASS release-gate`, `gate_exit=0`, over a final tree whose `notes.txt` was gone. **This is not the residual limit 5 states**, and treating it as one would have repeated the mis-drawn boundary of the last two versions: that residual is material only a *discovered check* reads, while here the gate itself read the target's existence and put the answer in its verdict. **The boundary is redrawn at the question rather than at a fourth proxy for it** — it has moved in three consecutive versions (the discovery set, a table of input classes, what the accessors handed out) — and the property is now stated once and precisely: *every answer this run took from the tree is taken again at the verdict and must be the same answer; content is answered by bytes, presence by yes or no, and both directions of a presence answer are drift.* Existence is asked through one accessor, `path_exists`, whose three call sites are the link phase, the drafted-version read and the gate's own path resolution; **the class was swept and recorded in the gate**: executability is never asked, `git check-ignore` is never called because the ignore rules enter through a recorded pathspec, and the one question deliberately outside — `exists_at`, which asks about a **base revision** rather than the working tree — is named rather than implied closed. Cases **21k** (a resolved target deleted mid-run → `REFUSED … notes.txt existed when this run asked and is now absent`), **21k2** (the reverse: a target absent when asked, created afterwards → `REFUSED … late.txt did not exist when this run asked and now does`) and **21k3** (a target that holds still → `PASS`) were red, red and legitimately green respectively on the unrepaired gate. **Case 21h survives unchanged and the pair now states the rule exactly:** its `notes.txt` is linked from nothing and stays outside; 21k's is linked from `README.md` and is inside; the difference is precisely whether this run asked. **Finding 2 [P2], a whole-line comment was folded into the value it followed** — and **this defect was found by v1.60's own sweep and registered rather than repaired**, on the reasoning that modelling it would be *a repair riding inside a repair*. *Reproduced with the reviewer's own script, unmodified:* `PASS: 23 skill file(s) …`, `ALL SKILL FRONTMATTER CHECKS PASSED`, `checker_exit=0` against `ruby_yaml_exit=1` with `Psych::SyntaxError: did not find expected key while parsing a block mapping at line 2 column 1`. **The registered reason was an estimate of difficulty standing where a measurement belonged:** ten comment and blank-line shapes probed against Psych one at a time returned one sentence covering all ten — *a whole-line comment ends a plain scalar that has already started* — and the repair is that sentence plus one piece of state. **It is a model rather than a house rule**, with no declared divergence, because the repaired reader answers all ten shapes as the parser does; rejecting the construct outright was the honest fallback if the model had been out of reach and was **refused** once the probes came back, because it would refuse a comment between two sequence entries. Four detection canaries were red and a fifth clean canary reported a **false failure** on the unrepaired reader; five clean canaries now hold the shapes that must keep passing. **Finding 3 [P2], case 20c measured a presence while claiming an absence** — also **found by v1.60's own sweep, called there the sharpest instance of its class, and registered rather than repaired**. It certified *the CI workflow does not carry a hand copy of the limits* by confirming that the workflow **invokes** `--limits`. *Reproduced with the reviewer's own script, unmodified:* a workflow carrying five verbatim limit statements **and** the invocation gave `PASS: 20c…`, `suite_exit=0`. The claim is split: **20c** asserts the pointer, which a grep answers honestly, and **20c2** asserts that no line of the gate's own limit definition is restated verbatim in the workflow, compared against the gate's `--limits` output so it cannot go stale; **20c3** injects the reviewer's five statements and requires the detector to fire, because a check reporting by absence proves nothing about itself. **No pattern was lengthened to reach green**, and what the comparison does not catch — a paraphrase, of which the workflow legitimately carries one — is stated with its error direction. **Finding 4 [P3], a claim known to be false was published.** The v1.60 declaration heading `tests/test_skill_frontmatter.sh` stated that the reviewer's script *"prints NOT REPRODUCED with checker_exit=1"* on the repaired tree; the same sentence stood in `tests/test_release_gate.sh`. **It was false and it was known to be false.** That script pins `73f89e8` and re-clones it, so it tested v1.59 on every run; *re-measured on 2026-08-26 against the published v1.60 tree it printed `REPRODUCED` at exit 0.* The v1.60 drafting report said plainly that the script could not show the repair because it hard-pinned the commit internally — **the true sentence stayed in the working report and the false one went into the artifact.** Both declarations are corrected to record what was actually done, with the false clauses **struck in place and attributed** rather than deleted, so a reader of any copy can see the correction: the scripts were run unmodified against the **unrepaired** tree where they legitimately reproduced, and the repairs were verified by other means, each named — integrated canaries carrying the reviewers' fixtures **byte for byte**, differential measurement against the reference parser, and **de-pinned variants declared as modified scripts**, which reported `NOT REPRODUCED` against the repaired tree. A 65-character SHA-256 digest published by v1.59, which named no file, is corrected in the same pass. **The rule is published and the checkable half is enforced:** *a verification declaration is a record of what was run, and a script that pins a revision cannot testify about any other revision*; a citation of the form `sha256 <digest>` must state what that script **pins**, or state that it is **unpinned**, which is the move already made for an exemption with no stated reason. Cases **22/22d** were red on the unrepaired gate, **22b/22c** legitimately green, and **22e** — prose mentioning `sha256` without a digest — is recorded as having **failed on the first form of the rule**, which read a digest out of the word *and*, so the sixteen-character floor that answers it is held by a case rather than being a pattern lengthened until the tree went green. **The registered-not-repaired backlog was audited in full**, with each entry's age, and is listed in `design.md`. Two are closed here. Three are re-classified as **policy questions referred to the owner**, and four as **approximations with a stated error direction** now required to carry a measurement and a version by which they are answered. **Disclosure is not closure**, and the rule separating registration from repair is written into the standard rather than left to judgement. **Nothing is redeployed anywhere by this version**, and no hub is edited or dispatched. |
 | v1.62 | 2026-08-27 | Drafted and published 2026-08-27 (owner push). Four mechanisms promoted from the accepted record of an external application build, on the deployment owner's direction to integrate that build's improvements — the first promotion assessment ever run over the work, off an inventory that settled seventeen of twenty-two accepted slices as application-specific and shortlisted five. Each candidate was assessed for duplication against the current canonical text (property search, both case forms, known-positive controls), for checkability with a real negative test named or the absence of one stated, and against the generic-organisation test; four survived, one returned no-change. **(1) A consuming answer surface discloses nothing it will not answer** (Rule 6): restricted-beyond-clearance, ineligible-evidence and genuinely-absent render as one byte-identical no-answer state, RECONCILED with crossing law 3 rather than grafted beside it — law 3 governs traffic between governed parties, where a steward is entitled to existence; an answer surface serves readers at or below its clearance, where a differentiated refusal is an oracle that maps restricted holdings by enumeration. **This narrows the reach of published doctrine and therefore requires the owner's explicit word: the push publishing this version is that word, stated in the subsection so it is given knowingly.** No shipped instrument evaluates a serving surface (the one query surface is quarantined and serves nothing), so the rule is convention until an implementation ships its byte-identity case, and the text says so. **(2) The diagnostic record** (the correction loop): the `agent-error` trigger's "was diagnosed" gets a definition — four required sections (environment and validity; the isolation-versus-context matrix, one variable per comparison; the hypothesis with stated confidence, route-qualified scope and named falsifying evidence; the smallest next boundary, no fix riding inside a diagnosis), protecting the rule that a shared failure value is a property of the harness that stops a run and never, alone, evidence of a shared cause. Converged on independently by five investigation records of the external build and by an estate's own correction registry — the promotion sweep's strongest signal. Section presence is checkable; hypothesis quality is not; no shipped instrument reads diagnostic records, stated rather than implied. **(3) The acceptance threshold and the stop predicate are fixed before the measurement runs** (Standard Maintainer, beside the deferral rule): the same line the deferral rule draws for difficulty, drawn one step earlier for acceptance; three independent instances in the external build's design commits. The mechanical half is commit ordering — the threshold commit is an ancestor of the measurement commit and contains the threshold — and what ordering cannot prove (an unrecorded prior run, a stop predicate honoured, a threshold well chosen) is stated beside it. **(4) A cache may accelerate feedback; it never produces the authoritative verdict** (beside the release gate): one accepted instance, ranked last for it; a cache key is a proxy for the tree, so the verdict anything is cited on comes from a direct, uncached run whose record says it was direct, with the negative test named (a defect the key does not capture must be caught by the direct run) — **and the scope question, whether this standard should govern a tooling class it does not ship, is stated in the paragraph for the owner and is answered by the push that publishes it.** **(5) No-change, recorded rather than dropped:** per-criterion evidence pointers on acceptance criteria duplicate the maintainer contract's existing obligations — criteria defined before editing and verified individually afterward, unrun checks never described as passing, and v1.61's rule that a verification declaration is a record of what was run — and the assessment could not produce a report the pointer catches that those obligations miss; its claimed instrument (`[ LINKS ]`) reads frontmatter wiki-links of entity notes and would never read an acceptance record, so the checkability claim did not survive inspection. The confounded-comparator and route-qualified-causality rows fold into (2), where the evidence itself holds them. Evidence: the build's accepted records `9f52225`, `10d3425`, `ebf0fae`, `25609c4`, `d6f1873`, genericised; no organization, person or initiative is named. This version edits `STANDARD.md` and adds its OpenSpec package only: no check is added or changed, no shipped file restates the changed obligations (swept: the template instruction files' "when it is diagnosed" and the architecture note's law-3 restatement are consistent with the grafts), and the maintainer contract's own criteria obligations are named as instances, not amended. |
-
+| v1.63 | 2026-08-27 | **DRAFT — awaiting owner push. Nothing this version adds binds until that push.** Six items clear the canonical backlog ahead of a planned fork, on the deployment owner's direction (2026-08-27) that nothing stays behind: three defect repairs, two rulings, and two no-change verdicts recorded with their reasons rather than dropped. The scan repairs were reproduced as failing cases and **committed red at `bdab753`** before any repair was written, with each suite's unrepaired-tree declaration re-stated in that commit. **Repair 1 — a dispute resolved in place reported as open forever.** `[ RECONCILIATION ]` counted every file in `_disputes/` as active, so a dispute resolved by an owner answer and retained under retract-in-place raised an "active dispute" advisory on every scan afterwards; the deployment that reported it carried the advisory for a week after the owner had answered. A dispute may now be **resolved in place and retained**: OKF frontmatter `lifecycle: resolved` (that exact value only — no frontmatter, any other value, or an unreadable file stays ACTIVE, fail-closed), the resolution recorded above the retained original, and the `corrections/` capture unchanged; the scan renders `RESOLVED (retained record)` outside the active list, because two states that mean different things must not render identically. Unrepaired-tree run, recorded in the canary declaration: the fixture rendered under "! Active disputes:" at exit 0. Surfaces: `template/hub-scan.sh`, §"Resolving a dispute" and the reconciliation snippet here, `template/reconciliation/README.md`, canary cases 10d/10e. **Repair 2 — the docs-site outbound surface.** Canonical `hub-scan.sh` did not lint a documentation site's source pages, so one deployment carried the surface as a hub-local line in two installed scan copies, added under an owner word, that every template refresh threatened to overwrite — a capability existing only as divergence is re-lost until canonical absorbs it. `[ RESTRICTED ]` now scans every markdown page under `working-docs/*-docs-site/docs/` exactly as it scans `shareable/`, and pass 1 excludes those pages from the note walk as it excludes every other surface. The naming convention is the contract and the stated limit: a site source elsewhere is not scanned, and the rest of `working-docs/` stays a non-surface deliberately, so an internal draft may quote what a published page may not. The capability was absorbed **genericised**: no organization, portal, hub or person name crossed, verified against the added lines by the leakage instrument. Unrepaired-tree run: a page carrying a restricted section's verbatim text returned "OK: no restricted markers, classes, identifiers or section text on outbound surfaces" at exit 0. Surfaces: `template/hub-scan.sh`, §"Validating the graph", `template/working-docs/README.md`, `tests/test_restricted_lint.sh` cases 1h–1k, 1j pinning the boundary. **Repair 3 — a shipped directory contract contradicting the shipped instrument.** The sweep the reported working-docs defect demanded (search shipped READMEs for monitoring claims and hold each against the instrument) found the same class live in canonical: `template/shareable/README.md` said the folder is "not monitored by `hub-scan.sh`" while the restricted lint has read that surface since v1.16 — false as shipped, in a file every hub installs. Reworded: not integrity-monitored, and an outbound surface the restricted lint reads on every scan. **Ruling 1 — the hand-maintained integrity manifest is retired.** `hub-manifest.md`, a legacy hash manifest this standard never shipped and named only as scaffold, is ruled **retired** (Rule 3, new subsection): git history is the sole integrity baseline; the measured state of the one deployment carrying the convention is 59 of 94 recorded hashes wrong across the seven hubs that hold one, four hubs holding none and losing nothing, and the best-maintained copy belonging to the hub whose staleness raised the question — a manifest that is mostly wrong is a false assurance, worse than an acknowledged gap, and v1.30 already records that the git-backed check cannot see a manifest's own omissions. Migration stated: remove through the hub's own governance (or archive); `[ INTEGRITY ]` names a lingering copy as an **advisory, never an error**, and the scaffold sets keep the filename so a lingering copy is not misread as a generated document. Unrepaired-tree run: an injected manifest produced no line anywhere in the scan at exit 0, which is the invisibility the ruling ends. Canary case 15. **Ruling 2 — the runtime skill trees.** A deployment's `.claude` and `.agents` trees held one shipped skill at two different published versions, with a hub-local skill in one tree only; levelling at whichever copy was newer closes the finding without repairing anything. Ruled in §"The harness carries its skills twice": **neither installed tree is authoritative** — a shipped skill is repaired by refreshing **both** trees from the pinned canonical, a hub-local skill by raising both copies to the stronger one (the §"One canonical copy" obligation-4 judgement, unmechanised); **a refresh writes both trees in one act**; and **a hub-local skill belongs in both trees or in neither**, because placement decides which runtime discovers it. `[ PROJECTION ]`'s two divergence findings, errors since v1.32, now carry the ruling as the repair route, and the one-tree-only arm — live since v1.32 and reached by no case, indistinguishable from a dead arm — is pinned by canary 14n, whose 14n2 half (the ruling text) is the red direction. **No-change 1 — the initiation skill's merge and withdrawal modes.** Reported absent from a deployment's installed copy; verified present in canonical `skills/km-init/SKILL.md` since the v1.35 draft (`77fd1f2`), draft markings cleared at v1.42. The absence is a stale installed copy (280 lines against the canonical 756, zero occurrences of "merge"), the repair is a workspace-level refresh of the installed skill under the deployment's own governance, and no canonical line changes. **No-change 2 — the working-docs half of the currency contradiction.** The reported defect ("the CURRENCY check scans `working-docs/` while that directory's own README declares its files unmonitored") does not exist in the canonical pair: `template/working-docs/README.md` has disclosed the `[ CURRENCY ]` read since this repository's first commit, and the contradiction lives in deployed README copies predating v1.12. The check keeps its scope, deliberately: excluding `working-docs/` from currency — the remedy the reporting deployment's agent recommended against its older README — would reverse the published v1.12 correction, whose motivating failure was an agent answering from a superseded working-docs draft. The adoption action is refreshing the deployed README, and the README's "one check" undercount is corrected to two alongside the new docs-site paragraph. **Per-hub obligations on adoption, stated because three of the six create them:** re-deploy `template/hub-scan.sh` (repairs 1 and 2, ruling 1's advisory, ruling 2's messages ride the same file); refresh `working-docs/README.md`, `shareable/README.md` and `reconciliation/README.md` from the template; remove any `hub-manifest.md` through the hub's own governance; and refresh stale installed copies of workspace-level skills, `km-init` first. A hub that carries a docs-site and quotes restricted material in its pages **will go red on the refreshed scan, and that is the check working**: the value was always failing the rule and only the check was not looking. |
 
 ### Publishing a version (added in v1.42)
 

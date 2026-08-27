@@ -11,8 +11,10 @@ is ground truth.
 - **Topic files** (e.g. `timeline.md`, `partnerships.md`) hold SETTLED facts. These are
   integrity-monitored via git — committed alongside other hub docs as part of the proposal/approval
   apply step. Changed only via the proposal/approval workflow.
-- **`_disputes/`** holds active contradictions awaiting resolution. Each dispute file names who it is
-  blocked on; that is not always the hub owner. Transient, not monitored.
+- **`_disputes/`** holds active contradictions awaiting resolution, and may retain resolved ones
+  as records (below). Each dispute file names who it is blocked on; that is not always the hub
+  owner. Not integrity-monitored: an active dispute is transient, and a retained resolved one is
+  a record whose history git already holds.
 
 Topic files are created as needed, when disputes arise. Do not pre-fill them with facts that have
 not been contested — the ledger reflects adjudicated disputes, not a parallel copy of hub content.
@@ -107,3 +109,20 @@ correction records **why**, and the rule that stops the contradiction recurring.
 Deleting a dispute without it discards the reasoning and guarantees the same source is
 re-ingested, re-flagged, and re-adjudicated from scratch.
 See STANDARD.md §"Resolving a dispute" and §"The correction loop".
+
+## Resolving in place — the retained record (added in v1.63, drafted and unpublished: binds nothing until its own owner push)
+
+Deletion is the default end state, not the only lawful one. Where the adjudication is recorded
+**in the dispute file itself** — an owner answer applied under a directive, with the reasoning
+kept — the file may be retained instead of deleted:
+
+1. Record the resolution at the top of the file and keep the original dispute text below it
+   (retract-in-place; never rewrite the record that was adjudicated).
+2. Give the file OKF frontmatter carrying `lifecycle: resolved` (add the frontmatter if the file
+   has none). Only that exact value counts: no frontmatter, or any other value, still reads as an
+   active dispute — the check fails closed.
+3. The `corrections/` capture still happens; retention replaces the deletion, never the capture.
+
+`hub-scan.sh` reads the frontmatter `lifecycle:` and reports a resolved dispute as
+`RESOLVED (retained record)`, never under "Active disputes": a state the owner has settled and a
+state still waiting on someone must not render identically.

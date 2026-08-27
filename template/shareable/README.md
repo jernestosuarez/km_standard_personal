@@ -22,5 +22,15 @@ ready to share as-is.
 
 ## Governance note
 
-Files in `shareable/` are not monitored by `hub-scan.sh`. Moving a file here from `_inbox/` or
-`working-docs/` follows the normal proposal/approval workflow.
+Files in `shareable/` are not **integrity-monitored** by `hub-scan.sh`: the scan does not require
+them to be committed or to carry OKF frontmatter. They are an **outbound surface**, and the
+`[ RESTRICTED ]` check reads every file here on every scan: a restricted marker, a restricted
+note's name, or a verbatim line of restricted content in this folder fails the scan as an error
+(STANDARD.md §"Validating the graph"). This paragraph previously said the folder was "not
+monitored", which was false as shipped — the restricted lint has read this surface since v1.16 —
+and a directory contract that contradicts the instrument beside it teaches the reader to trust
+the wrong one (corrected in v1.63, drafted and unpublished: the correction binds nothing until
+its own owner push).
+
+Moving a file here from `_inbox/` or `working-docs/` follows the normal proposal/approval
+workflow, and each outward send is logged in `sources/publication-log.md`.
