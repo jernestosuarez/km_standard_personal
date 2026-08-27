@@ -12,7 +12,7 @@ lifecycle: active
 
 ## Review status
 
-**Disposition (2026-08-27):** Owner-authorized Supervisor commit `f21bf3e` approves Phase S0 as security-design input only. No control is asserted as present in a deployed system; no residual risk, runtime implementation, or release is approved. AD-001 through AD-004 were subsequently resolved at the design layer; AD-005 remains blocking.
+**Disposition (2026-08-27):** Owner-authorized Supervisor commit `f21bf3e` approves Phase S0 as security-design input only. No control is asserted as present in a deployed system; no residual risk, runtime implementation, or release is approved. AD-001 through AD-005 were subsequently resolved at the design layer. Production persistence remains blocked until legal/privacy and DPA review confirms or replaces AD-005's conditional periods and processor obligations.
 
 ## Scope and method
 
@@ -51,24 +51,26 @@ Reviewed the proposed system in the approved design using data flows, trust boun
 | F-002 | Resolved design decision | critical | Supabase Auth proves identity; a server-side active-tenant binding and forced PostgreSQL RLS enforce tenant isolation. | Accountable owner + app security owner | Closed at design layer by [AD-002](../decisions/ad-002-supabase-session-postgres-rls.md); VER-001/002 remain required. |
 | F-003 | Resolved design decision | high | S3 quarantine/clean buckets and GuardDuty in `eu-west-1`, Glassity archive limits, tenant quotas, fail-closed outcomes, and no application override are selected. | Accountable owner + security reviewer | Closed at design layer by [AD-003](../decisions/ad-003-s3-quarantine-guardduty.md); VER-007/013 remain required. |
 | F-004 | Resolved design decision | critical | AWS Secrets Manager/KMS, private per-tenant GitHub.com hubs, a privileged credential broker, active per-run leases, serialized revocation/publication, lifecycle rotation, and governed break-glass are selected. | Accountable owner + security reviewer | Closed at design layer by [AD-004](../decisions/ad-004-aws-secrets-github-broker.md); VER-004/006/009/010 remain required. |
-| F-005 | Missing design decision | high | Retention/deletion authority and periods are unselected. | Accountable owner + legal/privacy authority | Resolve AD-005 before production persistence. |
+| F-005 | Resolved conditional design decision | high | A noticed 30-day return-or-delete default, day-zero full-store freeze, per-store erasure map, deterministic repository reconstitution, scoped legal holds, and verified provider/backup completion are selected. | Accountable owner + legal/privacy authority | Closed at design layer by [AD-005](../decisions/ad-005-retention-deletion-reconstitution.md); legal/privacy and DPA confirmation plus VER-016 remain required. |
 | F-006 | Contract requirement | critical | Future contracts must encode tenant authorization, pointer re-authorization, path confinement, isolated answers, and commit attribution. | Contract author | Encode SEC-002–005 and SEC-014/015. |
 | F-007 | Contract requirement | critical | Future worker contract must encode untrusted-data handling, external tool policy, isolation, egress denial, and skill verification. | Contract author | Encode SEC-006–008 and SEC-017/018. |
 | F-008 | Runtime conformance | critical | Runtime evidence for tenant denial, sandbox, injection, upload, browser, retryable pickup/idempotent effects, retention/deletion, and consumption controls is absent. | Implementation owner | Produce VER-002, VER-005–008, VER-011–016 before release. |
 | F-009 | Owner-only residual risk | high | Scanner coverage, provider data path, and retention exceptions can leave residual risk after conformance. | Accountable owner | Use the documented residual-risk policy with evidence and expiry. |
 | F-010 | Explicit architecture consequence | high | Standard GitHub.com stores the tenant hub's governed knowledge, including classified extracts, in the USA by default; AD-001/AD-003 `eu-west-1` does not cover it. | Accountable commercial owner + legal/privacy authority | Present with AD-001 cost before v1 commitments; use a governed `GHE.com` EU residency migration if a later commitment requires it. |
+| F-011 | Legal/privacy disposition | high | Glassity's processor posture, controller instruction path, final contractual retention periods, subprocessor deletion terms, and legal bases are not yet confirmed in a DPA/privacy review. | Legal/privacy authority + accountable commercial owner | Confirm or replace AD-005's conditional defaults before production persistence; record the resulting DPA/privacy disposition without weakening SEC-019 or VER-016. |
 
-## Architecture decisions required
+## Architecture decision status
 
-AD-001 is resolved in [its governed decision record](../decisions/ad-001-self-hosted-production-execution.md), AD-002 in [its governed decision record](../decisions/ad-002-supabase-session-postgres-rls.md), AD-003 in [its governed decision record](../decisions/ad-003-s3-quarantine-guardduty.md), and AD-004 in [its governed decision record](../decisions/ad-004-aws-secrets-github-broker.md). AD-005 remains a blocking decision. Its owner, gate, and consequence are in `threat-model.md`; this prevents a later builder selecting retention or risk posture by implication.
+AD-001 is resolved in [its governed decision record](../decisions/ad-001-self-hosted-production-execution.md), AD-002 in [its governed decision record](../decisions/ad-002-supabase-session-postgres-rls.md), AD-003 in [its governed decision record](../decisions/ad-003-s3-quarantine-guardduty.md), AD-004 in [its governed decision record](../decisions/ad-004-aws-secrets-github-broker.md), and AD-005 in [its governed decision record](../decisions/ad-005-retention-deletion-reconstitution.md). All five are complete at the design layer. AD-005's legally owned periods and processor assumptions remain conditional until the separate legal/privacy and DPA review; implementation and release remain blocked by conformance evidence.
 
 ## Implementation gates
 
 1. **Complete — Phase S0 design review:** Owner-authorized Supervisor disposition approved this threat model and review record as security-design input only, without accepting residual risk.
-2. Owners resolve AD-005 in a governed record; AD-001 through AD-004 are complete at the design layer only.
-3. Future contracts encode applicable SEC identifiers and reference their TM/VER mappings.
-4. Before release, evidence satisfies VER-001 through VER-016, including independent cross-tenant negative tests.
-5. A release reviewer confirms no model, upload, tool output, or client tenant value becomes authority.
+2. **Complete at design layer — architecture decisions:** AD-001 through AD-005 have governed records; no implementation or release approval follows from them.
+3. Legal/privacy and the accountable commercial owner confirm or replace AD-005's conditional processor posture, retention periods, legal-hold terms, and subprocessor obligations in the DPA/customer terms before production persistence.
+4. Future contracts encode applicable SEC identifiers and reference their TM/VER mappings.
+5. Before release, evidence satisfies VER-001 through VER-016, including independent cross-tenant negative tests.
+6. A release reviewer confirms no model, upload, tool output, or client tenant value becomes authority.
 
 ## Future conformance evidence
 
@@ -76,16 +78,17 @@ VER-001 through VER-016, selected-mode responsibility documentation, immutable b
 
 ## Out-of-scope risks
 
-This review does not select legal basis, customer-facing residency commitments, retention values, incident response, browser framework, or staffing. AD-004 selects private GitHub.com as the v1 operational hub host and records its US-residency consequence, but it creates no customer promise. The existing core localhost cockpit is not reviewed as a hosted multi-tenant system; the approved design requires a re-realized web contract later.
+This review does not select legal basis, final customer-facing residency or retention commitments, DPA terms, incident response, browser framework, or staffing. AD-005 selects conditional engineering defaults so implementation can be designed and tested; those defaults are not final legal or contractual terms and may be shortened, removed, or replaced through governed legal/privacy review without weakening the required deletion evidence. AD-004 selects private GitHub.com as the v1 operational hub host and records its US-residency consequence, but it creates no customer promise. The existing core localhost cockpit is not reviewed as a hosted multi-tenant system; the approved design requires a re-realized web contract later.
 
 ## Reviewer checklist
 
 - [x] Reviewed requirements: flows and boundaries match the approved design and record boundary.
 - [x] Reviewed requirements: every TM identifier maps to SEC/VER and every SEC/VER has a use.
-- [x] Reviewed requirements: the selected self-hosted responsibility boundary is visible; execution remains blocked by unresolved decisions and conformance.
+- [x] Reviewed requirements: the selected self-hosted responsibility boundary is visible; production persistence remains blocked by legal/privacy disposition, and execution/release remain blocked by conformance.
 - [x] Reviewed requirements: the selected identity, sole server-side tenant fact, forced-RLS boundary, and every-route negative-test oracle are visible; no control is claimed as implemented.
 - [x] Reviewed requirements: the selected quarantine, scanner, independent archive limits, tenant quotas, operational region, fail-closed outcomes, and no-override rule are visible; no control is claimed as implemented.
 - [x] Reviewed requirements: private GitHub.com hub hosting, its US-residency consequence and EU upgrade path, the privileged broker, per-operation lease/audit, direct-egress denial, mid-stream revocation, atomic ref visibility, secret rotation, and break-glass lifecycle are visible; no control is claimed as implemented.
+- [x] Reviewed requirements: noticed offboarding, day-zero termination and whole-map freeze, return-or-delete handling, deterministic extract reconstitution, scoped legal holds, provider/backup pending windows, expiry verification, and non-content completion evidence are visible; legal defaults remain conditional and no control is claimed as implemented.
 - [x] Reviewed requirements: unknowns remain findings rather than security-treatment claims.
 - [x] Reviewed requirements: tenant isolation, injection, worker agency, uploads, browser, Git, secrets, retention, replay, audit, supply chain, availability, exfiltration, pointer, and logging controls are specified fail closed.
 - [x] Reviewed disposition: no residual risk is accepted here.
