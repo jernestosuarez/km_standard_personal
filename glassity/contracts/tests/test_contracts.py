@@ -1,7 +1,10 @@
+# km-unrepaired-tree: v1.64 | each new contract behavior was run RED before implementation; the UUID, destination, and idempotency guards were also disabled individually and their canaries failed before restoration.
 import importlib.util
 from copy import deepcopy
+import json
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -18,6 +21,398 @@ def load_validator():
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
+
+
+DESCRIPTOR_REQUIRED = {
+    "case_id",
+    "artifact",
+    "operation",
+    "path",
+    "expected_reason",
+}
+DESCRIPTOR_OPERATIONS = {"remove", "replace", "add", "append_copy"}
+
+
+def load_case_descriptors(path, reason_order):
+    descriptors = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(descriptors, list):
+        raise ValueError("descriptor file must contain a list")
+    case_ids = set()
+    for descriptor in descriptors:
+        if not isinstance(descriptor, dict):
+            raise ValueError("each descriptor must be an object")
+        allowed = DESCRIPTOR_REQUIRED | {"value"}
+        if set(descriptor) - allowed or not DESCRIPTOR_REQUIRED.issubset(descriptor):
+            raise ValueError("descriptor has missing or unknown fields")
+        case_id = descriptor["case_id"]
+        if not isinstance(case_id, str) or not case_id or case_id in case_ids:
+            raise ValueError("case_id must be non-empty and unique")
+        case_ids.add(case_id)
+        operation = descriptor["operation"]
+        if operation not in DESCRIPTOR_OPERATIONS:
+            raise ValueError("unknown mutation operation")
+        if operation in {"replace", "add"} and "value" not in descriptor:
+            raise ValueError("mutation operation requires value")
+        if operation == "remove" and "value" in descriptor:
+            raise ValueError("remove cannot declare value")
+        if descriptor["expected_reason"] not in reason_order:
+            raise ValueError("expected_reason is not in REASON_ORDER")
+        if not isinstance(descriptor["path"], str) or not descriptor["path"].startswith("/"):
+            raise ValueError("path must be an absolute JSON Pointer")
+    return descriptors
+
+
+def _pointer_tokens(pointer):
+    return [token.replace("~1", "/").replace("~0", "~") for token in pointer[1:].split("/")]
+
+
+def _pointer_parent(value, pointer):
+    tokens = _pointer_tokens(pointer)
+    parent = value
+    for token in tokens[:-1]:
+        parent = parent[int(token)] if isinstance(parent, list) else parent[token]
+    return parent, tokens[-1]
+
+
+def _descriptor_value(value):
+    if isinstance(value, dict) and set(value) == {"repeat_text", "count"}:
+        text = value["repeat_text"]
+        count = value["count"]
+        if not isinstance(text, str) or len(text) != 1 or not isinstance(count, int):
+            raise ValueError("repeat_text value must declare one character and an integer count")
+        return text * count
+    return deepcopy(value)
+
+
+def apply_case_mutation(baseline, descriptor):
+    mutated = deepcopy(baseline)
+    parent, token = _pointer_parent(mutated, descriptor["path"])
+    key = int(token) if isinstance(parent, list) else token
+    operation = descriptor["operation"]
+    if operation == "remove":
+        del parent[key]
+    elif operation == "replace":
+        if (isinstance(parent, list) and key >= len(parent)) or (
+            isinstance(parent, dict) and key not in parent
+        ):
+            raise ValueError("replace target does not exist")
+        parent[key] = _descriptor_value(descriptor["value"])
+    elif operation == "add":
+        if not isinstance(parent, dict) or key in parent:
+            raise ValueError("add target must be a new object member")
+        parent[key] = _descriptor_value(descriptor["value"])
+    elif operation == "append_copy":
+        if not isinstance(parent, list):
+            raise ValueError("append_copy target must be a list item")
+        copied = deepcopy(parent[key])
+        if "value" in descriptor:
+            if not isinstance(copied, dict) or not isinstance(descriptor["value"], dict):
+                raise ValueError("append_copy override requires objects")
+            copied.update(deepcopy(descriptor["value"]))
+        parent.append(copied)
+    else:
+        raise ValueError("unknown mutation operation")
+    return mutated
+
+
+def validate_mutation_case(validator, valid_root, descriptor):
+    baseline = json.loads(
+        (valid_root / descriptor["artifact"]).read_text(encoding="utf-8")
+    )
+    mutated = apply_case_mutation(baseline, descriptor)
+    schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+    issues = list(schema_issues)
+    artifact = descriptor["artifact"]
+    if artifact == "authority-matrix.json":
+        issues.extend(validator.validate_schema("authority", mutated, schemas, registry))
+        issues.extend(validator.validate_authority_matrix(mutated))
+    elif artifact == "deployment-binding.json":
+        issues.extend(
+            validator.validate_schema("deployment-binding", mutated, schemas, registry)
+        )
+        issues.extend(validator.validate_binding(mutated))
+    elif artifact == "provisioning-receipt.json":
+        tenant_valid = CONTRACTS / "tenant-provisioning" / "fixtures" / "valid"
+        binding_path = tenant_valid / "deployment-binding.json"
+        binding = json.loads(binding_path.read_text(encoding="utf-8"))
+        issues.extend(
+            validator.validate_schema("provisioning-receipt", mutated, schemas, registry)
+        )
+        issues.extend(
+            validator.validate_receipt(mutated, binding_path.read_bytes(), binding)
+        )
+    else:
+        tenant_valid = CONTRACTS / "tenant-provisioning" / "fixtures" / "valid"
+        authority = json.loads(
+            (
+                CONTRACTS
+                / "authority-matrix"
+                / "fixtures"
+                / "valid"
+                / "authority-matrix.json"
+            ).read_text(encoding="utf-8")
+        )
+        binding = json.loads(
+            (tenant_valid / "deployment-binding.json").read_text(encoding="utf-8")
+        )
+        issues.extend(
+            validator.validate_schema("inbound-envelope", mutated, schemas, registry)
+        )
+        issues.extend(validator.validate_envelope(mutated, authority, binding).issues)
+    return validator._ordered_unique(issues)
+
+
+class InvalidFixtureDescriptorTests(unittest.TestCase):
+    def test_committed_descriptor_sets_have_closed_valid_shapes(self):
+        validator = load_validator()
+        descriptor_paths = (
+            CONTRACTS / "authority-matrix" / "fixtures" / "invalid" / "cases.json",
+            CONTRACTS / "tenant-provisioning" / "fixtures" / "invalid" / "cases.json",
+        )
+
+        descriptors = []
+        for path in descriptor_paths:
+            descriptors.extend(load_case_descriptors(path, validator.REASON_ORDER))
+
+        self.assertEqual(
+            len({descriptor["case_id"] for descriptor in descriptors}),
+            len(descriptors),
+        )
+
+    def test_descriptor_canaries_cover_every_validation_reason(self):
+        validator = load_validator()
+        descriptors = []
+        for path in (
+            CONTRACTS / "authority-matrix" / "fixtures" / "invalid" / "cases.json",
+            CONTRACTS / "tenant-provisioning" / "fixtures" / "invalid" / "cases.json",
+        ):
+            descriptors.extend(load_case_descriptors(path, validator.REASON_ORDER))
+
+        covered = {descriptor["expected_reason"] for descriptor in descriptors}
+        covered.update({"JSON_INVALID", "DEPENDENCY_MISSING"})
+
+        self.assertEqual(covered, set(validator.REASON_ORDER))
+
+    def test_each_descriptor_is_one_mutation_with_one_named_result(self):
+        validator = load_validator()
+        fixture_groups = (
+            (
+                CONTRACTS / "authority-matrix" / "fixtures" / "invalid" / "cases.json",
+                CONTRACTS / "authority-matrix" / "fixtures" / "valid",
+            ),
+            (
+                CONTRACTS / "tenant-provisioning" / "fixtures" / "invalid" / "cases.json",
+                CONTRACTS / "tenant-provisioning" / "fixtures" / "valid",
+            ),
+        )
+
+        for descriptor_path, valid_root in fixture_groups:
+            descriptors = load_case_descriptors(
+                descriptor_path, validator.REASON_ORDER
+            )
+            for descriptor in descriptors:
+                with self.subTest(case_id=descriptor["case_id"]):
+                    issues = validate_mutation_case(
+                        validator, valid_root, descriptor
+                    )
+                    self.assertEqual(
+                        [issue.code for issue in issues],
+                        [descriptor["expected_reason"]],
+                    )
+
+    def test_descriptor_loader_rejects_malformed_metadata(self):
+        validator = load_validator()
+        valid = {
+            "case_id": "synthetic-case",
+            "artifact": "upload-pointer.json",
+            "operation": "replace",
+            "path": "/tenant_id",
+            "value": "tenant-other",
+            "expected_reason": "TENANT_MISMATCH",
+        }
+        malformed_sets = []
+
+        unknown_operation = deepcopy(valid)
+        unknown_operation["operation"] = "copy"
+        malformed_sets.append([unknown_operation])
+
+        malformed_sets.append([valid, deepcopy(valid)])
+
+        missing_reason = deepcopy(valid)
+        del missing_reason["expected_reason"]
+        malformed_sets.append([missing_reason])
+
+        unknown_reason = deepcopy(valid)
+        unknown_reason["expected_reason"] = "NOT_A_REASON"
+        malformed_sets.append([unknown_reason])
+
+        extra_field = deepcopy(valid)
+        extra_field["comment"] = "not allowed"
+        malformed_sets.append([extra_field])
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "cases.json"
+            for descriptors in malformed_sets:
+                with self.subTest(descriptors=descriptors):
+                    path.write_text(json.dumps(descriptors), encoding="utf-8")
+                    with self.assertRaises(ValueError):
+                        load_case_descriptors(path, validator.REASON_ORDER)
+
+
+class BundleCliTests(unittest.TestCase):
+    def valid_command(self):
+        tenant_valid = CONTRACTS / "tenant-provisioning" / "fixtures" / "valid"
+        return [
+            sys.executable,
+            str(VALIDATOR),
+            "bundle",
+            "--authority",
+            str(
+                CONTRACTS
+                / "authority-matrix"
+                / "fixtures"
+                / "valid"
+                / "authority-matrix.json"
+            ),
+            "--binding",
+            str(tenant_valid / "deployment-binding.json"),
+            "--receipt",
+            str(tenant_valid / "provisioning-receipt.json"),
+            "--envelope",
+            str(tenant_valid / "upload-pointer.json"),
+        ]
+
+    def test_valid_bundle_cli_prints_one_success_line(self):
+        result = subprocess.run(
+            self.valid_command(), text=True, capture_output=True, check=False
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stderr, "")
+        self.assertEqual(
+            result.stdout.strip(),
+            "VALID foundation-contracts: tenant-alpha "
+            "deployment-alpha-eu-west-1 1 envelope(s)",
+        )
+
+    def test_invalid_bundle_cli_prints_issue_only(self):
+        receipt_path = (
+            CONTRACTS
+            / "tenant-provisioning"
+            / "fixtures"
+            / "valid"
+            / "provisioning-receipt.json"
+        )
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        receipt["tenant_id"] = "tenant-other"
+        with tempfile.TemporaryDirectory() as directory:
+            mutated_path = Path(directory) / "provisioning-receipt.json"
+            mutated_path.write_text(json.dumps(receipt), encoding="utf-8")
+            command = self.valid_command()
+            receipt_index = command.index("--receipt") + 1
+            command[receipt_index] = str(mutated_path)
+
+            result = subprocess.run(
+                command, text=True, capture_output=True, check=False
+            )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("TENANT_MISMATCH\t", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertNotIn("VALID", result.stdout)
+
+    def test_missing_bundle_arguments_exit_two_with_usage(self):
+        result = subprocess.run(
+            [sys.executable, str(VALIDATOR), "bundle"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("usage:", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+
+    def test_malformed_json_exits_one_without_partial_success(self):
+        with tempfile.TemporaryDirectory() as directory:
+            malformed = Path(directory) / "authority.json"
+            malformed.write_text("{not-json", encoding="utf-8")
+            command = self.valid_command()
+            authority_index = command.index("--authority") + 1
+            command[authority_index] = str(malformed)
+
+            result = subprocess.run(
+                command, text=True, capture_output=True, check=False
+            )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("JSON_INVALID\t", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertNotIn("VALID", result.stdout)
+
+    def test_bundle_receipt_uses_exact_binding_file_bytes(self):
+        tenant_valid = CONTRACTS / "tenant-provisioning" / "fixtures" / "valid"
+        with tempfile.TemporaryDirectory() as directory:
+            binding_path = Path(directory) / "deployment-binding.json"
+            binding = json.loads(
+                (tenant_valid / "deployment-binding.json").read_text(encoding="utf-8")
+            )
+            binding_path.write_text(
+                json.dumps(binding, indent=4) + "\n", encoding="utf-8"
+            )
+            command = self.valid_command()
+            binding_index = command.index("--binding") + 1
+            command[binding_index] = str(binding_path)
+
+            result = subprocess.run(
+                command, text=True, capture_output=True, check=False
+            )
+
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("PROVISIONING_DIGEST_MISMATCH\t", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertNotIn("VALID", result.stdout)
+
+    def test_bundle_issues_are_deduplicated_in_contract_order(self):
+        receipt_path = (
+            CONTRACTS
+            / "tenant-provisioning"
+            / "fixtures"
+            / "valid"
+            / "provisioning-receipt.json"
+        )
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        receipt.update(
+            {
+                "tenant_id": "tenant-other",
+                "deployment_id": "deployment-other",
+                "overlay_parent_commit": "c" * 40,
+                "binding_sha256": "0" * 64,
+                "erasure_map_sha256": "0" * 64,
+            }
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            mutated_path = Path(directory) / "provisioning-receipt.json"
+            mutated_path.write_text(json.dumps(receipt), encoding="utf-8")
+            command = self.valid_command()
+            receipt_index = command.index("--receipt") + 1
+            command[receipt_index] = str(mutated_path)
+
+            result = subprocess.run(
+                command, text=True, capture_output=True, check=False
+            )
+
+        codes = [line.split("\t", 1)[0] for line in result.stderr.splitlines()]
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(
+            codes,
+            [
+                "TENANT_MISMATCH",
+                "DEPLOYMENT_MISMATCH",
+                "PROVISIONING_ORDER_INVALID",
+                "PROVISIONING_DIGEST_MISMATCH",
+            ],
+        )
 
 
 class DependencyAndCliTests(unittest.TestCase):

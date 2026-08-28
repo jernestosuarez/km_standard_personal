@@ -147,14 +147,12 @@ def extract_measurements(extract: dict) -> tuple[int, str]:
 
 def _ordered_unique(issues: list[Issue]) -> list[Issue]:
     order = {code: index for index, code in enumerate(REASON_ORDER)}
-    unique = {(issue.code, issue.path, issue.message): issue for issue in issues}
+    unique = {}
+    for issue in issues:
+        unique.setdefault(issue.code, issue)
     return sorted(
         unique.values(),
-        key=lambda issue: (
-            order.get(issue.code, len(REASON_ORDER)),
-            issue.path,
-            issue.message,
-        ),
+        key=lambda issue: order.get(issue.code, len(REASON_ORDER)),
     )
 
 
@@ -162,6 +160,13 @@ def load_json(path: Path) -> tuple[Optional[object], list[Issue]]:
     try:
         return json.loads(path.read_text(encoding="utf-8")), []
     except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        return None, [Issue("JSON_INVALID", "/", f"{path}: {error}")]
+
+
+def _decode_json_bytes(path: Path, value: bytes) -> tuple[Optional[object], list[Issue]]:
+    try:
+        return json.loads(value), []
+    except (UnicodeError, json.JSONDecodeError) as error:
         return None, [Issue("JSON_INVALID", "/", f"{path}: {error}")]
 
 
@@ -641,6 +646,68 @@ def validate_envelope(
     )
 
 
+def validate_bundle(
+    authority_path: Path,
+    binding_path: Path,
+    receipt_path: Path,
+    envelope_paths: list[Path],
+) -> list[Issue]:
+    try:
+        binding_bytes = binding_path.read_bytes()
+    except OSError as error:
+        return [Issue("JSON_INVALID", "/", f"{binding_path}: {error}")]
+
+    binding, binding_load_issues = _decode_json_bytes(binding_path, binding_bytes)
+    authority, authority_load_issues = load_json(authority_path)
+    receipt, receipt_load_issues = load_json(receipt_path)
+    envelopes = []
+    envelope_load_issues = []
+    for path in envelope_paths:
+        envelope, load_issues = load_json(path)
+        envelopes.append(envelope)
+        envelope_load_issues.extend(load_issues)
+
+    issues = (
+        authority_load_issues
+        + binding_load_issues
+        + receipt_load_issues
+        + envelope_load_issues
+    )
+    if issues:
+        return _ordered_unique(issues)
+
+    schemas, registry, schema_issues = load_schemas(Path(__file__).resolve().parent)
+    issues.extend(schema_issues)
+    if schema_issues:
+        return _ordered_unique(issues)
+
+    documents = [
+        ("authority", authority),
+        ("deployment-binding", binding),
+        ("provisioning-receipt", receipt),
+    ]
+    documents.extend(("inbound-envelope", envelope) for envelope in envelopes)
+    schema_results = []
+    for kind, value in documents:
+        result = validate_schema(kind, value, schemas, registry)
+        schema_results.append(result)
+        issues.extend(result)
+
+    authority_schema, binding_schema, receipt_schema = schema_results[:3]
+    envelope_schemas = schema_results[3:]
+    if not authority_schema:
+        issues.extend(validate_authority_matrix(authority))
+    if not binding_schema:
+        issues.extend(validate_binding(binding))
+    if not receipt_schema and not binding_schema:
+        issues.extend(validate_receipt(receipt, binding_bytes, binding))
+    if not authority_schema and not binding_schema:
+        for envelope, envelope_schema in zip(envelopes, envelope_schemas):
+            if not envelope_schema:
+                issues.extend(validate_envelope(envelope, authority, binding).issues)
+    return _ordered_unique(issues)
+
+
 def schema_runtime():
     try:
         from jsonschema import Draft202012Validator
@@ -655,7 +722,19 @@ def schema_runtime():
 def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--self-check", action="store_true")
+    subparsers = parser.add_subparsers(dest="command")
+    bundle_parser = subparsers.add_parser("bundle")
+    bundle_parser.add_argument("--authority", type=Path, required=True)
+    bundle_parser.add_argument("--binding", type=Path, required=True)
+    bundle_parser.add_argument("--receipt", type=Path, required=True)
+    bundle_parser.add_argument(
+        "--envelope", type=Path, action="append", required=True
+    )
     args = parser.parse_args(argv)
+    if args.self_check and args.command is not None:
+        parser.error("--self-check cannot be combined with a command")
+    if not args.self_check and args.command != "bundle":
+        parser.error("bundle command is required")
     runtime = schema_runtime()
     if runtime is None:
         print(
@@ -666,7 +745,35 @@ def main(argv=None):
     if args.self_check:
         print("VALID Draft202012Validator jsonschema==4.25.1")
         return 0
-    parser.error("bundle command is required")
+    issues = validate_bundle(
+        args.authority,
+        args.binding,
+        args.receipt,
+        args.envelope,
+    )
+    if issues:
+        for issue in issues:
+            print(
+                f"{issue.code}\t{issue.path}\t{issue.message}",
+                file=sys.stderr,
+            )
+        return 1
+    binding, binding_issues = load_json(args.binding)
+    if binding_issues or not isinstance(binding, dict):
+        for issue in binding_issues or [
+            Issue("JSON_INVALID", "/", "binding must be a JSON object")
+        ]:
+            print(
+                f"{issue.code}\t{issue.path}\t{issue.message}",
+                file=sys.stderr,
+            )
+        return 1
+    print(
+        "VALID foundation-contracts: "
+        f"{binding['tenant_id']} {binding['deployment_id']} "
+        f"{len(args.envelope)} envelope(s)"
+    )
+    return 0
 
 
 if __name__ == "__main__":
