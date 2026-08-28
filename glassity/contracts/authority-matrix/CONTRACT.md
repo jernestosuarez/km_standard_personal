@@ -31,6 +31,19 @@ The authority matrix fixes which system is authoritative for every v1 data class
 
 Every row also declares one or more producer roles, envelope types, classification-policy references, a retention-policy reference, and forbidden locations. Producer roles are limited to `inbound_adapter`, `core_intake`, `cockpit`, `worker`, and `audit_service`. Envelope types are limited to `upload_pointer`, `domain_event`, and the explicit non-envelope value `none`.
 
+## Record-boundary prohibitions
+
+The tenant hub is authoritative only for the governed data classes assigned to it in the table. It must not become object storage, an application database, an event store, a pending-answer store, or an audit store. In particular:
+
+- raw upload bytes, app-object rows, operational event records, and pending answers are forbidden in the tenant hub;
+- a raw upload may be represented only by its content-addressed pointer before core intake creates any governed record;
+- an optional classified extract is governed content only when it satisfies the inbound-envelope contract; it is never the raw upload or a substitute authority for it;
+- a pending answer has no tenant-hub representation until core `pull` consumes it through the governed workflow;
+- audit content remains in the audit store; the hub may carry only a non-content evidence pointer when governed knowledge needs one; and
+- an inbound adapter writes only a validated envelope to `_inbox/`. It never writes directly to `sources/` and never promotes governed state.
+
+A producer declaration, envelope, deployment binding, or application implementation cannot override these prohibitions.
+
 ## Validation
 
 The Draft 2020-12 schema validates the closed document and row shapes. The semantic validator independently requires exactly one row for every class in the normative table and compares the system-of-record and permitted-representation mappings exactly. This separation gives closed-set failures stable contract reasons rather than schema-engine-dependent messages.
@@ -40,3 +53,5 @@ The Draft 2020-12 schema validates the closed document and row shapes. The seman
 - A changed system of record or permitted representation set is `AUTHORITY_SYSTEM_MISMATCH`.
 
 Order is not authoritative. A representation array is compared as a set, but duplicates within scalar arrays are schema-invalid. A new class or mapping is never accepted as a compatible extension; it first requires a governed amendment to the contract, schema, fixture, validator constant, and canaries.
+
+The initial stable authority reasons are `AUTHORITY_SET_INCOMPLETE`, `AUTHORITY_SET_UNKNOWN`, and `AUTHORITY_SYSTEM_MISMATCH`. Changing one of these codes is itself a contract amendment.
