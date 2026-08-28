@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glassity:contract:authority-matrix:schema:v1",
+  "title": "Glassity record authority matrix",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "matrix_id", "revision", "rows"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "matrix_id": {"const": "urn:glassity:synthetic:authority-matrix:v1"},
+    "revision": {"type": "string", "minLength": 1},
+    "rows": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/row"}
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "data_class",
+        "system_of_record",
+        "hub_representations",
+        "allowed_producers",
+        "envelope_types",
+        "classification_policy_refs",
+        "retention_policy_ref",
+        "forbidden_locations"
+      ],
+      "properties": {
+        "data_class": {"type": "string", "minLength": 1},
+        "system_of_record": {
+          "enum": [
+            "object_storage",
+            "application_database",
+            "event_store",
+            "tenant_hub",
+            "pending_answer_store",
+            "audit_store"
+          ]
+        },
+        "hub_representations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "pointer",
+              "digest",
+              "claim",
+              "decision",
+              "governed_digest",
+              "governed_claim",
+              "governed_decision",
+              "classified_text_extract",
+              "resolvable_pointer",
+              "governed_queue_record",
+              "governed_execution_record",
+              "none_until_pull",
+              "non_content_evidence_pointer"
+            ]
+          }
+        },
+        "allowed_producers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "inbound_adapter",
+              "core_intake",
+              "cockpit",
+              "worker",
+              "audit_service"
+            ]
+          }
+        },
+        "envelope_types": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"enum": ["upload_pointer", "domain_event", "none"]}
+        },
+        "classification_policy_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "retention_policy_ref": {"type": "string", "minLength": 1},
+        "forbidden_locations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "object_storage",
+              "application_database",
+              "event_store",
+              "tenant_hub",
+              "pending_answer_store",
+              "audit_store"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

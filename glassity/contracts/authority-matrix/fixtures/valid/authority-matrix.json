@@ -1,0 +1,127 @@
+{
+  "schema_version": "1.0",
+  "matrix_id": "urn:glassity:synthetic:authority-matrix:v1",
+  "revision": "1",
+  "rows": [
+    {
+      "data_class": "raw_upload",
+      "system_of_record": "object_storage",
+      "hub_representations": ["pointer"],
+      "allowed_producers": ["inbound_adapter"],
+      "envelope_types": ["upload_pointer"],
+      "classification_policy_refs": ["urn:glassity:synthetic:policy:classification"],
+      "retention_policy_ref": "urn:glassity:synthetic:policy:retention",
+      "forbidden_locations": ["tenant_hub", "pending_answer_store"]
+    },
+    {
+      "data_class": "app_object",
+      "system_of_record": "application_database",
+      "hub_representations": ["pointer", "digest", "claim", "decision"],
+      "allowed_producers": ["cockpit", "worker"],
+      "envelope_types": ["domain_event"],
+      "classification_policy_refs": ["urn:glassity:synthetic:policy:classification"],
+      "retention_policy_ref": "urn:glassity:synthetic:policy:retention",
+      "forbidden_locations": ["tenant_hub"]
+    },
+    {
+      "data_class": "app_event",
+      "system_of_record": "event_store",
+      "hub_representations": ["pointer", "digest", "claim", "decision"],
+      "allowed_producers": ["cockpit", "worker"],
+      "envelope_types": ["domain_event"],
+      "classification_policy_refs": ["urn:glassity:synthetic:policy:classification"],
+      "retention_policy_ref": "urn:glassity:synthetic:policy:retention",
+      "forbidden_locations": ["tenant_hub"]
+    },
+    {
+      "data_class": "digest",
+      "system_of_record": "tenant_hub",
+      "hub_representations": ["governed_digest"],
+      "allowed_producers": ["core_intake", "worker"],
+      "envelope_types": ["none"],
+      "classification_policy_refs": ["urn:glassity:synthetic:policy:classification"],
+      "retention_policy_ref": "urn:glassity:synthetic:policy:retention",
+      "forbidden_locations": ["object_storage"]
+    },
+    {
+      "data_class": "claim",
+      "system_of_record": "tenant_hub",
+      "hub_representations": ["governed_claim"],
+      "allowed_producers": ["core_intake", "worker"],
+      "envelope_types": ["none"],
+      "classification_policy_refs": ["urn:glassity:synthetic:policy:classification"],
+      "retention_policy_ref": "urn:glassity:synthetic:policy:retention",
+      "forbidden_locations": ["object_storage"]
+    },
+    {
+      "data_class": "decision",
+      "system_of_record": "tenant_hub",
+      "hub_representations": ["governed_decision"],
+      "allowed_producers": ["core_intake", "cockpit"],
+      "envelope_types": ["none"],
+      "classification_policy_refs": ["urn:glassity:synthetic:policy:classification"],
+      "retention_policy_ref": "urn:glassity:synthetic:policy:retention",
+      "forbidden_locations": ["object_storage"]
+    },
+    {
+      "data_class": "classified_extract",
+      "system_of_record": "tenant_hub",
+      "hub_representations": ["classified_text_extract"],
+      "allowed_producers": ["core_intake"],
+      "envelope_types": ["upload_pointer"],
+      "classification_policy_refs": ["urn:glassity:synthetic:policy:classification"],
+      "retention_policy_ref": "urn:glassity:synthetic:policy:retention",
+      "forbidden_locations": ["object_storage"]
+    },
+    {
+      "data_class": "pointer",
+      "system_of_record": "tenant_hub",
+      "hub_representations": ["resolvable_pointer"],
+      "allowed_producers": ["core_intake"],
+      "envelope_types": ["upload_pointer"],
+      "classification_policy_refs": ["urn:glassity:synthetic:policy:classification"],
+      "retention_policy_ref": "urn:glassity:synthetic:policy:retention",
+      "forbidden_locations": ["pending_answer_store"]
+    },
+    {
+      "data_class": "owner_queue",
+      "system_of_record": "tenant_hub",
+      "hub_representations": ["governed_queue_record"],
+      "allowed_producers": ["cockpit", "worker"],
+      "envelope_types": ["none"],
+      "classification_policy_refs": ["urn:glassity:synthetic:policy:classification"],
+      "retention_policy_ref": "urn:glassity:synthetic:policy:retention",
+      "forbidden_locations": ["object_storage"]
+    },
+    {
+      "data_class": "execution_record",
+      "system_of_record": "tenant_hub",
+      "hub_representations": ["governed_execution_record"],
+      "allowed_producers": ["worker"],
+      "envelope_types": ["none"],
+      "classification_policy_refs": ["urn:glassity:synthetic:policy:classification"],
+      "retention_policy_ref": "urn:glassity:synthetic:policy:retention",
+      "forbidden_locations": ["object_storage"]
+    },
+    {
+      "data_class": "pending_answer",
+      "system_of_record": "pending_answer_store",
+      "hub_representations": ["none_until_pull"],
+      "allowed_producers": ["worker"],
+      "envelope_types": ["none"],
+      "classification_policy_refs": ["urn:glassity:synthetic:policy:classification"],
+      "retention_policy_ref": "urn:glassity:synthetic:policy:retention",
+      "forbidden_locations": ["tenant_hub", "object_storage"]
+    },
+    {
+      "data_class": "audit_event",
+      "system_of_record": "audit_store",
+      "hub_representations": ["non_content_evidence_pointer"],
+      "allowed_producers": ["audit_service"],
+      "envelope_types": ["none"],
+      "classification_policy_refs": ["urn:glassity:synthetic:policy:classification"],
+      "retention_policy_ref": "urn:glassity:synthetic:policy:retention",
+      "forbidden_locations": ["object_storage", "pending_answer_store"]
+    }
+  ]
+}
