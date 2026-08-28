@@ -60,6 +60,22 @@ AUTHORITY = {
     "audit_event": ("audit_store", {"non_content_evidence_pointer"}),
 }
 
+ERASURE_CATEGORIES = {
+    "iam_session",
+    "worker_transient",
+    "pending_answer_queue",
+    "app_database_event",
+    "derived_projection_index",
+    "s3_object_version",
+    "github_repository",
+    "backup_recovery",
+    "scan_event_finding",
+    "audit_log",
+    "anthropic_control_plane",
+    "export_staging",
+    "tenant_secret",
+}
+
 
 def _ordered_unique(issues: list[Issue]) -> list[Issue]:
     order = {code: index for index, code in enumerate(REASON_ORDER)}
@@ -107,7 +123,9 @@ def load_schemas(root: Path) -> tuple[dict[str, dict], object, list[Issue]]:
         except Exception as error:  # jsonschema/referencing expose several subclasses
             issues.append(Issue("SCHEMA_INVALID", "/", f"{path}: {error}"))
             continue
-        kind = path.name.removesuffix("-matrix.schema.json")
+        kind = path.name.removesuffix(".schema.json")
+        if kind == "authority-matrix":
+            kind = "authority"
         schemas[kind] = schema
         resources.append((schema["$id"], resource))
 
@@ -129,7 +147,33 @@ def validate_schema(
     issues = []
     for error in Draft202012Validator(schema, registry=registry).iter_errors(value):
         path = "/" + "/".join(str(part) for part in error.absolute_path)
-        issues.append(Issue("SCHEMA_INVALID", path, error.message))
+        missing_erasure_map = (
+            error.validator == "required"
+            and isinstance(error.instance, dict)
+            and "erasure_map" not in error.instance
+            and not error.absolute_path
+            and error.message == "'erasure_map' is a required property"
+        )
+        incomplete_erasure_entries = (
+            error.validator == "minItems"
+            and list(error.absolute_path) == ["erasure_map", "entries"]
+        )
+        if kind == "deployment-binding" and (
+            missing_erasure_map or incomplete_erasure_entries
+        ):
+            issues.append(
+                Issue(
+                    "ERASURE_MAP_INCOMPLETE",
+                    (
+                        "/erasure_map/entries"
+                        if incomplete_erasure_entries
+                        else "/erasure_map"
+                    ),
+                    "deployment binding must embed a complete erasure map",
+                )
+            )
+        else:
+            issues.append(Issue("SCHEMA_INVALID", path, error.message))
     return _ordered_unique(issues)
 
 
@@ -169,6 +213,48 @@ def validate_authority_matrix(value: dict) -> list[Issue]:
                     f"authority mapping changed for {row['data_class']}",
                 )
             )
+    return _ordered_unique(issues)
+
+
+def validate_binding(value: dict) -> list[Issue]:
+    if not isinstance(value, dict) or not isinstance(value.get("erasure_map"), dict):
+        return [
+            Issue(
+                "ERASURE_MAP_INCOMPLETE",
+                "/erasure_map",
+                "deployment binding must embed an erasure map",
+            )
+        ]
+    erasure_map = value["erasure_map"]
+    entries = erasure_map.get("entries", []) if isinstance(erasure_map, dict) else []
+    categories = [
+        entry.get("category") for entry in entries if isinstance(entry, dict)
+    ]
+    issues = []
+    if set(categories) != ERASURE_CATEGORIES or len(categories) != len(set(categories)):
+        issues.append(
+            Issue(
+                "ERASURE_MAP_INCOMPLETE",
+                "/erasure_map/entries",
+                "erasure map must contain each required category exactly once",
+            )
+        )
+    if erasure_map.get("tenant_id") != value.get("tenant_id"):
+        issues.append(
+            Issue(
+                "TENANT_MISMATCH",
+                "/erasure_map/tenant_id",
+                "erasure map tenant differs from binding tenant",
+            )
+        )
+    if erasure_map.get("deployment_id") != value.get("deployment_id"):
+        issues.append(
+            Issue(
+                "DEPLOYMENT_MISMATCH",
+                "/erasure_map/deployment_id",
+                "erasure map deployment differs from binding deployment",
+            )
+        )
     return _ordered_unique(issues)
 
 

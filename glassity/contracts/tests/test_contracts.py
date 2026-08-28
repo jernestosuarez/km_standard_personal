@@ -128,5 +128,182 @@ class AuthorityMatrixTests(unittest.TestCase):
         self.assertEqual([issue.code for issue in issues], ["AUTHORITY_SET_UNKNOWN"])
 
 
+class DeploymentBindingTests(unittest.TestCase):
+    def load_binding(self):
+        validator = load_validator()
+        binding, issues = validator.load_json(
+            CONTRACTS
+            / "tenant-provisioning"
+            / "fixtures"
+            / "valid"
+            / "deployment-binding.json"
+        )
+        self.assertEqual(issues, [])
+        return validator, binding
+
+    def test_active_binding_with_complete_erasure_map_passes(self):
+        validator, binding = self.load_binding()
+        schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+
+        issues = validator.validate_schema("deployment-binding", binding, schemas, registry)
+        issues.extend(validator.validate_binding(binding))
+
+        self.assertEqual(schema_issues, [])
+        self.assertEqual(issues, [])
+
+    def test_frozen_binding_with_scoped_hold_passes(self):
+        validator, binding = self.load_binding()
+        mutated = deepcopy(binding)
+        mutated["lifecycle"] = "frozen"
+        mutated["legal_hold"] = {
+            "status": "scoped",
+            "decision_ref": "decisions/synthetic-legal-hold-v1",
+            "scope_digest": "a" * 64,
+            "legal_basis_ref": "legal/synthetic-basis-v1",
+            "review_date": "2026-09-30",
+        }
+        schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+
+        issues = validator.validate_schema("deployment-binding", mutated, schemas, registry)
+        issues.extend(validator.validate_binding(mutated))
+
+        self.assertEqual(schema_issues, [])
+        self.assertEqual(issues, [])
+
+    def test_lifecycle_outside_ad_005_is_schema_invalid(self):
+        validator, binding = self.load_binding()
+        mutated = deepcopy(binding)
+        mutated["lifecycle"] = "paused"
+        schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+
+        issues = validator.validate_schema("deployment-binding", mutated, schemas, registry)
+
+        self.assertEqual(schema_issues, [])
+        self.assertEqual([issue.code for issue in issues], ["SCHEMA_INVALID"])
+
+    def test_missing_erasure_category_has_stable_reason(self):
+        validator, binding = self.load_binding()
+        mutated = deepcopy(binding)
+        mutated["erasure_map"]["entries"] = [
+            entry
+            for entry in mutated["erasure_map"]["entries"]
+            if entry["category"] != "tenant_secret"
+        ]
+        schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+
+        schema_validation = validator.validate_schema(
+            "deployment-binding", mutated, schemas, registry
+        )
+        semantic_validation = validator.validate_binding(mutated)
+
+        self.assertEqual(schema_issues, [])
+        self.assertEqual(
+            [issue.code for issue in schema_validation], ["ERASURE_MAP_INCOMPLETE"]
+        )
+        self.assertEqual(
+            [issue.code for issue in semantic_validation], ["ERASURE_MAP_INCOMPLETE"]
+        )
+
+    def test_missing_embedded_erasure_map_has_stable_reason(self):
+        validator, binding = self.load_binding()
+        mutated = deepcopy(binding)
+        del mutated["erasure_map"]
+        schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+
+        schema_validation = validator.validate_schema(
+            "deployment-binding", mutated, schemas, registry
+        )
+        semantic_validation = validator.validate_binding(mutated)
+
+        self.assertEqual(schema_issues, [])
+        self.assertEqual(
+            [issue.code for issue in schema_validation], ["ERASURE_MAP_INCOMPLETE"]
+        )
+        self.assertEqual(
+            [issue.code for issue in semantic_validation], ["ERASURE_MAP_INCOMPLETE"]
+        )
+
+    def test_missing_erasure_map_does_not_mask_another_required_field(self):
+        validator, binding = self.load_binding()
+        mutated = deepcopy(binding)
+        del mutated["erasure_map"]
+        del mutated["lifecycle"]
+        schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+
+        issues = validator.validate_schema(
+            "deployment-binding", mutated, schemas, registry
+        )
+
+        self.assertEqual(schema_issues, [])
+        self.assertEqual(
+            [issue.code for issue in issues],
+            ["SCHEMA_INVALID", "ERASURE_MAP_INCOMPLETE"],
+        )
+
+    def test_blanket_legal_hold_without_scope_digest_is_schema_invalid(self):
+        validator, binding = self.load_binding()
+        mutated = deepcopy(binding)
+        mutated["legal_hold"] = {
+            "status": "scoped",
+            "decision_ref": "decisions/synthetic-legal-hold-v1",
+            "legal_basis_ref": "legal/synthetic-basis-v1",
+            "review_date": "2026-09-30",
+        }
+        schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+
+        issues = validator.validate_schema("deployment-binding", mutated, schemas, registry)
+
+        self.assertEqual(schema_issues, [])
+        self.assertEqual([issue.code for issue in issues], ["SCHEMA_INVALID"])
+
+    def test_duplicate_erasure_category_has_stable_reason(self):
+        validator, binding = self.load_binding()
+        mutated = deepcopy(binding)
+        mutated["erasure_map"]["entries"].append(
+            deepcopy(mutated["erasure_map"]["entries"][0])
+        )
+
+        issues = validator.validate_binding(mutated)
+
+        self.assertEqual([issue.code for issue in issues], ["ERASURE_MAP_INCOMPLETE"])
+
+    def test_erasure_map_tenant_mismatch_has_stable_reason(self):
+        validator, binding = self.load_binding()
+        mutated = deepcopy(binding)
+        mutated["erasure_map"]["tenant_id"] = "tenant-other"
+
+        issues = validator.validate_binding(mutated)
+
+        self.assertEqual([issue.code for issue in issues], ["TENANT_MISMATCH"])
+
+    def test_erasure_map_deployment_mismatch_has_stable_reason(self):
+        validator, binding = self.load_binding()
+        mutated = deepcopy(binding)
+        mutated["erasure_map"]["deployment_id"] = "deployment-other"
+
+        issues = validator.validate_binding(mutated)
+
+        self.assertEqual([issue.code for issue in issues], ["DEPLOYMENT_MISMATCH"])
+
+    def test_scoped_hold_is_orthogonal_to_complete_lifecycle(self):
+        validator, binding = self.load_binding()
+        mutated = deepcopy(binding)
+        mutated["lifecycle"] = "complete"
+        mutated["legal_hold"] = {
+            "status": "scoped",
+            "decision_ref": "decisions/synthetic-legal-hold-v1",
+            "scope_digest": "b" * 64,
+            "legal_basis_ref": "legal/synthetic-basis-v1",
+            "review_date": "2026-09-30",
+        }
+        schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+
+        issues = validator.validate_schema("deployment-binding", mutated, schemas, registry)
+        issues.extend(validator.validate_binding(mutated))
+
+        self.assertEqual(schema_issues, [])
+        self.assertEqual(issues, [])
+
+
 if __name__ == "__main__":
     unittest.main()
