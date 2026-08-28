@@ -1,0 +1,36 @@
+{
+  "schema_version": "1.0",
+  "contract_namespace": "glassity.inbound-envelope.v1",
+  "envelope_id": "123e4567-e89b-42d3-a456-426614174001",
+  "tenant_id": "tenant-alpha",
+  "deployment_id": "deployment-alpha-eu-west-1",
+  "envelope_type": "upload_pointer",
+  "source": {
+    "system": "object_storage",
+    "object_id": "synthetic-vault-export",
+    "version_id": "version-002",
+    "content_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "resolver_ref": "urn:glassity:synthetic:object:vault-export:version-002",
+    "owning_region_or_system": "eu-west-1"
+  },
+  "actor_service_id": "synthetic-inbound-adapter",
+  "created_at": "2026-08-28T12:01:00Z",
+  "provenance": {
+    "date_status": "resolved",
+    "source_date": "2026-08-27",
+    "date_kind": "document"
+  },
+  "classification": "internal",
+  "classification_policy_ref": "policies/synthetic-retention-v1",
+  "idempotency_key": "c4d22d4ffa3dda54d3f1a889f3a7b214208bd9581cb676e0ae39e53e7f96615f",
+  "destination": "_inbox/123e4567-e89b-42d3-a456-426614174001.json",
+  "extract": {
+    "content_type": "text/plain; charset=utf-8",
+    "content_transfer_encoding": "identity",
+    "classification": "internal",
+    "classification_policy_ref": "policies/synthetic-retention-v1",
+    "text": "Synthetic classified extract for contract verification.",
+    "utf8_byte_length": 55,
+    "sha256": "13e67838e3fd50f57d650c532253dfc3fb46d86c015bf9488f32b1f17b569fd9"
+  }
+}

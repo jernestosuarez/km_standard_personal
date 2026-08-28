@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 import argparse
 from dataclasses import dataclass
+from datetime import date
 import hashlib
 from importlib import metadata
 import json
 from pathlib import Path
+import re
 import sys
 from typing import Optional
 
@@ -43,6 +45,12 @@ class Issue:
     message: str
 
 
+@dataclass(frozen=True)
+class EnvelopeValidation:
+    issues: list[Issue]
+    intake_hold_required: bool
+
+
 AUTHORITY = {
     "raw_upload": ("object_storage", {"pointer"}),
     "app_object": (
@@ -77,6 +85,20 @@ ERASURE_CATEGORIES = {
     "tenant_secret",
 }
 
+IDEMPOTENCY_NAMESPACE = "glassity.inbound-envelope.v1"
+UUID4 = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+)
+FORBIDDEN_CONTENT_FIELDS = {
+    "raw_content",
+    "raw_bytes",
+    "blob",
+    "binary",
+    "binary_data",
+    "data",
+    "payload",
+}
+
 
 def canonical_json_bytes(value: object) -> bytes:
     return json.dumps(
@@ -86,6 +108,41 @@ def canonical_json_bytes(value: object) -> bytes:
 
 def sha256_hex(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
+
+
+def expected_idempotency_key(envelope: dict) -> str:
+    fields = (
+        IDEMPOTENCY_NAMESPACE,
+        envelope["tenant_id"],
+        envelope["envelope_type"],
+        envelope["source"]["system"],
+        envelope["source"]["object_id"],
+        envelope["source"]["version_id"],
+    )
+    if any(not value or "\0" in value for value in fields):
+        raise ValueError("idempotency tuple fields must be non-empty and NUL-free")
+    return sha256_hex("\0".join(fields).encode("utf-8"))
+
+
+def expected_destination(envelope_id: str) -> str:
+    if not UUID4.fullmatch(envelope_id):
+        raise ValueError("invalid canonical UUIDv4")
+    return f"_inbox/{envelope_id}.json"
+
+
+def _contains_forbidden_content_field(value: object) -> bool:
+    if isinstance(value, dict):
+        if FORBIDDEN_CONTENT_FIELDS.intersection(value):
+            return True
+        return any(_contains_forbidden_content_field(item) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_forbidden_content_field(item) for item in value)
+    return False
+
+
+def extract_measurements(extract: dict) -> tuple[int, str]:
+    raw = extract["text"].encode("utf-8")
+    return len(raw), sha256_hex(raw)
 
 
 def _ordered_unique(issues: list[Issue]) -> list[Issue]:
@@ -158,6 +215,7 @@ def validate_schema(
     issues = []
     for error in Draft202012Validator(schema, registry=registry).iter_errors(value):
         path = "/" + "/".join(str(part) for part in error.absolute_path)
+        path_parts = list(error.absolute_path)
         missing_erasure_map = (
             error.validator == "required"
             and isinstance(error.instance, dict)
@@ -169,7 +227,45 @@ def validate_schema(
             error.validator == "minItems"
             and list(error.absolute_path) == ["erasure_map", "entries"]
         )
-        if kind == "deployment-binding" and (
+        if kind == "inbound-envelope":
+            code = "SCHEMA_INVALID"
+            if path_parts == ["envelope_id"]:
+                code = "ENVELOPE_ID_INVALID"
+            elif path_parts == ["destination"]:
+                code = "UNSAFE_DESTINATION"
+            elif path_parts == ["extract", "content_transfer_encoding"]:
+                code = "EXTRACT_ENCODING_FORBIDDEN"
+            elif path_parts == ["provenance"] and isinstance(
+                error.instance, dict
+            ):
+                date_status = error.instance.get("date_status")
+                if date_status == "resolved":
+                    code = "PROVENANCE_DATE_INVALID"
+                elif date_status == "unknown":
+                    code = "PROVENANCE_UNKNOWN_REASON_REQUIRED"
+                else:
+                    code = "PROVENANCE_DATE_REQUIRED"
+            elif error.validator == "required" and isinstance(
+                error.instance, dict
+            ):
+                missing = set(error.validator_value) - set(error.instance)
+                if "source" in missing:
+                    code = "POINTER_REQUIRED"
+                    path = "/source"
+                elif "provenance" in missing or (
+                    path_parts == ["provenance"] and "date_status" in missing
+                ):
+                    code = "PROVENANCE_DATE_REQUIRED"
+                    path = "/provenance"
+            elif error.validator == "additionalProperties" and isinstance(
+                error.instance, dict
+            ):
+                allowed = set(error.schema.get("properties", {}))
+                unexpected = set(error.instance) - allowed
+                if unexpected.intersection(FORBIDDEN_CONTENT_FIELDS):
+                    code = "RAW_CONTENT_FORBIDDEN"
+            issues.append(Issue(code, path, error.message))
+        elif kind == "deployment-binding" and (
             missing_erasure_map or incomplete_erasure_entries
         ):
             issues.append(
@@ -320,6 +416,229 @@ def validate_receipt(value: dict, binding_bytes: bytes, binding: dict) -> list[I
             )
         )
     return _ordered_unique(issues)
+
+
+def validate_envelope(
+    value: dict, authority: dict, binding: dict
+) -> EnvelopeValidation:
+    issues = []
+    provenance = value.get("provenance")
+    if not isinstance(provenance, dict) or "date_status" not in provenance:
+        return EnvelopeValidation(
+            [
+                Issue(
+                    "PROVENANCE_DATE_REQUIRED",
+                    "/provenance",
+                    "a provenance date-status block is required",
+                )
+            ],
+            False,
+        )
+    if provenance.get("date_status") == "resolved":
+        try:
+            source_date = provenance["source_date"]
+            if not isinstance(source_date, str):
+                raise ValueError("source_date must be text")
+            date.fromisoformat(source_date)
+            if provenance.get("date_kind") not in {"document", "event", "version"}:
+                raise ValueError("invalid date_kind")
+        except (KeyError, TypeError, ValueError):
+            return EnvelopeValidation(
+                [
+                    Issue(
+                        "PROVENANCE_DATE_INVALID",
+                        "/provenance",
+                        "resolved provenance requires a real ISO date and approved date kind",
+                    )
+                ],
+                False,
+            )
+    if provenance.get("date_status") == "unknown" and not provenance.get("reason"):
+        return EnvelopeValidation(
+            [
+                Issue(
+                    "PROVENANCE_UNKNOWN_REASON_REQUIRED",
+                    "/provenance/reason",
+                    "unknown provenance requires a non-empty reason",
+                )
+            ],
+            True,
+        )
+    if not isinstance(value.get("source"), dict):
+        return EnvelopeValidation(
+            [
+                Issue(
+                    "POINTER_REQUIRED",
+                    "/source",
+                    "a content-addressed source pointer is required",
+                )
+            ],
+            isinstance(provenance, dict)
+            and provenance.get("date_status") == "unknown",
+        )
+    if _contains_forbidden_content_field(value):
+        return EnvelopeValidation(
+            [
+                Issue(
+                    "RAW_CONTENT_FORBIDDEN",
+                    "/",
+                    "embedded raw, blob, binary, data, or payload fields are forbidden",
+                )
+            ],
+            isinstance(provenance, dict)
+            and provenance.get("date_status") == "unknown",
+        )
+    extract = value.get("extract")
+    if isinstance(extract, dict):
+        text = extract.get("text")
+        base64_data_uri = isinstance(text, str) and re.match(
+            r"^data:[^,]*;base64,", text, re.IGNORECASE
+        )
+        if extract.get("content_transfer_encoding") != "identity" or base64_data_uri:
+            return EnvelopeValidation(
+                [
+                    Issue(
+                        "EXTRACT_ENCODING_FORBIDDEN",
+                        "/extract",
+                        "extract must be identity-encoded UTF-8 text, not base64",
+                    )
+                ],
+                isinstance(provenance, dict)
+                and provenance.get("date_status") == "unknown",
+            )
+        try:
+            extract_length, extract_digest = extract_measurements(extract)
+        except (KeyError, AttributeError, TypeError, UnicodeError):
+            extract_length = 0
+            extract_digest = ""
+        if extract_length > 65536:
+            return EnvelopeValidation(
+                [Issue("EXTRACT_TOO_LARGE", "/extract/text", "extract exceeds 65,536 UTF-8 bytes")],
+                isinstance(provenance, dict)
+                and provenance.get("date_status") == "unknown",
+            )
+        if extract.get("utf8_byte_length") != extract_length:
+            return EnvelopeValidation(
+                [
+                    Issue(
+                        "EXTRACT_LENGTH_MISMATCH",
+                        "/extract/utf8_byte_length",
+                        "declared extract length differs from exact UTF-8 bytes",
+                    )
+                ],
+                isinstance(provenance, dict)
+                and provenance.get("date_status") == "unknown",
+            )
+        if extract.get("sha256") != extract_digest:
+            return EnvelopeValidation(
+                [
+                    Issue(
+                        "EXTRACT_DIGEST_MISMATCH",
+                        "/extract/sha256",
+                        "declared extract digest differs from exact UTF-8 bytes",
+                    )
+                ],
+                isinstance(provenance, dict)
+                and provenance.get("date_status") == "unknown",
+            )
+    authority_rows = authority.get("rows", []) if isinstance(authority, dict) else []
+    authorized_source = any(
+        isinstance(row, dict)
+        and row.get("system_of_record") == value["source"].get("system")
+        and value.get("envelope_type") in row.get("envelope_types", [])
+        and (
+            value.get("envelope_type") != "upload_pointer"
+            or row.get("data_class") == "raw_upload"
+        )
+        for row in authority_rows
+    )
+    if not authorized_source:
+        issues.append(
+            Issue(
+                "SCHEMA_INVALID",
+                "/source/system",
+                "source system is not authoritative for this envelope type",
+            )
+        )
+    if binding.get("lifecycle") != "active":
+        issues.append(
+            Issue(
+                "SCHEMA_INVALID",
+                "/lifecycle",
+                "only an active deployment binding accepts inbound envelopes",
+            )
+        )
+    if value.get("tenant_id") != binding.get("tenant_id"):
+        issues.append(
+            Issue(
+                "TENANT_MISMATCH",
+                "/tenant_id",
+                "envelope tenant differs from binding tenant",
+            )
+        )
+    if value.get("deployment_id") != binding.get("deployment_id"):
+        issues.append(
+            Issue(
+                "DEPLOYMENT_MISMATCH",
+                "/deployment_id",
+                "envelope deployment differs from binding deployment",
+            )
+        )
+    bound_policy_refs = set(binding.get("tenant_policy_refs", []))
+    declared_policy_refs = [value.get("classification_policy_ref")]
+    if isinstance(extract, dict):
+        declared_policy_refs.append(extract.get("classification_policy_ref"))
+    assertion = value.get("domain_assertion")
+    if isinstance(assertion, dict) and isinstance(
+        assertion.get("classification_policy_refs"), list
+    ):
+        declared_policy_refs.extend(assertion["classification_policy_refs"])
+    if any(policy_ref not in bound_policy_refs for policy_ref in declared_policy_refs):
+        issues.append(
+            Issue(
+                "SCHEMA_INVALID",
+                "/classification_policy_ref",
+                "classification policy is not present in the binding",
+            )
+        )
+    try:
+        if value.get("idempotency_key") != expected_idempotency_key(value):
+            issues.append(
+                Issue(
+                    "IDEMPOTENCY_KEY_MISMATCH",
+                    "/idempotency_key",
+                    "idempotency key differs from recomputation",
+                )
+            )
+    except (KeyError, TypeError, ValueError):
+        issues.append(
+            Issue(
+                "IDEMPOTENCY_KEY_MISMATCH",
+                "/idempotency_key",
+                "idempotency tuple is invalid",
+            )
+        )
+    try:
+        if value.get("destination") != expected_destination(value.get("envelope_id", "")):
+            issues.append(
+                Issue(
+                    "UNSAFE_DESTINATION",
+                    "/destination",
+                    "destination differs from the derived inbox path",
+                )
+            )
+    except (TypeError, ValueError):
+        issues.append(
+            Issue(
+                "ENVELOPE_ID_INVALID",
+                "/envelope_id",
+                "envelope ID is not canonical lowercase UUIDv4",
+            )
+        )
+    return EnvelopeValidation(
+        _ordered_unique(issues),
+        isinstance(provenance, dict) and provenance.get("date_status") == "unknown",
+    )
 
 
 def schema_runtime():

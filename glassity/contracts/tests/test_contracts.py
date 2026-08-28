@@ -417,5 +417,379 @@ class ProvisioningReceiptTests(unittest.TestCase):
         self.assertEqual([issue.code for issue in issues], ["SCHEMA_INVALID"])
 
 
+class InboundEnvelopeTests(unittest.TestCase):
+    def load_envelope_bundle(self, fixture_name):
+        validator = load_validator()
+        fixture_root = CONTRACTS / "tenant-provisioning" / "fixtures" / "valid"
+        authority, authority_issues = validator.load_json(
+            CONTRACTS
+            / "authority-matrix"
+            / "fixtures"
+            / "valid"
+            / "authority-matrix.json"
+        )
+        binding, binding_issues = validator.load_json(
+            fixture_root / "deployment-binding.json"
+        )
+        envelope, envelope_issues = validator.load_json(fixture_root / fixture_name)
+        self.assertEqual(authority_issues + binding_issues + envelope_issues, [])
+        return validator, authority, binding, envelope
+
+    def test_upload_pointer_without_extract_passes(self):
+        validator, authority, binding, envelope = self.load_envelope_bundle(
+            "upload-pointer.json"
+        )
+        schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+
+        issues = validator.validate_schema(
+            "inbound-envelope", envelope, schemas, registry
+        )
+        result = validator.validate_envelope(envelope, authority, binding)
+
+        self.assertEqual(schema_issues, [])
+        self.assertEqual(issues, [])
+        self.assertEqual(result.issues, [])
+        self.assertFalse(result.intake_hold_required)
+
+    def test_upload_pointer_with_classified_extract_passes(self):
+        validator, authority, binding, envelope = self.load_envelope_bundle(
+            "upload-pointer-with-extract.json"
+        )
+        schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+
+        issues = validator.validate_schema(
+            "inbound-envelope", envelope, schemas, registry
+        )
+        result = validator.validate_envelope(envelope, authority, binding)
+
+        self.assertEqual(schema_issues, [])
+        self.assertEqual(issues, [])
+        self.assertEqual(result.issues, [])
+        self.assertFalse(result.intake_hold_required)
+
+    def test_domain_event_with_resolved_date_passes(self):
+        validator, authority, binding, envelope = self.load_envelope_bundle(
+            "domain-event.json"
+        )
+        schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+
+        issues = validator.validate_schema(
+            "inbound-envelope", envelope, schemas, registry
+        )
+        result = validator.validate_envelope(envelope, authority, binding)
+
+        self.assertEqual(schema_issues, [])
+        self.assertEqual(issues, [])
+        self.assertEqual(result.issues, [])
+        self.assertFalse(result.intake_hold_required)
+
+    def test_unknown_date_is_valid_but_requires_intake_hold(self):
+        validator, authority, binding, envelope = self.load_envelope_bundle(
+            "unknown-date.json"
+        )
+        schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+
+        issues = validator.validate_schema(
+            "inbound-envelope", envelope, schemas, registry
+        )
+        result = validator.validate_envelope(envelope, authority, binding)
+
+        self.assertEqual(schema_issues, [])
+        self.assertEqual(issues, [])
+        self.assertEqual(result.issues, [])
+        self.assertTrue(result.intake_hold_required)
+
+    def assert_envelope_reason(self, envelope, expected_reason):
+        validator, authority, binding, _ = self.load_envelope_bundle(
+            "upload-pointer-with-extract.json"
+        )
+        result = validator.validate_envelope(envelope, authority, binding)
+        self.assertEqual([issue.code for issue in result.issues], [expected_reason])
+
+    def test_missing_pointer_has_stable_reason(self):
+        _, _, _, envelope = self.load_envelope_bundle("upload-pointer.json")
+        mutated = deepcopy(envelope)
+        del mutated["source"]
+
+        self.assert_envelope_reason(mutated, "POINTER_REQUIRED")
+
+    def test_embedded_raw_content_has_stable_reason(self):
+        _, _, _, envelope = self.load_envelope_bundle("upload-pointer.json")
+        for forbidden_field in ("raw_content", "binary", "blob", "data"):
+            with self.subTest(forbidden_field=forbidden_field):
+                mutated = deepcopy(envelope)
+                mutated[forbidden_field] = "synthetic forbidden content"
+                self.assert_envelope_reason(mutated, "RAW_CONTENT_FORBIDDEN")
+
+    def test_base64_transfer_encoding_has_stable_reason(self):
+        _, _, _, envelope = self.load_envelope_bundle(
+            "upload-pointer-with-extract.json"
+        )
+        mutated = deepcopy(envelope)
+        mutated["extract"]["content_transfer_encoding"] = "base64"
+
+        self.assert_envelope_reason(mutated, "EXTRACT_ENCODING_FORBIDDEN")
+
+    def test_recognizable_base64_data_uri_has_stable_reason(self):
+        _, _, _, envelope = self.load_envelope_bundle(
+            "upload-pointer-with-extract.json"
+        )
+        mutated = deepcopy(envelope)
+        mutated["extract"]["text"] = "DaTa:text/plain;BaSe64,U3ludGhldGlj"
+
+        self.assert_envelope_reason(mutated, "EXTRACT_ENCODING_FORBIDDEN")
+
+    def test_extract_over_utf8_byte_limit_has_stable_reason(self):
+        _, _, _, envelope = self.load_envelope_bundle(
+            "upload-pointer-with-extract.json"
+        )
+        mutated = deepcopy(envelope)
+        mutated["extract"]["text"] = "a" * 65537
+
+        self.assert_envelope_reason(mutated, "EXTRACT_TOO_LARGE")
+
+    def test_extract_at_exact_utf8_byte_limit_passes(self):
+        validator, authority, binding, envelope = self.load_envelope_bundle(
+            "upload-pointer-with-extract.json"
+        )
+        mutated = deepcopy(envelope)
+        mutated["extract"]["text"] = "é" * 32768
+        length, digest = validator.extract_measurements(mutated["extract"])
+        mutated["extract"]["utf8_byte_length"] = length
+        mutated["extract"]["sha256"] = digest
+        schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+
+        issues = validator.validate_schema(
+            "inbound-envelope", mutated, schemas, registry
+        )
+        result = validator.validate_envelope(mutated, authority, binding)
+
+        self.assertEqual(length, 65536)
+        self.assertEqual(schema_issues, [])
+        self.assertEqual(issues, [])
+        self.assertEqual(result.issues, [])
+
+    def test_false_extract_byte_length_has_stable_reason(self):
+        _, _, _, envelope = self.load_envelope_bundle(
+            "upload-pointer-with-extract.json"
+        )
+        mutated = deepcopy(envelope)
+        mutated["extract"]["utf8_byte_length"] += 1
+
+        self.assert_envelope_reason(mutated, "EXTRACT_LENGTH_MISMATCH")
+
+    def test_changed_extract_with_old_digest_has_stable_reason(self):
+        _, _, _, envelope = self.load_envelope_bundle(
+            "upload-pointer-with-extract.json"
+        )
+        mutated = deepcopy(envelope)
+        mutated["extract"]["text"] = mutated["extract"]["text"][:-1] + "!"
+
+        self.assert_envelope_reason(mutated, "EXTRACT_DIGEST_MISMATCH")
+
+    def test_missing_provenance_has_stable_reason(self):
+        _, _, _, envelope = self.load_envelope_bundle("upload-pointer.json")
+        mutated = deepcopy(envelope)
+        del mutated["provenance"]
+
+        self.assert_envelope_reason(mutated, "PROVENANCE_DATE_REQUIRED")
+
+    def test_invalid_resolved_date_has_stable_reason(self):
+        _, _, _, envelope = self.load_envelope_bundle("upload-pointer.json")
+        mutated = deepcopy(envelope)
+        mutated["provenance"]["source_date"] = "2026-02-30"
+
+        self.assert_envelope_reason(mutated, "PROVENANCE_DATE_INVALID")
+
+    def test_unknown_date_without_reason_has_stable_reason(self):
+        _, _, _, envelope = self.load_envelope_bundle("unknown-date.json")
+        mutated = deepcopy(envelope)
+        del mutated["provenance"]["reason"]
+
+        self.assert_envelope_reason(
+            mutated, "PROVENANCE_UNKNOWN_REASON_REQUIRED"
+        )
+
+    def test_noncanonical_envelope_ids_have_stable_reason(self):
+        _, _, _, envelope = self.load_envelope_bundle("upload-pointer.json")
+        invalid_ids = (
+            envelope["envelope_id"].upper(),
+            "123e4567-e89b-12d3-a456-426614174000",
+        )
+
+        for envelope_id in invalid_ids:
+            with self.subTest(envelope_id=envelope_id):
+                mutated = deepcopy(envelope)
+                mutated["envelope_id"] = envelope_id
+                self.assert_envelope_reason(mutated, "ENVELOPE_ID_INVALID")
+
+    def test_destination_mismatch_has_stable_reason(self):
+        _, _, _, envelope = self.load_envelope_bundle("upload-pointer.json")
+        mutated = deepcopy(envelope)
+        mutated["destination"] = "sources/synthetic.json"
+
+        self.assert_envelope_reason(mutated, "UNSAFE_DESTINATION")
+
+    def test_changed_idempotency_tuple_with_old_key_has_stable_reason(self):
+        _, _, _, envelope = self.load_envelope_bundle("upload-pointer.json")
+        mutated = deepcopy(envelope)
+        mutated["source"]["version_id"] = "version-002"
+
+        self.assert_envelope_reason(mutated, "IDEMPOTENCY_KEY_MISMATCH")
+
+    def test_pointer_system_must_match_envelope_authority(self):
+        validator, authority, binding, envelope = self.load_envelope_bundle(
+            "upload-pointer.json"
+        )
+        mutated = deepcopy(envelope)
+        mutated["source"]["system"] = "event_store"
+        mutated["idempotency_key"] = validator.expected_idempotency_key(mutated)
+
+        result = validator.validate_envelope(mutated, authority, binding)
+
+        self.assertEqual([issue.code for issue in result.issues], ["SCHEMA_INVALID"])
+
+    def test_pointer_rejects_http_resolvers_and_credential_fields(self):
+        validator, _, _, envelope = self.load_envelope_bundle("upload-pointer.json")
+        schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+        mutations = []
+
+        http_resolver = deepcopy(envelope)
+        http_resolver["source"]["resolver_ref"] = "https://example.invalid/object"
+        mutations.append(http_resolver)
+
+        credential_field = deepcopy(envelope)
+        credential_field["source"]["bearer_token"] = "synthetic-secret"
+        mutations.append(credential_field)
+
+        self.assertEqual(schema_issues, [])
+        for mutated in mutations:
+            with self.subTest(source=mutated["source"]):
+                issues = validator.validate_schema(
+                    "inbound-envelope", mutated, schemas, registry
+                )
+                self.assertEqual([issue.code for issue in issues], ["SCHEMA_INVALID"])
+
+    def test_envelope_tenant_must_match_binding(self):
+        validator, authority, binding, envelope = self.load_envelope_bundle(
+            "upload-pointer.json"
+        )
+        mutated = deepcopy(envelope)
+        mutated["tenant_id"] = "tenant-other"
+        mutated["idempotency_key"] = validator.expected_idempotency_key(mutated)
+
+        result = validator.validate_envelope(mutated, authority, binding)
+
+        self.assertEqual([issue.code for issue in result.issues], ["TENANT_MISMATCH"])
+
+    def test_envelope_deployment_must_match_binding(self):
+        validator, authority, binding, envelope = self.load_envelope_bundle(
+            "upload-pointer.json"
+        )
+        mutated = deepcopy(envelope)
+        mutated["deployment_id"] = "deployment-other"
+
+        result = validator.validate_envelope(mutated, authority, binding)
+
+        self.assertEqual(
+            [issue.code for issue in result.issues], ["DEPLOYMENT_MISMATCH"]
+        )
+
+    def test_envelope_policy_must_be_bound_to_tenant(self):
+        validator, authority, binding, envelope = self.load_envelope_bundle(
+            "upload-pointer.json"
+        )
+        mutated = deepcopy(envelope)
+        mutated["classification_policy_ref"] = "policies/unbound-synthetic-policy"
+
+        result = validator.validate_envelope(mutated, authority, binding)
+
+        self.assertEqual([issue.code for issue in result.issues], ["SCHEMA_INVALID"])
+
+    def test_only_active_binding_accepts_inbound_envelopes(self):
+        validator, authority, binding, envelope = self.load_envelope_bundle(
+            "upload-pointer.json"
+        )
+        frozen_binding = deepcopy(binding)
+        frozen_binding["lifecycle"] = "frozen"
+
+        result = validator.validate_envelope(envelope, authority, frozen_binding)
+
+        self.assertEqual([issue.code for issue in result.issues], ["SCHEMA_INVALID"])
+
+    def test_nested_classification_policies_must_be_bound_to_tenant(self):
+        validator, authority, binding, upload = self.load_envelope_bundle(
+            "upload-pointer-with-extract.json"
+        )
+        mutated_upload = deepcopy(upload)
+        mutated_upload["extract"]["classification_policy_ref"] = (
+            "policies/unbound-synthetic-policy"
+        )
+        _, _, _, domain_event = self.load_envelope_bundle("domain-event.json")
+        mutated_event = deepcopy(domain_event)
+        mutated_event["domain_assertion"]["classification_policy_refs"] = [
+            "policies/unbound-synthetic-policy"
+        ]
+
+        for envelope in (mutated_upload, mutated_event):
+            with self.subTest(envelope_type=envelope["envelope_type"]):
+                result = validator.validate_envelope(envelope, authority, binding)
+                self.assertEqual(
+                    [issue.code for issue in result.issues], ["SCHEMA_INVALID"]
+                )
+
+    def test_schema_failures_use_their_named_envelope_reasons(self):
+        validator, _, _, baseline = self.load_envelope_bundle(
+            "upload-pointer-with-extract.json"
+        )
+        _, _, _, unknown_date = self.load_envelope_bundle("unknown-date.json")
+        mutations = []
+
+        uppercase_id = deepcopy(baseline)
+        uppercase_id["envelope_id"] = uppercase_id["envelope_id"].upper()
+        mutations.append((uppercase_id, "ENVELOPE_ID_INVALID"))
+
+        unsafe_destination = deepcopy(baseline)
+        unsafe_destination["destination"] = "sources/synthetic.json"
+        mutations.append((unsafe_destination, "UNSAFE_DESTINATION"))
+
+        missing_pointer = deepcopy(baseline)
+        del missing_pointer["source"]
+        mutations.append((missing_pointer, "POINTER_REQUIRED"))
+
+        embedded_raw = deepcopy(baseline)
+        embedded_raw["raw_content"] = "synthetic"
+        mutations.append((embedded_raw, "RAW_CONTENT_FORBIDDEN"))
+
+        base64_encoding = deepcopy(baseline)
+        base64_encoding["extract"]["content_transfer_encoding"] = "base64"
+        mutations.append((base64_encoding, "EXTRACT_ENCODING_FORBIDDEN"))
+
+        missing_provenance = deepcopy(baseline)
+        del missing_provenance["provenance"]
+        mutations.append((missing_provenance, "PROVENANCE_DATE_REQUIRED"))
+
+        invalid_date = deepcopy(baseline)
+        invalid_date["provenance"]["source_date"] = "not-a-date"
+        mutations.append((invalid_date, "PROVENANCE_DATE_INVALID"))
+
+        missing_unknown_reason = deepcopy(unknown_date)
+        del missing_unknown_reason["provenance"]["reason"]
+        mutations.append(
+            (missing_unknown_reason, "PROVENANCE_UNKNOWN_REASON_REQUIRED")
+        )
+
+        schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+        self.assertEqual(schema_issues, [])
+        for envelope, expected_reason in mutations:
+            with self.subTest(expected_reason=expected_reason):
+                issues = validator.validate_schema(
+                    "inbound-envelope", envelope, schemas, registry
+                )
+                self.assertEqual(
+                    [issue.code for issue in issues], [expected_reason]
+                )
+
+
 if __name__ == "__main__":
     unittest.main()

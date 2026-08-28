@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0",
+  "contract_namespace": "glassity.inbound-envelope.v1",
+  "envelope_id": "123e4567-e89b-42d3-a456-426614174000",
+  "tenant_id": "tenant-alpha",
+  "deployment_id": "deployment-alpha-eu-west-1",
+  "envelope_type": "upload_pointer",
+  "source": {
+    "system": "object_storage",
+    "object_id": "synthetic-vault-export",
+    "version_id": "version-001",
+    "content_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "resolver_ref": "urn:glassity:synthetic:object:vault-export:version-001",
+    "owning_region_or_system": "eu-west-1"
+  },
+  "actor_service_id": "synthetic-inbound-adapter",
+  "created_at": "2026-08-28T12:00:00Z",
+  "provenance": {
+    "date_status": "resolved",
+    "source_date": "2026-08-27",
+    "date_kind": "document"
+  },
+  "classification": "internal",
+  "classification_policy_ref": "policies/synthetic-retention-v1",
+  "idempotency_key": "e31cfb87e0301671c02211c5c9e0761363f8c9aee19a7315a7e50e45a2750b42",
+  "destination": "_inbox/123e4567-e89b-42d3-a456-426614174000.json"
+}
