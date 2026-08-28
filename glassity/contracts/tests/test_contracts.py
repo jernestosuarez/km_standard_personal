@@ -305,5 +305,117 @@ class DeploymentBindingTests(unittest.TestCase):
         self.assertEqual(issues, [])
 
 
+class ProvisioningReceiptTests(unittest.TestCase):
+    def load_receipt_bundle(self):
+        validator = load_validator()
+        binding_path = (
+            CONTRACTS
+            / "tenant-provisioning"
+            / "fixtures"
+            / "valid"
+            / "deployment-binding.json"
+        )
+        binding, binding_issues = validator.load_json(binding_path)
+        receipt, receipt_issues = validator.load_json(
+            CONTRACTS
+            / "tenant-provisioning"
+            / "fixtures"
+            / "valid"
+            / "provisioning-receipt.json"
+        )
+        self.assertEqual(binding_issues, [])
+        self.assertEqual(receipt_issues, [])
+        return validator, binding_path.read_bytes(), binding, receipt
+
+    def test_declared_provisioning_receipt_passes(self):
+        validator, binding_bytes, binding, receipt = self.load_receipt_bundle()
+        schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+
+        issues = validator.validate_schema(
+            "provisioning-receipt", receipt, schemas, registry
+        )
+        issues.extend(validator.validate_receipt(receipt, binding_bytes, binding))
+
+        self.assertEqual(schema_issues, [])
+        self.assertEqual(issues, [])
+
+    def test_binding_digest_is_recomputed_from_exact_file_bytes(self):
+        validator, binding_bytes, binding, receipt = self.load_receipt_bundle()
+        mutated = deepcopy(receipt)
+        mutated["binding_sha256"] = "0" * 64
+
+        issues = validator.validate_receipt(mutated, binding_bytes, binding)
+
+        self.assertEqual(
+            [issue.code for issue in issues], ["PROVISIONING_DIGEST_MISMATCH"]
+        )
+
+    def test_erasure_map_digest_is_recomputed_from_canonical_json(self):
+        validator, binding_bytes, binding, receipt = self.load_receipt_bundle()
+        mutated = deepcopy(receipt)
+        mutated["erasure_map_sha256"] = "0" * 64
+
+        issues = validator.validate_receipt(mutated, binding_bytes, binding)
+
+        self.assertEqual(
+            [issue.code for issue in issues], ["PROVISIONING_DIGEST_MISMATCH"]
+        )
+        self.assertEqual(issues[0].path, "/erasure_map_sha256")
+
+    def test_multiple_digest_defects_emit_the_reason_once(self):
+        validator, binding_bytes, binding, receipt = self.load_receipt_bundle()
+        mutated = deepcopy(receipt)
+        mutated["binding_sha256"] = "0" * 64
+        mutated["erasure_map_sha256"] = "0" * 64
+
+        issues = validator.validate_receipt(mutated, binding_bytes, binding)
+
+        self.assertEqual(
+            [issue.code for issue in issues], ["PROVISIONING_DIGEST_MISMATCH"]
+        )
+
+    def test_overlay_parent_must_equal_declared_initialization_commit(self):
+        validator, binding_bytes, binding, receipt = self.load_receipt_bundle()
+        mutated = deepcopy(receipt)
+        mutated["overlay_parent_commit"] = "c" * 40
+
+        issues = validator.validate_receipt(mutated, binding_bytes, binding)
+
+        self.assertEqual(
+            [issue.code for issue in issues], ["PROVISIONING_ORDER_INVALID"]
+        )
+
+    def test_receipt_identity_and_pins_must_match_binding(self):
+        validator, binding_bytes, binding, receipt = self.load_receipt_bundle()
+        mutations = (
+            ("tenant_id", "tenant-other", "TENANT_MISMATCH"),
+            ("deployment_id", "deployment-other", "DEPLOYMENT_MISMATCH"),
+            ("canonical_pin", "c" * 40, "PROVISIONING_ORDER_INVALID"),
+            ("overlay_revision", "glassity-overlay-other", "PROVISIONING_ORDER_INVALID"),
+        )
+
+        for field, value, reason in mutations:
+            with self.subTest(field=field):
+                mutated = deepcopy(receipt)
+                mutated[field] = value
+
+                issues = validator.validate_receipt(mutated, binding_bytes, binding)
+
+                self.assertEqual([issue.code for issue in issues], [reason])
+
+    def test_proof_level_is_declared_parent_relationship_only(self):
+        validator, _, _, receipt = self.load_receipt_bundle()
+        mutated = deepcopy(receipt)
+        mutated["proof_level"] = "git_ancestry_proved"
+        schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
+
+        issues = validator.validate_schema(
+            "provisioning-receipt", mutated, schemas, registry
+        )
+
+        self.assertEqual(schema_issues, [])
+        self.assertEqual([issue.code for issue in issues], ["SCHEMA_INVALID"])
+
+
 if __name__ == "__main__":
     unittest.main()

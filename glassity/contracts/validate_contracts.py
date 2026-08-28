@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 from dataclasses import dataclass
+import hashlib
 from importlib import metadata
 import json
 from pathlib import Path
@@ -75,6 +76,16 @@ ERASURE_CATEGORIES = {
     "export_staging",
     "tenant_secret",
 }
+
+
+def canonical_json_bytes(value: object) -> bytes:
+    return json.dumps(
+        value, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+
+
+def sha256_hex(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()
 
 
 def _ordered_unique(issues: list[Issue]) -> list[Issue]:
@@ -253,6 +264,59 @@ def validate_binding(value: dict) -> list[Issue]:
                 "DEPLOYMENT_MISMATCH",
                 "/erasure_map/deployment_id",
                 "erasure map deployment differs from binding deployment",
+            )
+        )
+    return _ordered_unique(issues)
+
+
+def validate_receipt(value: dict, binding_bytes: bytes, binding: dict) -> list[Issue]:
+    issues = []
+    if value.get("tenant_id") != binding.get("tenant_id"):
+        issues.append(
+            Issue(
+                "TENANT_MISMATCH",
+                "/tenant_id",
+                "receipt tenant differs from binding tenant",
+            )
+        )
+    if value.get("deployment_id") != binding.get("deployment_id"):
+        issues.append(
+            Issue(
+                "DEPLOYMENT_MISMATCH",
+                "/deployment_id",
+                "receipt deployment differs from binding deployment",
+            )
+        )
+    order_mismatch = (
+        value.get("overlay_parent_commit")
+        != value.get("canonical_initialization_commit")
+        or value.get("canonical_pin") != binding.get("canonical_commit")
+        or value.get("overlay_revision") != binding.get("overlay_revision")
+    )
+    if order_mismatch:
+        issues.append(
+            Issue(
+                "PROVISIONING_ORDER_INVALID",
+                "/",
+                "receipt declaration differs from its binding or expected parent",
+            )
+        )
+    erasure_map = binding.get("erasure_map") if isinstance(binding, dict) else None
+    binding_digest_matches = value.get("binding_sha256") == sha256_hex(binding_bytes)
+    erasure_map_digest_matches = value.get("erasure_map_sha256") == sha256_hex(
+        canonical_json_bytes(erasure_map)
+    )
+    if not binding_digest_matches or not erasure_map_digest_matches:
+        path = (
+            "/binding_sha256"
+            if not binding_digest_matches
+            else "/erasure_map_sha256"
+        )
+        issues.append(
+            Issue(
+                "PROVISIONING_DIGEST_MISMATCH",
+                path,
+                "receipt digest does not match recomputed contract bytes",
             )
         )
     return _ordered_unique(issues)
