@@ -1,0 +1,56 @@
+[
+  {
+    "case_id": "authority-row-missing",
+    "artifact": "authority-matrix.json",
+    "operation": "remove",
+    "path": "/rows/0",
+    "expected_reason": "AUTHORITY_SET_INCOMPLETE"
+  },
+  {
+    "case_id": "authority-row-extra",
+    "artifact": "authority-matrix.json",
+    "operation": "append_copy",
+    "path": "/rows/0",
+    "value": {"data_class": "unknown_class"},
+    "expected_reason": "AUTHORITY_SET_UNKNOWN"
+  },
+  {
+    "case_id": "authority-row-duplicate",
+    "artifact": "authority-matrix.json",
+    "operation": "append_copy",
+    "path": "/rows/0",
+    "expected_reason": "AUTHORITY_SET_UNKNOWN"
+  },
+  {
+    "case_id": "raw-upload-remapped-to-git",
+    "artifact": "authority-matrix.json",
+    "operation": "replace",
+    "path": "/rows/0/system_of_record",
+    "value": "tenant_hub",
+    "expected_reason": "AUTHORITY_SYSTEM_MISMATCH"
+  },
+  {
+    "case_id": "app-object-remapped-to-git",
+    "artifact": "authority-matrix.json",
+    "operation": "replace",
+    "path": "/rows/1/system_of_record",
+    "value": "tenant_hub",
+    "expected_reason": "AUTHORITY_SYSTEM_MISMATCH"
+  },
+  {
+    "case_id": "app-event-remapped-to-git",
+    "artifact": "authority-matrix.json",
+    "operation": "replace",
+    "path": "/rows/2/system_of_record",
+    "value": "tenant_hub",
+    "expected_reason": "AUTHORITY_SYSTEM_MISMATCH"
+  },
+  {
+    "case_id": "pending-answer-remapped-to-git",
+    "artifact": "authority-matrix.json",
+    "operation": "replace",
+    "path": "/rows/10/system_of_record",
+    "value": "tenant_hub",
+    "expected_reason": "AUTHORITY_SYSTEM_MISMATCH"
+  }
+]

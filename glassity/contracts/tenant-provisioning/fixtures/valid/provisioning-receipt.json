@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "receipt_id": "urn:glassity:synthetic:provisioning-receipt:tenant-alpha:v1",
+  "tenant_id": "tenant-alpha",
+  "deployment_id": "deployment-alpha-eu-west-1",
+  "canonical_pin": "9d43e19300000000000000000000000000000000",
+  "canonical_initialization_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "overlay_revision": "glassity-overlay-v1",
+  "overlay_parent_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "overlay_commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "binding_sha256": "eb14f8e769bacf11e27fc6eef1d62daf942f0c097545b0de16719ab77e2481f4",
+  "erasure_map_sha256": "0887c41d39fb55ee2bc5fb4c4ca2586d50d8f3dd89cdaa077558875a7ce4019e",
+  "actor_service_id": "service:synthetic-glassity-provisioner",
+  "initialized_at": "2026-08-28T10:01:00Z",
+  "overlay_applied_at": "2026-08-28T10:02:00Z",
+  "proof_level": "declared_parent_relationship"
+}

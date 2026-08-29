@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "binding_id": "urn:glassity:synthetic:binding:tenant-alpha:v1",
+  "binding_revision": "1",
+  "tenant_id": "tenant-alpha",
+  "deployment_id": "deployment-alpha-eu-west-1",
+  "canonical_commit": "9d43e19300000000000000000000000000000000",
+  "overlay_revision": "glassity-overlay-v1",
+  "operator_profile_ref": "operator-profiles/synthetic-v1.json",
+  "tenant_policy_refs": ["urn:glassity:synthetic:policy:classification", "urn:glassity:synthetic:policy:retention"],
+  "approval_record": "decisions/synthetic-binding-approval-v1",
+  "repository": {
+    "provider": "github",
+    "repository_id": "synthetic/tenant-alpha-hub",
+    "approved_refs": ["refs/heads/main"]
+  },
+  "operational_region": "eu-west-1",
+  "lifecycle": "active",
+  "legal_hold": null,
+  "erasure_map": {
+    "schema_version": "1.0",
+    "map_id": "urn:glassity:synthetic:erasure-map:tenant-alpha:v1",
+    "revision": "1",
+    "tenant_id": "tenant-alpha",
+    "deployment_id": "deployment-alpha-eu-west-1",
+    "entries": [
+      {"category": "iam_session", "data_classes": ["identity_session"], "owning_system": "identity_provider", "selectors": ["tenant_id", "subject_id"], "locations": ["session_store"], "freeze_control": "revoke tenant sessions", "deletion_mechanism": "delete tenant sessions", "deletion_start_bound": "day 30", "provider_backup_expiry": "provider schedule", "verification_query": "no tenant sessions", "restore_deletion_ledger": "replay tenant deletion ledger", "non_content_evidence": "session deletion count", "legal_hold_behavior": "retain only scoped records"},
+      {"category": "worker_transient", "data_classes": ["worker_input", "worker_output"], "owning_system": "worker_runtime", "selectors": ["tenant_id", "run_id"], "locations": ["worker filesystem"], "freeze_control": "deny new runs", "deletion_mechanism": "destroy run context", "deletion_start_bound": "run termination", "provider_backup_expiry": "none", "verification_query": "no tenant run context", "restore_deletion_ledger": "not restorable", "non_content_evidence": "run cleanup receipt", "legal_hold_behavior": "hold evidence only"},
+      {"category": "pending_answer_queue", "data_classes": ["pending_answer"], "owning_system": "pending_answer_store", "selectors": ["tenant_id", "answer_id"], "locations": ["pending answer database"], "freeze_control": "stop dequeue and enqueue", "deletion_mechanism": "delete tenant rows", "deletion_start_bound": "day 30", "provider_backup_expiry": "backup lifecycle", "verification_query": "no tenant pending answers", "restore_deletion_ledger": "replay tenant deletion ledger", "non_content_evidence": "row deletion count", "legal_hold_behavior": "retain scoped rows"},
+      {"category": "app_database_event", "data_classes": ["app_object", "app_event"], "owning_system": "application_database", "selectors": ["tenant_id", "record_id"], "locations": ["application database", "event store"], "freeze_control": "RLS denies tenant access", "deletion_mechanism": "delete tenant rows and events", "deletion_start_bound": "day 30", "provider_backup_expiry": "backup lifecycle", "verification_query": "no tenant rows or events", "restore_deletion_ledger": "replay tenant deletion ledger", "non_content_evidence": "database deletion receipt", "legal_hold_behavior": "retain scoped rows"},
+      {"category": "derived_projection_index", "data_classes": ["projection", "index"], "owning_system": "projection_service", "selectors": ["tenant_id", "source_lineage"], "locations": ["search index", "knowledge graph"], "freeze_control": "disable tenant projections", "deletion_mechanism": "delete tenant projections", "deletion_start_bound": "day 30", "provider_backup_expiry": "projection backup lifecycle", "verification_query": "no tenant projections", "restore_deletion_ledger": "replay tenant deletion ledger", "non_content_evidence": "projection deletion receipt", "legal_hold_behavior": "retain scoped projections"},
+      {"category": "s3_object_version", "data_classes": ["raw_upload"], "owning_system": "object_storage", "selectors": ["tenant_id", "object_key", "version_id"], "locations": ["quarantine bucket", "clean bucket"], "freeze_control": "deny tenant object access", "deletion_mechanism": "delete every object version", "deletion_start_bound": "day 30", "provider_backup_expiry": "version lifecycle", "verification_query": "no tenant object versions", "restore_deletion_ledger": "not restorable without ledger replay", "non_content_evidence": "object version deletion manifest", "legal_hold_behavior": "retain scoped versions"},
+      {"category": "github_repository", "data_classes": ["tenant_hub"], "owning_system": "github", "selectors": ["tenant_id", "repository_id"], "locations": ["tenant repository"], "freeze_control": "revoke broker lease", "deletion_mechanism": "delete repository or reconstitute", "deletion_start_bound": "day 30", "provider_backup_expiry": "90 day recovery window", "verification_query": "repository unavailable and recovery expired", "restore_deletion_ledger": "replay deletion before release", "non_content_evidence": "repository deletion receipt", "legal_hold_behavior": "retain scoped repository content"},
+      {"category": "backup_recovery", "data_classes": ["backup"], "owning_system": "backup_service", "selectors": ["tenant_id", "backup_id"], "locations": ["managed backups"], "freeze_control": "deny tenant restore release", "deletion_mechanism": "expire backups", "deletion_start_bound": "day 30", "provider_backup_expiry": "configured backup expiry", "verification_query": "no releasable tenant backup", "restore_deletion_ledger": "replay deletion before release", "non_content_evidence": "backup expiry receipt", "legal_hold_behavior": "retain scoped backup set"},
+      {"category": "scan_event_finding", "data_classes": ["scan_event", "scan_finding"], "owning_system": "malware_scanner", "selectors": ["tenant_id", "scan_id"], "locations": ["scan event store"], "freeze_control": "deny new scans", "deletion_mechanism": "delete tenant scan artifacts", "deletion_start_bound": "day 30", "provider_backup_expiry": "scanner retention schedule", "verification_query": "no tenant scan artifacts", "restore_deletion_ledger": "replay tenant deletion ledger", "non_content_evidence": "scan deletion count", "legal_hold_behavior": "retain scoped findings"},
+      {"category": "audit_log", "data_classes": ["audit_event"], "owning_system": "audit_store", "selectors": ["tenant_id", "event_id"], "locations": ["audit log"], "freeze_control": "append terminal event only", "deletion_mechanism": "apply approved retention", "deletion_start_bound": "day 30", "provider_backup_expiry": "audit retention schedule", "verification_query": "only permitted non-content evidence remains", "restore_deletion_ledger": "replay retention decision", "non_content_evidence": "audit retention receipt", "legal_hold_behavior": "retain scoped audit evidence"},
+      {"category": "anthropic_control_plane", "data_classes": ["session", "file", "memory"], "owning_system": "model_provider", "selectors": ["tenant_id", "provider_resource_id"], "locations": ["provider control plane"], "freeze_control": "deny new provider calls", "deletion_mechanism": "delete sessions files and memories", "deletion_start_bound": "day 30", "provider_backup_expiry": "provider deletion schedule", "verification_query": "provider acknowledges every resource deletion", "restore_deletion_ledger": "not restorable", "non_content_evidence": "provider acknowledgements", "legal_hold_behavior": "retain scoped provider resources"},
+      {"category": "export_staging", "data_classes": ["tenant_export"], "owning_system": "export_service", "selectors": ["tenant_id", "export_id"], "locations": ["export staging"], "freeze_control": "governed export access only", "deletion_mechanism": "delete staged exports", "deletion_start_bound": "day 30", "provider_backup_expiry": "export lifecycle", "verification_query": "no tenant exports", "restore_deletion_ledger": "replay tenant deletion ledger", "non_content_evidence": "export deletion count", "legal_hold_behavior": "retain scoped exports"},
+      {"category": "tenant_secret", "data_classes": ["tenant_credential"], "owning_system": "secrets_manager", "selectors": ["tenant_id", "secret_id"], "locations": ["secrets manager"], "freeze_control": "revoke secret use", "deletion_mechanism": "schedule secret deletion", "deletion_start_bound": "day 0", "provider_backup_expiry": "provider recovery window", "verification_query": "secret cannot be retrieved", "restore_deletion_ledger": "do not restore revoked secret", "non_content_evidence": "secret deletion receipt", "legal_hold_behavior": "never retain active credential"}
+    ]
+  },
+  "created_at": "2026-08-28T10:00:00Z",
+  "effective_at": "2026-08-28T10:00:00Z",
+  "lifecycle_evidence_ref": "evidence/synthetic-lifecycle-active-v1"
+}

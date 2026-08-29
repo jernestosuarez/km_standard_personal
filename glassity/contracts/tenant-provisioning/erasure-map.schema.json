@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glassity:contract:tenant-provisioning:erasure-map:schema:v1",
+  "title": "Glassity per-tenant erasure map",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "map_id",
+    "revision",
+    "tenant_id",
+    "deployment_id",
+    "entries"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "map_id": {"type": "string", "minLength": 1},
+    "revision": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "deployment_id": {"type": "string", "minLength": 1},
+    "entries": {
+      "type": "array",
+      "minItems": 13,
+      "items": {"$ref": "#/$defs/entry"}
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "category",
+        "data_classes",
+        "owning_system",
+        "selectors",
+        "locations",
+        "freeze_control",
+        "deletion_mechanism",
+        "deletion_start_bound",
+        "provider_backup_expiry",
+        "verification_query",
+        "restore_deletion_ledger",
+        "non_content_evidence",
+        "legal_hold_behavior"
+      ],
+      "properties": {
+        "category": {
+          "enum": [
+            "iam_session",
+            "worker_transient",
+            "pending_answer_queue",
+            "app_database_event",
+            "derived_projection_index",
+            "s3_object_version",
+            "github_repository",
+            "backup_recovery",
+            "scan_event_finding",
+            "audit_log",
+            "anthropic_control_plane",
+            "export_staging",
+            "tenant_secret"
+          ]
+        },
+        "data_classes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "owning_system": {"type": "string", "minLength": 1},
+        "selectors": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "locations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "freeze_control": {"type": "string", "minLength": 1},
+        "deletion_mechanism": {"type": "string", "minLength": 1},
+        "deletion_start_bound": {"type": "string", "minLength": 1},
+        "provider_backup_expiry": {"type": "string", "minLength": 1},
+        "verification_query": {"type": "string", "minLength": 1},
+        "restore_deletion_ledger": {"type": "string", "minLength": 1},
+        "non_content_evidence": {"type": "string", "minLength": 1},
+        "legal_hold_behavior": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

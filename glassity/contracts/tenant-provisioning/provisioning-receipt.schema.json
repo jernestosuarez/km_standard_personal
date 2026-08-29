@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:glassity:contract:tenant-provisioning:provisioning-receipt:schema:v1",
+  "title": "Glassity declared parent relationship provisioning receipt",
+  "description": "Declares provisioning inputs and an expected parent relationship; it does not prove Git ancestry.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "tenant_id",
+    "deployment_id",
+    "canonical_pin",
+    "canonical_initialization_commit",
+    "overlay_revision",
+    "overlay_parent_commit",
+    "overlay_commit",
+    "binding_sha256",
+    "erasure_map_sha256",
+    "actor_service_id",
+    "initialized_at",
+    "overlay_applied_at",
+    "proof_level"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "receipt_id": {"type": "string", "minLength": 1},
+    "tenant_id": {"type": "string", "minLength": 1},
+    "deployment_id": {"type": "string", "minLength": 1},
+    "canonical_pin": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "canonical_initialization_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "overlay_revision": {"type": "string", "minLength": 1},
+    "overlay_parent_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "overlay_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "binding_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "erasure_map_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "actor_service_id": {"type": "string", "minLength": 1},
+    "initialized_at": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "overlay_applied_at": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "proof_level": {"const": "declared_parent_relationship"}
+  }
+}

@@ -1,0 +1,142 @@
+[
+  {
+    "case_id": "binding-additional-property",
+    "artifact": "deployment-binding.json",
+    "operation": "add",
+    "path": "/unexpected_property",
+    "value": "synthetic",
+    "expected_reason": "SCHEMA_INVALID"
+  },
+  {
+    "case_id": "receipt-tenant-mismatch",
+    "artifact": "provisioning-receipt.json",
+    "operation": "replace",
+    "path": "/tenant_id",
+    "value": "tenant-other",
+    "expected_reason": "TENANT_MISMATCH"
+  },
+  {
+    "case_id": "receipt-deployment-mismatch",
+    "artifact": "provisioning-receipt.json",
+    "operation": "replace",
+    "path": "/deployment_id",
+    "value": "deployment-other",
+    "expected_reason": "DEPLOYMENT_MISMATCH"
+  },
+  {
+    "case_id": "binding-erasure-map-incomplete",
+    "artifact": "deployment-binding.json",
+    "operation": "remove",
+    "path": "/erasure_map/entries/12",
+    "expected_reason": "ERASURE_MAP_INCOMPLETE"
+  },
+  {
+    "case_id": "receipt-parent-order-invalid",
+    "artifact": "provisioning-receipt.json",
+    "operation": "replace",
+    "path": "/overlay_parent_commit",
+    "value": "cccccccccccccccccccccccccccccccccccccccc",
+    "expected_reason": "PROVISIONING_ORDER_INVALID"
+  },
+  {
+    "case_id": "receipt-binding-digest-mismatch",
+    "artifact": "provisioning-receipt.json",
+    "operation": "replace",
+    "path": "/binding_sha256",
+    "value": "0000000000000000000000000000000000000000000000000000000000000000",
+    "expected_reason": "PROVISIONING_DIGEST_MISMATCH"
+  },
+  {
+    "case_id": "envelope-pointer-required",
+    "artifact": "upload-pointer.json",
+    "operation": "remove",
+    "path": "/source",
+    "expected_reason": "POINTER_REQUIRED"
+  },
+  {
+    "case_id": "envelope-raw-content-forbidden",
+    "artifact": "upload-pointer.json",
+    "operation": "add",
+    "path": "/raw_content",
+    "value": "synthetic forbidden content",
+    "expected_reason": "RAW_CONTENT_FORBIDDEN"
+  },
+  {
+    "case_id": "envelope-id-invalid",
+    "artifact": "upload-pointer.json",
+    "operation": "replace",
+    "path": "/envelope_id",
+    "value": "123E4567-E89B-42D3-A456-426614174000",
+    "expected_reason": "ENVELOPE_ID_INVALID"
+  },
+  {
+    "case_id": "envelope-destination-unsafe",
+    "artifact": "upload-pointer.json",
+    "operation": "replace",
+    "path": "/destination",
+    "value": "sources/synthetic.json",
+    "expected_reason": "UNSAFE_DESTINATION"
+  },
+  {
+    "case_id": "extract-encoding-forbidden",
+    "artifact": "upload-pointer-with-extract.json",
+    "operation": "replace",
+    "path": "/extract/content_transfer_encoding",
+    "value": "base64",
+    "expected_reason": "EXTRACT_ENCODING_FORBIDDEN"
+  },
+  {
+    "case_id": "extract-too-large",
+    "artifact": "upload-pointer-with-extract.json",
+    "operation": "replace",
+    "path": "/extract/text",
+    "value": {"repeat_text": "a", "count": 65537},
+    "expected_reason": "EXTRACT_TOO_LARGE"
+  },
+  {
+    "case_id": "extract-length-mismatch",
+    "artifact": "upload-pointer-with-extract.json",
+    "operation": "replace",
+    "path": "/extract/utf8_byte_length",
+    "value": 54,
+    "expected_reason": "EXTRACT_LENGTH_MISMATCH"
+  },
+  {
+    "case_id": "extract-digest-mismatch",
+    "artifact": "upload-pointer-with-extract.json",
+    "operation": "replace",
+    "path": "/extract/sha256",
+    "value": "0000000000000000000000000000000000000000000000000000000000000000",
+    "expected_reason": "EXTRACT_DIGEST_MISMATCH"
+  },
+  {
+    "case_id": "idempotency-key-mismatch",
+    "artifact": "upload-pointer.json",
+    "operation": "replace",
+    "path": "/idempotency_key",
+    "value": "0000000000000000000000000000000000000000000000000000000000000000",
+    "expected_reason": "IDEMPOTENCY_KEY_MISMATCH"
+  },
+  {
+    "case_id": "provenance-date-required",
+    "artifact": "upload-pointer.json",
+    "operation": "remove",
+    "path": "/provenance",
+    "expected_reason": "PROVENANCE_DATE_REQUIRED"
+  },
+  {
+    "case_id": "provenance-date-invalid",
+    "artifact": "upload-pointer.json",
+    "operation": "replace",
+    "path": "/provenance/source_date",
+    "value": "2026-02-30",
+    "expected_reason": "PROVENANCE_DATE_INVALID"
+  },
+  {
+    "case_id": "provenance-unknown-reason-required",
+    "artifact": "unknown-date.json",
+    "operation": "remove",
+    "path": "/provenance/reason",
+    "expected_reason": "PROVENANCE_UNKNOWN_REASON_REQUIRED"
+  }
+]
