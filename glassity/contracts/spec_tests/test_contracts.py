@@ -1061,23 +1061,37 @@ class InboundEnvelopeTests(unittest.TestCase):
 
     def test_noncanonical_envelope_ids_have_stable_reason(self):
         _, _, _, envelope = self.load_envelope_bundle("upload-pointer.json")
+        canonical = envelope["envelope_id"]
         invalid_ids = (
-            envelope["envelope_id"].upper(),
+            canonical.upper(),
             "123e4567-e89b-12d3-a456-426614174000",
+            canonical + "0",
+            "prefix-" + canonical,
+            canonical + "-suffix",
+            canonical[:-1] + "\n",
         )
 
         for envelope_id in invalid_ids:
-            with self.subTest(envelope_id=envelope_id):
+            with self.subTest(envelope_id=repr(envelope_id)):
                 mutated = deepcopy(envelope)
                 mutated["envelope_id"] = envelope_id
                 self.assert_envelope_reason(mutated, "ENVELOPE_ID_INVALID")
 
-    def test_destination_mismatch_has_stable_reason(self):
+    def test_unsafe_destinations_have_stable_reason(self):
         _, _, _, envelope = self.load_envelope_bundle("upload-pointer.json")
-        mutated = deepcopy(envelope)
-        mutated["destination"] = "sources/synthetic.json"
+        invalid_destinations = (
+            "sources/synthetic.json",
+            "/_inbox/123e4567-e89b-42d3-a456-426614174000.json",
+            "../_inbox/123e4567-e89b-42d3-a456-426614174000.json",
+            "_inbox/%2e%2e/123e4567-e89b-42d3-a456-426614174000.json",
+            "_inbox\\123e4567-e89b-42d3-a456-426614174000.json",
+        )
 
-        self.assert_envelope_reason(mutated, "UNSAFE_DESTINATION")
+        for destination in invalid_destinations:
+            with self.subTest(destination=destination):
+                mutated = deepcopy(envelope)
+                mutated["destination"] = destination
+                self.assert_envelope_reason(mutated, "UNSAFE_DESTINATION")
 
     def test_changed_idempotency_tuple_with_old_key_has_stable_reason(self):
         _, _, _, envelope = self.load_envelope_bundle("upload-pointer.json")
@@ -1098,26 +1112,35 @@ class InboundEnvelopeTests(unittest.TestCase):
 
         self.assertEqual([issue.code for issue in result.issues], ["SCHEMA_INVALID"])
 
-    def test_pointer_rejects_http_resolvers_and_credential_fields(self):
+    def test_pointer_rejects_nonopaque_or_credential_bearing_resolvers(self):
         validator, _, _, envelope = self.load_envelope_bundle("upload-pointer.json")
         schemas, registry, schema_issues = validator.load_schemas(CONTRACTS)
-        mutations = []
-
-        http_resolver = deepcopy(envelope)
-        http_resolver["source"]["resolver_ref"] = "https://example.invalid/object"
-        mutations.append(http_resolver)
-
-        credential_field = deepcopy(envelope)
-        credential_field["source"]["bearer_token"] = "synthetic-secret"
-        mutations.append(credential_field)
+        invalid_refs = (
+            "https://example.invalid/object",
+            "s3:object?X-Amz-Signature=synthetic",
+            "urn:user@example.invalid:object",
+            "urn:object?token=synthetic",
+            "urn:object#fragment",
+            "urn:object=synthetic",
+            "urn:a://example.invalid/object",
+        )
 
         self.assertEqual(schema_issues, [])
-        for mutated in mutations:
-            with self.subTest(source=mutated["source"]):
+        for resolver_ref in invalid_refs:
+            with self.subTest(resolver_ref=resolver_ref):
+                mutated = deepcopy(envelope)
+                mutated["source"]["resolver_ref"] = resolver_ref
                 issues = validator.validate_schema(
                     "inbound-envelope", mutated, schemas, registry
                 )
                 self.assertEqual([issue.code for issue in issues], ["SCHEMA_INVALID"])
+
+        credential_field = deepcopy(envelope)
+        credential_field["source"]["bearer_token"] = "synthetic-secret"
+        issues = validator.validate_schema(
+            "inbound-envelope", credential_field, schemas, registry
+        )
+        self.assertEqual([issue.code for issue in issues], ["SCHEMA_INVALID"])
 
     def test_envelope_tenant_must_match_binding(self):
         validator, authority, binding, envelope = self.load_envelope_bundle(

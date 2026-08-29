@@ -84,8 +84,8 @@
         "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
         "resolver_ref": {
           "type": "string",
-          "minLength": 1,
-          "not": {"pattern": "^[Hh][Tt][Tt][Pp][Ss]?://"}
+          "pattern": "^[A-Za-z][A-Za-z0-9+.-]*:[A-Za-z0-9][A-Za-z0-9:._/-]*$",
+          "not": {"pattern": "://"}
         },
         "owning_region_or_system": {"type": "string", "minLength": 1}
       }
