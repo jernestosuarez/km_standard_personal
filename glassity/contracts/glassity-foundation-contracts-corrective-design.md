@@ -1,6 +1,6 @@
 ---
 title: Glassity Foundation Contracts Corrective Design
-status: proposed-for-review
+status: approved-for-implementation
 date: 2026-08-29
 base_commit: 9226ef91608736dd4447b943f7ce5ed83d95f933
 supersedes_in_part: glassity-foundation-contracts-design.md
@@ -311,9 +311,45 @@ This correction does not implement:
 - production persistence, tenant isolation, or release; or
 - any change to the five approved architecture decisions.
 
-## 12. Disposition requested
+## 12. Disposition
 
-Approve this corrective design as the bounded completion of the foundation
-contract package. Approval authorizes implementation of the listed corrections
-and the single workflow exception only. It does not approve runtime behavior,
-production persistence, or release.
+This corrective design is approved for implementation as the bounded completion
+of the foundation contract package. Approval authorizes implementation of the
+listed corrections and the single workflow exception only. It does not approve
+runtime behavior, production persistence, or release. Supervisor review remains
+the hard stop before push or implementation acceptance.
+
+## 13. Implementation evidence
+
+The corrective implementation was exercised directly on 2026-08-29. Exit
+status, rather than elapsed time, is the acceptance evidence:
+
+| Check | Observed result |
+|---|---|
+| `python3 -m pip install --disable-pip-version-check -r glassity/contracts/requirements-test.txt` | exit `0`; pinned `jsonschema==4.25.1` satisfied |
+| `python3 glassity/contracts/validate_contracts.py --self-check` | exit `0`; `Draft202012Validator` and `jsonschema==4.25.1` reported |
+| `python3 -m unittest discover -s glassity/contracts/spec_tests -p 'test_*.py' -v` | exit `0`; 70 tests run, 0 failures, 0 errors |
+| Five required `python3 -m json.tool` schema commands | each exit `0` |
+| `git diff --check` | exit `0` |
+| `python3 tools/km-release-gate.py` in the restricted sandbox | exit `1`; only `tests/test_km_cockpit.sh` failed because localhost bind was denied with `PermissionError: [Errno 1] Operation not permitted` |
+| Identical direct, unpiped `python3 tools/km-release-gate.py` rerun with localhost permission | exit `0`; 35 checks discovered, 30 run, 5 skipped as declared instruments |
+
+The successful core gate did not discover
+`glassity/contracts/spec_tests/test_contracts.py`. Its discovery remained under
+the core `tests/` and `scripts/` paths, confirming the two-lane boundary.
+
+The scope result has two explicit views:
+
+1. `08d5302..HEAD` contains the approved governance plan at
+   `docs/superpowers/plans/2026-08-29-glassity-foundation-contract-corrections.md`,
+   the sole workflow exception `.github/workflows/glassity-contracts.yml`, and
+   paths under `glassity/contracts/`.
+2. `52469eb..HEAD`, the approved implementation delta, contains only
+   `.github/workflows/glassity-contracts.yml` and paths under
+   `glassity/contracts/`; no other protected-core path changed.
+
+This evidence accepts the bounded corrective implementation for Supervisor
+review. It does not prove runtime resolver authorization, a trusted
+`actor_service_id`-to-producer-role mapping, actual Git ancestry, production
+persistence, tenant isolation, or release. Supervisor review remains the hard
+stop before push or implementation acceptance.

@@ -52,13 +52,37 @@ Each contract group has `fixtures/valid/` and `fixtures/invalid/` material. Vali
 
 ## Independent acceptance lanes
 
-Both commands are required and neither substitutes for the other:
+The Glassity lane runs in the dedicated
+`.github/workflows/glassity-contracts.yml` workflow. It installs the pinned
+test dependency, runs the validator self-check, and invokes the suite explicitly:
 
 ```bash
-python3 -m unittest discover -s glassity/contracts/tests -p 'test_*.py'
+python3 -m unittest discover -s glassity/contracts/spec_tests -p 'test_*.py' -v
+```
+
+The authoritative core lane remains unchanged in
+`.github/workflows/release-gate.yml` and runs the unchanged core gate separately:
+
+```bash
 python3 tools/km-release-gate.py
 ```
 
-The first exercises the Glassity overlay schemas, semantic checks, recomputations, fixtures, and mutation directions. The second is the authoritative core release gate and proves only the checks it reports. The overlay checks are deliberately not wired into protected core.
+Both commands are required and neither substitutes for the other. The first
+exercises the Glassity overlay schemas, semantic checks, recomputations,
+fixtures, and mutation directions. The second is the authoritative core release
+gate and proves only the checks it reports. The new Glassity workflow is the
+sole approved protected-path exception; the overlay checks are not wired into
+protected core.
 
-The validator is read-only. It never mutates a tenant hub. Schemas, fixtures, and receipts do not prove runtime tenant isolation, actual Git ancestry, content scanning, source-pointer authorization, deletion conformance, or worker behavior. The required commands and these proof limits are recorded in `VERIFICATION.md`.
+`AUTHORITY_SYSTEM_MISMATCH` means that any field in a complete closed authority
+row differs from the canonical definition, not only that its
+`system_of_record` changed. Resolver syntax excludes embedded URL, query, and
+user-info credential forms, but it cannot prove runtime resolver authorization.
+Likewise, `actor_service_id` is evidence identifying the claimed service; it is
+not a trusted assertion that the service holds an allowed producer role.
+
+The validator is read-only. It never mutates a tenant hub. Schemas, fixtures,
+and receipts do not prove runtime tenant isolation, actual Git ancestry, content
+scanning, source-pointer authorization, trusted producer-role authorization,
+deletion conformance, or worker behavior. The required commands and these proof
+limits are recorded in `VERIFICATION.md`.

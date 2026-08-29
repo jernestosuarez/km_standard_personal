@@ -4,7 +4,15 @@
 
 **Goal:** Build the machine-testable authority-matrix and tenant-provisioning specification package approved in `glassity-foundation-contracts-design.md`, without adding application or runtime implementation.
 
-**Architecture:** All new work stays under `glassity/contracts/`. JSON Schema Draft 2020-12 fixes artifact shape, a pinned dev-only `jsonschema` engine performs full schema validation, and one read-only Python validator performs cross-document comparisons and digest/key recomputation. Synthetic baseline fixtures plus data-driven single-mutation cases prove both acceptance and named failure reasons; the overlay suite and unchanged core release gate remain separate required commands.
+**Architecture:** All package work stays under `glassity/contracts/`, with the
+sole approved protected-path exception
+`.github/workflows/glassity-contracts.yml`. JSON Schema Draft 2020-12 fixes
+artifact shape, a pinned dev-only `jsonschema` engine performs full schema
+validation, and one read-only Python validator performs cross-document
+comparisons and digest/key recomputation. Synthetic baseline fixtures plus
+data-driven single-mutation cases prove both acceptance and named failure
+reasons; the dedicated overlay workflow and unchanged core workflow/gate remain
+separate required lanes.
 
 **Tech Stack:** Python 3.9, `unittest`, `jsonschema==4.25.1`, `referencing` as jsonschema's installed dependency, JSON Schema Draft 2020-12, JSON, Markdown, Git.
 
@@ -13,7 +21,8 @@
 ## Execution boundary and fixed decisions
 
 - Start from synchronized commit `29c8307d0b98d2859f34d140414b160883339c06`.
-- Modify only `glassity/contracts/`. A changed pre-existing path outside `glassity/` is a refusal.
+- Modify only `glassity/contracts/`, except for the approved new workflow
+  `.github/workflows/glassity-contracts.yml`. Any other changed path is a refusal.
 - Do not implement provisioning, Git operations, object dereference, classification, scanning, deletion, IAM/RLS, queues, workers, cockpit behavior, or model calls.
 - Use `jsonschema.Draft202012Validator`; do not replace it with a hand-written schema subset.
 - The binding digest is SHA-256 of the exact UTF-8 bytes of the binding JSON file.
@@ -40,8 +49,9 @@
 | `glassity/contracts/tenant-provisioning/inbound-envelope.schema.json` | Closed upload/domain-event envelope variants. |
 | `glassity/contracts/tenant-provisioning/fixtures/valid/*.json` | Synthetic binding, receipt, and envelope baselines. |
 | `glassity/contracts/tenant-provisioning/fixtures/invalid/cases.json` | Named provisioning/envelope mutations and expected codes. |
-| `glassity/contracts/tests/test_contracts.py` | Dependency, schema, semantic, recomputation, and mutation canaries. |
+| `glassity/contracts/spec_tests/test_contracts.py` | Dependency, schema, semantic, recomputation, and mutation canaries. |
 | `glassity/contracts/VERIFICATION.md` | Commands, scope, and explicit proof limits; it does not claim a run occurred. |
+| `.github/workflows/glassity-contracts.yml` | Pinned dedicated Glassity verification lane; sole protected-path exception. |
 
 ## Public validator interface
 
@@ -86,7 +96,7 @@ Issues print as `CODE<TAB>JSON_POINTER<TAB>message`, once per code in the contra
 - Create: `glassity/contracts/requirements-test.txt`
 - Create: `glassity/contracts/README.md`
 - Create: `glassity/contracts/validate_contracts.py`
-- Create: `glassity/contracts/tests/test_contracts.py`
+- Create: `glassity/contracts/spec_tests/test_contracts.py`
 
 - [ ] **Step 1: Write the dependency and CLI tests first**
 
@@ -137,7 +147,7 @@ class DependencyAndCliTests(unittest.TestCase):
 Run:
 
 ```bash
-python3 -m unittest glassity/contracts/tests/test_contracts.py -v
+python3 -m unittest glassity/contracts/spec_tests/test_contracts.py -v
 ```
 
 Expected: both tests fail because `validate_contracts.py` does not exist.
@@ -219,7 +229,7 @@ Run the same unittest command. Expected: `Ran 2 tests` and `OK`.
 
 ```bash
 git add -- glassity/contracts/requirements-test.txt glassity/contracts/README.md \
-  glassity/contracts/validate_contracts.py glassity/contracts/tests/test_contracts.py
+  glassity/contracts/validate_contracts.py glassity/contracts/spec_tests/test_contracts.py
 git commit -m "contracts: pin schema validation runtime"
 ```
 
@@ -231,7 +241,7 @@ git commit -m "contracts: pin schema validation runtime"
 - Create: `glassity/contracts/authority-matrix/fixtures/valid/authority-matrix.json`
 - Create: `glassity/contracts/authority-matrix/fixtures/invalid/cases.json`
 - Modify: `glassity/contracts/validate_contracts.py`
-- Modify: `glassity/contracts/tests/test_contracts.py`
+- Modify: `glassity/contracts/spec_tests/test_contracts.py`
 
 - [ ] **Step 1: Add red tests for schema checking and the exact authority set**
 
@@ -302,7 +312,7 @@ Expected: all dependency and authority tests pass.
 
 ```bash
 git add -- glassity/contracts/authority-matrix glassity/contracts/validate_contracts.py \
-  glassity/contracts/tests/test_contracts.py
+  glassity/contracts/spec_tests/test_contracts.py
 git commit -m "contracts: define record authority matrix"
 ```
 
@@ -314,7 +324,7 @@ git commit -m "contracts: define record authority matrix"
 - Create: `glassity/contracts/tenant-provisioning/deployment-binding.schema.json`
 - Create: `glassity/contracts/tenant-provisioning/fixtures/valid/deployment-binding.json`
 - Modify: `glassity/contracts/validate_contracts.py`
-- Modify: `glassity/contracts/tests/test_contracts.py`
+- Modify: `glassity/contracts/spec_tests/test_contracts.py`
 
 - [ ] **Step 1: Add red binding and erasure-map tests**
 
@@ -366,7 +376,7 @@ git add -- glassity/contracts/tenant-provisioning/CONTRACT.md \
   glassity/contracts/tenant-provisioning/erasure-map.schema.json \
   glassity/contracts/tenant-provisioning/deployment-binding.schema.json \
   glassity/contracts/tenant-provisioning/fixtures/valid/deployment-binding.json \
-  glassity/contracts/validate_contracts.py glassity/contracts/tests/test_contracts.py
+  glassity/contracts/validate_contracts.py glassity/contracts/spec_tests/test_contracts.py
 git commit -m "contracts: define tenant binding and erasure map"
 ```
 
@@ -377,7 +387,7 @@ git commit -m "contracts: define tenant binding and erasure map"
 - Create: `glassity/contracts/tenant-provisioning/fixtures/valid/provisioning-receipt.json`
 - Modify: `glassity/contracts/tenant-provisioning/CONTRACT.md`
 - Modify: `glassity/contracts/validate_contracts.py`
-- Modify: `glassity/contracts/tests/test_contracts.py`
+- Modify: `glassity/contracts/spec_tests/test_contracts.py`
 
 - [ ] **Step 1: Add red receipt recomputation tests**
 
@@ -426,7 +436,7 @@ Expected: all receipt mutations return their exact reason.
 git add -- glassity/contracts/tenant-provisioning/provisioning-receipt.schema.json \
   glassity/contracts/tenant-provisioning/fixtures/valid/provisioning-receipt.json \
   glassity/contracts/tenant-provisioning/CONTRACT.md \
-  glassity/contracts/validate_contracts.py glassity/contracts/tests/test_contracts.py
+  glassity/contracts/validate_contracts.py glassity/contracts/spec_tests/test_contracts.py
 git commit -m "contracts: define provisioning receipt"
 ```
 
@@ -440,7 +450,7 @@ git commit -m "contracts: define provisioning receipt"
 - Create: `glassity/contracts/tenant-provisioning/fixtures/valid/unknown-date.json`
 - Modify: `glassity/contracts/tenant-provisioning/CONTRACT.md`
 - Modify: `glassity/contracts/validate_contracts.py`
-- Modify: `glassity/contracts/tests/test_contracts.py`
+- Modify: `glassity/contracts/spec_tests/test_contracts.py`
 
 - [ ] **Step 1: Add red tests for the four valid variants**
 
@@ -534,7 +544,7 @@ Expected: four valid variants pass; every isolated mutation returns exactly the 
 git add -- glassity/contracts/tenant-provisioning/inbound-envelope.schema.json \
   glassity/contracts/tenant-provisioning/fixtures/valid \
   glassity/contracts/tenant-provisioning/CONTRACT.md \
-  glassity/contracts/validate_contracts.py glassity/contracts/tests/test_contracts.py
+  glassity/contracts/validate_contracts.py glassity/contracts/spec_tests/test_contracts.py
 git commit -m "contracts: define inbound envelope boundary"
 ```
 
@@ -544,7 +554,7 @@ git commit -m "contracts: define inbound envelope boundary"
 - Create: `glassity/contracts/tenant-provisioning/fixtures/invalid/cases.json`
 - Modify: `glassity/contracts/authority-matrix/fixtures/invalid/cases.json`
 - Modify: `glassity/contracts/validate_contracts.py`
-- Modify: `glassity/contracts/tests/test_contracts.py`
+- Modify: `glassity/contracts/spec_tests/test_contracts.py`
 
 - [ ] **Step 1: Add a red data-driven mutation test**
 
@@ -577,7 +587,7 @@ Run the valid bundle and assert exit `0`. Run one tenant-mismatched bundle and a
 - [ ] **Step 6: Run the entire overlay suite**
 
 ```bash
-python3 -m unittest discover -s glassity/contracts/tests -p 'test_*.py' -v
+python3 -m unittest discover -s glassity/contracts/spec_tests -p 'test_*.py' -v
 ```
 
 Expected: all tests pass, every `REASON_ORDER` code is reached by at least one canary, and the test prints its exact test count.
@@ -587,7 +597,7 @@ Expected: all tests pass, every `REASON_ORDER` code is reached by at least one c
 ```bash
 git add -- glassity/contracts/authority-matrix/fixtures/invalid/cases.json \
   glassity/contracts/tenant-provisioning/fixtures/invalid/cases.json \
-  glassity/contracts/validate_contracts.py glassity/contracts/tests/test_contracts.py
+  glassity/contracts/validate_contracts.py glassity/contracts/spec_tests/test_contracts.py
 git commit -m "contracts: prove named invalid directions"
 ```
 
@@ -619,7 +629,7 @@ python3 -m json.tool glassity/contracts/tenant-provisioning/deployment-binding.s
 python3 -m json.tool glassity/contracts/tenant-provisioning/erasure-map.schema.json >/dev/null
 python3 -m json.tool glassity/contracts/tenant-provisioning/provisioning-receipt.schema.json >/dev/null
 python3 -m json.tool glassity/contracts/tenant-provisioning/inbound-envelope.schema.json >/dev/null
-python3 -m unittest discover -s glassity/contracts/tests -p 'test_*.py' -v
+python3 -m unittest discover -s glassity/contracts/spec_tests -p 'test_*.py' -v
 ```
 
 Expected: every JSON parse exits `0`; overlay suite exits `0` with no failures or errors.
@@ -631,7 +641,9 @@ git diff --name-only 29c8307d0b98d2859f34d140414b160883339c06 HEAD
 git status --short
 ```
 
-Expected: every changed path starts with `glassity/contracts/`; status contains only the four documentation paths from this task before staging.
+Expected: every changed path starts with `glassity/contracts/`, except for the
+sole approved new workflow `.github/workflows/glassity-contracts.yml`; status
+contains only the documentation paths from the current task before staging.
 
 - [ ] **Step 6: Stage only the final documentation and run the authoritative gate**
 
@@ -659,7 +671,11 @@ git diff --name-only 29c8307d0b98d2859f34d140414b160883339c06 HEAD
 rg -n -i 'T''BD|T''ODO|FIX''ME' glassity/contracts
 ```
 
-Expected: clean working tree; all changed paths under `glassity/contracts/`; search exit `1` with no matches. Report the seven commits, overlay-suite exit status/test count, authoritative-gate exit status/counts, and explicitly repeat the runtime/Git proof limits.
+Expected: clean working tree; all changed paths under `glassity/contracts/`
+except for `.github/workflows/glassity-contracts.yml`; search exit `1` with no
+matches. Report the commits, overlay-suite exit status/test count,
+authoritative-gate exit status/counts, and explicitly repeat the runtime/Git
+proof limits.
 
 ## Spec-coverage index
 
@@ -680,9 +696,21 @@ Expected: clean working tree; all changed paths under `glassity/contracts/`; sea
 | Tenant/deployment cross-document comparisons | 3–6 |
 | Stable reason codes and exact negative direction | 1–6 |
 | Separate overlay suite and authoritative gate | 6, 7 |
-| Protected core unchanged | 7 |
+| Protected core unchanged except for the sole approved workflow | 7 |
 | Explicit runtime/Git limitations | 4, 7 |
 
 ## Execution handoff
 
 Implement tasks in order. Each task leaves the overlay suite green and creates one focused commit. Do not begin the cockpit-web or worker contract cycles in this plan. Stop for review if a schema field, authority mapping, erasure category, reason code, digest serialization, or security boundary would need to differ from the approved design.
+
+## Corrective implementation disposition
+
+The corrective design is approved for implementation. The dedicated
+`.github/workflows/glassity-contracts.yml` lane is the sole workflow exception;
+`.github/workflows/release-gate.yml` and `tools/km-release-gate.py` remain
+unchanged. `AUTHORITY_SYSTEM_MISMATCH` covers any changed field in a complete
+closed authority row. Resolver syntax excludes embedded URL, query, and
+user-info credential forms but does not prove runtime resolver authorization.
+`actor_service_id` is evidence of a claimed service identity, not a trusted
+producer-role assertion. Supervisor review remains the hard stop before push or
+implementation acceptance.

@@ -50,7 +50,8 @@ The repository remains a specification package. Markdown states behavior; JSON S
 
 ## Package layout
 
-The implementation plan will create only overlay paths:
+The package implementation uses overlay paths plus one explicitly governed
+workflow exception:
 
 ```text
 glassity/contracts/
@@ -72,17 +73,23 @@ glassity/contracts/
 │   └── fixtures/
 │       ├── valid/
 │       └── invalid/
-└── tests/
+└── spec_tests/
     └── test_contracts.py
+
+.github/workflows/glassity-contracts.yml
 ```
 
 All fixtures are visibly synthetic. No filled operator profile ships. Tests run explicitly with:
 
 ```bash
-python3 -m unittest discover -s glassity/contracts/tests -p 'test_*.py'
+python3 -m unittest discover -s glassity/contracts/spec_tests -p 'test_*.py' -v
 ```
 
-The overlay-local suite is required evidence and is not silently treated as part of the core release gate. The authoritative `python3 tools/km-release-gate.py` runs separately and must also pass.
+The dedicated `.github/workflows/glassity-contracts.yml` workflow installs the
+pinned dependency and runs the overlay-local suite. That workflow is the sole
+approved protected-path exception. The unchanged core workflow
+`.github/workflows/release-gate.yml` runs the unchanged authoritative
+`python3 tools/km-release-gate.py` separately, and both lanes must pass.
 
 Full Draft 2020-12 validation uses the declared **development/test-only** dependency `jsonschema==4.25.1`, pinned in `glassity/contracts/requirements-test.txt` and installed with `python3 -m pip install -r glassity/contracts/requirements-test.txt`. `validate_contracts.py` imports `jsonschema.Draft202012Validator`, calls `check_schema` for every shipped schema, and validates every instance with that engine before semantic checks. It does not vendor a validator and does not claim or implement an unstated schema subset. A missing/incompatible dependency fails closed as `DEPENDENCY_MISSING`; it never falls back to shape-only validation. This dependency belongs to specification verification, not the Glassity application runtime.
 
@@ -107,7 +114,13 @@ The matrix contains exactly these required classes and systems of record:
 | `pending_answer` | `pending_answer_store` | no hub representation until `pull` consumes it |
 | `audit_event` | `audit_store` | non-content evidence pointer only, if governed knowledge needs it |
 
-Each row also carries allowed producer roles, permitted inbound-envelope type, required classification/policy references, retention-policy reference, and explicitly forbidden locations. `raw_upload`, `app_object`, `app_event`, and `pending_answer` can never name the tenant hub as their system of record. The validator rejects missing rows, duplicate rows, extra rows, altered authority mappings, or a representation not allowed by the table.
+Each row also carries allowed producer roles, permitted inbound-envelope type,
+required classification/policy references, retention-policy reference, and
+explicitly forbidden locations. `raw_upload`, `app_object`, `app_event`, and
+`pending_answer` can never name the tenant hub as their system of record. The
+validator rejects missing rows, duplicate rows, extra rows, or any altered field
+in a closed authority row. `AUTHORITY_SYSTEM_MISMATCH` names any such complete-row
+difference; it is not limited to the `system_of_record` scalar.
 
 ## Contract 2: tenant deployment binding
 
@@ -143,7 +156,12 @@ The receipt records the declared two-commit sequence:
 2. the Glassity provisioner applied the deployment binding and approved overlay at `overlay_commit`; and
 3. `overlay_parent_commit` equals `canonical_initialization_commit`.
 
-The receipt includes the tenant and deployment IDs, exact canonical pin, overlay revision, binding digest, erasure-map digest, actor/service identity, timestamps, and `proof_level: declared_parent_relationship`.
+The receipt includes the tenant and deployment IDs, exact canonical pin,
+overlay revision, binding digest, erasure-map digest, actor/service identity,
+timestamps, and `proof_level: declared_parent_relationship`. The
+`actor_service_id` is evidence of the claimed service identity, not a trusted
+assertion that the service is authorized for an allowed producer role; that
+mapping requires runtime conformance evidence.
 
 The semantic validator recomputes referenced document digests and requires the declared parent equality. It does **not** prove that either commit exists, that the commit contains the claimed tree, or that the parent relationship is true in Git. Actual ancestry, tree content, commit attribution, and signatures are later Git conformance work. The normative contract and every rendered receipt description must state this limit; the receipt is never described as ancestry proof.
 
@@ -175,7 +193,12 @@ The pointer is mandatory for both variants and contains:
 - non-secret resolver reference; and
 - storage region or owning-system reference needed for authorization.
 
-The pointer is the only route to the raw object. Presigned URLs, bearer tokens, credentials, embedded bytes, binary fields, and unrestricted HTTP URLs are forbidden. Dereferencing remains a runtime action requiring fresh tenant/object authorization under SEC-002 and SEC-015.
+The pointer is the only route to the raw object. Its opaque resolver-reference
+syntax excludes embedded URL, query, user-info, and common credential forms.
+Presigned URLs, bearer tokens, credentials, embedded bytes, binary fields, and
+unrestricted HTTP URLs are forbidden. Syntax does not prove that the external
+resolver is authorized or secret-free. Dereferencing remains a runtime action
+requiring fresh tenant/object authorization under SEC-002 and SEC-015.
 
 ### Classified extract
 
@@ -340,7 +363,7 @@ The negative direction is the reason, not merely a nonzero exit. A canary that p
 The later implementation is accepted only after both commands run directly and report exit status zero:
 
 ```bash
-python3 -m unittest discover -s glassity/contracts/tests -p 'test_*.py'
+python3 -m unittest discover -s glassity/contracts/spec_tests -p 'test_*.py' -v
 python3 tools/km-release-gate.py
 ```
 
@@ -380,7 +403,9 @@ Rejected because it would state where data belongs without proving the first ope
 
 The future implementation plan must demonstrate all of the following before this slice can be accepted:
 
-1. Every planned artifact exists under `glassity/contracts/`; protected core files remain unchanged.
+1. Every planned artifact exists under `glassity/contracts/`; protected core
+   files remain unchanged except for the sole approved new workflow
+   `.github/workflows/glassity-contracts.yml`.
 2. All schemas are Draft 2020-12, closed by default, checked and exercised with the pinned dev-only `jsonschema==4.25.1` `Draft202012Validator`, and covered by synthetic positive and negative fixtures; no subset or fallback is claimed.
 3. The validator recomputes—not trusts—the inbound idempotency key, extract UTF-8 byte length, extract digest, binding digest, and erasure-map digest.
 4. The authority matrix enforces the exact record boundary.
@@ -392,8 +417,14 @@ The future implementation plan must demonstrate all of the following before this
 10. Provenance always carries a resolved or explicitly unknown date state; unknown dates force the intake hold.
 11. All invalid fixtures assert a stable reason code, and mutation canaries prove the validator can fail for that reason.
 12. The overlay contract suite and authoritative release gate each run directly and exit zero.
-13. The evidence report states that schemas and receipts do not prove runtime tenant isolation, actual Git ancestry, content scanning, dereference authorization, or deletion conformance.
+13. The evidence report states that schemas and receipts do not prove runtime
+    tenant isolation, actual Git ancestry, content scanning, resolver or
+    producer-role authorization, dereference authorization, or deletion
+    conformance.
 
 ## Next step after approval of this written specification
 
-Use the writing-plans skill to produce a task-by-task implementation plan for this slice only. Contract implementation begins only after the written specification is reviewed and approved. Cockpit-web and worker contracts remain separate design/specification cycles.
+The foundation-contract implementation and its approved corrective design are
+now implemented on the review branch. Supervisor review remains the hard stop
+before push or implementation acceptance. Cockpit-web and worker contracts
+remain separate design/specification cycles.
