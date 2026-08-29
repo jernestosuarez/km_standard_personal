@@ -20,7 +20,7 @@
     "reason": "The synthetic source carries no authoritative date."
   },
   "classification": "internal",
-  "classification_policy_ref": "policies/synthetic-retention-v1",
+  "classification_policy_ref": "urn:glassity:synthetic:policy:classification",
   "idempotency_key": "ee74cbb0040841948e79f65c43e822f545996f851ac3272322b3c19ca7d7a167",
   "destination": "_inbox/123e4567-e89b-42d3-a456-426614174003.json"
 }

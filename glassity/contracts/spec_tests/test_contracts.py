@@ -1155,6 +1155,20 @@ class InboundEnvelopeTests(unittest.TestCase):
 
         self.assertEqual([issue.code for issue in result.issues], ["SCHEMA_INVALID"])
 
+    def test_envelope_policy_must_match_binding_and_source_authority(self):
+        validator, authority, binding, envelope = self.load_envelope_bundle(
+            "upload-pointer.json"
+        )
+        mutated = deepcopy(envelope)
+        policy_ref = "urn:glassity:synthetic:policy:binding-only"
+        mutated["classification_policy_ref"] = policy_ref
+        mutated_binding = deepcopy(binding)
+        mutated_binding["tenant_policy_refs"].append(policy_ref)
+
+        result = validator.validate_envelope(mutated, authority, mutated_binding)
+
+        self.assertEqual([issue.code for issue in result.issues], ["SCHEMA_INVALID"])
+
     def test_only_active_binding_accepts_inbound_envelopes(self):
         validator, authority, binding, envelope = self.load_envelope_bundle(
             "upload-pointer.json"

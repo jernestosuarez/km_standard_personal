@@ -21,7 +21,7 @@
     "date_kind": "document"
   },
   "classification": "internal",
-  "classification_policy_ref": "policies/synthetic-retention-v1",
+  "classification_policy_ref": "urn:glassity:synthetic:policy:classification",
   "idempotency_key": "e31cfb87e0301671c02211c5c9e0761363f8c9aee19a7315a7e50e45a2750b42",
   "destination": "_inbox/123e4567-e89b-42d3-a456-426614174000.json"
 }

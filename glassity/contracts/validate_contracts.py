@@ -646,17 +646,18 @@ def validate_envelope(
                 and provenance.get("date_status") == "unknown",
             )
     authority_rows = authority.get("rows", []) if isinstance(authority, dict) else []
-    authorized_source = any(
-        isinstance(row, dict)
+    matched_authority_rows = [
+        row
+        for row in authority_rows
+        if isinstance(row, dict)
         and row.get("system_of_record") == value["source"].get("system")
         and value.get("envelope_type") in row.get("envelope_types", [])
         and (
             value.get("envelope_type") != "upload_pointer"
             or row.get("data_class") == "raw_upload"
         )
-        for row in authority_rows
-    )
-    if not authorized_source:
+    ]
+    if not matched_authority_rows:
         issues.append(
             Issue(
                 "SCHEMA_INVALID",
@@ -697,12 +698,22 @@ def validate_envelope(
         assertion.get("classification_policy_refs"), list
     ):
         declared_policy_refs.extend(assertion["classification_policy_refs"])
-    if any(policy_ref not in bound_policy_refs for policy_ref in declared_policy_refs):
+    authority_policy_refs = set().union(
+        *(
+            set(row.get("classification_policy_refs", []))
+            for row in matched_authority_rows
+        )
+    ) if matched_authority_rows else set()
+    if any(
+        policy_ref not in bound_policy_refs
+        or policy_ref not in authority_policy_refs
+        for policy_ref in declared_policy_refs
+    ):
         issues.append(
             Issue(
                 "SCHEMA_INVALID",
                 "/classification_policy_ref",
-                "classification policy is not present in the binding",
+                "classification policy is not approved by both binding and authority",
             )
         )
     try:

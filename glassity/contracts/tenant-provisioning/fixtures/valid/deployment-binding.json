@@ -7,7 +7,7 @@
   "canonical_commit": "9d43e19300000000000000000000000000000000",
   "overlay_revision": "glassity-overlay-v1",
   "operator_profile_ref": "operator-profiles/synthetic-v1.json",
-  "tenant_policy_refs": ["policies/synthetic-retention-v1"],
+  "tenant_policy_refs": ["urn:glassity:synthetic:policy:classification", "urn:glassity:synthetic:policy:retention"],
   "approval_record": "decisions/synthetic-binding-approval-v1",
   "repository": {
     "provider": "github",

@@ -21,7 +21,7 @@
     "date_kind": "event"
   },
   "classification": "internal",
-  "classification_policy_ref": "policies/synthetic-retention-v1",
+  "classification_policy_ref": "urn:glassity:synthetic:policy:classification",
   "idempotency_key": "fcf30ab7b51955eeb37e634668a29e6eb69e44b8140caeacbe1412c0bdf8488a",
   "destination": "_inbox/123e4567-e89b-42d3-a456-426614174002.json",
   "domain_assertion": {
@@ -29,6 +29,6 @@
     "claim_candidate": "A synthetic event occurred for contract verification.",
     "decision_ref": "decisions/synthetic-domain-event-review-v1",
     "classification": "internal",
-    "classification_policy_refs": ["policies/synthetic-retention-v1"]
+    "classification_policy_refs": ["urn:glassity:synthetic:policy:classification"]
   }
 }
