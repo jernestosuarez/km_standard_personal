@@ -1186,5 +1186,26 @@ class InboundEnvelopeTests(unittest.TestCase):
                 )
 
 
+class WorkflowContractTests(unittest.TestCase):
+    def test_glassity_workflow_pins_runtime_dependency_and_explicit_suite(self):
+        workflow = (ROOT / ".github" / "workflows" / "glassity-contracts.yml").read_text(
+            encoding="utf-8"
+        )
+        required_fragments = (
+            "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+            "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+            "python-version: '3.9'",
+            "python -m pip install --disable-pip-version-check -r glassity/contracts/requirements-test.txt",
+            "python glassity/contracts/validate_contracts.py --self-check",
+            "python -m unittest discover -s glassity/contracts/spec_tests -p 'test_*.py' -v",
+        )
+        for fragment in required_fragments:
+            with self.subTest(fragment=fragment):
+                self.assertIn(fragment, workflow)
+
+    def test_legacy_discovery_path_is_absent(self):
+        self.assertFalse((CONTRACTS / "tests" / "test_contracts.py").exists())
+
+
 if __name__ == "__main__":
     unittest.main()
