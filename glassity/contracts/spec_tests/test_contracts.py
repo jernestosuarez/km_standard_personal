@@ -510,6 +510,60 @@ class AuthorityMatrixTests(unittest.TestCase):
 
         self.assertEqual([issue.code for issue in issues], ["AUTHORITY_SYSTEM_MISMATCH"])
 
+    def test_every_canonical_authority_field_is_pinned(self):
+        validator, matrix = self.load_matrix()
+        raw_upload = next(
+            row for row in matrix["rows"] if row["data_class"] == "raw_upload"
+        )
+        mutations = {
+            "system_of_record": "tenant_hub",
+            "hub_representations": ["governed_claim"],
+            "allowed_producers": ["worker"],
+            "envelope_types": ["domain_event"],
+            "classification_policy_refs": [
+                "urn:glassity:synthetic:policy:other"
+            ],
+            "retention_policy_ref": "urn:glassity:synthetic:policy:other",
+            "forbidden_locations": ["audit_store"],
+        }
+
+        for field, value in mutations.items():
+            with self.subTest(field=field):
+                mutated = deepcopy(matrix)
+                row = next(
+                    item
+                    for item in mutated["rows"]
+                    if item["data_class"] == "raw_upload"
+                )
+                row[field] = value
+                issues = validator.validate_authority_matrix(mutated)
+                self.assertEqual(
+                    [issue.code for issue in issues],
+                    ["AUTHORITY_SYSTEM_MISMATCH"],
+                )
+
+    def test_non_git_record_classes_cannot_be_remapped_to_tenant_hub(self):
+        validator, matrix = self.load_matrix()
+        for data_class in (
+            "raw_upload",
+            "app_object",
+            "app_event",
+            "pending_answer",
+        ):
+            with self.subTest(data_class=data_class):
+                mutated = deepcopy(matrix)
+                row = next(
+                    item
+                    for item in mutated["rows"]
+                    if item["data_class"] == data_class
+                )
+                row["system_of_record"] = "tenant_hub"
+                issues = validator.validate_authority_matrix(mutated)
+                self.assertEqual(
+                    [issue.code for issue in issues],
+                    ["AUTHORITY_SYSTEM_MISMATCH"],
+                )
+
     def test_duplicate_class_has_stable_reason(self):
         validator, matrix = self.load_matrix()
         mutated = deepcopy(matrix)

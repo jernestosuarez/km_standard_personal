@@ -52,21 +52,114 @@ class EnvelopeValidation:
 
 
 AUTHORITY = {
-    "raw_upload": ("object_storage", {"pointer"}),
+    "raw_upload": (
+        "object_storage",
+        {"pointer"},
+        {"inbound_adapter"},
+        {"upload_pointer"},
+        {"urn:glassity:synthetic:policy:classification"},
+        "urn:glassity:synthetic:policy:retention",
+        {"tenant_hub", "pending_answer_store"},
+    ),
     "app_object": (
         "application_database",
         {"pointer", "digest", "claim", "decision"},
+        {"cockpit", "worker"},
+        {"domain_event"},
+        {"urn:glassity:synthetic:policy:classification"},
+        "urn:glassity:synthetic:policy:retention",
+        {"tenant_hub"},
     ),
-    "app_event": ("event_store", {"pointer", "digest", "claim", "decision"}),
-    "digest": ("tenant_hub", {"governed_digest"}),
-    "claim": ("tenant_hub", {"governed_claim"}),
-    "decision": ("tenant_hub", {"governed_decision"}),
-    "classified_extract": ("tenant_hub", {"classified_text_extract"}),
-    "pointer": ("tenant_hub", {"resolvable_pointer"}),
-    "owner_queue": ("tenant_hub", {"governed_queue_record"}),
-    "execution_record": ("tenant_hub", {"governed_execution_record"}),
-    "pending_answer": ("pending_answer_store", {"none_until_pull"}),
-    "audit_event": ("audit_store", {"non_content_evidence_pointer"}),
+    "app_event": (
+        "event_store",
+        {"pointer", "digest", "claim", "decision"},
+        {"cockpit", "worker"},
+        {"domain_event"},
+        {"urn:glassity:synthetic:policy:classification"},
+        "urn:glassity:synthetic:policy:retention",
+        {"tenant_hub"},
+    ),
+    "digest": (
+        "tenant_hub",
+        {"governed_digest"},
+        {"core_intake", "worker"},
+        {"none"},
+        {"urn:glassity:synthetic:policy:classification"},
+        "urn:glassity:synthetic:policy:retention",
+        {"object_storage"},
+    ),
+    "claim": (
+        "tenant_hub",
+        {"governed_claim"},
+        {"core_intake", "worker"},
+        {"none"},
+        {"urn:glassity:synthetic:policy:classification"},
+        "urn:glassity:synthetic:policy:retention",
+        {"object_storage"},
+    ),
+    "decision": (
+        "tenant_hub",
+        {"governed_decision"},
+        {"core_intake", "cockpit"},
+        {"none"},
+        {"urn:glassity:synthetic:policy:classification"},
+        "urn:glassity:synthetic:policy:retention",
+        {"object_storage"},
+    ),
+    "classified_extract": (
+        "tenant_hub",
+        {"classified_text_extract"},
+        {"core_intake"},
+        {"upload_pointer"},
+        {"urn:glassity:synthetic:policy:classification"},
+        "urn:glassity:synthetic:policy:retention",
+        {"object_storage"},
+    ),
+    "pointer": (
+        "tenant_hub",
+        {"resolvable_pointer"},
+        {"core_intake"},
+        {"upload_pointer"},
+        {"urn:glassity:synthetic:policy:classification"},
+        "urn:glassity:synthetic:policy:retention",
+        {"pending_answer_store"},
+    ),
+    "owner_queue": (
+        "tenant_hub",
+        {"governed_queue_record"},
+        {"cockpit", "worker"},
+        {"none"},
+        {"urn:glassity:synthetic:policy:classification"},
+        "urn:glassity:synthetic:policy:retention",
+        {"object_storage"},
+    ),
+    "execution_record": (
+        "tenant_hub",
+        {"governed_execution_record"},
+        {"worker"},
+        {"none"},
+        {"urn:glassity:synthetic:policy:classification"},
+        "urn:glassity:synthetic:policy:retention",
+        {"object_storage"},
+    ),
+    "pending_answer": (
+        "pending_answer_store",
+        {"none_until_pull"},
+        {"worker"},
+        {"none"},
+        {"urn:glassity:synthetic:policy:classification"},
+        "urn:glassity:synthetic:policy:retention",
+        {"tenant_hub", "object_storage"},
+    ),
+    "audit_event": (
+        "audit_store",
+        {"non_content_evidence_pointer"},
+        {"audit_service"},
+        {"none"},
+        {"urn:glassity:synthetic:policy:classification"},
+        "urn:glassity:synthetic:policy:retention",
+        {"object_storage", "pending_answer_store"},
+    ),
 }
 
 ERASURE_CATEGORIES = {
@@ -313,16 +406,22 @@ def validate_authority_matrix(value: dict) -> list[Issue]:
     for index, row in enumerate(rows):
         if not isinstance(row, dict) or row.get("data_class") not in AUTHORITY:
             continue
-        expected_system, expected_representations = AUTHORITY[row["data_class"]]
-        if (
-            row.get("system_of_record") != expected_system
-            or set(row.get("hub_representations", [])) != expected_representations
-        ):
+        expected = AUTHORITY[row["data_class"]]
+        actual_row = (
+            row.get("system_of_record"),
+            set(row.get("hub_representations", [])),
+            set(row.get("allowed_producers", [])),
+            set(row.get("envelope_types", [])),
+            set(row.get("classification_policy_refs", [])),
+            row.get("retention_policy_ref"),
+            set(row.get("forbidden_locations", [])),
+        )
+        if actual_row != expected:
             issues.append(
                 Issue(
                     "AUTHORITY_SYSTEM_MISMATCH",
                     f"/rows/{index}",
-                    f"authority mapping changed for {row['data_class']}",
+                    f"closed authority definition changed for {row['data_class']}",
                 )
             )
     return _ordered_unique(issues)

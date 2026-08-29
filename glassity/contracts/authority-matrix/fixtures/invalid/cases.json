@@ -22,7 +22,31 @@
     "expected_reason": "AUTHORITY_SET_UNKNOWN"
   },
   {
-    "case_id": "authority-row-remapped",
+    "case_id": "raw-upload-remapped-to-git",
+    "artifact": "authority-matrix.json",
+    "operation": "replace",
+    "path": "/rows/0/system_of_record",
+    "value": "tenant_hub",
+    "expected_reason": "AUTHORITY_SYSTEM_MISMATCH"
+  },
+  {
+    "case_id": "app-object-remapped-to-git",
+    "artifact": "authority-matrix.json",
+    "operation": "replace",
+    "path": "/rows/1/system_of_record",
+    "value": "tenant_hub",
+    "expected_reason": "AUTHORITY_SYSTEM_MISMATCH"
+  },
+  {
+    "case_id": "app-event-remapped-to-git",
+    "artifact": "authority-matrix.json",
+    "operation": "replace",
+    "path": "/rows/2/system_of_record",
+    "value": "tenant_hub",
+    "expected_reason": "AUTHORITY_SYSTEM_MISMATCH"
+  },
+  {
+    "case_id": "pending-answer-remapped-to-git",
     "artifact": "authority-matrix.json",
     "operation": "replace",
     "path": "/rows/10/system_of_record",
