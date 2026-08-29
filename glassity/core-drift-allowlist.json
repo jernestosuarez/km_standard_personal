@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0",
+  "upstream_pin": "9d43e193d044e2bdd6084480b80195b7e8ba9adf",
+  "policy": "Every upstream-baseline path is protected unless it is enumerated here. Adding, changing, or retaining an entry requires a governed decision.",
+  "entries": [
+    {
+      "path": "README.md",
+      "reason": "Glassity edition front-door adaptation.",
+      "authority": "docs/superpowers/specs/2026-08-27-km-standard-glassity-front-door-design.md",
+      "change_commit": "c7ef6af",
+      "main_commit": "9c5b8e8797079611a525ab6431c0663b443f165e",
+      "retirement": "Retire if a future upstream edition mechanism makes the fork-local front door unnecessary."
+    },
+    {
+      "path": "assets/km-banner.svg",
+      "reason": "Glassity edition front-door adaptation; editable banner source.",
+      "authority": "docs/superpowers/specs/2026-08-27-km-standard-glassity-front-door-design.md",
+      "change_commit": "c7ef6af",
+      "main_commit": "9c5b8e8797079611a525ab6431c0663b443f165e",
+      "retirement": "Retire if a future upstream edition mechanism supplies the edition banner without modifying protected core."
+    },
+    {
+      "path": "assets/km-banner.png",
+      "reason": "Glassity edition front-door adaptation; rendered banner paired with the SVG source.",
+      "authority": "docs/superpowers/specs/2026-08-27-km-standard-glassity-front-door-design.md",
+      "change_commit": "c7ef6af",
+      "main_commit": "9c5b8e8797079611a525ab6431c0663b443f165e",
+      "retirement": "Retire with the paired SVG entry if a future upstream edition mechanism makes the fork-local banner unnecessary."
+    },
+    {
+      "path": ".github/workflows/glassity-contracts.yml",
+      "reason": "Independent Glassity contract-verification lane accepted with the foundation contracts.",
+      "authority": "glassity/contracts/glassity-foundation-contracts-corrective-design.md",
+      "change_commit": "9b6cd38",
+      "main_commit": "7f51002e0fe107d97ca53d15c2c717045012b6bf",
+      "retirement": "Retire if an adopted upstream verification mechanism provides the same independent overlay lane without this protected-path addition."
+    },
+    {
+      "path": "skills/km-init/SKILL.md",
+      "reason": "Correct the README presentation coupling by deriving canonical-standard-version from STANDARD.md, the authoritative version ledger.",
+      "authority": "Supervisor record 2026-08-29_km-init-readme-version-coupling-defect.md at commit e34b66a",
+      "change_commit": "3010c2bcc0cc372e544e0943ec435d33499b917e",
+      "main_commit": "3010c2bcc0cc372e544e0943ec435d33499b917e",
+      "retirement": "Retire this fork-local entry when upstream corrects the coupling and this fork adopts a pin containing that correction."
+    }
+  ]
+}
