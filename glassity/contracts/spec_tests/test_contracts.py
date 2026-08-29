@@ -753,6 +753,26 @@ class DeploymentBindingTests(unittest.TestCase):
         self.assertEqual(schema_issues, [])
         self.assertEqual(issues, [])
 
+    def test_binding_rejects_impossible_dates_and_reversed_effect(self):
+        validator, binding = self.load_binding()
+        impossible_hold = deepcopy(binding)
+        impossible_hold["legal_hold"] = {
+            "status": "scoped",
+            "decision_ref": "decisions/synthetic-legal-hold-v1",
+            "scope_digest": "a" * 64,
+            "legal_basis_ref": "legal/synthetic-basis-v1",
+            "review_date": "2026-02-30",
+        }
+        reversed_effect = deepcopy(binding)
+        reversed_effect["effective_at"] = "2026-08-28T09:59:59Z"
+
+        for mutated in (impossible_hold, reversed_effect):
+            with self.subTest(mutated=mutated):
+                issues = validator.validate_binding(mutated)
+                self.assertEqual(
+                    [issue.code for issue in issues], ["SCHEMA_INVALID"]
+                )
+
 
 class ProvisioningReceiptTests(unittest.TestCase):
     def load_receipt_bundle(self):
@@ -863,6 +883,49 @@ class ProvisioningReceiptTests(unittest.TestCase):
         )
 
         self.assertEqual(schema_issues, [])
+        self.assertEqual([issue.code for issue in issues], ["SCHEMA_INVALID"])
+
+    def test_receipt_rejects_impossible_timestamp_and_reversed_events(self):
+        validator, binding_bytes, binding, receipt = self.load_receipt_bundle()
+        impossible = deepcopy(receipt)
+        impossible["initialized_at"] = "2026-02-30T10:01:00Z"
+        reversed_events = deepcopy(receipt)
+        reversed_events["overlay_applied_at"] = "2026-08-28T10:00:59Z"
+
+        self.assertEqual(
+            [
+                issue.code
+                for issue in validator.validate_receipt(
+                    impossible, binding_bytes, binding
+                )
+            ],
+            ["SCHEMA_INVALID"],
+        )
+        self.assertEqual(
+            [
+                issue.code
+                for issue in validator.validate_receipt(
+                    reversed_events, binding_bytes, binding
+                )
+            ],
+            ["PROVISIONING_ORDER_INVALID"],
+        )
+
+    def test_receipt_schema_must_disclaim_git_ancestry_proof(self):
+        validator = load_validator()
+        schema_path = (
+            CONTRACTS
+            / "tenant-provisioning"
+            / "provisioning-receipt.schema.json"
+        )
+        mutated = json.loads(schema_path.read_text(encoding="utf-8"))
+        mutated["description"] = "Proves actual Git ancestry."
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            target = root / "provisioning-receipt.schema.json"
+            target.write_text(json.dumps(mutated), encoding="utf-8")
+            _, _, issues = validator.load_schemas(root)
+
         self.assertEqual([issue.code for issue in issues], ["SCHEMA_INVALID"])
 
 

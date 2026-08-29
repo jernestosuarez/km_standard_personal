@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 import hashlib
 from importlib import metadata
 import json
@@ -182,6 +182,13 @@ IDEMPOTENCY_NAMESPACE = "glassity.inbound-envelope.v1"
 UUID4 = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
 )
+UTC_SECONDS = re.compile(
+    r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+)
+RECEIPT_PROOF_DESCRIPTION = (
+    "Declares provisioning inputs and an expected parent relationship; "
+    "it does not prove Git ancestry."
+)
 FORBIDDEN_CONTENT_FIELDS = {
     "raw_content",
     "raw_bytes",
@@ -201,6 +208,20 @@ def canonical_json_bytes(value: object) -> bytes:
 
 def sha256_hex(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
+
+
+def parse_utc_seconds(value: object) -> datetime:
+    if not isinstance(value, str) or not UTC_SECONDS.fullmatch(value):
+        raise ValueError("timestamp must use exact UTC-second form")
+    return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+
+
+def parse_calendar_date(value: object) -> date:
+    if not isinstance(value, str) or not re.fullmatch(
+        r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value
+    ):
+        raise ValueError("date must use exact calendar form")
+    return date.fromisoformat(value)
 
 
 def expected_idempotency_key(envelope: dict) -> str:
@@ -292,6 +313,17 @@ def load_schemas(root: Path) -> tuple[dict[str, dict], object, list[Issue]]:
         kind = path.name.removesuffix(".schema.json")
         if kind == "authority-matrix":
             kind = "authority"
+        if (
+            kind == "provisioning-receipt"
+            and schema.get("description") != RECEIPT_PROOF_DESCRIPTION
+        ):
+            issues.append(
+                Issue(
+                    "SCHEMA_INVALID",
+                    "/description",
+                    f"{path}: receipt schema must disclaim actual Git ancestry proof",
+                )
+            )
         schemas[kind] = schema
         resources.append((schema["$id"], resource))
 
@@ -466,11 +498,40 @@ def validate_binding(value: dict) -> list[Issue]:
                 "erasure map deployment differs from binding deployment",
             )
         )
+    try:
+        created_at = parse_utc_seconds(value.get("created_at"))
+        effective_at = parse_utc_seconds(value.get("effective_at"))
+        legal_hold = value.get("legal_hold")
+        if isinstance(legal_hold, dict):
+            parse_calendar_date(legal_hold.get("review_date"))
+        if created_at > effective_at:
+            raise ValueError("binding cannot become effective before creation")
+    except ValueError:
+        issues.append(
+            Issue(
+                "SCHEMA_INVALID",
+                "/",
+                "binding dates must be real and chronologically ordered",
+            )
+        )
     return _ordered_unique(issues)
 
 
 def validate_receipt(value: dict, binding_bytes: bytes, binding: dict) -> list[Issue]:
     issues = []
+    try:
+        initialized_at = parse_utc_seconds(value.get("initialized_at"))
+        overlay_applied_at = parse_utc_seconds(value.get("overlay_applied_at"))
+    except ValueError:
+        issues.append(
+            Issue(
+                "SCHEMA_INVALID",
+                "/",
+                "receipt timestamps must be real UTC-second values",
+            )
+        )
+        initialized_at = None
+        overlay_applied_at = None
     if value.get("tenant_id") != binding.get("tenant_id"):
         issues.append(
             Issue(
@@ -492,6 +553,11 @@ def validate_receipt(value: dict, binding_bytes: bytes, binding: dict) -> list[I
         != value.get("canonical_initialization_commit")
         or value.get("canonical_pin") != binding.get("canonical_commit")
         or value.get("overlay_revision") != binding.get("overlay_revision")
+        or (
+            initialized_at is not None
+            and overlay_applied_at is not None
+            and initialized_at > overlay_applied_at
+        )
     )
     if order_mismatch:
         issues.append(
