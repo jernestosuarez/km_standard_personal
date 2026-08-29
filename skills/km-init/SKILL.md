@@ -329,7 +329,7 @@ After resolving the root, derive and validate the canonical provenance before cr
 ```bash
 KM_STANDARD_REVISION="$(git -C "$KM_STANDARD_ROOT" rev-parse HEAD)"
 KM_STANDARD_SOURCE="$(git -C "$KM_STANDARD_ROOT" remote get-url origin 2>/dev/null || printf 'unresolved')"
-KM_STANDARD_VERSION="$(sed -n 's/^\*\*Current version: v\([^*]*\)\*\*.*/\1/p' "$KM_STANDARD_ROOT/README.md" | head -1)"
+KM_STANDARD_VERSION="$(sed -n 's/^# .* (v\([0-9][0-9.]*\)\( draft\)\{0,1\})$/\1/p' "$KM_STANDARD_ROOT/STANDARD.md" | head -1)"
 ```
 
 `KM_STANDARD_REVISION` must be the full 40-character lowercase Git revision and
