@@ -32,9 +32,9 @@ cited per step below.
   duplicate their steps, copy records into hubs, or modify the source vault. The vault stays
   put and read-only; hubs hold claims and `file://` pointers.
 
-**Precedence.** Where this skill and a live estate plan for the same vault conflict, **the plan's
-owner rulings win** until the owner supersedes them. This skill generalizes such plans; it does
-not overrule them.
+**Precedence.** Where this skill and a live estate plan for the same vault conflict,
+**the plan's owner rulings win** until the owner supersedes them. This skill generalizes such
+plans; it does not overrule them.
 
 **Arrival is not a decision.** Never pause per file. The campaign holds on the owner in exactly
 three places: the **date gate** (mtime-only sources), the **boundary interview** per domain, and

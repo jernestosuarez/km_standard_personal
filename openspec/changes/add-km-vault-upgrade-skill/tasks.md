@@ -34,12 +34,12 @@ Drafted on `main` at `045515c`. **No STANDARD.md version is drafted by this chan
 
 ## 4. Format test (U5)
 
-- [ ] 4.1 Write `tests/test_vault_upgrade_ledger_format.sh`: valid fixture passes with coverage
+- [x] 4.1 Write `tests/test_vault_upgrade_ledger_format.sh`: valid fixture passes with coverage
       stated; each named mutation fails with a rule-specific message; empty ledger valid;
       truncated JSON refused (exit 2); assertions parsed from the contract's machine-readable
       block; literal-conformance cases for the skill's load-bearing declarations, each matcher
       proven live.
-- [ ] 4.2 Run the failing direction FIRST against a violating fixture; record that run in the
+- [x] 4.2 Run the failing direction FIRST against a violating fixture; record that run in the
       `km-unrepaired-tree` declaration's result text. Declaration token: `none` with the reason
       (new-capability check, no defect, no version drafted). The suite lands green.
 
