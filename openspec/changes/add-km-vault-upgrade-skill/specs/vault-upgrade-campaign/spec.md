@@ -18,6 +18,26 @@ that hub's own approval flow. The skill orchestrates `/km-gather`, `/km-intake`,
 - **THEN** the result is one proposal per domain in the receiving hub's `changes/`, and no file
   outside `changes/`, the Supervisor's own ledger/catalogue, or `_scratch/` is written
 
+### Requirement: The skill SHALL reach an estate by symlink from the canonical tree, never by copy
+
+An estate's `.claude/skills/km-vault-upgrade` entry SHALL be a symlink to the standard
+checkout's canonical `skills/km-vault-upgrade/`. A new estate instance SHALL create the link
+when its Supervisor tier is minted; an existing estate SHALL adopt it at the skill's first run;
+every run SHALL health-check it before campaign work begins.
+
+#### Scenario: First run at an estate with no deployment entry
+
+- **WHEN** the skill runs at a workspace whose `.claude/skills/` carries no `km-vault-upgrade`
+  entry
+- **THEN** it offers to create the symlink as an owner-authorized act, and proceeds only once
+  the entry resolves into a standard checkout's `skills/` tree
+
+#### Scenario: A copied skill tree is found in place of the link
+
+- **WHEN** the health-check finds `.claude/skills/km-vault-upgrade` as a copied directory
+- **THEN** it is reported as drift risk and its replacement with the symlink is offered — never
+  left silently
+
 ### Requirement: The source vault SHALL be registered as a SourceSystem before any extraction
 
 Registration SHALL be idempotent: an unregistered vault gets the SourceSystem note

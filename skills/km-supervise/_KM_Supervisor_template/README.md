@@ -29,6 +29,23 @@ ignores.
 | Estate corrections registry (`corrections/`) | The owner corrects the agent on a rule that crosses hub boundaries | STANDARD.md → "The correction loop runs at the estate tier too" |
 | Decision surface (KM Cockpit component) | The owner wants the queue as rendered cards rather than a file | `components/km-cockpit/` in the standard |
 
+## Workspace-level skills: linked, never copied
+
+The estate-tier skills (`km-init`, `km-supervise`, `km-vault-upgrade`) have one canonical copy
+each, in the standard checkout's `skills/` tree. At this workspace they resolve through
+`<workspace>/.claude/skills/<slug>` entries that are **symlinks to those canonical directories —
+never copied trees**. A copy is the drift class the standard has already measured (the one skill
+copy without a parity check was the one that drifted), and no check reaches a copy inside a
+deployed estate; a link keeps every instance on the checkout's governed text.
+
+Two control points, and only these:
+- **Minting a new instance** — create the links when this tier is minted, one per
+  workspace-level skill the estate uses.
+- **Health-check** — each skill's own first step verifies its link on every run: a missing entry
+  is offered for creation (owner authorization plus a commit stating the reason), a copy found
+  in its place is reported as drift risk and offered for replacement with the link, never left
+  silently.
+
 **Bind only what exists.** A hub next to this tier carries estate-binding references only to the
 files and directories actually present here; a dangling binding is worse than none. When a
 capability above is adopted, extend each hub's estate-binding section through that hub's own

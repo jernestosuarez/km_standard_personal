@@ -49,3 +49,12 @@ Drafted on `main` at `045515c`. **No STANDARD.md version is drafted by this chan
       (the tested per-hub parenthetical row untouched).
 - [x] 5.2 Run `python3 tools/km-release-gate.py` directly; record the exit status. Exact-path
       staging throughout.
+
+## 6. Estate deployment doctrine (post-review correction)
+
+- [x] 6.1 SKILL.md: deployment-by-symlink block ("a symlink, never a copy") + Step 0 health-check
+      (missing entry → offer the link, owner-authorized; a copy → drift risk, replacement offered).
+- [x] 6.2 Supervisor tier template README: "Workspace-level skills: linked, never copied" section
+      naming the two control points (instance minting, per-run health-check).
+- [x] 6.3 spec.md: deployment requirement + first-run and copied-tree scenarios; test pins the
+      "a symlink, never a copy" literal.

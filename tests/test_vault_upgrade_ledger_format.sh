@@ -18,7 +18,8 @@
 # raises no false violation; and that unreadable or truncated input is REFUSED (exit 2), never
 # passed. It also proves, at the level the standard's tests operate for a prose skill, that
 # SKILL.md still declares its load-bearing rules — never write entity folders directly, rulings
-# carried forward verbatim, never silently dedupe, plan-rulings precedence.
+# carried forward verbatim, never silently dedupe, plan-rulings precedence, and estate
+# deployment by symlink rather than copy.
 #
 # It does NOT prove the skill behaves as SKILL.md says (procedures are exercised at the first
 # estate run, against the capability spec's scenarios), that a ledger's rows are TRUE (a
@@ -487,12 +488,13 @@ assert_skill "never writes entity folders directly" "no direct entity-folder wri
 assert_skill "rulings are carried forward, never re-derived" "owner rulings carry forward verbatim"
 assert_skill "never silently dedupe" "duplicate subtrees reconcile, never silent dedupe"
 assert_skill "the plan's owner rulings win" "a live estate plan's rulings take precedence"
+assert_skill "a symlink, never a copy" "estate deployment resolves by symlink, not by copied tree"
 
 # --- summary -----------------------------------------------------------------------------------
 if [ "$fail" -eq 0 ]; then
   echo "vault-upgrade ledger format tests passed"
   echo "COVERAGE: 1 valid ledger, 2 valid edge ledgers, 5 ledger mutations, 2 campaign-state"
-  echo "  mutations, 2 contract-edit directions, 4 refusals, 4 skill literals; required keys,"
+  echo "  mutations, 2 contract-edit directions, 4 refusals, 5 skill literals; required keys,"
   echo "  enums and hash format asserted from the contract's machine-readable block, not from"
   echo "  values copied here; batch correlation checked against the campaign-state table"
   echo "LIMIT: the checker gates format, not truth; the per-file catalogue columns, date-field"

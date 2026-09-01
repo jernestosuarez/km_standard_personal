@@ -18,6 +18,14 @@ is the capability spec
 ([`vault-upgrade-campaign/spec.md`](../../openspec/changes/add-km-vault-upgrade-skill/specs/vault-upgrade-campaign/spec.md)),
 cited per step below.
 
+**Deployment: a symlink, never a copy.** An estate invokes this skill through
+`<workspace>/.claude/skills/km-vault-upgrade`, and that entry is a symlink to the canonical
+`skills/km-vault-upgrade/` in the standard checkout — never a copied tree. A copy is the drift
+class this standard has already measured: the one skill copy without a parity check was the one
+that drifted, and no check reaches a skill copied into a deployed estate. A new estate instance
+creates the link when its Supervisor tier is minted (the tier template's "Workspace-level
+skills" section); an existing estate adopts it at this skill's first run.
+
 **Governing principles (do not violate):**
 
 - **The skill never writes entity folders directly.** Every content mutation arrives as a
@@ -56,6 +64,14 @@ integrity and idempotency (IV, Steps 7–9), close (V, Step 10).
 
 Read, in full, before anything else:
 
+- **Health-check this skill's own deployment.** Resolve how `/km-vault-upgrade` is installed at
+  this workspace: `.claude/skills/km-vault-upgrade` must be a symlink into a standard checkout's
+  `skills/` tree. Missing → offer to create it (owner authorization plus a commit stating the
+  reason, like all estate state). A **copy** found in its place → report it as drift risk and
+  offer to replace it with the link; never leave it silently. Do the same check for the other
+  workspace-level skills (`km-init`, `km-supervise`) and report what you find — per-hub skills
+  are a different class: hubs receive them from `template/` at initiation, and the factory's
+  parity check governs those copies.
 - `_KM_Supervisor/hub-registry.md` — the routing map. If `_KM_Supervisor/` does not exist, stop
   and tell the owner to stand up the Supervisor first (offer `/km-init` and the supervisor
   threshold); a campaign has no home without it.

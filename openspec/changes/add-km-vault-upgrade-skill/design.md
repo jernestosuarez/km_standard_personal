@@ -80,3 +80,16 @@ estate run. Only the ledger/catalogue format — machine-read state that can dri
 warrants a new discovered test, and that test also carries literal-conformance cases (the
 `test_hub_merge.sh` pattern, each matcher proven live) for the skill's load-bearing declarations:
 never write entity folders, rulings carried forward verbatim, never silently dedupe.
+
+## Estate deployment: linked, never copied (post-review correction)
+
+The first drafting assumed the incumbent's mechanism — copy the skill into the estate's
+`.claude/skills/`. The owner corrected it: a copied skill inside a deployed estate is exactly the
+drift class the parity work already measured, and no factory check reaches it. The skill now
+deploys as a symlink from `<workspace>/.claude/skills/km-vault-upgrade` to the checkout's
+canonical `skills/km-vault-upgrade/`, with two control points and only these: Supervisor-tier
+minting incorporates the links into new instances (tier template README section), and the
+skill's own Step 0 health-checks the link on every run at existing estates — a missing entry is
+offered for creation under owner authorization, a copy is reported as drift risk and offered for
+replacement, never left silently. Per-hub skills are out of this doctrine's scope: hubs receive
+them from `template/` at initiation and the parity suite governs those copies.

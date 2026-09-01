@@ -53,6 +53,14 @@ covers:
    directions that the ledger/catalogue contract cannot drift silently, plus literal-conformance
    cases for the skill's load-bearing declarations.
 4. **README repository-map prose** — the untested `skills/` row gains vault-onboarding phrasing.
+5. **Estate deployment doctrine: linked, never copied** — the skill reaches an estate as a
+   symlink (`<workspace>/.claude/skills/km-vault-upgrade` → the checkout's canonical
+   `skills/km-vault-upgrade/`), never as a copied tree. Control points: Supervisor-tier minting
+   for new instances (the tier template's new "Workspace-level skills" section) and the skill's
+   own Step 0 health-check for existing estates (missing → offer the link; a copy → drift risk,
+   replacement offered). The tier template README
+   (`skills/km-supervise/_KM_Supervisor_template/README.md`) gains that section; km-supervise's
+   SKILL.md body is untouched.
 
 Explicitly **not in scope**: any STANDARD.md normative edit or version bump; publication
 (version-ledger row, badge, changelog); execution of the campaign against the real vault (that is
@@ -65,8 +73,11 @@ estate-side runtime ledger validator (follow-up once the format survives one rea
 - `skills/km-vault-upgrade/` (new: `SKILL.md`, `ledger-format.md`), `tests/` (one new discovered
   check), `README.md` (one prose row), this OpenSpec package, and the implementation plan under
   `docs/superpowers/plans/`.
-- No STANDARD.md edit. No template edit. No existing skill, script, or check is modified. The
-  supervisor template's growth-conditions table is deliberately not extended; the ledger row lands
+- No STANDARD.md edit. No `template/` (reference hub) edit. No existing skill *body* is modified;
+  the one existing file touched is the supervisor tier template's README
+  (`skills/km-supervise/_KM_Supervisor_template/README.md`), which gains the workspace-level
+  skills deployment section — a data file the tier is minted from, outside every parity and
+  inventory suite. Its growth-conditions table is deliberately not extended; the ledger row lands
   with the follow-up that ships the estate-side validator.
 - The new check carries its `km-unrepaired-tree` declaration as `none` with the reason stated: it
   is a new-capability check, not a defect repair, and no version is being drafted.
