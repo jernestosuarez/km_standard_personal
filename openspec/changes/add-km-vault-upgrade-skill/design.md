@@ -30,9 +30,11 @@ deliberately left to the follow-up that ships the estate-side runtime validator,
 keeps every existing skill file untouched.
 
 **One-definition rule.** `ledger-format.md` carries exactly one machine-readable block (required
-row keys, the disposition enum, the campaign-state status enum). The format test parses its
-assertions from that block, so an edit to the contract reddens the test; prose elaborates, never
-redefines.
+row keys, the disposition enum, the campaign-state status enum, the content-hash format, and the
+catalogue's required columns). The format test derives its assertions from the block at run time
+— row keys, both enums, and the hash format — so an edit to those lines reddens the test; the
+catalogue-columns line is validated by the estate-side follow-up, and the test names that limit
+on every pass. Prose elaborates, never redefines.
 
 **Content-hash normalization** is decided in the contract itself, with examples: SHA-256 over the
 file's raw bytes, no whitespace or frontmatter normalization. The vault is the system of record and

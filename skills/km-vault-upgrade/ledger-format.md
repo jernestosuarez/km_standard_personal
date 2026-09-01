@@ -7,8 +7,12 @@ dependency, match hints over duplicate records, and a mechanical validator that 
 truth.
 
 `tests/test_vault_upgrade_ledger_format.sh` parses its assertions from the machine-readable block
-below. **One-definition rule: the block defines; prose elaborates, never redefines.** An edit to
-the block reddens the test.
+below: the required row keys, both enums, and the content-hash format are derived from it at run
+time, so an edit to any of those lines reddens the suite (for enum values, in the class the
+fixtures exercise — a widening edit reddens nothing by construction and is guarded by review).
+The `catalogue-required-columns` line is equally definitional, but its mechanical validation is
+the estate-side validator follow-up; the test states that limit on every pass.
+**One-definition rule: the block defines; prose elaborates, never redefines.**
 
 ## The machine-readable block
 
@@ -22,7 +26,8 @@ catalogue-required-columns: domain file date date-source class route
 
 ## The campaign ledger
 
-One canonical JSON file at the estate Supervisor: `_KM_Supervisor/campaign-ledger.json` once
+One canonical JSON file per campaign at the estate Supervisor:
+`_KM_Supervisor/campaign-ledger.json` once
 adopted. It is the campaign's idempotency receipt: which sources have been adjudicated, how, and
 under which proposal. It holds **match hints, not duplicate records** — a row points at the source
 and the proposal; it never restates extracted content.
@@ -33,7 +38,7 @@ and the proposal; it never restates extracted content.
 {
   "manifest": {
     "contract": "km-vault-upgrade/ledger-format",
-    "source_system": "sources/systems/vault-example.md",
+    "source_system": "_KM_Supervisor/sources/systems/vault-example.md",
     "campaign": "vault-example-2026-08",
     "generated_by": "km-vault-upgrade",
     "created_on": "2026-09-02"
@@ -70,10 +75,14 @@ and the proposal; it never restates extracted content.
 
 ### Row rules
 
-- **Every row carries all six required keys** (`ledger-required-row-keys` above). `proposal_ref`
-  is the repo-relative path of the proposal that adjudicated the source for `extracted`,
-  `pointer-only`, and `rejected` rows; it is `null` for `out-of-scope` and `deferred` rows, which
-  no proposal carries.
+- **Every row carries all six required keys** (`ledger-required-row-keys` above), and only
+  `proposal_ref` may be `null`. `proposal_ref` is the workspace-root-relative path of the
+  proposal that adjudicated the source for `extracted`, `pointer-only`, and `rejected` rows
+  (for `rejected` rows it is a historical reference — the proposal file is deleted after its
+  `corrections/` rule is captured, and the path resolves through git history); it is `null` for
+  `out-of-scope` and `deferred` rows, which no proposal carries. Path bases, one per field:
+  `source_path` is vault-root-relative; `proposal_ref` and the manifest's `source_system` are
+  workspace-root-relative.
 - **`disposition` takes exactly one value from the enum:**
   - `extracted` — knowledge facts were routed into one or more proposals;
   - `pointer-only` — a record; the hub holds a `file://` pointer, never a copy (Rule 6);
@@ -90,11 +99,16 @@ and the proposal; it never restates extracted content.
   normalization. The vault is the system of record; any byte change is a change the owner should
   see. A normalizing hash would silently decide on the owner's behalf which differences matter.
   Compute: `shasum -a 256 <file>`.
-- **`batch_id`** correlates the row with the campaign-state table in the catalogue header
-  (below). Every `batch_id` in the ledger names a batch that table carries.
+- **`batch_id`** correlates the row with the catalogue's `## Campaign state` table (below).
+  Every `batch_id` in the ledger names a batch that table carries.
 - **`decided_on`** is the `YYYY-MM-DD` date of the owner decision the row records (approval,
   rejection, or ruling) — not the date the row was written.
 - **An empty ledger (zero rows) is valid.** A fresh campaign has adjudicated nothing.
+- **One campaign per ledger file.** The manifest names one `campaign` and one `source_system`.
+  A second concurrent campaign at the same estate — a quarantined bulk-export subtree promoted
+  to its own campaign, or a second vault — needs its own ledger file (or a manifest extension),
+  and that is a governed decision under the same adoption rule, stated here rather than
+  improvised at run time.
 
 ### FLAG semantics on hash change
 
@@ -125,11 +139,17 @@ scratch-plane doctrine). Only the ledger, the catalogue, and the proposals touch
 ## The catalogue
 
 One markdown file per campaign at the Supervisor `_inbox/`
-(`vault-catalogue-YYYY-MM-DD.md`), regenerated per catalogue run — not appended. Regeneration is
-safe because rulings are carried forward verbatim (below) and the file is mechanical everywhere
-else; an append-per-run catalogue would fork the file into competing snapshots a resuming session
-would have to reconcile. A pre-existing hand-built catalogue that satisfies this structure is a
-valid instance of this contract retroactively; its rulings enter the carry-forward set unchanged.
+(`vault-catalogue-YYYY-MM-DD.md`, dated at campaign creation and kept for the campaign's life),
+regenerated per catalogue run — not appended. Regeneration is safe because the two
+decision-bearing sections — `## Owner rulings applied` and `## Campaign state` — are carried
+forward across regenerations (rulings verbatim; campaign-state rows as last written, then
+updated), and the file is mechanical everywhere else; an append-per-run catalogue would fork the
+file into competing snapshots a resuming session would have to reconcile. A resuming session
+locates the campaign catalogue through the ledger manifest's `campaign` field (the catalogue's
+frontmatter names the same campaign); with no ledger yet, the newest `vault-catalogue-*.md` in
+`_inbox/` is the campaign's. A pre-existing hand-built catalogue that satisfies this structure is
+a valid instance of this contract retroactively; its rulings enter the carry-forward set
+unchanged.
 
 ### Required structure, in order
 

@@ -1,36 +1,41 @@
 #!/bin/bash
-# km-unrepaired-tree: none | a new-capability format check, not a defect repair: no unrepaired tree exists (the contract and the skill this suite guards are born in the same change) and no version is drafted in this change. The failing direction was run FIRST, before the passing fixture was accepted: a violating ledger whose one row carried disposition "archived" was run against the finished checker over the shipped contract and it FAILED, exit 1, printing "VIOLATION: accounts/orion/2026-04-07-account-report.md: disposition 'archived' is not in the contract's disposition enum (extracted | pointer-only | rejected | out-of-scope | deferred)" — a rule-specific finding, not a blanket match. Each mutation case preserves that direction inside the suite, and case 9 proves the one-definition rule by reddening the checker with a contract edit alone.
+# km-unrepaired-tree: none | a new-capability format check, not a defect repair: no unrepaired tree exists (the contract and the skill this suite guards are born in the same change) and no version is drafted in this change. The failing direction was run FIRST, before the passing fixture was accepted: a violating ledger whose one row carried disposition "archived" was run against the finished checker over the shipped contract and it FAILED, exit 1, printing "VIOLATION: accounts/orion/2026-04-07-account-report.md: disposition 'archived' is not in the contract's disposition enum (extracted | pointer-only | rejected | out-of-scope | deferred)" — a rule-specific finding, not a blanket match. Each mutation case preserves that direction inside the suite; case 9 proves the one-definition rule by reddening the checker with a contract edit alone, and case 9b does the same for the hash-format line. Re-stated in-change for the review repairs: null-value rejection, hash-format derivation, batch correlation, and the campaign-state parser boundary — each was run in its failing direction against the pre-repair checker (null rows passed, a sha1 contract edit stayed green, a B5-orphan ledger passed, and a following table produced false status violations) before the repairs landed.
 # Fixtures for the vault-upgrade campaign ledger/catalogue format contract
 # (skills/km-vault-upgrade/ledger-format.md), added with the km-vault-upgrade skill.
 #
 # WHAT THIS PROVES, AND WHAT IT DOES NOT.
 #
 # It proves the ledger/catalogue format contract cannot drift silently: the checker derives its
-# enums and required keys FROM the contract's machine-readable block at run time, so an edit to
-# the block reddens this suite without any fixture being touched (case 9 demonstrates it by
-# renaming an enum value in a copy of the contract and requiring the previously-valid fixture to
-# fail against it). It proves a valid ledger passes and states its coverage; that each named
-# mutation — a missing required key, an unknown disposition, a malformed content hash, duplicate
-# rows for one source, a campaign-state row with an unknown status — fails with a rule-specific
-# message; that an empty ledger and a ledger of only flagged rows are valid; and that unreadable
-# or truncated input is REFUSED (exit 2), never passed. It also proves, at the level the
-# standard's tests operate for a prose skill, that SKILL.md still declares its load-bearing
-# rules — never write entity folders directly, rulings carried forward verbatim, never silently
-# dedupe, plan-rulings precedence — with each matcher proven live against its own literal so a
-# narrowed assertion cannot go dead.
+# enums, required keys, AND the content-hash format FROM the contract's machine-readable block at
+# run time, so an edit to those lines reddens this suite without any fixture being touched
+# (case 9 renames an enum value in a copy of the contract; case 9b changes the hash algorithm;
+# both require the previously-valid fixture to fail). It proves a valid ledger passes and states
+# its coverage; that each named mutation — a missing required key, a null-valued required key, an
+# unknown disposition, a malformed content hash, duplicate rows for one source, a campaign-state
+# row with an unknown status, a ledger batch_id naming no campaign-state batch — fails with a
+# rule-specific message; that an empty ledger and a ledger of only flagged rows are valid; that a
+# campaign-state table followed directly by another table (the contract's own required structure)
+# raises no false violation; and that unreadable or truncated input is REFUSED (exit 2), never
+# passed. It also proves, at the level the standard's tests operate for a prose skill, that
+# SKILL.md still declares its load-bearing rules — never write entity folders directly, rulings
+# carried forward verbatim, never silently dedupe, plan-rulings precedence.
 #
 # It does NOT prove the skill behaves as SKILL.md says (procedures are exercised at the first
 # estate run, against the capability spec's scenarios), that a ledger's rows are TRUE (a
 # validator gates intake, not truth), that a hash was computed over the bytes it claims, or that
-# an estate adopted the ledger through a governed act. The checker models the contract's
-# machine-readable block plus the row rules named above, and proving both directions proves it
-# fires on the class it models, never that it models the right class.
+# an estate adopted the ledger through a governed act. The per-file catalogue table's required
+# columns are NOT validated here — that is the estate-side validator follow-up the contract
+# names, and the passing line states the limit. Enum-WIDENING contract edits are undetectable by
+# construction (a new value reddens no fixture); only the openspec review path guards them. Date
+# fields (decided_on, flagged_on) and the manifest's keys are not format-validated. Proving both
+# directions proves the checker fires on the class it models, never that it models the right
+# class.
 #
 # BOTH DIRECTIONS. A format checker passes by absence, so the suite carries firing and
 # non-firing cases side by side: the valid fixture must pass (and a checker that fires on
 # everything proves as little as one that fires on nothing), and each mutation must fail with
 # its own rule named. This is new-check doctrine, not defect-repair doctrine: there is no
-# unrepaired tree and no manufactured red commit — the failing direction was run first and is
+# unrepaired tree and no manufactured red commit — the failing directions were run first and are
 # recorded in the declaration above.
 #
 # All fixture content is synthetic. No real person, organization or initiative is named.
@@ -86,12 +91,20 @@ try:
     required = block["ledger-required-row-keys"].split()
     dispositions = block["disposition-enum"].split()
     statuses = block["status-enum"].split()
+    hash_format = block["content-hash-format"]
 except KeyError as e:
     refuse("the machine-readable block is missing " + str(e))
 if not required or not dispositions or not statuses:
     refuse("the machine-readable block defines an empty rule set")
 
-HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+# The hash rule is derived, not hardcoded: "<algo>:<N lowercase hex>, ..." builds the regex, so
+# editing the block's content-hash-format line reddens the fixtures (case 9b).
+hm = re.match(r"(\w+):<(\d+) lowercase hex>", hash_format)
+if not hm:
+    refuse("the content-hash-format line could not be parsed into an algorithm and a hex length")
+HASH_RE = re.compile(r"^{}:[0-9a-f]{{{}}}$".format(hm.group(1), hm.group(2)))
+
+NULLABLE = {"proposal_ref"}  # the one key the contract permits to be null
 violations = []
 
 # -- the ledger --
@@ -110,8 +123,9 @@ if not isinstance(rows, list):
 
 seen = {}
 flagged = 0
+ledger_batches = []
 for i, row in enumerate(rows):
-    label = row.get("source_path", "row {}".format(i)) if isinstance(row, dict) else "row {}".format(i)
+    label = row.get("source_path") or "row {}".format(i) if isinstance(row, dict) else "row {}".format(i)
     if not isinstance(row, dict):
         violations.append("{}: a ledger row is not an object".format(label))
         continue
@@ -120,6 +134,10 @@ for i, row in enumerate(rows):
             violations.append(
                 "{}: missing required key '{}'; every row carries all of: {}".format(
                     label, key, " ".join(required)))
+        elif row[key] is None and key not in NULLABLE:
+            violations.append(
+                "{}: null is not a value for '{}'; only proposal_ref may be null".format(
+                    label, key))
     d = row.get("disposition")
     if d is not None and d not in dispositions:
         violations.append(
@@ -129,7 +147,7 @@ for i, row in enumerate(rows):
     if h is not None and not HASH_RE.match(str(h)):
         violations.append(
             "{}: content_hash '{}' does not match the contract's content-hash-format "
-            "(sha256: + 64 lowercase hex over raw bytes)".format(label, h))
+            "({})".format(label, h, hash_format))
     p = row.get("source_path")
     if p is not None:
         if p in seen:
@@ -137,6 +155,9 @@ for i, row in enumerate(rows):
                 "duplicate rows for source_path '{}': one row per source; "
                 "re-adjudication updates the row".format(p))
         seen[p] = True
+    b = row.get("batch_id")
+    if b is not None:
+        ledger_batches.append((label, b))
     if "flagged_on" in row:
         flagged += 1
 
@@ -148,30 +169,45 @@ if catalogue is not None:
             cat = f.read()
     except OSError:
         refuse("could not read the catalogue at " + catalogue)
-    m = re.search(r"^## Campaign state\n(.*?)(?=^## |\Z)", cat, re.S | re.M)
+    m = re.search(r"^## Campaign state\n(.*?)(?=^#|\Z)", cat, re.S | re.M)
     if not m:
         refuse("the catalogue carries no '## Campaign state' section")
+    # Only the FIRST contiguous table block is the campaign-state table. The contract's required
+    # structure puts further tables (domain summary, per-file rows) after it without an
+    # intervening heading, and reading them as status rows would fire false violations.
+    table_batches = set()
+    in_table = False
     for line in m.group(1).splitlines():
         line = line.strip()
         if not line.startswith("|"):
+            if in_table:
+                break
             continue
+        in_table = True
         cells = [c.strip() for c in line.strip("|").split("|")]
         if len(cells) < 5 or cells[0] in ("Batch", "") or set(cells[0]) <= set("-: "):
             continue
         cat_rows += 1
+        table_batches.add(cells[0])
         status = cells[3]
         if status not in statuses:
             violations.append(
                 "campaign-state batch '{}': status '{}' is not in the contract's status enum "
                 "({})".format(cells[0], status, " | ".join(statuses)))
+    for label, b in ledger_batches:
+        if b not in table_batches:
+            violations.append(
+                "{}: ledger batch_id '{}' names no batch in the campaign-state table; every "
+                "ledger batch_id names a batch the table carries".format(label, b))
 
 if violations:
     for v in violations:
         print("VIOLATION: " + v)
     sys.exit(1)
 print("ledger format check passed: {} row(s) read ({} flagged), {} campaign-state row(s) read; "
-      "required keys, disposition enum, status enum and hash format derived from the contract's "
-      "machine-readable block".format(len(rows), flagged, cat_rows))
+      "required keys, disposition enum, status enum and content-hash format derived from the "
+      "contract's machine-readable block; batch correlation checked when a catalogue is given"
+      .format(len(rows), flagged, cat_rows))
 sys.exit(0)
 PYCHECK
 
@@ -191,7 +227,7 @@ cat > "$work/valid.json" <<'FIX'
 {
   "manifest": {
     "contract": "km-vault-upgrade/ledger-format",
-    "source_system": "sources/systems/vault-example.md",
+    "source_system": "_KM_Supervisor/sources/systems/vault-example.md",
     "campaign": "vault-example-2026-08",
     "generated_by": "km-vault-upgrade",
     "created_on": "2026-09-02"
@@ -272,6 +308,22 @@ else
   die "missing-disposition mutation not caught with its rule (rc=$rc): $out"
 fi
 
+# --- 4b. MUTATION: a null-valued required key fails; presence is not a value -------------------
+# Only proposal_ref may be null. A null disposition (key present) previously skipped every
+# validation including the duplicate-source check; this case pins the repair.
+python3 - "$work/valid.json" "$work/nulldisp.json" <<'PY'
+import json, sys
+data = json.load(open(sys.argv[1]))
+data["rows"][0]["disposition"] = None
+json.dump(data, open(sys.argv[2], "w"))
+PY
+out=$(run_check "$work/nulldisp.json"); rc=$?
+if [ "$rc" -eq 1 ] && printf '%s\n' "$out" | grep -Fq "null is not a value for 'disposition'"; then
+  pass "a null disposition fails: only proposal_ref may be null"
+else
+  die "null-disposition mutation not caught with its rule (rc=$rc): $out"
+fi
+
 # --- 5. MUTATION: an unknown disposition fails naming the value and the enum -------------------
 python3 - "$work/valid.json" "$work/badenum.json" <<'PY'
 import json, sys
@@ -316,7 +368,11 @@ else
   die "duplicate-row mutation not caught with its rule (rc=$rc): $out"
 fi
 
-# --- 8. MUTATION: a campaign-state row with an unknown status fails naming both ----------------
+# --- 8. THE CAMPAIGN-STATE TABLE: statuses, correlation, and the section boundary --------------
+# The fixture reproduces the contract's required structure: the campaign-state table is followed
+# by the domain summary table with NO intervening heading. A parser that reads past the first
+# table block would report the summary's cells as status violations (the false-fire this case
+# pins). The table carries every batch the valid ledger names (B1, B5), per the correlation rule.
 cat > "$work/catalogue.md" <<'FIX'
 ## Campaign state
 
@@ -324,12 +380,17 @@ cat > "$work/catalogue.md" <<'FIX'
 |---|---|---|---|---|
 | B1 | accounts | CQ1, CQ3 | applied | 2026-09-02 |
 | B2 | events | CQ2 | planned | — |
+| B5 | events | CQ2 | proposed | — |
+
+| Domain | Route | Files | Knowledge candidates | Records |
+|---|---|---|---|---|
+| accounts | hub-a | 12 | 9 | 3 |
 
 ## Something else
 FIX
 out=$(run_check "$work/valid.json" "$work/catalogue.md"); rc=$?
-if [ "$rc" -eq 0 ] && printf '%s\n' "$out" | grep -Fq "2 campaign-state row(s) read"; then
-  pass "a campaign-state table with contract statuses passes and is counted"
+if [ "$rc" -eq 0 ] && printf '%s\n' "$out" | grep -Fq "3 campaign-state row(s) read"; then
+  pass "a contract-shaped catalogue passes: statuses valid, batches correlated, no false fire on the following table"
 else
   die "valid campaign-state table did not pass (rc=$rc): $out"
 fi
@@ -343,10 +404,20 @@ else
   die "unknown-status mutation not caught with its rule (rc=$rc): $out"
 fi
 
+# --- 8c. MUTATION: a ledger batch_id naming no campaign-state batch fails ----------------------
+grep -v '^| B5 |' "$work/catalogue.md" > "$work/catalogue-nob5.md"
+out=$(run_check "$work/valid.json" "$work/catalogue-nob5.md"); rc=$?
+if [ "$rc" -eq 1 ] && printf '%s\n' "$out" | grep -Fq "ledger batch_id 'B5' names no batch in the campaign-state table"; then
+  pass "a ledger batch_id absent from the campaign-state table fails with the correlation rule"
+else
+  die "orphan-batch mutation not caught with its rule (rc=$rc): $out"
+fi
+
 # --- 9. THE CONTRACT-EDIT DIRECTION: editing the machine-readable block reddens the suite ------
 # The one-definition rule is only real if an edit to the block fires without any fixture edit.
 # A copy of the shipped contract has one enum value renamed; the previously-valid fixture must
-# now fail against it. The shipped contract is never modified.
+# now fail against it. The shipped contract is never modified. (Scope: this proves the
+# fixture-exercised value class; an enum-WIDENING edit reddens nothing by construction.)
 sed 's/^disposition-enum: extracted /disposition-enum: harvested /' "$CONTRACT" > "$work/contract-edited.md"
 grep -Fq "disposition-enum: harvested" "$work/contract-edited.md" \
   || die "the contract-edit fixture did not take; this direction would prove nothing"
@@ -355,6 +426,17 @@ if [ "$rc" -eq 1 ] && printf '%s\n' "$out" | grep -Fq "disposition 'extracted' i
   pass "renaming an enum value in the contract block reddens the check without touching fixtures"
 else
   die "a contract edit did not redden the check (rc=$rc): $out"
+fi
+
+# --- 9b. THE HASH-FORMAT LINE IS DERIVED TOO: changing the algorithm reddens the fixtures ------
+sed 's/^content-hash-format: sha256:/content-hash-format: sha1:/' "$CONTRACT" > "$work/contract-sha1.md"
+grep -Fq "content-hash-format: sha1:" "$work/contract-sha1.md" \
+  || die "the hash-format edit fixture did not take; this direction would prove nothing"
+out=$(python3 "$work/check.py" "$work/contract-sha1.md" "$work/valid.json" 2>&1); rc=$?
+if [ "$rc" -eq 1 ] && printf '%s\n' "$out" | grep -Fq "does not match the contract's content-hash-format"; then
+  pass "changing the block's hash algorithm reddens the fixtures: the hash rule is derived, not hardcoded"
+else
+  die "a hash-format contract edit did not redden the check (rc=$rc): $out"
 fi
 
 # --- 10. REFUSALS: no verdict on input the checker could not evaluate --------------------------
@@ -387,13 +469,13 @@ else
 fi
 
 # --- 11. SKILL.md literal conformance: the load-bearing declarations are still declared --------
-# Each matcher is proven live against its own literal first, so a narrowed assertion cannot go
-# dead, and the file is required non-empty so nothing passes by reading nothing.
+# The file is required non-empty so nothing passes by reading nothing, and each literal is
+# required non-empty so a narrowed call cannot pass vacuously. (The real liveness proof is that
+# the SKILL grep sits in the pass path: a drifted literal fails loudly.)
 [ -s "$SKILL" ] || die "skills/km-vault-upgrade/SKILL.md is missing or empty — the checks below would read nothing"
 
 assert_skill() { # <literal-substring> <human-description>
-  printf '%s\n' "$1" | grep -Fq -- "$1" \
-    || { die "matcher inert for: $2"; return; }
+  [ -n "$1" ] || { die "matcher inert (empty literal) for: $2"; return; }
   if grep -Fq -- "$1" "$SKILL"; then
     pass "skill declares: $2"
   else
@@ -409,11 +491,14 @@ assert_skill "the plan's owner rulings win" "a live estate plan's rulings take p
 # --- summary -----------------------------------------------------------------------------------
 if [ "$fail" -eq 0 ]; then
   echo "vault-upgrade ledger format tests passed"
-  echo "COVERAGE: 1 valid ledger, 2 valid edge ledgers, 4 ledger mutations, 1 campaign-state"
-  echo "  mutation, 1 contract-edit direction, 4 refusals, 4 skill literals; every rule asserted"
-  echo "  from the contract's machine-readable block, not from values copied here"
-  echo "LIMIT: the checker gates format, not truth; skill BEHAVIOR is exercised at the first"
-  echo "  estate run against the capability spec's scenarios, and no case here reads a real estate"
+  echo "COVERAGE: 1 valid ledger, 2 valid edge ledgers, 5 ledger mutations, 2 campaign-state"
+  echo "  mutations, 2 contract-edit directions, 4 refusals, 4 skill literals; required keys,"
+  echo "  enums and hash format asserted from the contract's machine-readable block, not from"
+  echo "  values copied here; batch correlation checked against the campaign-state table"
+  echo "LIMIT: the checker gates format, not truth; the per-file catalogue columns, date-field"
+  echo "  formats and manifest keys are not validated (estate-side validator follow-up);"
+  echo "  enum-widening contract edits redden nothing by construction; skill BEHAVIOR is"
+  echo "  exercised at the first estate run against the capability spec's scenarios"
   exit 0
 else
   exit 1

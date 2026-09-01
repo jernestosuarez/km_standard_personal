@@ -39,8 +39,9 @@ stated. A registered vault's existing note is reused.
 
 ### Requirement: The catalogue SHALL be generated mechanically, and owner rulings SHALL be carried forward verbatim
 
-Every file SHALL get a row — date, date-source (named vs mtime), knowledge-vs-record class,
-candidate hub route by registry keywords, exclusion flag — written to the Supervisor `_inbox/`,
+Every file SHALL get a row — domain, file, date, date-source (named vs mtime), knowledge-vs-record
+class, route (candidate hub by registry keywords, or `excluded` with the ruling's date) — written
+to the Supervisor `_inbox/`,
 read-only with respect to the vault. Prior owner rulings (exclusions, routes, quarantines) SHALL
 be carried forward verbatim, never re-derived. A subtree the owner ruled excluded SHALL never be
 proposed from by any later phase.
@@ -153,7 +154,7 @@ an estate SHALL be a governed act: owner authorization plus a commit stating the
 
 #### Scenario: A session resumes a half-done campaign
 
-- **WHEN** a cold-start session reads the catalogue header and the ledger
+- **WHEN** a cold-start session reads the catalogue's campaign-state table and the ledger
 - **THEN** it can state which batches are planned, proposed, approved, applied, or rejected, and
   proceed without re-proposing adjudicated work
 

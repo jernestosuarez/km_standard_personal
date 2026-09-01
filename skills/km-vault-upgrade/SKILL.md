@@ -21,10 +21,13 @@ cited per step below.
 **Governing principles (do not violate):**
 
 - **The skill never writes entity folders directly.** Every content mutation arrives as a
-  proposal in the receiving hub's `changes/`, applied by that hub's own approval flow. The only
-  files this skill writes outside `changes/` are the catalogue (Supervisor `_inbox/`), the
-  ledger (once adopted), QUEUE and `_unrouted/` rows, and declared-lifetime staging in
-  `_scratch/`.
+  proposal in the receiving hub's `changes/`, applied by that hub's own approval flow. Outside
+  `changes/`, this skill writes only campaign and registration state, each class named here:
+  the catalogue (Supervisor `_inbox/`), the ledger (once adopted), QUEUE and `_unrouted/` rows,
+  declared-lifetime staging in `_scratch/`, the Step 1 registration writes (SourceSystem note,
+  subscription entries, dates-register files and rows) under their owner authorization,
+  `corrections/` notes capturing rejection rules (Step 6), and the close-out lifecycle edit that
+  retires a superseded plan (Step 10) — never an entity note, rollup, or index.
 - **The owner decides; rulings are carried forward, never re-derived.** Exclusions, routes,
   quarantines, source-of-record selections, and interview answers are owner decisions. A later
   run repeats none of them and reverses none of them silently.
@@ -36,9 +39,16 @@ cited per step below.
 **the plan's owner rulings win** until the owner supersedes them. This skill generalizes such
 plans; it does not overrule them.
 
-**Arrival is not a decision.** Never pause per file. The campaign holds on the owner in exactly
-three places: the **date gate** (mtime-only sources), the **boundary interview** per domain, and
-**per-domain proposal approval**. Everything else runs to completion unasked.
+**Arrival is not a decision.** Never pause per file. Per source content, the campaign holds on
+the owner in exactly three places: the **date gate** (mtime-only sources, confirmed in bulk per
+domain), the **boundary interview** per domain, and **per-domain proposal approval**. Governance
+acts — registration commits, ledger adoption, FLAG rulings, source-of-record selection, the
+`--dry-run` confirmation before a full `/km-supervise` — carry their own owner authorization
+where the steps state it; none is a per-file pause. Everything else runs to completion unasked.
+
+The steps group into the campaign's five episodes: registration and catalogue (I, Steps 1–2),
+interviews and batch planning (II, Steps 3–4), extraction under governance (III, Steps 5–6),
+integrity and idempotency (IV, Steps 7–9), close (V, Step 10).
 
 ---
 
@@ -49,10 +59,10 @@ Read, in full, before anything else:
 - `_KM_Supervisor/hub-registry.md` — the routing map. If `_KM_Supervisor/` does not exist, stop
   and tell the owner to stand up the Supervisor first (offer `/km-init` and the supervisor
   threshold); a campaign has no home without it.
-- The campaign catalogue and ledger, if they exist — this is how a cold-start session resumes:
-  the catalogue's `## Campaign state` table plus the ledger say exactly which batches are
-  planned, proposed, approved, applied, or rejected. Never rebuild campaign state from memory or
-  chat history.
+- The campaign catalogue and ledger, if they exist — this is how a cold-start session resumes
+  (locate the catalogue via the ledger manifest's `campaign` field, per the contract): the
+  catalogue's `## Campaign state` table plus the ledger say exactly where every batch stands
+  (one `status-enum` value each). Never rebuild campaign state from memory or chat history.
 - **Every receiving hub's active `corrections/` rules** (`lifecycle: active`). Rejections teach
   the campaign (Step 6); a session that extracts before reading the rules repeats the mistake
   the owner already corrected. State which rules are in force in your first report.
@@ -67,16 +77,19 @@ Check `_KM_Supervisor/sources/systems/` for an existing SourceSystem note for th
 - **Registered** → skip; reuse the existing note unchanged. Say so.
 - **Unregistered** → execute the registration shape, each write an **owner-authorized commit with
   the reason stated**:
-  1. SourceSystem note at the Supervisor (`systemKind: vault-export`, `uriScheme: file://…`,
-     `connector: manual`, `refreshPolicy: on-demand`, and the owner's `defaultAccessClass`).
+  1. SourceSystem note at `_KM_Supervisor/sources/systems/` (`systemKind: vault-export`,
+     `uriScheme: file://…`, `connector: manual`, `refreshPolicy: on-demand`, and the
+     `defaultAccessClass` the owner states when authorizing this commit).
      A live vault is knowingly registered as `vault-export`; note it in the file.
   2. A subscription entry in each receiving hub's `sources.config.md` naming the SourceSystem
      and the owner's path filter for that hub.
   3. A `sources/dates-register.md` present in **every** receiving hub — create from the template
      where missing, and never reset one that is live.
 
-Registration precedes cataloguing; every extract inherits this note's provenance and access
-class.
+The SourceSystem note (item 1) precedes cataloguing; every extract inherits its provenance and
+access class. Items 2 and 3 name the **receiving hubs**, which the owner's routing rulings on the
+catalogue establish — write them once Step 2's domain summary is ruled, under the same
+registration authorization, before the first batch extracts.
 
 ## Step 2 — Catalogue, mechanically (Episode I)
 
@@ -86,17 +99,21 @@ verbatim."*
 Generate the catalogue per the contract in [`ledger-format.md`](ledger-format.md) — one file per
 campaign at the Supervisor `_inbox/`, **read-only with respect to the vault**:
 
-- **Every file gets a row**: domain, path, date, date-source (`named` when a valid ISO date
-  parses from the filename; `mtime` otherwise), knowledge-vs-record class, candidate hub route
-  by registry keywords, exclusion flag. This is mechanical work; the owner's time is for
+- **Every file gets a row** with the contract's columns: domain, file, date, date-source
+  (`named` when a valid ISO date parses from the filename; `mtime` otherwise), knowledge-vs-record
+  class, and candidate hub route by registry keywords — an owner-excluded file carries `excluded`
+  with the ruling's date in its route column. This is mechanical work; the owner's time is for
   rulings, not enumeration.
-- **Carry prior rulings forward verbatim.** If a prior catalogue exists, its `## Owner rulings
-  applied` section crosses into the new catalogue unchanged, then extends with any new rulings,
-  each dated. A subtree the owner ruled excluded is **never proposed from** by any later step —
-  re-inclusion requires a fresh owner ruling.
-- **Date gate posture, recorded per row, held at intake**: `named` dates are accepted
-  mechanically; `mtime` rows are confirmed with the owner at intake as `ESTIMATED` and
-  registered in the receiving hub's `sources/dates-register.md`. Never silently backfill a date.
+- **Carry the decision-bearing sections forward.** If a prior catalogue exists, its `## Owner
+  rulings applied` section crosses into the new catalogue unchanged (then extends with new
+  rulings, each dated) and its `## Campaign state` table carries forward as last written. A
+  subtree the owner ruled excluded is **never proposed from** by any later step — re-inclusion
+  requires a fresh owner ruling.
+- **Date gate posture, recorded per row, held in bulk**: `named` dates are accepted mechanically.
+  `mtime` rows are confirmed **once per domain at batch planning** (Step 4): present the domain's
+  mtime-only files with their proposed `ESTIMATED` dates in one list, record the owner's
+  confirmation, and write the rows into the receiving hub's `sources/dates-register.md` with the
+  batch. Never silently backfill a date, and never ask per file.
 - **Quarantine bulk-export subtrees** (a platform export dominated by row stubs, a duplicated
   tree, anything whose file count dwarfs its knowledge density) as **their own campaigns** with
   per-subtree triage — never batch-intaked blindly. Mark them in the catalogue and surface each
@@ -141,6 +158,10 @@ Plan batches into the catalogue's `## Campaign state` table (contract in
 - **Batch size stays at dozens of files.** If a single batch proposal exceeds review capacity
   (~50 proposed changes), the next batch halves — review capacity, not file count, governs.
 - **One proposal per domain per batch**, in the receiving hub's `changes/` — never one per file.
+- **The batch's date gate resolves here, in bulk.** Present the batch domains' mtime-only files
+  with their proposed `ESTIMATED` dates as one list for the owner's confirmation (Step 2's
+  posture); the confirmed rows go into the receiving hub's `sources/dates-register.md` with the
+  batch.
 - Batches from interviewed domains only (Step 3); ledger-skipped sources excluded (Step 8).
 
 ## Step 5 — Extraction under governance (Episode III)
@@ -175,6 +196,11 @@ discipline, whichever flow runs:
 Dispatch means proposals in `changes/` — nothing is applied here. Each hub's own approval flow
 takes over (Step 7).
 
+**Close each batch with a batch report**, in this order: facts extracted; routed per hub;
+unsourced; out-of-scope tuples written to `_unrouted/`; reconciliation conflicts opened;
+proposals dispatched (each `‹hub›/changes/‹file›`); approvals pending. The counts are what the
+owner steers batch size and classification style by (Step 4's tripwire reads them).
+
 ## Step 6 — Rejection teaches the campaign (Episode III)
 
 *Spec: "A rejected proposal SHALL produce a corrections rule before deletion."*
@@ -195,8 +221,8 @@ When the owner rejects a proposal (in whole or in part):
 *Spec: "Campaign state SHALL be resumable and re-runs SHALL be idempotent."*
 
 Approval happens in each hub's own flow; this skill never approves or applies a proposal on the
-owner's behalf. When a hub applies an approved batch proposal, **the apply contract** holds
-(Rule 3):
+owner's behalf. The hub applies an approved batch proposal through its own intake flow
+(`/km-intake` reads `changes/`), and **the apply contract** holds (Rule 3):
 
 - the commit stages **exact paths** — never a blanket add in a populated tree;
 - the commit carries the **`KM-Agent:` trailer**;
@@ -210,18 +236,17 @@ Then record the batch:
    new estate state. On first need — not before — ask the owner to authorize its adoption and
    create it in a commit stating the reason, under the Supervisor tier's generic change rule.
    Never create estate state silently.
-2. **Write one ledger row per adjudicated source**: path, content hash, disposition
-   (`extracted` / `pointer-only` / `rejected` / `out-of-scope` / `deferred`), proposal ref,
-   batch id, decision date — exactly as the contract defines. One row per source, ever;
-   re-adjudication updates the row.
-3. **Update the campaign-state table** in the catalogue header (`planned` → `proposed` →
-   `approved` → `applied`, or `rejected`), with the decision date.
+2. **Write one ledger row per adjudicated source** — path, hash, one `disposition-enum` value,
+   proposal ref, batch id, decision date — exactly as the contract defines. One row per source,
+   ever; re-adjudication updates the row.
+3. **Update the batch's row in the `## Campaign state` table** to its new `status-enum` value,
+   with the decision date.
 4. **Crystallize per batch.** Before the next batch begins, entity notes implied by the newly
    applied extracts (stakeholders, decisions, risks, commitments) are proposed through the
    ordinary flow — CQ answerability accretes per batch instead of piling up at the close.
 
-The catalogue header and the ledger are the whole resumable state: a cold-start session (Step 0)
-reads them and continues, mid-campaign, without reconstruction.
+The catalogue's decision-bearing sections and the ledger are the whole resumable state: a
+cold-start session (Step 0) reads them and continues, mid-campaign, without reconstruction.
 
 ## Step 8 — Re-run semantics: skip, FLAG, new (Episode IV)
 
@@ -232,9 +257,9 @@ must never double-propose. On every catalogue run after ledger adoption, hash ea
 - **Hash matches** → the source is **skipped**: adjudicated is adjudicated. Skipped sources are
   counted in the run report, per disposition.
 - **Hash differs** → stamp `flagged_on` on the row and report the source as **FLAG** for the
-  owner. The prior adjudication stands until the owner rules: re-adjudicate (the row is updated
-  and re-enters batch planning) or keep the prior disposition (the flag clears). Nothing is
-  re-proposed silently.
+  owner. The prior adjudication stands until the owner rules — re-adjudicate, or keep the prior
+  disposition — and the row is updated exactly as the contract's FLAG semantics define. Nothing
+  is re-proposed silently.
 - **No row** → the source is new; it enters batch planning normally.
 
 ## Step 9 — Duplicate subtrees: reconcile, never silently dedupe (Episode IV)

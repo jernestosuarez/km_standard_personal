@@ -20,7 +20,7 @@ Drafted on `main` at `045515c`. **No STANDARD.md version is drafted by this chan
 
 - [x] 2.1 Frontmatter: `name: km-vault-upgrade`, one trigger-phrased description naming
       `/km-vault-upgrade <vault-path>` (10–40 words, no colon-space in the value).
-- [x] 2.2 Governing principles block; Step 0 idempotent registration; mechanical catalogue with
+- [x] 2.2 Governing principles block; Step 1 idempotent registration; mechanical catalogue with
       rulings carried forward verbatim; interview gate with QUEUE row on block; per-fact
       extraction with edge closure, accessClass stamping, `--dry-run` for mixed sources,
       `_unrouted/` for out-of-scope; rejection → `corrections/` rule loop.

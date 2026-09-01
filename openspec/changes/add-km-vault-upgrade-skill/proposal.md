@@ -63,7 +63,8 @@ estate-side runtime ledger validator (follow-up once the format survives one rea
 ## Impact
 
 - `skills/km-vault-upgrade/` (new: `SKILL.md`, `ledger-format.md`), `tests/` (one new discovered
-  check), `README.md` (one prose row), plus this OpenSpec package.
+  check), `README.md` (one prose row), this OpenSpec package, and the implementation plan under
+  `docs/superpowers/plans/`.
 - No STANDARD.md edit. No template edit. No existing skill, script, or check is modified. The
   supervisor template's growth-conditions table is deliberately not extended; the ledger row lands
   with the follow-up that ships the estate-side validator.
