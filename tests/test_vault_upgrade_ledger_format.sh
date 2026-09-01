@@ -1,5 +1,5 @@
 #!/bin/bash
-# km-unrepaired-tree: none | a new-capability format check, not a defect repair: no unrepaired tree exists (the contract and the skill this suite guards are born in the same change) and no version is drafted in this change. The failing direction was run FIRST, before the passing fixture was accepted: a violating ledger whose one row carried disposition "archived" was run against the finished checker over the shipped contract and it FAILED, exit 1, printing "VIOLATION: accounts/orion/2026-04-07-account-report.md: disposition 'archived' is not in the contract's disposition enum (extracted | pointer-only | rejected | out-of-scope | deferred)" — a rule-specific finding, not a blanket match. Each mutation case preserves that direction inside the suite; case 9 proves the one-definition rule by reddening the checker with a contract edit alone, and case 9b does the same for the hash-format line. Re-stated in-change for the review repairs: null-value rejection, hash-format derivation, batch correlation, and the campaign-state parser boundary — each was run in its failing direction against the pre-repair checker (null rows passed, a sha1 contract edit stayed green, a B5-orphan ledger passed, and a following table produced false status violations) before the repairs landed. Re-stated again for the deployment-doctrine edit, which adds case 11's fifth matcher ("a symlink, never a copy"): the matcher was probed in both directions against the shipped SKILL.md before this declaration was written — over a copy with that line stripped it did NOT match (the assert fails, so the matcher is live), and over the real file it matched. The gate's CHANGED rule caught this file being edited without this line moving, on the push-event base; that is the rule working, and the re-statement is deliberate rather than incidental.
+# km-unrepaired-tree: none | a new-capability format check, not a defect repair: no unrepaired tree exists (the contract and the skill this suite guards are born in the same change) and no version is drafted in this change. The failing direction was run FIRST, before the passing fixture was accepted: a violating ledger whose one row carried disposition "archived" was run against the finished checker over the shipped contract and it FAILED, exit 1, printing "VIOLATION: accounts/orion/2026-04-07-account-report.md: disposition 'archived' is not in the contract's disposition enum (extracted | pointer-only | rejected | out-of-scope | deferred)" — a rule-specific finding, not a blanket match. Each mutation case preserves that direction inside the suite; case 9 proves the one-definition rule by reddening the checker with a contract edit alone, and case 9b does the same for the hash-format line. Re-stated in-change for the review repairs: null-value rejection, hash-format derivation, batch correlation, and the campaign-state parser boundary — each was run in its failing direction against the pre-repair checker (null rows passed, a sha1 contract edit stayed green, a B5-orphan ledger passed, and a following table produced false status violations) before the repairs landed. Re-stated for the deployment-doctrine edit, which added case 11's fifth matcher ("a symlink, never a copy"): probed both directions against the shipped SKILL.md before the declaration was written — stripped copy did not match (assert fails, matcher live), real file matched. Re-stated again for the deployment-ROOT correction, which adds a sixth matcher pinning "_KM_Supervisor/.claude/skills/km-vault-upgrade": the original text named the workspace root, a location that is not a git repository and carries no scope guard, so the link there was untracked by anything; the sixth matcher was probed both directions against the corrected SKILL.md before this line was written — over a copy with that path stripped it did NOT match, over the real file it matched — and it exists so the root cannot silently revert to the workspace-root form.
 # Fixtures for the vault-upgrade campaign ledger/catalogue format contract
 # (skills/km-vault-upgrade/ledger-format.md), added with the km-vault-upgrade skill.
 #
@@ -19,7 +19,7 @@
 # passed. It also proves, at the level the standard's tests operate for a prose skill, that
 # SKILL.md still declares its load-bearing rules — never write entity folders directly, rulings
 # carried forward verbatim, never silently dedupe, plan-rulings precedence, and estate
-# deployment by symlink rather than copy.
+# deployment by symlink rather than copy, and the link's root being the Supervisor tier.
 #
 # It does NOT prove the skill behaves as SKILL.md says (procedures are exercised at the first
 # estate run, against the capability spec's scenarios), that a ledger's rows are TRUE (a
@@ -489,12 +489,13 @@ assert_skill "rulings are carried forward, never re-derived" "owner rulings carr
 assert_skill "never silently dedupe" "duplicate subtrees reconcile, never silent dedupe"
 assert_skill "the plan's owner rulings win" "a live estate plan's rulings take precedence"
 assert_skill "a symlink, never a copy" "estate deployment resolves by symlink, not by copied tree"
+assert_skill "_KM_Supervisor/.claude/skills/km-vault-upgrade" "the link resolves inside the Supervisor tier, not at the workspace root"
 
 # --- summary -----------------------------------------------------------------------------------
 if [ "$fail" -eq 0 ]; then
   echo "vault-upgrade ledger format tests passed"
   echo "COVERAGE: 1 valid ledger, 2 valid edge ledgers, 5 ledger mutations, 2 campaign-state"
-  echo "  mutations, 2 contract-edit directions, 4 refusals, 5 skill literals; required keys,"
+  echo "  mutations, 2 contract-edit directions, 4 refusals, 6 skill literals; required keys,"
   echo "  enums and hash format asserted from the contract's machine-readable block, not from"
   echo "  values copied here; batch correlation checked against the campaign-state table"
   echo "LIMIT: the checker gates format, not truth; the per-file catalogue columns, date-field"

@@ -10,8 +10,8 @@ Obsidian-structured directory of notes, exports, and records) is to be onboarded
 estate as a **campaign**: a resumable sequence of dozens-sized, competency-question-ordered
 batches, each ending in owner-approved proposals — never a one-shot import.
 
-You operate at the **Supervisor tier**. Run this from the workspace root (the folder that contains
-`_KM_Supervisor/` and the hubs). The formats you read and write — the campaign ledger, the
+You operate at the **Supervisor tier**. Run this from `_KM_Supervisor/` — the estate's own git
+repository, with the hubs as siblings at `../`. The formats you read and write — the campaign ledger, the
 catalogue, the campaign-state table — are defined once, in
 [`ledger-format.md`](ledger-format.md); this skill never redefines them. The behavioral contract
 is the capability spec
@@ -19,12 +19,22 @@ is the capability spec
 cited per step below.
 
 **Deployment: a symlink, never a copy.** An estate invokes this skill through
-`<workspace>/.claude/skills/km-vault-upgrade`, and that entry is a symlink to the canonical
-`skills/km-vault-upgrade/` in the standard checkout — never a copied tree. A copy is the drift
-class this standard has already measured: the one skill copy without a parity check was the one
-that drifted, and no check reaches a skill copied into a deployed estate. A new estate instance
-creates the link when its Supervisor tier is minted (the tier template's "Workspace-level
-skills" section); an existing estate adopts it at this skill's first run.
+`_KM_Supervisor/.claude/skills/km-vault-upgrade` (and its `.agents/skills/` mirror), and that
+entry is a symlink to the canonical `skills/km-vault-upgrade/` in the standard checkout — never a
+copied tree. A copy is the drift class this standard has already measured: the one skill copy
+without a parity check was the one that drifted, and no check reaches a skill copied into a
+deployed estate.
+
+**The Supervisor tier is the estate's governed unit, and that is why the link lives there.** It is
+the git repository that holds estate state and carries the tier's change rule, so a skill linked
+inside it is versioned, scannable, and sits beside the tier's own `CLAUDE.md`/`AGENTS.md` — the
+same shape a hub has. The workspace root above it is an ordinary folder, not a repository: a
+`.claude/` placed there is untracked, unscanned, and orphaned from any scope guard. A new estate
+creates the links when its Supervisor tier is minted (the tier template's "Workspace-level
+skills" section); an existing estate adopts them at this skill's first run.
+
+**Paths in this skill are written from your cwd, the tier root.** Tier state is unprefixed
+(`hub-registry.md`, `_inbox/`, `campaign-ledger.json`); hubs are siblings (`../‹hub›/changes/`).
 
 **Governing principles (do not violate):**
 
@@ -65,14 +75,17 @@ integrity and idempotency (IV, Steps 7–9), close (V, Step 10).
 Read, in full, before anything else:
 
 - **Health-check this skill's own deployment.** Resolve how `/km-vault-upgrade` is installed at
-  this workspace: `.claude/skills/km-vault-upgrade` must be a symlink into a standard checkout's
-  `skills/` tree. Missing → offer to create it (owner authorization plus a commit stating the
-  reason, like all estate state). A **copy** found in its place → report it as drift risk and
-  offer to replace it with the link; never leave it silently. Do the same check for the other
-  workspace-level skills (`km-init`, `km-supervise`) and report what you find — per-hub skills
-  are a different class: hubs receive them from `template/` at initiation, and the factory's
-  parity check governs those copies.
-- `_KM_Supervisor/hub-registry.md` — the routing map. If `_KM_Supervisor/` does not exist, stop
+  this tier: `.claude/skills/km-vault-upgrade` (and the `.agents/skills/` mirror, where the
+  estate uses an AGENTS.md surface) must be a symlink into a standard checkout's `skills/` tree.
+  Missing → offer to create it (owner authorization plus a commit stating the reason, like all
+  estate state). A **copy** found in its place → report it as drift risk and offer to replace it
+  with the link; never leave it silently. A link found at the **workspace root above this tier**
+  (`../.claude/skills/`) is the superseded location → report it, offer to move it here, since a
+  link there is untracked by any repository. Do the same check for the other workspace-level
+  skills (`km-init`, `km-supervise`) and report what you find — per-hub skills are a different
+  class: hubs receive them from `template/` at initiation, and the factory's parity check
+  governs those copies.
+- `hub-registry.md` — the routing map. If you are not inside a Supervisor tier, stop
   and tell the owner to stand up the Supervisor first (offer `/km-init` and the supervisor
   threshold); a campaign has no home without it.
 - The campaign catalogue and ledger, if they exist — this is how a cold-start session resumes
@@ -88,12 +101,12 @@ Read, in full, before anything else:
 
 *Spec: "The source vault SHALL be registered as a SourceSystem before any extraction."*
 
-Check `_KM_Supervisor/sources/systems/` for an existing SourceSystem note for this vault.
+Check `sources/systems/` for an existing SourceSystem note for this vault.
 
 - **Registered** → skip; reuse the existing note unchanged. Say so.
 - **Unregistered** → execute the registration shape, each write an **owner-authorized commit with
   the reason stated**:
-  1. SourceSystem note at `_KM_Supervisor/sources/systems/` (`systemKind: vault-export`,
+  1. SourceSystem note at `sources/systems/` (`systemKind: vault-export`,
      `uriScheme: file://…`, `connector: manual`, `refreshPolicy: on-demand`, and the
      `defaultAccessClass` the owner states when authorizing this commit).
      A live vault is knowingly registered as `vault-export`; note it in the file.
@@ -173,7 +186,7 @@ Plan batches into the catalogue's `## Campaign state` table (contract in
   moves a named N toward Y; a batch serving no CQ is deferred, not run.
 - **Batch size stays at dozens of files.** If a single batch proposal exceeds review capacity
   (~50 proposed changes), the next batch halves — review capacity, not file count, governs.
-- **One proposal per domain per batch**, in the receiving hub's `changes/` — never one per file.
+- **One proposal per domain per batch**, in the receiving hub's `../‹hub›/changes/` — never one per file.
 - **The batch's date gate resolves here, in bulk.** Present the batch domains' mtime-only files
   with their proposed `ESTIMATED` dates as one list for the owner's confirmation (Step 2's
   posture); the confirmed rows go into the receiving hub's `sources/dates-register.md` with the
@@ -204,7 +217,7 @@ discipline, whichever flow runs:
   interview's access class, else the SourceSystem `defaultAccessClass`. Restricted material
   never reaches indexes or `shareable/`.
 - **Out-of-scope facts are never dropped.** A fact matching no receiving hub's scope is written
-  as a tuple to `_KM_Supervisor/_unrouted/<theme>.md` and counted in the batch report.
+  as a tuple to `_unrouted/<theme>.md` and counted in the batch report.
 - **Contradictions are wins.** A fact contradicting a hub's SETTLED reconciliation row goes into
   a `⚠ RECONCILIATION CONFLICT` block / dispute file, and the batch proceeds without it until
   the owner adjudicates.
@@ -214,7 +227,7 @@ takes over (Step 7).
 
 **Close each batch with a batch report**, in this order: facts extracted; routed per hub;
 unsourced; out-of-scope tuples written to `_unrouted/`; reconciliation conflicts opened;
-proposals dispatched (each `‹hub›/changes/‹file›`); approvals pending. The counts are what the
+proposals dispatched (each `../‹hub›/changes/‹file›`); approvals pending. The counts are what the
 owner steers batch size and classification style by (Step 4's tripwire reads them).
 
 ## Step 6 — Rejection teaches the campaign (Episode III)
@@ -248,7 +261,7 @@ owner's behalf. The hub applies an approved batch proposal through its own intak
 Then record the batch:
 
 1. **Adopt the ledger, once, as a governed act.** The campaign ledger
-   (`_KM_Supervisor/campaign-ledger.json`, format in [`ledger-format.md`](ledger-format.md)) is
+   (`campaign-ledger.json` at the tier root, format in [`ledger-format.md`](ledger-format.md)) is
    new estate state. On first need — not before — ask the owner to authorize its adoption and
    create it in a commit stating the reason, under the Supervisor tier's generic change rule.
    Never create estate state silently.
