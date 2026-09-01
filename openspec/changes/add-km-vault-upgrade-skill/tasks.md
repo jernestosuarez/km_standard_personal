@@ -4,17 +4,17 @@ Drafted on `main` at `045515c`. **No STANDARD.md version is drafted by this chan
 
 ## 1. Format contract (U2)
 
-- [ ] 1.1 Write `skills/km-vault-upgrade/ledger-format.md`: ledger row contract
+- [x] 1.1 Write `skills/km-vault-upgrade/ledger-format.md`: ledger row contract
       (JSON schema-by-example), catalogue column contract, campaign-state table contract
       (batch-id, domain, CQs served, status enum `planned | proposed | approved | applied |
       rejected`, decided-on, batch-id ↔ ledger-row correlation), disposition enum
       `extracted | pointer-only | rejected | out-of-scope | deferred`, FLAG semantics on hash
       change.
-- [ ] 1.2 Decide and document content-hash normalization with concrete examples (raw bytes,
+- [x] 1.2 Decide and document content-hash normalization with concrete examples (raw bytes,
       SHA-256, no normalization — see design.md).
-- [ ] 1.3 One machine-readable block carries the enums and required keys; the format test parses
+- [x] 1.3 One machine-readable block carries the enums and required keys; the format test parses
       its assertions from it (one-definition rule).
-- [ ] 1.4 Document ledger adoption as a governed act and `_scratch/` staging for everything else.
+- [x] 1.4 Document ledger adoption as a governed act and `_scratch/` staging for everything else.
 
 ## 2. Skill body, Episodes I–III (U3)
 
