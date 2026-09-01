@@ -27,7 +27,7 @@ Drafted on `main` at `045515c`. **No STANDARD.md version is drafted by this chan
 
 ## 3. Skill body, Episodes IV–V (U4)
 
-- [ ] 3.1 Apply contract (exact paths, `KM-Agent:` trailer, `build-indexes.sh`, `hub-scan.sh`
+- [x] 3.1 Apply contract (exact paths, `KM-Agent:` trailer, `build-indexes.sh`, `hub-scan.sh`
       green); ledger use and re-run semantics (hash match ⇒ skip, changed ⇒ FLAG); duplicate
       reconciliation (source-of-record, per-diff, never silent dedupe); evidenced close
       (CQ re-check N→Y, `/km-handover`, QUEUE cleared, incumbent retired `lifecycle: retired`).

@@ -189,3 +189,87 @@ When the owner rejects a proposal (in whole or in part):
 3. Every subsequent session obeys the rule from Step 0. The owner never corrects the same
    behavior twice; if they had to, say so in the report — it means a rule was missed or is
    ambiguous, and the rule itself needs the owner's attention.
+
+## Step 7 — Apply under the apply contract, then ledger the batch (Episode IV)
+
+*Spec: "Campaign state SHALL be resumable and re-runs SHALL be idempotent."*
+
+Approval happens in each hub's own flow; this skill never approves or applies a proposal on the
+owner's behalf. When a hub applies an approved batch proposal, **the apply contract** holds
+(Rule 3):
+
+- the commit stages **exact paths** — never a blanket add in a populated tree;
+- the commit carries the **`KM-Agent:` trailer**;
+- `build-indexes.sh` runs after apply, and `hub-scan.sh` comes back **green** before the batch
+  is called applied. A batch whose scan is not green is not applied, whatever the commit says.
+
+Then record the batch:
+
+1. **Adopt the ledger, once, as a governed act.** The campaign ledger
+   (`_KM_Supervisor/campaign-ledger.json`, format in [`ledger-format.md`](ledger-format.md)) is
+   new estate state. On first need — not before — ask the owner to authorize its adoption and
+   create it in a commit stating the reason, under the Supervisor tier's generic change rule.
+   Never create estate state silently.
+2. **Write one ledger row per adjudicated source**: path, content hash, disposition
+   (`extracted` / `pointer-only` / `rejected` / `out-of-scope` / `deferred`), proposal ref,
+   batch id, decision date — exactly as the contract defines. One row per source, ever;
+   re-adjudication updates the row.
+3. **Update the campaign-state table** in the catalogue header (`planned` → `proposed` →
+   `approved` → `applied`, or `rejected`), with the decision date.
+4. **Crystallize per batch.** Before the next batch begins, entity notes implied by the newly
+   applied extracts (stakeholders, decisions, risks, commitments) are proposed through the
+   ordinary flow — CQ answerability accretes per batch instead of piling up at the close.
+
+The catalogue header and the ledger are the whole resumable state: a cold-start session (Step 0)
+reads them and continues, mid-campaign, without reconstruction.
+
+## Step 8 — Re-run semantics: skip, FLAG, new (Episode IV)
+
+Re-running `/km-vault-upgrade` against the same vault — including a live vault that changed —
+must never double-propose. On every catalogue run after ledger adoption, hash each source
+(`sha256` over raw bytes, per the contract) and compare against its ledger row:
+
+- **Hash matches** → the source is **skipped**: adjudicated is adjudicated. Skipped sources are
+  counted in the run report, per disposition.
+- **Hash differs** → stamp `flagged_on` on the row and report the source as **FLAG** for the
+  owner. The prior adjudication stands until the owner rules: re-adjudicate (the row is updated
+  and re-enters batch planning) or keep the prior disposition (the flag clears). Nothing is
+  re-proposed silently.
+- **No row** → the source is new; it enters batch planning normally.
+
+## Step 9 — Duplicate subtrees: reconcile, never silently dedupe (Episode IV)
+
+*Spec: "Duplicate subtrees SHALL be reconciled, never silently deduped."*
+
+When the catalogue finds the same subtree in two places with differing content (two export runs,
+a copied folder):
+
+1. **The owner selects one copy as source of record** — an owner ruling, recorded in the
+   catalogue's rulings section. Never pick by newest, largest, or hash count.
+2. **Differences reconcile file by file** through the dispute mechanism: each differing file is
+   a per-diff decision, and a divergent non-record copy can carry the truth. Identical files
+   need no decision — byte-identical is not a dispute.
+3. The non-record copy is catalogued as excluded (ruling-dated) once reconciliation completes;
+   its ledger rows point at the source-of-record's proposals.
+
+## Step 10 — Close with evidence (Episode V)
+
+*Spec: "The campaign SHALL close with evidence."*
+
+"Ingested" is a checked fact, not a feeling. When every planned batch in the campaign-state
+table is `applied` (or `rejected` with its rule captured):
+
+1. **Re-check each receiving hub's competency questions** in `01_project-brief.md`. A CQ flips
+   N → Y **only with a pointable fact** — an entity note or claim, not a pile of applied
+   documents. A CQ that cannot flip stays N, and saying so is part of the close.
+2. **`/km-handover` runs per receiving hub.**
+3. **Ingestion rows clear from `QUEUE.md`** — including interview and quarantine rows this
+   campaign opened.
+4. **Retire the superseded plan.** Any hand-written estate plan this campaign generalized is
+   marked `lifecycle: retired`, pointing at the closing commit. Retired, never deleted.
+5. Mark the catalogue `lifecycle` from `draft` to its closing state, and report the campaign's
+   final counts: sources adjudicated per disposition, batches per status, CQs flipped with their
+   evidence, corrections minted, flags outstanding.
+
+A quarantined bulk-export subtree that never got its own campaign is not silently forgotten at
+close: its QUEUE row survives, naming it as the follow-up campaign it is.
