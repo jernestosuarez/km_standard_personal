@@ -1,7 +1,7 @@
 ---
 title: "feat: Add km-vault-upgrade estate skill (governed vault onboarding command)"
 type: feat
-status: active
+status: completed
 date: 2026-09-01
 origin: /Users/ernesto/obsidian-mind/reference/km-vault-upgrade-gap-plan.md
 ---
