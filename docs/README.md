@@ -7,6 +7,7 @@ truth for the Standard.
 
 - **Adopting the Standard:** [`adopting.md`](adopting.md)
 - **Maintaining this edition:** [`maintaining.md`](maintaining.md)
+- **Onboarding a vault into an estate:** [`vault-onboarding.md`](vault-onboarding.md)
 - **Normative requirements:** [`../STANDARD.md`](../STANDARD.md)
 - **License and reuse:** [`license-and-reuse.md`](license-and-reuse.md)
 

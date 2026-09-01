@@ -110,7 +110,7 @@ For multiple hubs, add the minimum Supervisor tier when a source first crosses h
 |---|---|
 | [`STANDARD.md`](STANDARD.md) | Current normative architecture, governance, schemas, and release history. |
 | [`template/`](template/) | Reference hub. Its entity-note folders (`decisions/`, `risks/`, `stakeholders/`, `milestones/`, `partners/`, `corrections/`, `relationships/`, `claims/`, `sources/systems/`) and per-hub agent skills (`km-intake`, `km-propose`, `km-gather`, `km-start`, `km-handover`, `km-brief`, `km-publish`) are checked against the tree. |
-| [`skills/`](skills/) | Optional initialization, supervision, hub, briefing, and publication skills. |
+| [`skills/`](skills/) | Optional initialization, supervision, vault-onboarding, hub, briefing, and publication skills. |
 | [`components/`](components/) | Optional components, including the owner-facing KM Cockpit. |
 | [`rfcs/`](rfcs/README.md) | Dated design records and their derived lifecycle index. <img src="assets/badges/rfcs.svg" alt="RFCs: 4 adopted, 1 partial, 3 open"/> |
 | [`openspec/`](openspec/) | Governed change proposals and implementation evidence. |
