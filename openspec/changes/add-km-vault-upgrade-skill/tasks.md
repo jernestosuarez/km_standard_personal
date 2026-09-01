@@ -45,7 +45,7 @@ Drafted on `main` at `045515c`. **No STANDARD.md version is drafted by this chan
 
 ## 5. Surfaces and gate (U6)
 
-- [ ] 5.1 Extend README's `skills/` repository-map prose row with vault-onboarding phrasing
+- [x] 5.1 Extend README's `skills/` repository-map prose row with vault-onboarding phrasing
       (the tested per-hub parenthetical row untouched).
-- [ ] 5.2 Run `python3 tools/km-release-gate.py` directly; record the exit status. Exact-path
+- [x] 5.2 Run `python3 tools/km-release-gate.py` directly; record the exit status. Exact-path
       staging throughout.
