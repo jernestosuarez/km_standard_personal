@@ -29,22 +29,33 @@ ignores.
 | Estate corrections registry (`corrections/`) | The owner corrects the agent on a rule that crosses hub boundaries | STANDARD.md → "The correction loop runs at the estate tier too" |
 | Decision surface (KM Cockpit component) | The owner wants the queue as rendered cards rather than a file | `components/km-cockpit/` in the standard |
 
-## Workspace-level skills: linked, never copied
+## Estate-tier skills: linked here, never copied, never at the workspace root
 
 The estate-tier skills (`km-init`, `km-supervise`, `km-vault-upgrade`) have one canonical copy
-each, in the standard checkout's `skills/` tree. At this workspace they resolve through
-`<workspace>/.claude/skills/<slug>` entries that are **symlinks to those canonical directories —
-never copied trees**. A copy is the drift class the standard has already measured (the one skill
+each, in the standard checkout's `skills/` tree. They resolve **inside this directory**, through
+`.claude/skills/<slug>` entries — and `.agents/skills/<slug>` where the estate uses an AGENTS.md
+surface — that are **symlinks to those canonical directories, never copied trees**.
+
+**Why here and not the workspace root above.** This tier is the estate's governed unit: a git
+repository, with a change rule, holding the estate's state, and carrying its own
+`CLAUDE.md`/`AGENTS.md` — structurally the same shape as a hub, which is where every other skill
+in this standard lives beside its scope guard. The workspace root above is an ordinary folder,
+not a repository: a `.claude/` placed there is untracked by anything, reached by no scan, and
+orphaned from any scope guard. An estate session therefore runs **in this directory**, with the
+hubs as siblings at `../`.
+
+A copy rather than a link is the drift class the standard has already measured (the one skill
 copy without a parity check was the one that drifted), and no check reaches a copy inside a
-deployed estate; a link keeps every instance on the checkout's governed text.
+deployed estate; a link keeps every session on the checkout's governed text, and updating a
+skill becomes `git pull` in the checkout.
 
 Two control points, and only these:
-- **Minting a new instance** — create the links when this tier is minted, one per
-  workspace-level skill the estate uses.
+- **Minting a new instance** — create the links when this tier is minted, one per estate-tier
+  skill the estate uses, in both runtime trees the estate runs.
 - **Health-check** — each skill's own first step verifies its link on every run: a missing entry
   is offered for creation (owner authorization plus a commit stating the reason), a copy found
-  in its place is reported as drift risk and offered for replacement with the link, never left
-  silently.
+  in its place is reported as drift risk and offered for replacement, and a link found at the
+  superseded workspace-root location is offered for relocation here — never left silently.
 
 **Bind only what exists.** A hub next to this tier carries estate-binding references only to the
 files and directories actually present here; a dangling binding is worse than none. When a

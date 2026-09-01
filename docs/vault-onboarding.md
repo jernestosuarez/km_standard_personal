@@ -23,7 +23,7 @@ The reason is a rule worth stating plainly, because it is the thing people get w
 | Changed by this PR | Reaches automatically | An existing deployment must |
 |---|---|---|
 | `skills/km-vault-upgrade/` — the new canonical skill | nothing | create the symlink (§3) |
-| `skills/km-supervise/_KM_Supervisor_template/README.md` — new "Workspace-level skills" section | **newly minted** Supervisor tiers only | copy the section into the live `_KM_Supervisor/README.md` (§2) |
+| `skills/km-supervise/_KM_Supervisor_template/` — "Estate-tier skills" section, plus new `CLAUDE.md` and `AGENTS.md` | **newly minted** Supervisor tiers only | copy all three into the live `_KM_Supervisor/` (§2) |
 | `tests/`, `openspec/`, `README.md` | factory only | nothing |
 | `template/` — the reference hub | *untouched by this change* | **nothing. No hub needs any action.** |
 
@@ -35,57 +35,77 @@ Per-hub skills (`km-intake`, `km-gather`, `km-propose`, `km-start`, `km-handover
 
 ## 2. Update an existing Supervisor tier
 
-Your live `_KM_Supervisor/README.md` was minted from the older template and does not carry the
-"Workspace-level skills: linked, never copied" section. Add it.
+Your live `_KM_Supervisor/` was minted from an older template. It is missing three things: the
+"Estate-tier skills" section in `README.md`, and the `CLAUDE.md`/`AGENTS.md` scope-guard pair that
+makes the tier a properly constituted unit — the same shape every hub already has.
 
 The Supervisor tier's change rule is its own — **owner authorization in session plus a git commit
 stating the reason**, no proposal ceremony:
 
 ```bash
+CHECKOUT="$HOME/home/Research/AI Harness/km_standard_glassity"   # your standard checkout
+TPL="$CHECKOUT/skills/km-supervise/_KM_Supervisor_template"
 cd ~/km/_KM_Supervisor
-# copy the new section from the standard checkout's tier template:
-#   <checkout>/skills/km-supervise/_KM_Supervisor_template/README.md
-#   → the "## Workspace-level skills: linked, never copied" section
-git add README.md
-git commit -m "adopt: workspace-level skill deployment section (linked, never copied)"
+
+cp "$TPL/CLAUDE.md" "$TPL/AGENTS.md" .        # substitute {{INIT_DATE}} with today's date
+# then copy the "## Estate-tier skills: linked here, never copied, never at the workspace root"
+# section from "$TPL/README.md" into your own README.md
+
+git add CLAUDE.md AGENTS.md README.md
+git commit -m "adopt: tier scope guard and estate-tier skill deployment rule"
 ```
 
-Skip this only if you accept that a future session has no written rule telling it links are
-required. The skill health-checks its own link either way (§6), but the tier README is where the
-rule lives for *every* workspace-level skill, not just this one.
+The `CLAUDE.md`/`AGENTS.md` pair declares the tier's **routing** scope — which hub owns what — not
+an admission rule; a hub admits sources, this tier routes between them. Without it the tier is a
+git repo with no scope statement, which is why the skill's link was originally put in the wrong
+place: nothing at either level said where a governed unit begins.
 
 ---
 
-## 3. Deploy the skill — a symlink, never a copy
+## 3. Deploy the skill — a symlink inside the tier, never a copy
 
-One canonical copy lives in the standard checkout. The estate points at it.
+One canonical copy lives in the standard checkout. The **Supervisor tier** points at it.
 
 ```bash
 CHECKOUT="$HOME/home/Research/AI Harness/km_standard_glassity"   # your standard checkout
-mkdir -p ~/km/.claude/skills
-ln -sfn "$CHECKOUT/skills/km-vault-upgrade" ~/km/.claude/skills/km-vault-upgrade
+TIER=~/km/_KM_Supervisor
+
+mkdir -p "$TIER/.claude/skills"
+ln -sfn "$CHECKOUT/skills/km-vault-upgrade" "$TIER/.claude/skills/km-vault-upgrade"
+
+# and the AGENTS.md-surface mirror, if this estate runs one
+mkdir -p "$TIER/.agents/skills"
+ln -sfn "$CHECKOUT/skills/km-vault-upgrade" "$TIER/.agents/skills/km-vault-upgrade"
 
 # verify: must print a symlink whose target ends in /skills/km-vault-upgrade
-ls -l ~/km/.claude/skills/km-vault-upgrade
-test -L ~/km/.claude/skills/km-vault-upgrade && echo "OK: link" || echo "WRONG: not a link"
+ls -l "$TIER/.claude/skills/km-vault-upgrade"
+test -L "$TIER/.claude/skills/km-vault-upgrade" && echo "OK: link" || echo "WRONG: not a link"
 ```
 
-Do the same for the other workspace-level skills if they are not already linked:
+Do the same for the other estate-tier skills if they are not already linked:
 
 ```bash
 for s in km-init km-supervise; do
-  ln -sfn "$CHECKOUT/skills/$s" ~/km/.claude/skills/"$s"
+  ln -sfn "$CHECKOUT/skills/$s" "$TIER/.claude/skills/$s"
+  ln -sfn "$CHECKOUT/skills/$s" "$TIER/.agents/skills/$s"
 done
 ```
 
-**Why a link and not a copy.** A copied skill inside a deployed estate is the drift class this
-standard has already measured — the one skill copy without a parity check was the one that
-drifted — and no factory check reaches a copy sitting in `~/km`. A link keeps every session on the
-checkout's governed text, and updating the skill becomes `git pull` in the checkout.
+**Why inside the tier and not at `~/km`.** The tier is the estate's governed unit: a git
+repository, with a change rule, holding estate state, and now carrying its own
+`CLAUDE.md`/`AGENTS.md` — structurally the same shape as a hub, which is where every other skill
+in this standard sits beside its scope guard. `~/km` is an ordinary folder, not a repository: a
+`.claude/` there is untracked by anything, reached by no scan, and orphaned from any scope guard.
 
-**If you find a real directory there instead of a link,** that is copy-deploy residue. Do not
-delete it blindly: diff it against the canonical copy first, carry over anything that is genuinely
-yours, then replace it with the link.
+**Why a link and not a copy.** A copied skill inside a deployment is the drift class this standard
+has already measured — the one skill copy without a parity check was the one that drifted — and no
+factory check reaches a copy. A link keeps every session on the checkout's governed text, and
+updating the skill becomes `git pull` in the checkout.
+
+**If you find a real directory instead of a link,** that is copy-deploy residue. Do not delete it
+blindly: diff it against the canonical copy first, carry over anything genuinely yours, then
+replace it with the link. **If you find a link at `~/km/.claude/skills/`** — the location an
+earlier revision of this guide named — move it into the tier and remove the orphaned `.claude/`.
 
 ---
 
@@ -95,42 +115,46 @@ This is the part to get right. **Two roots, and the proposal is the boundary bet
 
 | Command | Run from | Why |
 |---|---|---|
-| `/km-vault-upgrade <vault-path>` | **workspace root** — `~/km` | Estate session. Reads `_KM_Supervisor/`, writes the catalogue and ledger there, dispatches into hubs |
-| `/km-supervise` | **workspace root** — `~/km` | Estate tier; routes one source across several hubs |
-| `/km-init` | **workspace root** — `~/km` | Hubs are created as children of the workspace root |
+| `/km-vault-upgrade <vault-path>` | **the tier** — `~/km/_KM_Supervisor` | Estate session. Its git repo; writes the catalogue and ledger here, dispatches into hubs at `../` |
+| `/km-supervise` | **the tier** — `~/km/_KM_Supervisor` | Estate tier; routes one source across several hubs |
+| `/km-init` | **workspace root** — `~/km` | The exception: it *creates* hubs (and the tier itself) as children of the workspace root |
 | `/km-gather` | **inside the receiving hub** — e.g. `~/km/glassity` | Writes a proposal into *that hub's* `changes/` |
 | `/km-intake` | **inside the receiving hub** | Applies or rejects proposals from *that hub's* `changes/` |
 | `/km-handover` | **inside the receiving hub** | Per-hub close-out |
 | `hub-scan.sh`, `build-indexes.sh` | **inside the hub** | They derive the hub from their own location |
 
 **Ingest** — catalogue, boundary interviews, batch planning, extraction routing, ledger writes —
-is one estate session at `~/km`.
+is one estate session in `~/km/_KM_Supervisor`.
 
 **Distribute** — proposal review, apply, crystallize, index, scan, handover — is one session
 *per receiving hub*, rooted in that hub.
 
 ```
-~/km                    ← /km-vault-upgrade runs HERE (ingest, orchestration)
-├── .claude/skills/     ← symlinks to the standard checkout
-├── _KM_Supervisor/     ← catalogue, campaign-ledger.json, QUEUE, registry
-├── glassity/           ← /km-gather, /km-intake, /km-handover run HERE (distribute)
-│   └── changes/        ← the boundary: estate writes proposals in, hub applies them
-└── personal/           ← same, per hub
+~/km                      ← an ordinary folder: not a repo, nothing runs here
+├── _KM_Supervisor/       ← /km-vault-upgrade and /km-supervise run HERE (ingest)
+│   ├── CLAUDE.md  AGENTS.md      ← the tier's scope guard
+│   ├── .claude/skills/   ← symlinks to the standard checkout
+│   ├── .agents/skills/   ← the AGENTS.md-surface mirror
+│   ├── hub-registry.md  QUEUE.md  campaign-ledger.json
+│   └── _inbox/           ← the catalogue
+├── glassity/             ← /km-gather, /km-intake, /km-handover run HERE (distribute)
+│   └── changes/          ← the boundary: estate writes proposals in, hub applies them
+└── personal/             ← same, per hub
 ```
 
-The estate session **writes proposals into** a hub's `changes/`. It never applies them. The hub's
-own session does that, through the hub's own flow. Crossing that line is the one thing the skill's
-governing principles forbid outright.
+From the tier, a hub is `../glassity/`. The estate session **writes proposals into** a hub's
+`changes/` and never applies them; the hub's own session does that, through the hub's own flow.
+Crossing that line is the one thing the skill's governing principles forbid outright.
 
-**Most common mistake:** running `/km-gather` from `~/km`. There is no hub there, so there is no
-`changes/` to write to. `cd` into the receiving hub first.
+**Most common mistake:** running `/km-gather` from `~/km` or from the tier. There is no hub at
+either, so there is no `changes/` to write to. `cd` into the receiving hub first.
 
 ---
 
 ## 5. Running a campaign
 
 ```bash
-cd ~/km
+cd ~/km/_KM_Supervisor
 /km-vault-upgrade ~/home            # the vault to onboard
 ```
 
